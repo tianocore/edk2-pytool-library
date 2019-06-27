@@ -32,7 +32,7 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 
 ## Release Version History
 
-### Version 0.9.00-dev
+### Version 0.9.00
 
 Initial release of library with functionality ported from Project Mu.
 For history and documentation prior to this see the original Project Mu project
@@ -41,9 +41,10 @@ https://github.com/microsoft/mu_pip_python_library
 ## Current Status
 
 Todo: pypi badge here
+
 | Host Type | Toolchain | Build | Status |
 | :-------- | :-------- | :---- | :----- |
-| Linux     | Python 3.7.x | PR Gate | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/edk2-pytool-library%20-%20PR%20Gate%20-%20Linux?branchName=feature/proposedinitialcode)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=1&branchName=feature/proposedinitialcode) |
+| Linux Ubuntu 1604 | Python 3.7.x | PR Gate | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/edk2-pytool-library%20-%20PR%20Gate%20-%20Linux?branchName=feature/proposedinitialcode)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=1&branchName=feature/proposedinitialcode) |
 |Windows Server 2019 | Python 3.7.x | PR Gate | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/Edk2-PyTool-Library%20PR%20build%20-%20Win%20-%20VS2019?branchName=feature/proposedinitialcode)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=2&branchName=feature/proposedinitialcode) |
 
 
