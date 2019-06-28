@@ -20,6 +20,8 @@ Examples:
 
 All content in this repository is licensed under [BSD-2-Clause Plus Patent License](license.txt).
 
+[![PyPI - License](https://img.shields.io/pypi/l/edk2_pytool_library.svg)](https://pypi.org/project/edk2-pytool-library/)
+
 ## Usage
 
 NOTE: It is strongly recommended that you use python virtual environments.  Virtual environments avoid changing the global python workspace and causing conflicting dependencies.  Virtual environments are lightweight and easy to use.  [Learn more](https://docs.python.org/3/library/venv.html)
@@ -40,12 +42,13 @@ https://github.com/microsoft/mu_pip_python_library
 
 ## Current Status
 
-Todo: pypi badge here
+[![PyPI](https://img.shields.io/pypi/v/edk2_pytool_library.svg)](https://pypi.org/project/edk2-pytool-library/)
 
-| Host Type | Toolchain | Build | Status |
-| :-------- | :-------- | :---- | :----- |
-| Linux Ubuntu 1604 | Python 3.7.x | PR Gate | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/edk2-pytool-library%20-%20PR%20Gate%20-%20Linux?branchName=feature/proposedinitialcode)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=1&branchName=feature/proposedinitialcode) |
-|Windows Server 2019 | Python 3.7.x | PR Gate | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/Edk2-PyTool-Library%20PR%20build%20-%20Win%20-%20VS2019?branchName=feature/proposedinitialcode)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=2&branchName=feature/proposedinitialcode) |
+| Host Type | Toolchain | Branch | Build Status | Test Status | Code Coverage |
+| :-------- | :-------- | :---- | :----- | :---- | :--- |
+| Linux Ubuntu 1604 | Python 3.7.x | master | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/edk2-pytool-library%20-%20PR%20Gate%20-%20Linux)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=1) | ![Azure DevOps tests](https://img.shields.io/azure-devops/tests/tianocore/edk2-pytools-library/1.svg) | ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/tianocore/edk2-pytools-library/1.svg) |
+| Windows Server 2019 | Python 3.7.x | master | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/Edk2-PyTool-Library%20PR%20build%20-%20Win%20-%20VS2019)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=2) | ![Azure DevOps tests](https://img.shields.io/azure-devops/tests/tianocore/edk2-pytools-library/2.svg)| ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/tianocore/edk2-pytools-library/2.svg) |
+
 
 
 ## Contribution Process
