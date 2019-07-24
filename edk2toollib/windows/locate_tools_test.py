@@ -54,17 +54,15 @@ class LocateToolsTest(unittest.TestCase):
     def test_QueryVcVariablesWithNoValidProduct(self):
         keys = ["VCINSTALLDIR", "WindowsSDKVersion"]
         with self.assertRaises(ValueError):
-            results = locate_tools.QueryVcVariables(keys, product="YouWontFindThis")
+            locate_tools.QueryVcVariables(keys, product="YouWontFindThis")
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_QueryVcVariablesWithVariableNotFound(self):
         keys = ["YouWontFindMe", "WindowsSDKVersion"]
         with self.assertRaises(ValueError):
-            results = locate_tools.QueryVcVariables(keys)
+            locate_tools.QueryVcVariables(keys)
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_FindToolInWinSdkWithNoValidProduct(self):
         results = locate_tools.FindToolInWinSdk("WontFind.exe", product="YouWontFindThis")
         self.assertIsNone(results)
-
-
