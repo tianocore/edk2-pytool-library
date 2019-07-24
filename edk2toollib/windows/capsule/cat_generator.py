@@ -69,10 +69,6 @@ class CatGenerator(object):
             raise Exception("Can't find Inf2Cat on this machine.  Please install the Windows 10 WDK - "
                             "https://developer.microsoft.com/en-us/windows/hardware/windows-driver-kit")
 
-        # Adjust for spaces in the path (when calling the command).
-        if " " in PathToInf2CatTool:
-            PathToInf2CatTool = '"' + PathToInf2CatTool + '"'
-
         OutputFolder = os.path.dirname(OutputCatFile)
         # Make Cat file
         cmd = "/driver:. /os:" + self.OperatingSystem + "_" + self.Arch + " /verbose"

@@ -147,6 +147,9 @@ def timing(f):
 # @param outstream - capture output to a stream.
 # @param environ - shell environment variables dictionary that replaces the one inherited from the
 #                  current process.
+# @param logging_level - log level to log output at.  Default is INFO
+# @param raise_exception_on_nonzero - Setting to true causes exception to be raised if the cmd
+#                                     return code is not zero.
 #
 # @return returncode of called cmd
 ####
