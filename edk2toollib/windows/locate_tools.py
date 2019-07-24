@@ -1,9 +1,11 @@
 # @file locate_tools.py
 # This module provides python services that locate common development tools using vswhere.exe,
-# vsvars.bat, and other Windows based tools.  This will only work on systems running Windows
-# and with dev tools installed.
+# vsvars.bat, and other Windows based tools.  This works best on systems running Windows
+# and with dev tools installed but will attempt to use known paths for WinSDK if the dev
+# tools are not available.  This is only a best effort to locate the SDK tools in well
+# known/default install locations.
 #
-# Dev Tools:
+# Suggested Dev Tools:
 #   Current Windows SDKs
 #   Visual Studio 2017 Build Tools or newer
 #
@@ -107,7 +109,7 @@ def GetVsWherePath(fail_on_not_found=True):
 ####
 # Finds a product with VS Where
 ####
-def FindWithVsWhere(products="*"):
+def FindWithVsWhere(products: str = "*"):
     cmd = "-latest -nologo -all -property installationPath"
     vs_where_path = GetVsWherePath()
     if vs_where_path is None:
@@ -135,11 +137,16 @@ def FindWithVsWhere(products="*"):
 # keys: enumerable list with names of env variables to collect after bat run
 # arch: arch to run.  amd64, x86, ??
 # returns a dictionary of the interesting environment variables
-def QueryVcVariables(keys, arch="amd64"):
+def QueryVcVariables(keys: dict, arch: str = None, product: str = None):
     """Launch vcvarsall.bat and read the settings from its environment"""
+    if product is None:
+        product = "*"
+    if arch is None:
+        # TODO: look up host architecture?
+        arch = "amd64"
     interesting = set(keys)
     result = {}
-    ret, vs_path = FindWithVsWhere()
+    ret, vs_path = FindWithVsWhere(product)
     if ret != 0:
         logging.warning("We didn't find VS path or otherwise failed to invoke vsWhere")
         raise ValueError("Bad VC")
@@ -237,20 +244,17 @@ def _CheckArchOfMatch(match):
 
 # does a glob in the folder that your sdk is
 # uses the environmental variable WindowsSdkDir and tries to use WindowsSDKVersion
-def FindToolInWinSdk(tool, product="*"):
-    ret, vs_path = FindWithVsWhere(product)
-    if ret != 0:
-        logging.warning("We didn't find VS path for the given product")
-        raise ValueError(product)
+def FindToolInWinSdk(tool, product=None, arch=None):
     variables = ["WindowsSdkDir", "WindowsSDKVersion"]
     # get the value with QueryVcVariables
-    results = QueryVcVariables(variables, product=product)
-    # Get the variables we care about
-    sdk_dir = results["WindowsSdkDir"]
-    sdk_ver = results["WindowsSDKVersion"]
-    if not os.path.isdir(sdk_dir):
-        raise FileNotFoundError("Unable to find SDK directory")
-        return None
+    try:
+        results = QueryVcVariables(variables, product, arch)
+        # Get the variables we care about
+        sdk_dir = results["WindowsSdkDir"]
+        sdk_ver = results["WindowsSDKVersion"]
+    except ValueError:
+        sdk_dir = os.path.join(os.getenv("ProgramFiles(x86)"), "Windows Kits", "10", "bin")
+        sdk_ver = "0.0.0.0"
     sdk_dir = os.path.realpath(sdk_dir)
     search_pattern = os.path.join(sdk_dir, "**", tool)
 

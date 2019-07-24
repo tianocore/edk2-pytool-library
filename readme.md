@@ -34,6 +34,12 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 
 ## Release Version History
 
+### Version 0.9.1-dev
+
+* Features:
+  * Add support for getting WinSdk tools on platforms without VS2017 or newer
+* Bugs:
+
 ### Version 0.9.00
 
 Initial release of library with functionality ported from Project Mu.
