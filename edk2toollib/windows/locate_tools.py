@@ -147,7 +147,7 @@ def QueryVcVariables(keys: dict, arch: str = None, product: str = None):
     interesting = set(keys)
     result = {}
     ret, vs_path = FindWithVsWhere(product)
-    if ret != 0:
+    if ret != 0 or vs_path is None:
         logging.warning("We didn't find VS path or otherwise failed to invoke vsWhere")
         raise ValueError("Bad VC")
     vcvarsall_path = os.path.join(vs_path, "VC", "Auxiliary", "Build", "vcvarsall.bat")
