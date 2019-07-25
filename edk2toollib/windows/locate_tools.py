@@ -94,7 +94,7 @@ def GetVsWherePath(fail_on_not_found=True):
         vswhere_dir = os.path.dirname(vswhere_path)
         try:  # try to download
             _DownloadVsWhere(vswhere_dir)
-        except:
+        except Exception:
             logging.warning("Tried to download VsWhere and failed")
             pass
 
@@ -271,6 +271,8 @@ def FindToolInWinSdk(tool, product=None, arch=None):
         top_ver_match = 0
         if not _CheckArchOfMatch(match_front):  # make sure it's a good arch for us
             continue
+        if len(versions) == 0:
+            top_ver_match = "0.0.0.0"  # if we have a bad version, we should fall to a bad version
         for version in versions:  # find the highest version if there are multiple in this?
             is_current_sdk_version = _CompareWindowVersions(version, sdk_ver) == 0
             if _CompareWindowVersions(version, top_ver_match) > 0 or is_current_sdk_version:
@@ -280,4 +282,7 @@ def FindToolInWinSdk(tool, product=None, arch=None):
         if _CompareWindowVersions(top_ver_match, top_version_so_far) > 0 or is_current_sdk_version:
             top_version_so_far = top_ver_match
             top_match = match
+    if top_match is None:
+        logging.critical("We weren't able to find {}".format(tool))
+        raise FileNotFoundError(tool)
     return top_match
