@@ -284,5 +284,4 @@ def FindToolInWinSdk(tool, product=None, arch=None):
             top_match = match
     if top_match is None:
         logging.critical("We weren't able to find {}".format(tool))
-        raise FileNotFoundError(tool)
     return top_match
