@@ -38,6 +38,7 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 
 * Features:
   * Add support for getting WinSdk tools on platforms without VS2017 or newer
+  * FindToolInWinSdk in locate_tools.py throws a FileNotFoundException when it cannot find the tool requested, previouly it returned None
 * Bugs:
 
 ### Version 0.9.00
