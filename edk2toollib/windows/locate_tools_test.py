@@ -33,7 +33,7 @@ class LocateToolsTest(unittest.TestCase):
         ret, bad_prod = locate_tools.FindWithVsWhere("bad_prod")
         self.assertEqual(ret, 0, "Return code should be zero")
         self.assertEqual(bad_prod, None, "We should not have found this product")
-    
+
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_QueryVcVariables(self):
         keys = ["VCINSTALLDIR", "WindowsSDKVersion"]
@@ -44,19 +44,19 @@ class LocateToolsTest(unittest.TestCase):
 
         self.assertIsNotNone(results["VCINSTALLDIR"])
         self.assertIsNotNone(results["WindowsSDKVersion"])
-    
+
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_FindInf2CatToolInWinSdk(self):
         results = locate_tools.FindToolInWinSdk("inf2cat.exe")
         self.assertIsNotNone(results)
         self.assertTrue(os.path.isfile(results))
-    
+
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
-    def test_FindToolInWinSdk(self):        
+    def test_FindToolInWinSdk(self):
         results = locate_tools.FindToolInWinSdk("signtool.exe")
         self.assertIsNotNone(results)
         self.assertTrue(os.path.isfile(results))
-        
+
         results = locate_tools.FindToolInWinSdk("this_tool_should_never_exist.exe")
         self.assertIsNone(results)
 
