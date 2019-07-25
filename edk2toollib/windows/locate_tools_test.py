@@ -56,9 +56,9 @@ class LocateToolsTest(unittest.TestCase):
         results = locate_tools.FindToolInWinSdk("signtool.exe")
         self.assertIsNotNone(results)
         self.assertTrue(os.path.isfile(results))
-        with self.assertRaises(FileNotFoundError):
-            results = locate_tools.FindToolInWinSdk("this_tool_should_never_exist.exe")
-            self.assertIsNone(results)
+        
+        results = locate_tools.FindToolInWinSdk("this_tool_should_never_exist.exe")
+        self.assertIsNone(results)
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_QueryVcVariablesWithNoValidProduct(self):
@@ -74,6 +74,5 @@ class LocateToolsTest(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_FindToolInWinSdkWithNoValidProduct(self):
-        with self.assertRaises(FileNotFoundError):
-            results = locate_tools.FindToolInWinSdk("WontFind.exe", product="YouWontFindThis")
-            self.assertIsNone(results)
+        results = locate_tools.FindToolInWinSdk("WontFind.exe", product="YouWontFindThis")
+        self.assertIsNone(results)
