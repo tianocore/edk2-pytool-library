@@ -65,7 +65,7 @@ class CatGenerator(object):
         if(PathToInf2CatTool is None):
             PathToInf2CatTool = FindToolInWinSdk("Inf2Cat.exe")
         # check if exists
-        if not os.path.exists(PathToInf2CatTool):
+        if PathToInf2CatTool is None or not os.path.exists(PathToInf2CatTool):
             raise Exception("Can't find Inf2Cat on this machine.  Please install the Windows 10 WDK - "
                             "https://developer.microsoft.com/en-us/windows/hardware/windows-driver-kit")
 
