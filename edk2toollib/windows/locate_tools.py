@@ -37,6 +37,12 @@ __VERSION = "2.6.7"
 __URL = "https://github.com/microsoft/vswhere/releases/download/{}/vswhere.exe".format(__VERSION)
 __SHA256 = "10abd21aeb5003d87c01f033fd7c170360e362be397f23b0b730324abbd92612"
 
+#
+# Supported Versions that can be queried with vswhere
+# Use lower case for key as all comparisons will be lower case
+#
+supported_vs_versions = {"vs2017": "15.0,16.0", "vs2019": "16.0,17.0"}
+
 
 # Downloads VSWhere
 def _DownloadVsWhere(unpack_folder=None):
@@ -108,8 +114,11 @@ def GetVsWherePath(fail_on_not_found=True):
 
 ####
 # Finds a product with VS Where
+#
+# product: is defined by vswhere tool
+# vs_version: helper to find version of supported VS version (example vs2019).
 ####
-def FindWithVsWhere(products: str = "*"):
+def FindWithVsWhere(products: str = "*", vs_version: str = None):
     cmd = "-latest -nologo -all -property installationPath"
     vs_where_path = GetVsWherePath()
     if vs_where_path is None:
@@ -117,6 +126,13 @@ def FindWithVsWhere(products: str = "*"):
         return (1, None)
     if(products is not None):
         cmd += " -products " + products
+    if(vs_version is not None):
+        vs_version = vs_version.lower()
+        if vs_version in supported_vs_versions.keys():
+            cmd += " -version " + supported_vs_versions[vs_version]
+        else:
+            logging.warning("Invalid or unsupported vs_version " + vs_version)
+            return (2, None)
     a = StringIO()
     ret = RunCmd(vs_where_path, cmd, outstream=a)
     if(ret != 0):
@@ -136,8 +152,10 @@ def FindWithVsWhere(products: str = "*"):
 #
 # keys: enumerable list with names of env variables to collect after bat run
 # arch: arch to run.  amd64, x86, ??
+# product: value defined by vswhere.exe
+# vs_version: helper to find version of supported VS version (example vs2019).
 # returns a dictionary of the interesting environment variables
-def QueryVcVariables(keys: dict, arch: str = None, product: str = None):
+def QueryVcVariables(keys: dict, arch: str = None, product: str = None, vs_version: str = None):
     """Launch vcvarsall.bat and read the settings from its environment"""
     if product is None:
         product = "*"
@@ -146,7 +164,7 @@ def QueryVcVariables(keys: dict, arch: str = None, product: str = None):
         arch = "amd64"
     interesting = set(keys)
     result = {}
-    ret, vs_path = FindWithVsWhere(product)
+    ret, vs_path = FindWithVsWhere(product, vs_version)
     if ret != 0 or vs_path is None:
         logging.warning("We didn't find VS path or otherwise failed to invoke vsWhere")
         raise ValueError("Bad VC")
