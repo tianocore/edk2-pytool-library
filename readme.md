@@ -34,13 +34,12 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 
 ## Release Version History
 
-### Version 0.9.1-dev
+### Version 0.9.1
 
 * Features:
   * Add support for getting WinSdk tools on platforms without VS2017 or newer
   * FindToolInWinSdk in locate_tools.py throws a FileNotFoundException when it cannot find the tool requested, previouly it returned None
   * Add support for limiting vswhere to certain versions of visual studio (VS2017 and VS2019 supported)
-* Bugs:
 
 ### Version 0.9.00
 
