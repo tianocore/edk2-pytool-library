@@ -39,6 +39,7 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 * Features:
   * Add support for getting WinSdk tools on platforms without VS2017 or newer
   * FindToolInWinSdk in locate_tools.py throws a FileNotFoundException when it cannot find the tool requested, previouly it returned None
+  * Add support for limiting vswhere to certain versions of visual studio (VS2017 and VS2019 supported)
 * Bugs:
 
 ### Version 0.9.00
@@ -55,8 +56,6 @@ https://github.com/microsoft/mu_pip_python_library
 | :-------- | :-------- | :---- | :----- | :---- | :--- |
 | Linux Ubuntu 1604 | Python 3.7.x | master | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/edk2-pytool-library%20-%20PR%20Gate%20-%20Linux)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=1) | ![Azure DevOps tests](https://img.shields.io/azure-devops/tests/tianocore/edk2-pytools-library/1.svg) | ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/tianocore/edk2-pytools-library/1.svg) |
 | Windows Server 2019 | Python 3.7.x | master | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/Edk2-PyTool-Library%20PR%20build%20-%20Win%20-%20VS2019)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=2) | ![Azure DevOps tests](https://img.shields.io/azure-devops/tests/tianocore/edk2-pytools-library/2.svg)| ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/tianocore/edk2-pytools-library/2.svg) |
-
-
 
 ## Contribution Process
 

@@ -35,6 +35,28 @@ class LocateToolsTest(unittest.TestCase):
         self.assertEqual(bad_prod, None, "We should not have found this product")
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
+    def test_FindwithVsWhereVs2017(self):
+        ret, star_prod = locate_tools.FindWithVsWhere(vs_version="vs2017")
+        self.assertEqual(ret, 0, "Return code should be zero")
+        # not checking the result as no need to depend on machine state
+
+    @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
+    def test_FindwithVsWhereVs2019(self):
+        ret, star_prod = locate_tools.FindWithVsWhere(vs_version="vs2019")
+        self.assertEqual(ret, 0, "Return code should be zero")
+        # not checking the result as no need to depend on machine state
+
+    @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
+    def test_FindWithVsWhereVs2015(self):
+        ret, star_prod = locate_tools.FindWithVsWhere(vs_version="vs2015")
+        self.assertEqual(ret, 2, "Return code should be 2 as Vs2015 isn't supported")
+
+    @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
+    def test_FindWithVsWhereUnsupported(self):
+        ret, star_prod = locate_tools.FindWithVsWhere(vs_version="vs4096")
+        self.assertEqual(ret, 2, "Return code should be two as unsupported version")
+
+    @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_QueryVcVariables(self):
         keys = ["VCINSTALLDIR", "WindowsSDKVersion"]
         try:
