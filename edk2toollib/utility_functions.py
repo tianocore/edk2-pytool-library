@@ -204,7 +204,8 @@ def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstre
 ####
 
 
-def RunPythonScript(pythonfile, params, capture=True, workingdir=None, outfile=None, outstream=None, environ=None):
+def RunPythonScript(pythonfile, params, capture=True, workingdir=None, outfile=None, outstream=None,
+                    environ=None, logging_level=logging.INFO, raise_exception_on_nonzero=False):
     # locate python file on path
     pythonfile.strip('"\'')
     if " " in pythonfile:
@@ -226,7 +227,8 @@ def RunPythonScript(pythonfile, params, capture=True, workingdir=None, outfile=N
                 break
     params = pythonfile + " " + params
     return RunCmd(sys.executable, params, capture=capture, workingdir=workingdir, outfile=outfile,
-                  outstream=outstream, environ=environ)
+                  outstream=outstream, environ=environ, logging_level=logging_level,
+                  xraise_exception_on_nonzero=raise_exception_on_nonzero)
 ####
 # Locally Sign input file using Windows SDK signtool.  This will use a local Pfx file.
 # WARNING!!! : This should not be used for production signing as that process should follow stronger
