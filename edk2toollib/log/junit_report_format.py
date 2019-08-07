@@ -76,15 +76,17 @@ class JunitReportTestCase(object):
         self.Time = time.time() - self._StartTime
 
     def LogStdOut(self, msg):
-        self.StdOut += msg.strip() + "\n "
+        self.StdOut += msg.strip() + "\n "  # TODO: sanitize the input for XML
 
     def LogStdError(self, msg):
-        self.StdErr += msg.strip() + "\n "
+        self.StdErr += msg.strip() + "\n "  # TODO: sanitize the input for XML
 
     def Output(self, outstream):
         outstream.write('<testcase classname="{0}" name="{1}" time="{2}">'.format(self.ClassName, self.Name, self.Time))
         if self.Status == JunitReportTestCase.SKIPPED:
-            outstream.write('<skipped />')
+            outstream.write('<skipped message="skipped test because of configuration" type="skipped">')
+            outstream.write(self.stdOut)  
+            outstream.write('</skipped>')
         elif self.Status == JunitReportTestCase.FAILED:
             outstream.write('<failure message="{0}" type="{1}" />'.format(self.FailureMsg.Message,
                                                                           self.FailureMsg.Type))
