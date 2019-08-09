@@ -45,7 +45,7 @@ supported_vs_versions = {"vs2017": "15.0,16.0", "vs2019": "16.0,17.0"}
 
 
 # Downloads VSWhere
-def _DownloadVsWhere(unpack_folder=None):
+def _DownloadVsWhere(unpack_folder: os.PathLike = None):
     if unpack_folder is None:
         unpack_folder = os.path.dirname(__VsWherePath())
 
@@ -85,7 +85,7 @@ def __VsWherePath():
 #
 # @return string "/PATH/TO/vswhere.exe" or None
 ####
-def GetVsWherePath(fail_on_not_found=True):
+def GetVsWherePath(fail_on_not_found: bool = True):
     vswhere_path = __VsWherePath()
     # check if we can't find it, look for vswhere in the path
     if not os.path.isfile(vswhere_path):
@@ -155,7 +155,7 @@ def FindWithVsWhere(products: str = "*", vs_version: str = None):
 # product: value defined by vswhere.exe
 # vs_version: helper to find version of supported VS version (example vs2019).
 # returns a dictionary of the interesting environment variables
-def QueryVcVariables(keys: dict, arch: str = None, product: str = None, vs_version: str = None):
+def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_version: str = None):
     """Launch vcvarsall.bat and read the settings from its environment"""
     if product is None:
         product = "*"
@@ -262,7 +262,7 @@ def _CheckArchOfMatch(match):
 
 # does a glob in the folder that your sdk is
 # uses the environmental variable WindowsSdkDir and tries to use WindowsSDKVersion
-def FindToolInWinSdk(tool, product=None, arch=None):
+def FindToolInWinSdk(tool: str, product=None, arch=None):
     variables = ["WindowsSdkDir", "WindowsSDKVersion"]
     # get the value with QueryVcVariables
     try:
