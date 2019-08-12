@@ -156,13 +156,14 @@ def FindWithVsWhere(products: str = "*", vs_version: str = None):
 # vs_version: helper to find version of supported VS version (example vs2019).
 # returns a dictionary of the interesting environment variables
 def QueryVcVariables(keys: dict, arch: str = None, product: str = None, vs_version: str = None):
-    """Launch vcvarsall.bat and read the settings from its environment"""
+    """Launch vcvarsall.bat and read the settings from its environment.  This is a windows only function
+    and Windows is case insensitive for the keys"""
     if product is None:
         product = "*"
     if arch is None:
         # TODO: look up host architecture?
         arch = "amd64"
-    interesting = set(keys)
+    interesting = set(x.upper() for x in keys)
     result = {}
     ret, vs_path = FindWithVsWhere(product, vs_version)
     if ret != 0 or vs_path is None:
@@ -181,7 +182,7 @@ def QueryVcVariables(keys: dict, arch: str = None, product: str = None, vs_versi
                 continue
             line = line.strip()
             key, value = line.split('=', 1)
-            if key in interesting:
+            if key.upper() in interesting:
                 if value.endswith(os.pathsep):
                     value = value[:-1]
                 result[key] = value
