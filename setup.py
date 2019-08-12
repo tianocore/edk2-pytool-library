@@ -50,7 +50,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/tianocore/edk2-pytool-library",
-    license='BSD+Patent',
+    license='BSD-2-Clause-Patent',
     packages=setuptools.find_packages(),
     cmdclass={
         'sdist': PostSdistCommand,
