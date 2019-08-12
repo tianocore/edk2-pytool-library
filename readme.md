@@ -34,6 +34,11 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 
 ## Release Version History
 
+### Version 0.9.2
+
+* Bugs:
+  * Change QueryVcVariables so environment variable keys are not case sensitive.  On Windows these are not case sensitive and "Path" is not consistent.
+
 ### Version 0.9.1
 
 * Features:
