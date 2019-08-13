@@ -62,7 +62,7 @@ class DecParser(HashFileParser):
                     InLibraryClassSection = False
                 else:
                     t = sline.partition("|")
-                    self.LibrariesUsed.append(t[0].strip())
+                    self.LibrariesUsed.append(t([0].strip(), t[2].strip()))
                     continue
 
             elif InProtocolsSection:
