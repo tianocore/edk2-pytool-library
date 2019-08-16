@@ -21,4 +21,4 @@ class UtilityFunctionsTest(unittest.TestCase):
         utilities.RunPythonScript(path, "", working_dir)
 
 # DO NOT PUT A MAIN FUNCTION HERE
-#  this test runs itself to test runpython script, which is a tad bit strange yes.
+# this test runs itself to test runpython script, which is a tad bit strange yes.
