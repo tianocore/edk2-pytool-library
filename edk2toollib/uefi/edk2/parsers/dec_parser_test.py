@@ -14,6 +14,7 @@ from edk2toollib.uefi.edk2.parsers.dec_parser import LibraryClassDeclarationEntr
 from edk2toollib.uefi.edk2.parsers.dec_parser import GuidDeclarationEntry
 from edk2toollib.uefi.edk2.parsers.dec_parser import PpiDeclarationEntry
 from edk2toollib.uefi.edk2.parsers.dec_parser import ProtocolDeclarationEntry
+from edk2toollib.uefi.edk2.parsers.dec_parser import PcdDeclarationEntry
 import uuid
 
 
@@ -79,4 +80,15 @@ class TestLibraryClassDeclarationEntry(unittest.TestCase):
         a = LibraryClassDeclarationEntry("testpkg", SAMPLE_DATA_DECL)
         self.assertEqual(a.path, "Include/Library/BmpSupportLib.h")
         self.assertEqual(a.name, "BmpSupportLib")
+
+class TestPcdDeclarationEntry(unittest.TestCase):
+
+    def test_valid_input(self):
+        SAMPLE_DATA_DECL = """gEfiMdeModulePkgTokenSpaceGuid.PcdSupportUpdateCapsuleReset|FALSE|BOOLEAN|0x0001001d"""
+        a = PcdDeclarationEntry("testpkg", SAMPLE_DATA_DECL)
+        self.assertEqual(a.token_space_name, "gEfiMdeModulePkgTokenSpaceGuid")
+        self.assertEqual(a.name, "PcdSupportUpdateCapsuleReset")
+        self.assertEqual(a.default_value, "FALSE")
+        self.assertEqual(a.type, "BOOLEAN")
+        self.assertEqual(a.id, "0x0001001d")
 

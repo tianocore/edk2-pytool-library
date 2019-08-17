@@ -146,6 +146,31 @@ class GuidDeclarationEntry(GuidedDeclarationEntry):
         super().__init__(packagename, rawtext)
         self.type = GuidedDeclarationEntry.GUID
 
+class PcdDeclarationEntry():
+    def __init__(self, packagename: str, rawtext: str = None):
+        """ Creates a PCD Declaration Entry for one PCD
+        """
+        self.token_space_name = ""
+        self.name = ""
+        self.default_value = ""
+        self.type = ""
+        self.id = ""
+        self.package_name = packagename
+        if (rawtext is not None):
+            self._parse(rawtext)
+
+    def _parse(self, rawtext: str):
+        sp = rawtext.partition(".")
+        self.token_space_name = sp[0].strip()
+        op = sp[2].split("|")
+        
+        if(len(op) != 4):
+            raise Exception("Too many parts")
+
+        self.name = op[0].strip()
+        self.default_value = op[1].strip()
+        self.type = op[2].strip()
+        self.id = op[3].strip()
 
 
 class DecParser(HashFileParser):
@@ -158,7 +183,7 @@ class DecParser(HashFileParser):
         self.PPIs = []
         self.Protocols = []
         self.Guids = []
-        self.PcdsUsed = []
+        self.Pcds = []
         self.IncludePaths = []
         self.Path = ""
         self.PackageName = None
@@ -227,8 +252,8 @@ class DecParser(HashFileParser):
                 if sline.strip()[0] == '[':
                     InPcdSection = False
                 else:
-                    t = sline.partition("|")
-                    self.PcdsUsed.append(t[0].strip())
+                    t = PcdDeclarationEntry(self.PackageName, sline)
+                    self.Pcds.append(t)
                     continue
 
             elif InIncludesSection:
