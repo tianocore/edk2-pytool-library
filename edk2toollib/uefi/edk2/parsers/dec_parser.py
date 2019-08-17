@@ -5,8 +5,147 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 import os
+import uuid
+from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
+
+
+class LibraryClassDeclarationEntry():
+
+    def __init__(self, packagename: str, rawtext: str=None):
+        ''' Init a library Class Declaration Entry'''
+        self.path = ""
+        self.name = ""
+        self.package_name = packagename
+        if (rawtext is not None):
+            self._parse(rawtext)
+        
+    def _parse(self, rawtext: str):
+        '''rawtext is expected to be a string with <library class name> | <path>
+           all comments should already be removed from the string
+        '''
+        t = rawtext.partition("|")
+        self.name = t[0].strip()
+        self.path = t[2].strip()
+
+class GuidedDeclarationEntry():
+    PROTOCOL = 1
+    PPI = 2
+    GUID = 3
+
+    def __init__(self, packagename: str, rawtext: str=None):
+        '''Init a protocol/Ppi/or Guid declaration entry'''
+        self.name = ""
+        self.guidstring = ""
+        self.guid = None 
+        self.package_name = packagename
+        if(rawtext is not None):
+            self._parse(rawtext)
+
+    def _parse(self, rawtext: str):
+        '''rawtext is expected to be a string with <protocol name> = guid
+           all comments should already be removed from the string
+        '''
+        t = rawtext.partition("=")
+        self.name = t[0].strip()
+        self.guidstring = t[2].strip()
+        self.guid = self._convert_guid_to_uuid(self.guidstring)
+
+    def _is_guid_in_include_format(self, guidstring: str) -> bool:
+        '''will look at guidstring to make sure it looks like: 
+        { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}'''
+        if(guidstring.count("{") == 2 and guidstring.count("}") == 2 and guidstring.count(",") == 10):
+            return True
+        return False
+
+    def _parse_guid_to_reg_from_include_format(self, guid_string: str) -> str:
+        '''parse a guid in format
+        # { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
+        # into F7FDE4A6-294C-493c-B50F-9734553BB757  (NOTE these are not same guid this is just example of format)'''
+        entries = guid_string.lstrip(' {').rstrip(' }').split(',')
+        gu = entries[0].lstrip(' 0').lstrip('x').strip()
+        # pad front until 8 chars
+        while(len(gu) < 8):
+            gu = "0" + gu
+
+        gut = entries[1].lstrip(' 0').lstrip('x').strip()
+        while(len(gut) < 4):
+            gut = "0" + gut
+        gu = gu + "-" + gut
+
+        gut = entries[2].lstrip(' 0').lstrip('x').strip()
+        while(len(gut) < 4):
+            gut = "0" + gut
+        gu = gu + "-" + gut
+
+        # strip off extra {
+        gut = entries[3].lstrip(' { 0').lstrip('x').strip()
+        while(len(gut) < 2):
+            gut = "0" + gut
+        gu = gu + "-" + gut
+
+        gut = entries[4].lstrip(' 0').lstrip('x').strip()
+        while(len(gut) < 2):
+            gut = "0" + gut
+        gu = gu + gut
+
+        gut = entries[5].lstrip(' 0').lstrip('x').strip()
+        while(len(gut) < 2):
+            gut = "0" + gut
+        gu = gu + "-" + gut
+
+        gut = entries[6].lstrip(' 0').lstrip('x').strip()
+        while(len(gut) < 2):
+            gut = "0" + gut
+        gu = gu + gut
+
+        gut = entries[7].lstrip(' 0').lstrip('x').strip()
+        while(len(gut) < 2):
+            gut = "0" + gut
+        gu = gu + gut
+
+        gut = entries[8].lstrip(' 0').lstrip('x').strip()
+        while(len(gut) < 2):
+            gut = "0" + gut
+        gu = gu + gut
+
+        gut = entries[9].lstrip(' 0').lstrip('x').strip()
+        while(len(gut) < 2):
+            gut = "0" + gut
+        gu = gu + gut
+
+        gut = entries[10].split()[0].lstrip(' 0').lstrip('x').rstrip(' } ').strip()
+        while(len(gut) < 2):
+            gut = "0" + gut
+        gu = gu + gut
+
+        return gu.upper()
+
+    def _convert_guid_to_uuid(self, guid_string:str) -> uuid.UUID:
+        if(self._is_guid_in_include_format(guid_string)):
+            reg = self._parse_guid_to_reg_from_include_format(guid_string)
+            return uuid.UUID(reg)
+        return uuid.UUID(guid_string)
+
+class ProtocolDeclarationEntry(GuidedDeclarationEntry):
+
+    def __init__(self, packagename: str, rawtext: str=None):
+        '''Init a protocol declaration entry'''
+        super().__init__(packagename, rawtext)
+        self.type = GuidedDeclarationEntry.PROTOCOL
+
+class PpiDeclarationEntry(GuidedDeclarationEntry):
+    def __init__(self, packagename: str, rawtext: str=None):
+        '''Init a Ppi declaration entry'''
+        super().__init__(packagename, rawtext)
+        self.type = GuidedDeclarationEntry.PPI
+
+class GuidDeclarationEntry(GuidedDeclarationEntry):
+    def __init__(self, packagename: str, rawtext: str=None):
+        '''Init a Ppi declaration entry'''
+        super().__init__(packagename, rawtext)
+        self.type = GuidedDeclarationEntry.GUID
+
 
 
 class DecParser(HashFileParser):
@@ -15,13 +154,14 @@ class DecParser(HashFileParser):
         self.Lines = []
         self.Parsed = False
         self.Dict = {}
-        self.LibrariesUsed = []
-        self.PPIsUsed = []
-        self.ProtocolsUsed = []
-        self.GuidsUsed = []
+        self.LibraryClasses = []
+        self.PPIs = []
+        self.Protocols = []
+        self.Guids = []
         self.PcdsUsed = []
-        self.IncludesUsed = []
+        self.IncludePaths = []
         self.Path = ""
+        self.PackageName = None
 
     def ParseFile(self, filepath):
         self.Logger.debug("Parsing file: %s" % filepath)
@@ -55,30 +195,32 @@ class DecParser(HashFileParser):
                     if sline.count("=") == 1:
                         tokens = sline.split('=', 1)
                         self.Dict[tokens[0].strip()] = tokens[1].strip()
+                        if(self.PackageName is None and "PACKAGE_NAME" in self.Dict.keys()):
+                            self.PackageName = self.Dict["PACKAGE_NAME"]
                         continue
 
             elif InLibraryClassSection:
                 if sline.strip()[0] == '[':
                     InLibraryClassSection = False
                 else:
-                    t = sline.partition("|")
-                    self.LibrariesUsed.append(t([0].strip(), t[2].strip()))
+                    t = LibraryClassDeclarationEntry(self.PackageName, sline)
+                    self.LibraryClasses.append(t)
                     continue
 
             elif InProtocolsSection:
                 if sline.strip()[0] == '[':
                     InProtocolsSection = False
                 else:
-                    t = sline.partition("=")
-                    self.ProtocolsUsed.append(t[0].strip())
+                    t = ProtocolDeclarationEntry(self.PackageName, sline)
+                    self.Protocols.append(t)
                     continue
 
             elif InGuidsSection:
                 if sline.strip()[0] == '[':
                     InGuidsSection = False
                 else:
-                    t = sline.partition("=")
-                    self.GuidsUsed.append(t[0].strip())
+                    t = ProtocolDeclarationEntry(self.PackageName, sline)
+                    self.Guids.append(t)
                     continue
 
             elif InPcdSection:
@@ -93,15 +235,15 @@ class DecParser(HashFileParser):
                 if sline.strip()[0] == '[':
                     InIncludesSection = False
                 else:
-                    self.IncludesUsed.append(sline.strip())
+                    self.IncludePaths.append(sline.strip())
                     continue
 
             elif InPPISection:
                 if (sline.strip()[0] == '['):
                     InPPISection = False
                 else:
-                    t = sline.partition("=")
-                    self.PPIsUsed.append(t[0].strip())
+                    t = ProtocolDeclarationEntry(self.PackageName, sline)
+                    self.PPIs.append(t)
                     continue
 
             # check for different sections
