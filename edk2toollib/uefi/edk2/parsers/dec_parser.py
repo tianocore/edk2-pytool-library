@@ -12,56 +12,87 @@ from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 
 class LibraryClassDeclarationEntry():
 
-    def __init__(self, packagename: str, rawtext: str=None):
-        ''' Init a library Class Declaration Entry'''
+    def __init__(self, packagename: str, rawtext: str = None):
+        """Init a library Class Declaration Entry"""
         self.path = ""
         self.name = ""
         self.package_name = packagename
         if (rawtext is not None):
             self._parse(rawtext)
-        
-    def _parse(self, rawtext: str):
-        '''rawtext is expected to be a string with <library class name> | <path>
-           all comments should already be removed from the string
-        '''
+
+    def _parse(self, rawtext: str) -> None:
+        """Parses the rawtext line to collect the Library Class declaration
+           information (name and package root relative path).
+
+        Args:
+          rawtext: str
+          expected format is <library class name> | <package relative path to header file>
+
+        Returns:
+          None
+
+        """
         t = rawtext.partition("|")
         self.name = t[0].strip()
         self.path = t[2].strip()
 
+
 class GuidedDeclarationEntry():
+    """A baseclass for declaration types that have a name and guid."""
     PROTOCOL = 1
     PPI = 2
     GUID = 3
 
-    def __init__(self, packagename: str, rawtext: str=None):
-        '''Init a protocol/Ppi/or Guid declaration entry'''
+    def __init__(self, packagename: str, rawtext: str = None):
+        """Init a protocol/Ppi/or Guid declaration entry"""
         self.name = ""
         self.guidstring = ""
-        self.guid = None 
+        self.guid = None
         self.package_name = packagename
         if(rawtext is not None):
             self._parse(rawtext)
 
-    def _parse(self, rawtext: str):
-        '''rawtext is expected to be a string with <protocol name> = guid
-           all comments should already be removed from the string
-        '''
+    def _parse(self, rawtext: str) -> None:
+        """Parses the name and guid of a declaration
+
+        Args:
+          rawtext: str:
+
+        Returns:
+
+        """
         t = rawtext.partition("=")
         self.name = t[0].strip()
         self.guidstring = t[2].strip()
         self.guid = self._convert_guid_to_uuid(self.guidstring)
 
     def _is_guid_in_include_format(self, guidstring: str) -> bool:
-        '''will look at guidstring to make sure it looks like: 
-        { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}'''
+        """will look at guidstring to make sure it looks like:
+        { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
+
+        Args:
+          guidstring: str:
+
+        Returns:
+            TRUE - if format is c style
+            FALSE - all other cases
+
+        """
         if(guidstring.count("{") == 2 and guidstring.count("}") == 2 and guidstring.count(",") == 10):
             return True
         return False
 
     def _parse_guid_to_reg_from_include_format(self, guid_string: str) -> str:
-        '''parse a guid in format
+        """parse a guid in format
         # { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
-        # into F7FDE4A6-294C-493c-B50F-9734553BB757  (NOTE these are not same guid this is just example of format)'''
+        # into F7FDE4A6-294C-493c-B50F-9734553BB757  (NOTE these are not same guid this is just example of format)
+
+        Args:
+          guid_string: str:
+
+        Returns:
+
+        """
         entries = guid_string.lstrip(' {').rstrip(' }').split(',')
         gu = entries[0].lstrip(' 0').lstrip('x').strip()
         # pad front until 8 chars
@@ -121,35 +152,49 @@ class GuidedDeclarationEntry():
 
         return gu.upper()
 
-    def _convert_guid_to_uuid(self, guid_string:str) -> uuid.UUID:
+    def _convert_guid_to_uuid(self, guid_string: str) -> uuid.UUID:
+        """
+
+        Args:
+          guid_string: str:
+
+        Returns:
+
+        """
         if(self._is_guid_in_include_format(guid_string)):
             reg = self._parse_guid_to_reg_from_include_format(guid_string)
             return uuid.UUID(reg)
         return uuid.UUID(guid_string)
 
+
 class ProtocolDeclarationEntry(GuidedDeclarationEntry):
 
-    def __init__(self, packagename: str, rawtext: str=None):
-        '''Init a protocol declaration entry'''
+    def __init__(self, packagename: str, rawtext: str = None):
+        """Init a protocol declaration entry"""
         super().__init__(packagename, rawtext)
         self.type = GuidedDeclarationEntry.PROTOCOL
 
+
 class PpiDeclarationEntry(GuidedDeclarationEntry):
-    def __init__(self, packagename: str, rawtext: str=None):
-        '''Init a Ppi declaration entry'''
+
+    def __init__(self, packagename: str, rawtext: str = None):
+        """Init a Ppi declaration entry"""
         super().__init__(packagename, rawtext)
         self.type = GuidedDeclarationEntry.PPI
 
+
 class GuidDeclarationEntry(GuidedDeclarationEntry):
-    def __init__(self, packagename: str, rawtext: str=None):
-        '''Init a Ppi declaration entry'''
+
+    def __init__(self, packagename: str, rawtext: str = None):
+        """Init a Ppi declaration entry"""
         super().__init__(packagename, rawtext)
         self.type = GuidedDeclarationEntry.GUID
 
+
 class PcdDeclarationEntry():
+
     def __init__(self, packagename: str, rawtext: str = None):
-        """ Creates a PCD Declaration Entry for one PCD
-        """
+        """Creates a PCD Declaration Entry for one PCD"""
         self.token_space_name = ""
         self.name = ""
         self.default_value = ""
@@ -160,10 +205,18 @@ class PcdDeclarationEntry():
             self._parse(rawtext)
 
     def _parse(self, rawtext: str):
+        """
+
+        Args:
+          rawtext: str:
+
+        Returns:
+
+        """
         sp = rawtext.partition(".")
         self.token_space_name = sp[0].strip()
         op = sp[2].split("|")
-        
+
         if(len(op) != 4):
             raise Exception("Too many parts")
 
@@ -174,6 +227,8 @@ class PcdDeclarationEntry():
 
 
 class DecParser(HashFileParser):
+    """Parses an EDK2 DEC file"""
+
     def __init__(self):
         HashFileParser.__init__(self, 'DecParser')
         self.Lines = []
@@ -188,17 +243,8 @@ class DecParser(HashFileParser):
         self.Path = ""
         self.PackageName = None
 
-    def ParseFile(self, filepath):
-        self.Logger.debug("Parsing file: %s" % filepath)
-        if(not os.path.isabs(filepath)):
-            fp = self.FindPath(filepath)
-        else:
-            fp = filepath
-        self.Path = fp
+    def _Parse(self) -> None:
 
-        f = open(fp, "r")
-        self.Lines = f.readlines()
-        f.close()
         InDefinesSection = False
         InLibraryClassSection = False
         InProtocolsSection = False
@@ -220,7 +266,7 @@ class DecParser(HashFileParser):
                     if sline.count("=") == 1:
                         tokens = sline.split('=', 1)
                         self.Dict[tokens[0].strip()] = tokens[1].strip()
-                        if(self.PackageName is None and "PACKAGE_NAME" in self.Dict.keys()):
+                        if(self.PackageName is None and tokens[0].strip() == "PACKAGE_NAME"):
                             self.PackageName = self.Dict["PACKAGE_NAME"]
                         continue
 
@@ -244,7 +290,7 @@ class DecParser(HashFileParser):
                 if sline.strip()[0] == '[':
                     InGuidsSection = False
                 else:
-                    t = ProtocolDeclarationEntry(self.PackageName, sline)
+                    t = GuidDeclarationEntry(self.PackageName, sline)
                     self.Guids.append(t)
                     continue
 
@@ -267,7 +313,7 @@ class DecParser(HashFileParser):
                 if (sline.strip()[0] == '['):
                     InPPISection = False
                 else:
-                    t = ProtocolDeclarationEntry(self.PackageName, sline)
+                    t = PpiDeclarationEntry(self.PackageName, sline)
                     self.PPIs.append(t)
                     continue
 
@@ -294,3 +340,40 @@ class DecParser(HashFileParser):
                 InIncludesSection = True
 
         self.Parsed = True
+
+    def ParseStream(self, stream) -> None:
+        """
+        parse the supplied IO as a DEC file
+        Args:
+            stream: a file-like/stream object in which DEC file contents can be read
+
+        Returns:
+            None - Existing object now contains parsed data
+
+        """
+        self.Path = "None:stream_given"
+        self.Lines = stream.readlines()
+        self._Parse()
+
+    def ParseFile(self, filepath: str) -> None:
+        """
+        Parse the supplied file.
+        Args:
+          filepath: path to dec file to parse.  Can be either an absolute path or
+          relative to your CWD
+
+        Returns:
+          None - Existing object now contains parsed data
+
+        """
+        self.Logger.debug("Parsing file: %s" % filepath)
+        if(not os.path.isabs(filepath)):
+            fp = self.FindPath(filepath)
+        else:
+            fp = filepath
+        self.Path = fp
+
+        f = open(fp, "r")
+        self.Lines = f.readlines()
+        f.close()
+        self._Parse()
