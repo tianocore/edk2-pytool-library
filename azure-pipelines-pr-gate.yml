@@ -81,3 +81,19 @@ steps:
     #failOnStderr: false # Optional
   displayName: 'Check basic file and folder tests'
   condition: succeededOrFailed()
+
+- task: mspremier.BuildQualityChecks.QualityChecks-task.BuildQualityChecks@5
+  displayName: 'Check code coverage metrics'
+  inputs:
+    checkWarnings: false
+    showStatistics: true
+    checkCoverage: true
+    coverageFailOption: fixed
+    coverageType: branches
+    buildConfiguration: '$(BuildConfiguration)'
+    buildPlatform: '$(BuildPlatform)'
+    explicitFilter: true
+    baseDefinitionId: 3
+    baseRepoId: '21e399f7-aba6-4c72-a5f5-2bcc7b38a0cf'
+    baseBranchRef: refs/heads/master
+    runTitle: 'Run Title'
