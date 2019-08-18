@@ -46,6 +46,7 @@ class GuidParser():
           True if in C format.  Otherwise False
 
         """
+        guidstring = guidstring.strip()
         return cls.GuidCFormatRegEx.match(guidstring)
 
     @classmethod
@@ -58,6 +59,7 @@ class GuidParser():
         Returns:
           True if in Registry format.  Otherwise False
         """
+        guidstring = guidstring.strip().strip('} {')
         return cls.GuidRegFormatRegEx.match(guidstring)
 
     @classmethod
@@ -71,6 +73,7 @@ class GuidParser():
           Success: guidstring in registry format
           Failure: empty string ''
         """
+        guidstring = guidstring.strip()
         if not cls.is_guid_in_c_format(guidstring):
             return ''
 
@@ -106,6 +109,7 @@ class GuidParser():
           Success: guidstring in c format
           Failure: empty string ''
         """
+        guidstring = guidstring.strip().strip('} {')
         if(not cls.is_guid_in_reg_format(guidstring)):
             return ''
 
@@ -126,6 +130,7 @@ class GuidParser():
         if(cls.is_guid_in_c_format(guidstring)):
             return uuid.UUID(cls.reg_guid_from_c_format(guidstring))
         elif(cls.is_guid_in_reg_format(guidstring)):
+            guidstring = guidstring.strip().strip('} {')
             return uuid.UUID(guidstring)
         else:
             return None

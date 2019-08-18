@@ -49,13 +49,22 @@ class TestGuidParser(unittest.TestCase):
         self.assertEqual('', u)
 
     def test_valid_reg_input_with_brackets(self):
+        """ check the reg_format functions are able to handle extra {} as reg format sometimes has brackets """
         SAMPLE_DATA_REG_FORMAT_GUID_WITH = "{66341ae8-668f-4192-b44d-5f87b868f041}"
         SAMPLE_DATA_REG_FORMAT_GUID = "66341ae8-668f-4192-b44d-5f87b868f041"
         u = GuidParser.uuid_from_guidstring(SAMPLE_DATA_REG_FORMAT_GUID_WITH)
         self.assertEqual(SAMPLE_DATA_REG_FORMAT_GUID, GuidParser.reg_guid_str_from_uuid(u))
 
     def test_valid_reg_input_with_spaces(self):
-        SAMPLE_DATA_REG_FORMAT_GUID_WITH = "    66341ae8 - 668f - 4192 - b44d - 5f87b868f041           "
+        """ check the reg_format functions are able to handle extra spaces """
+        SAMPLE_DATA_REG_FORMAT_GUID_WITH = "    66341ae8-668f-4192-b44d-5f87b868f041           "
         SAMPLE_DATA_REG_FORMAT_GUID = "66341ae8-668f-4192-b44d-5f87b868f041"
         u = GuidParser.uuid_from_guidstring(SAMPLE_DATA_REG_FORMAT_GUID_WITH)
+        self.assertEqual(SAMPLE_DATA_REG_FORMAT_GUID, GuidParser.reg_guid_str_from_uuid(u))
+
+    def test_valid_c_format_input_with_spaces(self):
+        """ check the c_format functions are able to handle extra spaces """
+        SAMPLE_DATA_C_FORMAT_GUID = "   {  0x66341ae8, 0x668f, 0x4192, {0xb4, 0x4d, 0x5f, 0x87, 0xb8, 0x68, 0xf0, 0x41  }  }   "  # noqa: E501
+        SAMPLE_DATA_REG_FORMAT_GUID = "66341ae8-668f-4192-b44d-5f87b868f041"
+        u = GuidParser.uuid_from_guidstring(SAMPLE_DATA_C_FORMAT_GUID)
         self.assertEqual(SAMPLE_DATA_REG_FORMAT_GUID, GuidParser.reg_guid_str_from_uuid(u))
