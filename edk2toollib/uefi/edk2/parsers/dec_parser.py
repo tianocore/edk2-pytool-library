@@ -6,8 +6,8 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 import os
-import uuid
 from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
+from edk2toollib.uefi.edk2.parsers.guid_parser import GuidParser
 
 
 class LibraryClassDeclarationEntry():
@@ -64,107 +64,9 @@ class GuidedDeclarationEntry():
         t = rawtext.partition("=")
         self.name = t[0].strip()
         self.guidstring = t[2].strip()
-        self.guid = self._convert_guid_to_uuid(self.guidstring)
-
-    def _is_guid_in_include_format(self, guidstring: str) -> bool:
-        """will look at guidstring to make sure it looks like:
-        { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
-
-        Args:
-          guidstring: str:
-
-        Returns:
-            TRUE - if format is c style
-            FALSE - all other cases
-
-        """
-        if(guidstring.count("{") == 2 and guidstring.count("}") == 2 and guidstring.count(",") == 10):
-            return True
-        return False
-
-    def _parse_guid_to_reg_from_include_format(self, guid_string: str) -> str:
-        """parse a guid in format
-        # { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
-        # into F7FDE4A6-294C-493c-B50F-9734553BB757  (NOTE these are not same guid this is just example of format)
-
-        Args:
-          guid_string: str:
-
-        Returns:
-
-        """
-        entries = guid_string.lstrip(' {').rstrip(' }').split(',')
-        gu = entries[0].lstrip(' 0').lstrip('x').strip()
-        # pad front until 8 chars
-        while(len(gu) < 8):
-            gu = "0" + gu
-
-        gut = entries[1].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 4):
-            gut = "0" + gut
-        gu = gu + "-" + gut
-
-        gut = entries[2].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 4):
-            gut = "0" + gut
-        gu = gu + "-" + gut
-
-        # strip off extra {
-        gut = entries[3].lstrip(' { 0').lstrip('x').strip()
-        while(len(gut) < 2):
-            gut = "0" + gut
-        gu = gu + "-" + gut
-
-        gut = entries[4].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 2):
-            gut = "0" + gut
-        gu = gu + gut
-
-        gut = entries[5].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 2):
-            gut = "0" + gut
-        gu = gu + "-" + gut
-
-        gut = entries[6].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 2):
-            gut = "0" + gut
-        gu = gu + gut
-
-        gut = entries[7].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 2):
-            gut = "0" + gut
-        gu = gu + gut
-
-        gut = entries[8].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 2):
-            gut = "0" + gut
-        gu = gu + gut
-
-        gut = entries[9].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 2):
-            gut = "0" + gut
-        gu = gu + gut
-
-        gut = entries[10].split()[0].lstrip(' 0').lstrip('x').rstrip(' } ').strip()
-        while(len(gut) < 2):
-            gut = "0" + gut
-        gu = gu + gut
-
-        return gu.upper()
-
-    def _convert_guid_to_uuid(self, guid_string: str) -> uuid.UUID:
-        """
-
-        Args:
-          guid_string: str:
-
-        Returns:
-
-        """
-        if(self._is_guid_in_include_format(guid_string)):
-            reg = self._parse_guid_to_reg_from_include_format(guid_string)
-            return uuid.UUID(reg)
-        return uuid.UUID(guid_string)
+        self.guid = GuidParser.uuid_from_guidstring(self.guidstring)
+        if(self.guid is None):
+            raise ValueError("Could not parse guid")
 
 
 class ProtocolDeclarationEntry(GuidedDeclarationEntry):

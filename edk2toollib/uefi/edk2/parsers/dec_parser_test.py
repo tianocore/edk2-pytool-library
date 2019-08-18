@@ -36,13 +36,6 @@ class TestGuidDeclarationEntry(unittest.TestCase):
         con = uuid.UUID(SAMPLE_DATA_GUID_STRING_REG_FORMAT)
         self.assertEqual(str(con), str(a.guid))
 
-    def test_valid_input_reg_format_guid(self):
-        SAMPLE_DATA_GUID_DECL = '''gTestGuid       = {06341ae8-668f-4192-b44d-5f87b868f041}'''
-        SAMPLE_DATA_GUID_STRING_REG_FORMAT = "{06341ae8-668f-4192-b44d-5f87b868f041}"
-        a = GuidDeclarationEntry("testpkg", SAMPLE_DATA_GUID_DECL)
-        con = uuid.UUID(SAMPLE_DATA_GUID_STRING_REG_FORMAT)
-        self.assertEqual(str(con), str(a.guid))
-
     def test_invalid_guid_format(self):
         SAMPLE_DATA_GUID_DECL = '''gTestGuid       = 0x6341ae8, 0x668f, 0x4192, 0xb4, 0x4d, 0x5f, 0x87, 0xb8, 0x68, 0xf0, 0x41'''  # noqa: E501
         with self.assertRaises(ValueError):
