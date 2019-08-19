@@ -10,6 +10,7 @@ import logging
 
 
 class BaseParser(object):
+    """ """
 
     def __init__(self, log):
         self.Logger = logging.getLogger(log)
@@ -30,18 +31,50 @@ class BaseParser(object):
     #
 
     def SetBaseAbsPath(self, path):
+        """
+
+        Args:
+          path:
+
+        Returns:
+
+        """
         self.RootPath = path
         return self
 
     def SetPackagePaths(self, pps=[]):
+        """
+
+        Args:
+          pps:  (Default value = [])
+
+        Returns:
+
+        """
         self.PPs = pps
         return self
 
     def SetInputVars(self, inputdict):
+        """
+
+        Args:
+          inputdict:
+
+        Returns:
+
+        """
         self.InputVars = inputdict
         return self
 
     def FindPath(self, *p):
+        """
+
+        Args:
+          *p:
+
+        Returns:
+
+        """
         # NOTE: Some of this logic should be replaced
         #       with the path resolution from Edk2Module code.
 
@@ -68,6 +101,14 @@ class BaseParser(object):
         return Path
 
     def WriteLinesToFile(self, filepath):
+        """
+
+        Args:
+          filepath:
+
+        Returns:
+
+        """
         self.Logger.debug("Writing all lines to file: %s" % filepath)
         f = open(filepath, "w")
         for l in self.Lines:
@@ -78,6 +119,16 @@ class BaseParser(object):
     #
 
     def ComputeResult(self, value, cond, value2):
+        """
+
+        Args:
+          value:
+          cond:
+          value2:
+
+        Returns:
+
+        """
         if(cond == "=="):
             # equal
             return (value.upper() == value2.upper())
@@ -103,6 +154,14 @@ class BaseParser(object):
     #
 
     def ConvertToInt(self, value):
+        """
+
+        Args:
+          value:
+
+        Returns:
+
+        """
         if(value.upper().startswith("0X")):
             return int(value, 16)
         else:
@@ -112,6 +171,14 @@ class BaseParser(object):
     # Push new value on stack
     #
     def PushConditional(self, v):
+        """
+
+        Args:
+          v:
+
+        Returns:
+
+        """
         self.ConditionalStack.append(v)
 
     #
@@ -119,6 +186,7 @@ class BaseParser(object):
     #
 
     def PopConditional(self):
+        """ """
         if(len(self.ConditionalStack) > 0):
             return self.ConditionalStack.pop()
         else:
@@ -130,6 +198,14 @@ class BaseParser(object):
     # in a line with their value from input dict or local dict
     #
     def ReplaceVariables(self, line):
+        """
+
+        Args:
+          line:
+
+        Returns:
+
+        """
         rep = line.count("$")
         result = line
         index = 0
@@ -179,6 +255,14 @@ class BaseParser(object):
     #
 
     def ProcessConditional(self, text):
+        """
+
+        Args:
+          text:
+
+        Returns:
+
+        """
         tokens = text.split()
         if(tokens[0].lower() == "!if"):
             # need to add support for OR/AND
@@ -212,6 +296,7 @@ class BaseParser(object):
     # returns true or false depending on what state of conditional you are currently in
     #
     def InActiveCode(self):
+        """ """
         ret = True
         for a in self.ConditionalStack:
             if not a:
@@ -226,11 +311,27 @@ class BaseParser(object):
     #
 
     def IsGuidString(self, l):
+        """
+
+        Args:
+          l:
+
+        Returns:
+
+        """
         if(l.count("{") == 2 and l.count("}") == 2 and l.count(",") == 10 and l.count("=") == 1):
             return True
         return False
 
     def ParseGuid(self, l):
+        """
+
+        Args:
+          l:
+
+        Returns:
+
+        """
         # parse a guid in format
         # { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
         # into F7FDE4A6-294C-493c-B50F-9734553BB757  (NOTE these are not same guid this is just example of format)
@@ -294,6 +395,7 @@ class BaseParser(object):
         return gu.upper()
 
     def ResetParserState(self):
+        """ """
         self.ConditionalStack = []
         self.CurrentSection = ''
         self.CurrentFullSection = ''
@@ -305,14 +407,31 @@ class BaseParser(object):
 
 
 class HashFileParser(BaseParser):
+    """ """
 
     def __init__(self, log):
         BaseParser.__init__(self, log)
 
     def StripComment(self, l):
+        """
+
+        Args:
+          l:
+
+        Returns:
+
+        """
         return l.split('#')[0].strip()
 
     def ParseNewSection(self, l):
+        """
+
+        Args:
+          l:
+
+        Returns:
+
+        """
         if(l.count("[") == 1 and l.count("]") == 1):  # new section
             section = l.strip().lstrip("[").split(".")[0].split(",")[0].rstrip("]").strip()
             self.CurrentFullSection = l.strip().lstrip("[").split(",")[0].rstrip("]").strip()
