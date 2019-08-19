@@ -194,7 +194,12 @@ def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_versi
     if len(result) != len(interesting):
         logging.debug("Input: " + str(sorted(interesting)))
         logging.debug("Result: " + str(sorted(list(result.keys()))))
-        raise ValueError(str(list(result.keys())))
+        result_set = set(list(result.keys()))
+        difference = list(interesting.difference(result_set))
+
+        logging.error("We were not able to find on the keys requested from vcvarsall.")
+        logging.error("We didn't find: %s" % str(difference))
+        raise ValueError("Missing keyes when querying vcvarsall: " + str(difference))
     return result
 
 
