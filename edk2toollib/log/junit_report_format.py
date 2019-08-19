@@ -85,7 +85,7 @@ class JunitReportTestCase(object):
     def Output(self, outstream):
         outstream.write('<testcase classname="{0}" name="{1}" time="{2}">'.format(self.ClassName, self.Name, self.Time))
         if self.Status == JunitReportTestCase.SKIPPED:
-            outstream.write('<skipped message="skipped test because of configuration" type="skipped">')
+            outstream.write('<skipped type="skipped">')
             outstream.write(self.StdOut)
             outstream.write('</skipped>')
         elif self.Status == JunitReportTestCase.FAILED:
