@@ -10,6 +10,7 @@
 ##
 import uuid
 import re
+import os
 
 
 class GuidParser():
@@ -34,6 +35,27 @@ class GuidParser():
 
     # Regular expressions for GUID matching
     GuidRegFormatRegEx = re.compile(r'{}'.format(_GuidPattern))
+
+    _DecGuidRegex = r'\s*([a-zA-Z]\w*)\s*\=\s*' + \
+           r'\{\s*0x([0-9a-fA-F]{1,8})\s*,\s*' + \
+           r'0x([0-9a-fA-F]{1,4})\s*,\s*' + \
+           r'0x([0-9a-fA-F]{1,4})\s*,\s*' + \
+           r'\s*\{\s*0x([0-9a-fA-F]{1,2})\s*,\s*' + \
+           r'0x([0-9a-fA-F]{1,2})\s*,\s*' + \
+           r'0x([0-9a-fA-F]{1,2})\s*,\s*' + \
+           r'0x([0-9a-fA-F]{1,2})\s*,\s*' + \
+           r'0x([0-9a-fA-F]{1,2})\s*,\s*' + \
+           r'0x([0-9a-fA-F]{1,2})\s*,\s*' + \
+           r'0x([0-9a-fA-F]{1,2})\s*,\s*' + \
+           r'0x([0-9a-fA-F]{1,2})\s*\}\s*\}'
+
+    DecGuidRegEx = re.compile(r'{}'.format(_DecGuidRegex))
+
+    _InfFileRegex = r'\s*BASE_NAME\s*\=\s*([a-zA-Z]\w*)\s*'
+    _InfGuidRegex = r'\s*FILE_GUID\s*\=\s*([0-9a-fA-F]{8,8}-[0-9a-fA-F]{4,4}-[0-9a-fA-F]{4,4}-[0-9a-fA-F]{4,4}-[0-9a-fA-F]{12,12})\s*'
+
+    InfNameRegEx = re.compile(r'{}'.format(_InfFileRegex))
+    InfGuidRegEx = re.compile(r'{}'.format(_InfGuidRegex))
 
     @classmethod
     def is_guid_in_c_format(cls, guidstring: str) -> bool:
@@ -161,3 +183,77 @@ class GuidParser():
           Failure: empty string ''
         """
         return str(guid)
+
+    @classmethod
+    def find_guids_in_filesystem(cls, folder: str) -> list:
+      guids = []
+      for root, dirs, files in os.walk(folder):
+        if "Build" in dirs:
+          dirs.remove("Build")
+        for name in files:
+          fullpath = os.path.join(root, name)
+          newg = GuidParser.parse_guids_from_edk2_file(fullpath)
+          for entry in newg:
+            guids.append(entry + (fullpath,))
+          #guids.extend(newg)
+      return guids
+
+
+    @classmethod
+    def parse_guids_from_edk2_file(cls, filename: str ) -> list:
+      with open(filename, "r") as f:
+        if(filename.lower().endswith(".dec")):
+          return GuidParser.parse_guids_from_dec(f)
+        elif(filename.lower().endswith(".inf")):
+          return GuidParser.parse_guids_from_inf(f)
+        else:
+          return []
+
+    @classmethod
+    def parse_guids_from_dec(cls, stream) -> list:
+      results = []
+      for line in stream:
+        m = GuidParser.DecGuidRegEx.match(line)
+        if (m is not None):
+            guidKey = '%s-%s-%s-%s%s-%s%s%s%s%s%s' % (m.group(2).upper().zfill(8), \
+                                                      m.group(3).upper().zfill(4), \
+                                                      m.group(4).upper().zfill(4), \
+                                                      m.group(5).upper().zfill(2), m.group(6).upper().zfill(2), \
+                                                      m.group(7).upper().zfill(2), m.group(8).upper().zfill(2), m.group(9).upper().zfill(2), \
+                                                      m.group(10).upper().zfill(2), m.group(11).upper().zfill(2), m.group(12).upper().zfill(2))
+            results.append((guidKey, m.group(1)))
+      return results
+
+    @classmethod
+    def parse_guids_from_inf(cls, stream) -> list:
+      name = None
+      guid = None
+
+      for line in stream:
+          mFile = GuidParser.InfNameRegEx.match(line)
+          mGuid = GuidParser.InfGuidRegEx.match(line)
+          if (mFile is not None):
+              name = mFile.group(1)
+          elif (mGuid is not None):
+              guid = mGuid.group(1).upper()
+          if ((guid is not None) and (name is not None)):
+              return [(name, guid)]
+      return []
+
+if __name__ == '__main__':
+  gs = GuidParser.find_guids_in_filesystem(r"C:\src\edk2-plus-stuart-ci\edk2-staging")
+  #for e in gs:
+  #  print(e[2] + ": " + e[0] + " " + e[1])
+
+  # To return a new list, use the sorted() built-in function...
+  newlist = sorted(gs, key=lambda x: x[1], reverse=True)
+
+  previous = (None, None, None)
+  for index in range(len(newlist)):
+    i = newlist[index]
+    if i[1] == previous[1]:
+      print("Error Dup: " + i[1])
+      print("  " + i[0] + ": " + i[2])
+      print("  " + previous[0] + ": " + previous[2])
+    previous = i
+
