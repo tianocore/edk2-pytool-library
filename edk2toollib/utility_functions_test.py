@@ -8,14 +8,13 @@
 ##
 
 import unittest
-import sys
 import os
 import edk2toollib.utility_functions as utilities
 
 
 class UtilityFunctionsTest(unittest.TestCase):
 
-    def test_RunPythonScript(self):  # simple run yourself!
+    def test_RunPythonScript(self):  # simple- run yourself!
         path = __file__
         working_dir = os.path.dirname(__file__)
         ret = utilities.RunPythonScript(path, "", working_dir)
