@@ -28,11 +28,19 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 
 * To install run `pip install --upgrade edk2-pytool-library`
 * To use in your python code
+
     ```python
     from edk2toollib.<module> import <class>
     ```
 
 ## Release Version History
+
+### Version 0.10.0
+
+* Features:
+  * Change DEC parser
+    * More complete parser but is not backward compatibile.  Users of DEC parser will need to update.
+    * LibraryClass, Protocol, Ppi, and Guid sections now parse each line to a custom object which contains all data fields.
 
 ### Version 0.9.2
 
