@@ -2,7 +2,7 @@
 
 This is a Tianocore maintained project consisting of a python library supporting UEFI firmware development.  This package's intent is to provide an easy way to organize and share python code to facilitate reuse across environments, tools, and scripts.  Inclusion of this package and dependency management is best managed using Pip/Pypi.
 
-This is a supplemental package and is not required to be used for edk2 builds.  
+This is a supplemental package and is not required to be used for edk2 builds.
 
 ## Content
 
@@ -10,9 +10,9 @@ The package contains classes and modules that can be used as the building blocks
 
 Examples:
 
-* File parsers for edk2 specific file types.  These parse the file and provide an object for interacting with the content.  
+* File parsers for edk2 specific file types.  These parse the file and provide an object for interacting with the content.
 * UEFI specific services for encoding/decoding binary structures.
-* UEFI defined values and interfaces for usage in python  
+* UEFI defined values and interfaces for usage in python
 * Python wrappers for other system cli tools ( signtool, catalog file generation, inf file generation, etc)
 * Python utilities to provide consistent logging, command invocation, path resolution, etc
 
@@ -34,6 +34,13 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
     ```
 
 ## Release Version History
+
+### Version 0.10.1
+
+* Bugs:
+  * Added better logging when locate_tools queries vcvarsall and can't find a particular key
+  * Fixed bug in RunPythonScript that caused an exception
+  * Improved XML output by escaping
 
 ### Version 0.10.0
 
@@ -71,7 +78,7 @@ https://github.com/microsoft/mu_pip_python_library
 
 ## Contribution Process
 
-This project welcomes all types of contributions.  
+This project welcomes all types of contributions.
 For issues, bugs, and questions it is best to open a [github issue](https://github.com/tianocore/edk2-pytool-library/issues).
 
 ### Code Contributions
@@ -87,7 +94,7 @@ For best success please follow the below process.
 6. Contributor submits PR to master branch of tianocore/edk2-pytool-library
     1. PR reviewers will provide feedback on change.  If any modifications are required, contributor will make changes and push updates.
     2. PR automation will run and validate tests pass
-    3. If all comments resolved, maintainers approved, and tests pass the PR will be squash merged and closed by the maintainers.  
+    3. If all comments resolved, maintainers approved, and tests pass the PR will be squash merged and closed by the maintainers.
 
 ## Maintainers
 
