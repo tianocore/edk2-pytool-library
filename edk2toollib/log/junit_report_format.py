@@ -10,6 +10,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 import time
+from xml.sax.saxutils import escape
 
 
 class JunitReportError(object):
@@ -76,15 +77,17 @@ class JunitReportTestCase(object):
         self.Time = time.time() - self._StartTime
 
     def LogStdOut(self, msg):
-        self.StdOut += msg.strip() + "\n "
+        self.StdOut += escape(msg.strip()) + "\n "
 
     def LogStdError(self, msg):
-        self.StdErr += msg.strip() + "\n "
+        self.StdErr += escape(msg.strip()) + "\n "
 
     def Output(self, outstream):
         outstream.write('<testcase classname="{0}" name="{1}" time="{2}">'.format(self.ClassName, self.Name, self.Time))
         if self.Status == JunitReportTestCase.SKIPPED:
-            outstream.write('<skipped />')
+            outstream.write('<skipped type="skipped">')
+            outstream.write(self.StdOut)
+            outstream.write('</skipped>')
         elif self.Status == JunitReportTestCase.FAILED:
             outstream.write('<failure message="{0}" type="{1}" />'.format(self.FailureMsg.Message,
                                                                           self.FailureMsg.Type))
