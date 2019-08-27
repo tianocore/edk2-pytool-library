@@ -6,9 +6,12 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 import logging
-import re
 import os
 from edk2toollib.gitignore_parser import parse_gitignore_lines
+
+from edk2toollib.uefi.edk2.parsers.dec_parser import DecParser
+from edk2toollib.uefi.edk2.parsers.inf_parser import InfParser
+
 
 class GuidListEntry():
 
@@ -27,31 +30,6 @@ class GuidListEntry():
 
 
 class GuidList():
-
-    # Regular Expressions for matching the guid name and guid value of Edk2 DEC files
-
-    _DecGuidRegex = r'\s*([a-zA-Z]\w*)\s*\=\s*' + \
-           r'\{\s*0x([0-9a-fA-F]{1,8})\s*,\s*' + \
-           r'0x([0-9a-fA-F]{1,4})\s*,\s*' + \
-           r'0x([0-9a-fA-F]{1,4})\s*,\s*' + \
-           r'\s*\{\s*0x([0-9a-fA-F]{1,2})\s*,\s*' + \
-           r'0x([0-9a-fA-F]{1,2})\s*,\s*' + \
-           r'0x([0-9a-fA-F]{1,2})\s*,\s*' + \
-           r'0x([0-9a-fA-F]{1,2})\s*,\s*' + \
-           r'0x([0-9a-fA-F]{1,2})\s*,\s*' + \
-           r'0x([0-9a-fA-F]{1,2})\s*,\s*' + \
-           r'0x([0-9a-fA-F]{1,2})\s*,\s*' + \
-           r'0x([0-9a-fA-F]{1,2})\s*\}\s*\}'
-
-    DecGuidRegEx = re.compile(r'{}'.format(_DecGuidRegex))
-
-    # Regular expressions for matching the guid name and guid value of Edk2 INF files
-
-    _InfFileRegex = r'\s*BASE_NAME\s*\=\s*([a-zA-Z]\w*)\s*'
-    _InfGuidRegex = r'\s*FILE_GUID\s*\=\s*([0-9a-fA-F]{8,8}-[0-9a-fA-F]{4,4}-[0-9a-fA-F]{4,4}-[0-9a-fA-F]{4,4}-[0-9a-fA-F]{12,12})\s*'
-
-    InfNameRegEx = re.compile(r'{}'.format(_InfFileRegex))
-    InfGuidRegEx = re.compile(r'{}'.format(_InfGuidRegex))
 
     @staticmethod
     def guidlist_from_filesystem(folder: str, ignore_lines: list = list()) -> list:
@@ -89,8 +67,7 @@ class GuidList():
         with open(filename, "r") as f:
           return GuidList.parse_guids_from_dec(f, filename)
       elif(filename.lower().endswith(".inf")):
-        with open(filename, "r") as f:
-          return GuidList.parse_guids_from_inf(f, filename)
+        return GuidList.parse_guids_from_inf(filename)
       else:
         return []
 
@@ -102,35 +79,26 @@ class GuidList():
       filename: abspath to dec file
       """
       results = []
-      for line in stream:
-        m = GuidList.DecGuidRegEx.match(line)
-        if (m is not None):
-            guidKey = '%s-%s-%s-%s%s-%s%s%s%s%s%s' % (m.group(2).upper().zfill(8), \
-                                                      m.group(3).upper().zfill(4), \
-                                                      m.group(4).upper().zfill(4), \
-                                                      m.group(5).upper().zfill(2), m.group(6).upper().zfill(2), \
-                                                      m.group(7).upper().zfill(2), m.group(8).upper().zfill(2), m.group(9).upper().zfill(2), \
-                                                      m.group(10).upper().zfill(2), m.group(11).upper().zfill(2), m.group(12).upper().zfill(2))
-            results.append( GuidListEntry(m.group(1), guidKey, filename))
+      dec = DecParser()
+      dec.ParseStream(stream)
+      for p in dec.Protocols:
+        results.append(GuidListEntry(p.name, str(p.guid).upper(), filename))
+      for p in dec.PPIs:
+        results.append(GuidListEntry(p.name, str(p.guid).upper(), filename))
+      for p in dec.Guids:
+        results.append(GuidListEntry(p.name, str(p.guid).upper(), filename))
       return results
 
     @staticmethod
-    def parse_guids_from_inf(stream, filename: str) -> list:
-      """ find the module guids in an Edk2 inf file contents contained with stream
+    def parse_guids_from_inf(filename: str) -> list:
+      """ find the module guid in an Edk2 inf file
 
-      stream: lines of inf file content
       filename: abspath to inf file
       """
-      name = None
-      guid = None
-
-      for line in stream:
-          mFile = GuidList.InfNameRegEx.match(line)
-          mGuid = GuidList.InfGuidRegEx.match(line)
-          if (mFile is not None):
-              name = mFile.group(1)
-          elif (mGuid is not None):
-              guid = mGuid.group(1).upper()
-          if ((guid is not None) and (name is not None)):
-              return [GuidListEntry(name, guid, filename)]
+      inf = InfParser()
+      inf.ParseFile(filename)
+      try: 
+        return [GuidListEntry(inf.Dict["BASE_NAME"], inf.Dict["FILE_GUID"].upper(), filename)]
+      except:
+        logging.warn("Failed to find info from INF file: " + filename)
       return []
