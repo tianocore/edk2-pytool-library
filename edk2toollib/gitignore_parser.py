@@ -1,4 +1,9 @@
-""" 
+from pathlib import Path
+from os.path import dirname, abspath
+import re
+import os
+import collections
+"""
 gitignore parser configurd to work for edk2-pytool-library
 """
 
@@ -7,8 +12,8 @@ gitignore parser configurd to work for edk2-pytool-library
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 
 
-''' Original file is from 
-https://github.com/mherrmann/gitignore_parser/blob/master/gitignore_parser.py 
+''' Original file is from
+https://github.com/mherrmann/gitignore_parser/blob/master/gitignore_parser.py
 sha hash: 31407327e4a10d122632c5f03c7a705b010e5fbd
 
 Original License:
@@ -37,11 +42,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
-import collections
-import os
-import re
-from os.path import dirname, abspath
-from pathlib import Path
+
 def parse_gitignore_file(full_path, base_dir=None):
     """ parse a gitignore file
     """
@@ -97,9 +98,8 @@ def rule_from_pattern(pattern, base_path=None, source=None):
     # at the start or the end, or be surrounded by slashes
     for m in re.finditer(r'\*\*', pattern):
         start_index = m.start()
-        if (start_index != 0 and start_index != len(pattern) - 2 and
-            (pattern[start_index - 1] != '/' or
-             pattern[start_index + 2] != '/')):
+        if (start_index != 0 and start_index != len(pattern) - 2
+            and (pattern[start_index - 1] != '/' or pattern[start_index + 2] != '/')):
             return
 
     # Special-casing '/', which doesn't match any files or directories
