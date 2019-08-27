@@ -7,6 +7,7 @@
 ##
 import logging
 import re
+import os
 from edk2toollib.gitignore_parser import parse_gitignore_lines
 
 class GuidListEntry():
