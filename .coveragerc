@@ -1,2 +1,4 @@
 [run]
-omit = *_tests.py
+omit = 
+    # test files should all be named *_test.py
+    */*_test.py
