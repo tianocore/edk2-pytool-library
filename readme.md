@@ -35,12 +35,6 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 
 ## Release Version History
 
-### Version 0.10.2
-
-* Features:
-  * Add GuidList object to allow easy file system parsing of edk2 files for complete list of guids
-  * Add gitignore syntax parser to allow for common method to ignore files or folders in tools
-
 ### Version 0.10.1
 
 * Bugs:
@@ -52,7 +46,7 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 
 * Features:
   * Change DEC parser
-    * More complete parser but is not backward compatible.  Users of DEC parser will need to update.
+    * More complete parser but is not backward compatibile.  Users of DEC parser will need to update.
     * LibraryClass, Protocol, Ppi, and Guid sections now parse each line to a custom object which contains all data fields.
 
 ### Version 0.9.2
@@ -64,7 +58,7 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 
 * Features:
   * Add support for getting WinSdk tools on platforms without VS2017 or newer
-  * FindToolInWinSdk in locate_tools.py throws a FileNotFoundException when it cannot find the tool requested, previously it returned None
+  * FindToolInWinSdk in locate_tools.py throws a FileNotFoundException when it cannot find the tool requested, previouly it returned None
   * Add support for limiting vswhere to certain versions of visual studio (VS2017 and VS2019 supported)
 
 ### Version 0.9.00
