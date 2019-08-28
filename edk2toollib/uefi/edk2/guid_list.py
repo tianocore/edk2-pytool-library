@@ -1,5 +1,6 @@
 # @file guid_list
 #
+# Simple list of GuidListEntry objects parsed from edk2 specific files.
 #
 # Copyright (c) Microsoft Corporation
 #

@@ -11,7 +11,22 @@ import unittest
 import os
 import tempfile
 import shutil
-from edk2toollib.uefi.edk2.guid_list import GuidList
+from edk2toollib.uefi.edk2.guid_list import GuidList, GuidListEntry
+
+
+class TestGuidListEntry(unittest.TestCase):
+
+    def test_valid_input(self):
+        GUID = "66341ae8-668f-4192-b44d-5f87b868f041"
+        NAME = "testguid"
+        FILEPATH = os.path.dirname(os.path.abspath(__file__))
+        t = GuidListEntry(NAME, GUID, FILEPATH)
+        self.assertEqual(t.name, NAME)
+        self.assertEqual(t.guid, GUID)
+        self.assertEqual(t.absfilepath, FILEPATH)
+        self.assertTrue(GUID in str(t))
+        self.assertTrue(FILEPATH in str(t))
+        self.assertTrue(NAME in str(t))
 
 
 class TestGuidList(unittest.TestCase):
