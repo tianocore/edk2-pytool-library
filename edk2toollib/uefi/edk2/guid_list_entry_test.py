@@ -8,10 +8,8 @@
 ##
 
 import unittest
-import io
 import os
 from edk2toollib.uefi.edk2.guid_list import GuidListEntry
-
 
 
 class TestGuidListEntry(unittest.TestCase):

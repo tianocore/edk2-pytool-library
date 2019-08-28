@@ -8,7 +8,6 @@
 ##
 
 import unittest
-import io
 import os
 import tempfile
 import shutil

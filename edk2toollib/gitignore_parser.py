@@ -99,7 +99,7 @@ def rule_from_pattern(pattern, base_path=None, source=None):
     for m in re.finditer(r'\*\*', pattern):
         start_index = m.start()
         if (start_index != 0 and start_index != len(pattern) - 2
-            and (pattern[start_index - 1] != '/' or pattern[start_index + 2] != '/')):
+            and (pattern[start_index - 1] != '/' or pattern[start_index + 2] != '/')): # noqa
             return
 
     # Special-casing '/', which doesn't match any files or directories

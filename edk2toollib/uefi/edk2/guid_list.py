@@ -91,7 +91,7 @@ class GuidList():
         try:
             results.append(GuidListEntry(dec.Dict["PACKAGE_NAME"], dec.Dict["PACKAGE_GUID"], filename))
         except:
-            logging.warn("Failed to find Package Guid from dec file: " + filename)
+            logging.warning("Failed to find Package Guid from dec file: " + filename)
         return results
 
     @staticmethod
@@ -105,5 +105,5 @@ class GuidList():
         try:
             return [GuidListEntry(inf.Dict["BASE_NAME"], inf.Dict["FILE_GUID"].upper(), filename)]
         except:
-            logging.warn("Failed to find info from INF file: " + filename)
+            logging.warning("Failed to find info from INF file: " + filename)
         return []
