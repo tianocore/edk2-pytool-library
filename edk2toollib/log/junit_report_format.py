@@ -15,14 +15,14 @@ from xml.sax.saxutils import escape
 
 class JunitReportError(object):
     def __init__(self, type, msg):
-        self.Message = msg
-        self.Type = type
+        self.Message = escape(msg.strip(), {'"': "&quot;"})
+        self.Type = escape(type.strip(), {'"': "&quot;"})
 
 
 class JunitReportFailure(object):
     def __init__(self, type, msg):
-        self.Message = msg
-        self.Type = type
+        self.Message = escape(msg.strip(), {'"': "&quot;"})
+        self.Type = escape(type.strip(), {'"': "&quot;"})
 
 ##
 # Test Case class
@@ -38,8 +38,8 @@ class JunitReportTestCase(object):
     SUCCESS = 5
 
     def __init__(self, Name, ClassName):
-        self.Name = Name
-        self.ClassName = ClassName
+        self.Name = escape(Name.strip(), {'"': "&quot;"})
+        self.ClassName = escape(ClassName.strip(), {'"': "&quot;"})
         self.Time = 0
         self.Status = JunitReportTestCase.NEW
 
@@ -109,8 +109,8 @@ class JunitReportTestCase(object):
 ##
 class JunitReportTestSuite(object):
     def __init__(self, Name, Package, Id):
-        self.Name = Name
-        self.Package = Package
+        self.Name = escape(Name.strip(), {'"': "&quot;"})
+        self.Package = escape(Package.strip(), {'"': "&quot;"})
         self.TestId = Id
         self.TestCases = []
 
