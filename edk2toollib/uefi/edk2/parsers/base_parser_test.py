@@ -13,7 +13,7 @@ from edk2toollib.uefi.edk2.parsers.base_parser import BaseParser
 
 class TestBaseParser(unittest.TestCase):
 
-    def test_process_conditional(self):
+    def test_process_conditional_single_boolean(self):
         parser = BaseParser("")
         # check that nothing is on the stack
         self.assertEqual(len(parser.ConditionalStack), 0)
@@ -43,13 +43,21 @@ class TestBaseParser(unittest.TestCase):
         # check that nothing is on the stack
         self.assertEqual(len(parser.ConditionalStack), 0)
 
-        # make sure we can't do three tokens
-        with self.assertRaises(RuntimeError):
-            parser.ProcessConditional("!if 3 ==")
+    def test_process_conditional_ands_ors(self):
+        parser = BaseParser("")
 
         # make sure we can't do 5 tokens
         with self.assertRaises(RuntimeError):
             parser.ProcessConditional("!if 3 == 6 ==")
+
+        # TODO: check for and and if once we've implemented this
+
+    def test_process_conditional_longer_tokens(self):
+        parser = BaseParser("")
+
+        # make sure we can't do three tokens
+        with self.assertRaises(RuntimeError):
+            parser.ProcessConditional("!if 3 ==")
 
         # check 4 tokens
         self.assertTrue(parser.ProcessConditional("!IF 30 > 50"))
@@ -66,6 +74,8 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!EnDiF"))
 
+    def test_process_conditional_non_numerical(self):
+        parser = BaseParser("")
         # check non numerical values
         with self.assertRaises(ValueError):
             parser.ProcessConditional("!IF ROCKETSHIP > 50")
@@ -76,6 +86,8 @@ class TestBaseParser(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.assertTrue(parser.ProcessConditional("!IF 50 <> 50"))
 
+    def test_process_conditional_variables(self):
+        parser = BaseParser("")
         # check variables
         with self.assertRaises(RuntimeError):
             parser.ProcessConditional("!ifdef")
@@ -89,7 +101,10 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.ProcessConditional("!ifndef VARIABLE"))
         self.assertFalse(parser.InActiveCode())
 
+    def test_process_conditional_reset(self):
+        parser = BaseParser("")
         # test reset
+        self.assertTrue(parser.ProcessConditional("!IF FALSE"))
         parser.ResetParserState()
         self.assertTrue(parser.InActiveCode())
         self.assertEqual(len(parser.ConditionalStack), 0)

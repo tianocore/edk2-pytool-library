@@ -288,7 +288,8 @@ class BaseParser(object):
             if (len(tokens) == 2):
                 value = self.ConvertToInt(tokens[1].strip())
                 self.PushConditional(value == 1)  # if the value is true
-            elif len(tokens) >= 4:
+            # we can have tokens in 4, 8, 12 etc
+            elif len(tokens) >= 4 and len(tokens) % 4 == 0:
                 con = self.ComputeResult(tokens[1].strip(), tokens[2].strip(), tokens[3].strip())
                 self.PushConditional(con)
             else:
