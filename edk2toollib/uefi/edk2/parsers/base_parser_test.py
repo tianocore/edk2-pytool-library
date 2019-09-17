@@ -69,6 +69,9 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.InActiveCode())
         # check that nothing is on the stack
         self.assertEqual(len(parser.ConditionalStack), 0)
+
+    def test_process_conditional_not_equals_true_false(self):
+        parser = BaseParser("")
         # check != with true and false
         self.assertTrue(parser.ProcessConditional("!IF TRUE != FALSE"))
         self.assertTrue(parser.InActiveCode())
@@ -82,6 +85,8 @@ class TestBaseParser(unittest.TestCase):
         with self.assertRaises(ValueError):
             parser.ProcessConditional("!if 50 < ROCKETSHIPS")
 
+    def test_process_conditional_invalid_operators(self):
+        parser = BaseParser("")
         # check weird operators
         with self.assertRaises(RuntimeError):
             self.assertTrue(parser.ProcessConditional("!IF 50 <> 50"))
