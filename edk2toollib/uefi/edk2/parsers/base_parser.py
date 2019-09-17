@@ -12,7 +12,7 @@ import logging
 class BaseParser(object):
     """ """
 
-    def __init__(self, log):
+    def __init__(self, log=""):
         self.Logger = logging.getLogger(log)
         self.Lines = []
         self.LocalVars = {}
@@ -162,7 +162,11 @@ class BaseParser(object):
         Returns:
 
         """
-        if(value.upper().startswith("0X")):
+        if (value.upper() == "TRUE"):
+            return 1
+        elif (value.upper() == "FALSE"):
+            return 0
+        elif(value.upper().startswith("0X")):
             return int(value, 16)
         else:
             return int(value, 10)
@@ -232,7 +236,7 @@ class BaseParser(object):
 
                 if(v is None):
                     self.Logger.error("Unknown variable %s in  %s" % (token, line))
-                    # raise Exception("Invalid Variable Replacement", token)
+                    # raise RuntimeError("Invalid Variable Replacement", token)
                     # just skip it because we need to support ifdef
                 else:
                     # found in the Env
@@ -266,27 +270,44 @@ class BaseParser(object):
         tokens = text.split()
         if(tokens[0].lower() == "!if"):
             # need to add support for OR/AND
-            if(len(tokens) < 4):
+            if (len(tokens) == 2):
+                value = self.ConvertToInt(tokens[1].strip())
+                self.PushConditional(value == 1)  # if the value is true
+            elif len(tokens) == 4:
+                con = self.ComputeResult(tokens[1].strip(), tokens[2].strip(), tokens[3].strip())
+                self.PushConditional(con)
+            else:
                 self.Logger.error("!if conditionals need to be formatted correctly (spaces between each token)")
-                raise Exception("Invalid conditional", text)
-            con = self.ComputeResult(tokens[1].strip(), tokens[2].strip(), tokens[3].strip())
-            self.PushConditional(con)
+                raise RuntimeError("Invalid conditional", text)
             return True
 
         elif(tokens[0].lower() == "!ifdef"):
+            if len(tokens) != 2:
+                self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
+                raise RuntimeError("Invalid conditional", text)
             self.PushConditional((tokens[1].count("$") == 0))
             return True
 
         elif(tokens[0].lower() == "!ifndef"):
+            if len(tokens) != 2:
+                self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
+                raise RuntimeError("Invalid conditional", text)
             self.PushConditional((tokens[1].count("$") > 0))
             return True
 
         elif(tokens[0].lower() == "!else"):
+            if len(tokens) != 1:
+                self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
+                raise RuntimeError("Invalid conditional", text)
             v = self.PopConditional()
+            # TODO make sure we can't do multiple else statements
             self.PushConditional(not v)
             return True
 
         elif(tokens[0].lower() == "!endif"):
+            if len(tokens) != 1:
+                self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
+                raise RuntimeError("Invalid conditional", text)
             self.PopConditional()
             return True
 
