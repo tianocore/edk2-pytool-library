@@ -137,17 +137,32 @@ class BaseParser(object):
             # not equal
             return (value.upper() != value2.upper())
 
-        elif (cond == "<"):
-            return (self.ConvertToInt(value) < (self.ConvertToInt(value2)))
+        try:
+            value = self.ConvertToInt(value)
+        except ValueError:
+            self.Logger.error(f"{self.__class__}: Cannot convert value to an int: {value}")
+            raise
+        try:
+            value2 = self.ConvertToInt(value2)
+        except ValueError:
+            self.Logger.error(f"{self.__class__}: Cannot convert value to an int: {value2}")
+            raise
+
+        if (cond == "<"):
+            return (value < value2)
 
         elif (cond == "<="):
-            return (self.ConvertToInt(value) <= (self.ConvertToInt(value2)))
+            return (value <= value2)
 
         elif (cond == ">"):
-            return (self.ConvertToInt(value) > (self.ConvertToInt(value2)))
+            return (value > value2)
 
         elif (cond == ">="):
-            return (self.ConvertToInt(value) >= (self.ConvertToInt(value2)))
+            return (value >= value2)
+
+        else:
+            self.Logger.error(f"{self.__class__}: Unknown conditional: {cond}")
+            raise RuntimeError("Unknown conditional")
 
     #
     # convert to int based on prefix

@@ -25,6 +25,11 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!IF FALSE"))
         self.assertFalse(parser.InActiveCode())
+        # make sure if pass in a true thing we aren't back in active
+        self.assertTrue(parser.ProcessConditional("!IF TRUE"))
+        self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!EnDiF"))
+        self.assertFalse(parser.InActiveCode())
         # make sure we fail the garbage input
         conditional_count = len(parser.ConditionalStack)
         self.assertFalse(parser.ProcessConditional("GARBAGE INPUT"))
@@ -56,8 +61,35 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.InActiveCode())
         # check that nothing is on the stack
         self.assertEqual(len(parser.ConditionalStack), 0)
+        # check != with true and false
+        self.assertTrue(parser.ProcessConditional("!IF TRUE != FALSE"))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!EnDiF"))
+
+        # check non numerical values
+        with self.assertRaises(ValueError):
+            parser.ProcessConditional("!IF ROCKETSHIP > 50")
+        with self.assertRaises(ValueError):
+            parser.ProcessConditional("!if 50 < ROCKETSHIPS")
+
+        # check weird operators
+        with self.assertRaises(RuntimeError):
+            self.assertTrue(parser.ProcessConditional("!IF 50 <> 50"))
 
         # check variables
         with self.assertRaises(RuntimeError):
             parser.ProcessConditional("!ifdef")
         self.assertTrue(parser.ProcessConditional("!ifdef $VARIABLE"))
+        self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!EnDiF"))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!ifdef VARIABLE"))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!EnDiF"))
+        self.assertTrue(parser.ProcessConditional("!ifndef VARIABLE"))
+        self.assertFalse(parser.InActiveCode())
+
+        # test reset
+        parser.ResetParserState()
+        self.assertTrue(parser.InActiveCode())
+        self.assertEqual(len(parser.ConditionalStack), 0)
