@@ -25,6 +25,7 @@ class BaseParser(object):
         self.PPs = []
         self.TargetFile = None
         self.TargetFilePath = None
+        self.CurrentLine = -1
 
     #
     # For include files set the base root path
@@ -238,6 +239,7 @@ class BaseParser(object):
             v = self.LocalVars.get(token)
             self.Logger.debug("Trying to replace %s" % retoken)
             if(v is not None):
+                v = str(v)
                 #
                 # fixme: This should just be a workaround!!!!!
                 #
@@ -254,6 +256,7 @@ class BaseParser(object):
                     # raise RuntimeError("Invalid Variable Replacement", token)
                     # just skip it because we need to support ifdef
                 else:
+                    v = str(v)
                     # found in the Env
                     #
                     # fixme: This should just be a workaround!!!!!

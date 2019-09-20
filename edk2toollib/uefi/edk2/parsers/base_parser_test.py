@@ -9,6 +9,8 @@
 
 import unittest
 from edk2toollib.uefi.edk2.parsers.base_parser import BaseParser
+import tempfile
+import os
 
 
 class TestBaseParser(unittest.TestCase):
@@ -131,11 +133,22 @@ class TestBaseParser(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.assertTrue(parser.ProcessConditional("!IF 50 <> 50"))
 
+    def test_process_bad_endif(self):
+        parser = BaseParser("")
+        # check to make sure we can't do a malformed endif
+        with self.assertRaises(RuntimeError):
+            self.assertTrue(parser.ProcessConditional("!endif test"))
+        # try to pop the empty stack
+        with self.assertRaises(IndexError):
+            self.assertTrue(parser.ProcessConditional("!endif"))
+
     def test_process_conditional_variables(self):
         parser = BaseParser("")
         # check variables
         with self.assertRaises(RuntimeError):
             parser.ProcessConditional("!ifdef")
+        with self.assertRaises(RuntimeError):
+            parser.ProcessConditional("!ifndef")
         self.assertTrue(parser.ProcessConditional("!ifdef $VARIABLE"))
         self.assertFalse(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!EnDiF"))
@@ -163,8 +176,8 @@ class TestBaseParser(unittest.TestCase):
         guid3 = "= { 0xD3B36F2C, 0xD551, 0x11D4, {0x9A, 0x0, 0x90, 0x27, 0x3F, 0xC1,0xD }}"
         self.assertFalse(parser.IsGuidString(guid3))
         guid4 = "= { 0xD3B36F, 0xD551, 0x11D4, {0x9A, 0x46, 0x0, 0x90, 0x27, 0x3F, 0xC1,0xD }}"
-        #TODO make sure we are checking length?
-        #self.assertFalse(parser.IsGuidString(guid4))
+        # TODO make sure we are checking length?
+        # self.assertFalse(parser.IsGuidString(guid4))
         guid5 = " { 0xD3B36F2C, 0xD551, 0x11D4, {0x9A, 0x46, 0x0, 0x90, 0x27, 0x3F, 0xC1,0xD }}"
         self.assertFalse(parser.IsGuidString(guid5))
 
@@ -182,3 +195,70 @@ class TestBaseParser(unittest.TestCase):
         guid2 = "{ 0xD3B36FbadC, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}"
         with self.assertRaises(RuntimeError):
             guid2_result = parser.ParseGuid(guid2)
+
+    def test_replace_variables(self):
+        parser = BaseParser("")
+        variables = {
+            "VARFIFTY": 50,
+            "VARTEST": "TEST",
+            "VARFOURTY": 40,
+            "VARHEX": "0x20",
+            "VARBOOLEAN": "TRUE"
+        }
+        parser.SetInputVars(variables)
+        # check to make sure we don't modify if we don't have variables
+        no_var = "this has no variables"
+        no_var_result = parser.ReplaceVariables(no_var)
+        self.assertEqual(no_var_result, no_var)
+        # make sure we don't fail when we have unknown variables
+        na_var = "unknown var $(UNKNOWN)"
+        na_var_result = parser.ReplaceVariables(na_var)
+        self.assertEqual(na_var_result, na_var)
+        # make sure we're good for all the variables
+        variable_str = "var $(%s)"
+        for variable_key in variables:
+            line = variable_str % variable_key
+            print(line)
+            result = parser.ReplaceVariables(line)
+            val = "var " + str(variables[variable_key])
+            self.assertEqual(result, val)
+
+    # because of how this works we use WriteLines, SetAbsPath, and SetPackagePath
+    def test_find_path(self):
+        # we're using write lines to make sure everything wo
+        parser = BaseParser("")
+        parser.Lines = ["hello"]
+        package_paths = ["Common/Test", "SM_MAGIC"]
+        root_path = tempfile.mkdtemp()
+        target_filedir = os.path.join(root_path, "BuildPkg")
+        parser.TargetFilePath = target_filedir
+        parser.SetPackagePaths(package_paths)
+        parser.SetBaseAbsPath(root_path)
+        os.makedirs(target_filedir)
+        index = 0
+        root_file = "root.txt"
+        target_file = "target.txt"
+        for package in package_paths:
+            pack_path = os.path.join(root_path, package)
+            os.makedirs(pack_path)
+            parser.WriteLinesToFile(os.path.join(pack_path, f"package_{index}.txt"))
+            index += 1
+        root_filepath = os.path.join(root_path, root_file)
+        target_filepath = os.path.join(target_filedir, target_file)
+        parser.WriteLinesToFile(root_filepath)
+        parser.WriteLinesToFile(target_filepath)
+
+        root_found = parser.FindPath(root_file)
+        self.assertEqual(root_found, root_filepath)
+        target_found = parser.FindPath(target_file)
+        self.assertEqual(target_found, target_filepath)
+
+    # make sure we can write out to a file
+    def test_write_lines(self):
+        parser = BaseParser("")
+        parser.Lines = ["hello"]
+        root_path = tempfile.mkdtemp()
+        file_path = os.path.join(root_path, "lines.txt")
+        parser.WriteLinesToFile(file_path)
+        self.assertTrue(os.path.exists(file_path))
+        # TODO check to make sure that the file matches what we expect
