@@ -103,7 +103,7 @@ def GetHostInfo():
     arch = None
     bit = None
 
-    if ("x86" in processor_info.lower()) or ("AMD" in processor_info.upper()) or ("Intel" in processor_info):
+    if ("x86" in processor_info.lower()) or ("AMD" in processor_info.upper()) or ("INTEL" in processor_info.upper()):
         arch = "x86"
     elif ("ARM" in processor_info.upper()) or ("AARCH" in processor_info.upper()):
         arch = "ARM"
