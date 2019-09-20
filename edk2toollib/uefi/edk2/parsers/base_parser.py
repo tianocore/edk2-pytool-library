@@ -342,14 +342,10 @@ class BaseParser(object):
 
         return ret
 
-    #
-    # will return true if the the line has
-    # { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
-    #
-
     def IsGuidString(self, l):
         """
-
+        will return true if the the line has
+        = { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
         Args:
           l:
 
@@ -362,17 +358,17 @@ class BaseParser(object):
 
     def ParseGuid(self, l):
         """
-
+        parse a guid into a different format
+        Will throw exception if missing any of the 11 parts of isn't long enough
         Args:
-          l:
+          l: the guid to parse ex: { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
 
-        Returns:
+        Returns: a string of the guid. ex: D3B36F2C-D551-11D4-9A46-0090273FC14D
 
         """
-        # parse a guid in format
-        # { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
-        # into F7FDE4A6-294C-493c-B50F-9734553BB757  (NOTE these are not same guid this is just example of format)
         entries = l.lstrip(' {').rstrip(' }').split(',')
+        if len(entries) != 11:
+            raise RuntimeError(f"Invalid GUID found {l}. We are missing some parts since we only found: {len(entries)}")
         gu = entries[0].lstrip(' 0').lstrip('x').strip()
         # pad front until 8 chars
         while(len(gu) < 8):
@@ -428,6 +424,12 @@ class BaseParser(object):
         while(len(gut) < 2):
             gut = "0" + gut
         gu = gu + gut
+
+        proper_guid_length = 36
+        if len(gu) > proper_guid_length:
+            raise RuntimeError(f"The guid we parsed was too long: {gu}")
+        if len(gu) < proper_guid_length:
+            raise RuntimeError(f"The guid we parsed was too short: {gu}")
 
         return gu.upper()
 
