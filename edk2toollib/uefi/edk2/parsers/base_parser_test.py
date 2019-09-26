@@ -215,7 +215,7 @@ class TestBaseParser(unittest.TestCase):
         guid4_result = parser.ParseGuid(guid4)
         self.assertEqual(guid4_result, guid4_answer)
 
-    def test_replace_variables(self):
+    def test_replace_input_variables(self):
         parser = BaseParser("")
         variables = {
             "VARFIFTY": 50,
@@ -238,7 +238,33 @@ class TestBaseParser(unittest.TestCase):
         variable_str = "var $(%s)"
         for variable_key in variables:
             line = variable_str % variable_key
-            print(line)
+            result = parser.ReplaceVariables(line)
+            val = "var " + str(variables[variable_key])
+            self.assertEqual(result, val)
+
+    def test_replace_local_variables(self):
+        parser = BaseParser("")
+        variables = {
+            "VARFIFTY": 50,
+            "VARTEST": "TEST",
+            "VARFOURTY": 40,
+            "VARHEX": "0x20",
+            "VARBOOLEAN": "TRUE",
+            "VARBOOLEANFAL": "FALSE",
+        }
+        parser.LocalVars = variables
+        # check to make sure we don't modify if we don't have variables
+        no_var = "this has no variables"
+        no_var_result = parser.ReplaceVariables(no_var)
+        self.assertEqual(no_var_result, no_var)
+        # make sure we don't fail when we have unknown variables
+        na_var = "unknown var $(UNKNOWN)"
+        na_var_result = parser.ReplaceVariables(na_var)
+        self.assertEqual(na_var_result, na_var)
+        # make sure we're good for all the variables
+        variable_str = "var $(%s)"
+        for variable_key in variables:
+            line = variable_str % variable_key
             result = parser.ReplaceVariables(line)
             val = "var " + str(variables[variable_key])
             self.assertEqual(result, val)
