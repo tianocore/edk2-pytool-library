@@ -136,6 +136,15 @@ class TestBaseParser(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.assertTrue(parser.ProcessConditional("!IF 50 <> 50"))
 
+    def test_process_bad_else(self):
+        parser = BaseParser("")
+        # check to make sure we can't do a malformed endif
+        with self.assertRaises(RuntimeError):
+            self.assertTrue(parser.ProcessConditional("!else test"))
+        # try to pop the empty stack and invert it
+        with self.assertRaises(IndexError):
+            self.assertTrue(parser.ProcessConditional("!else"))
+
     def test_process_bad_endif(self):
         parser = BaseParser("")
         # check to make sure we can't do a malformed endif
@@ -195,9 +204,17 @@ class TestBaseParser(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             guid2_result = parser.ParseGuid(guid2)
 
+        # check one that's too long
         guid3 = "{ 0xD3B36FbadC, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}"
         with self.assertRaises(RuntimeError):
-            parser.ParseGuid(guid2)
+            guid3_result = parser.ParseGuid(guid3)
+
+        #check one that's too short
+        guid4 = "{ 0x3, 0x1, 0x4, { 0xA, 0x6, 0x0, 0x9, 0x2, 0xF, 0x1, 0xD }}"
+        guid4_answer = "00000003-0001-0004-0A06-0009020F010D"
+        guid4_result = parser.ParseGuid(guid4)
+        self.assertEqual(guid4_result, guid4_answer)
+
 
     def test_replace_variables(self):
         parser = BaseParser("")
