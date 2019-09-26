@@ -72,7 +72,7 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.ProcessConditional("!IF 0x30 == 30"))
         self.assertFalse(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!endif"))
-        self.assertTrue(parser.ProcessConditional("!IF 0x30 != 0x30"))
+        self.assertTrue(parser.ProcessConditional("!IF 0x20 == 0x30"))
         self.assertFalse(parser.InActiveCode())
 
     def test_process_conditional_greater_than(self):
@@ -209,12 +209,11 @@ class TestBaseParser(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             guid3_result = parser.ParseGuid(guid3)
 
-        #check one that's too short
+        # check one that's too short
         guid4 = "{ 0x3, 0x1, 0x4, { 0xA, 0x6, 0x0, 0x9, 0x2, 0xF, 0x1, 0xD }}"
         guid4_answer = "00000003-0001-0004-0A06-0009020F010D"
         guid4_result = parser.ParseGuid(guid4)
         self.assertEqual(guid4_result, guid4_answer)
-
 
     def test_replace_variables(self):
         parser = BaseParser("")
@@ -274,12 +273,20 @@ class TestBaseParser(unittest.TestCase):
         target_found = parser.FindPath(target_file)
         self.assertEqual(target_found, target_filepath)
 
+        # check package relative packages
         for index in range(len(package_paths)):
             file_name = f"package_{index}.txt"
             pp_found = parser.FindPath(file_name)
             self.assertTrue(os.path.exists(pp_found))
 
+        # invalid files
+        invalid_filename = "YOU_WONT_FIND_ME.txt"
+        invalid_file = os.path.join(root_path, invalid_filename)
+        invalid_result = parser.FindPath(invalid_filename)
+        self.assertEqual(invalid_file, invalid_result)
+
     # make sure we can write out to a file
+
     def test_write_lines(self):
         parser = BaseParser("")
         parser.Lines = ["hello"]
