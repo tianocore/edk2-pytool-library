@@ -71,6 +71,9 @@ class TestBaseParser(unittest.TestCase):
         # check that a hex number doesn't exqual itself
         self.assertTrue(parser.ProcessConditional("!IF 0x30 == 30"))
         self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
+        self.assertTrue(parser.ProcessConditional("!IF 0x30 != 0x30"))
+        self.assertFalse(parser.InActiveCode())
 
     def test_process_conditional_greater_than(self):
         parser = BaseParser("")
@@ -203,7 +206,8 @@ class TestBaseParser(unittest.TestCase):
             "VARTEST": "TEST",
             "VARFOURTY": 40,
             "VARHEX": "0x20",
-            "VARBOOLEAN": "TRUE"
+            "VARBOOLEAN": "TRUE",
+            "VARBOOLEANFAL": "FALSE",
         }
         parser.SetInputVars(variables)
         # check to make sure we don't modify if we don't have variables
@@ -252,6 +256,11 @@ class TestBaseParser(unittest.TestCase):
         self.assertEqual(root_found, root_filepath)
         target_found = parser.FindPath(target_file)
         self.assertEqual(target_found, target_filepath)
+
+        for index in range(len(package_paths)):
+            file_name = f"package_{index}.txt"
+            pp_found = parser.FindPath(file_name)
+            self.assertTrue(os.path.exists(pp_found))
 
     # make sure we can write out to a file
     def test_write_lines(self):
