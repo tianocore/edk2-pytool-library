@@ -145,6 +145,13 @@ class TestBaseParser(unittest.TestCase):
         with self.assertRaises(IndexError):
             self.assertTrue(parser.ProcessConditional("!else"))
 
+    def test_process_else(self):
+        parser = BaseParser("")
+        # check to make sure we can't do a malformed endif
+        self.assertTrue(parser.ProcessConditional("!if TRUE"))
+        self.assertTrue(parser.ProcessConditional("!else"))
+        self.assertFalse(parser.InActiveCode())
+
     def test_process_bad_endif(self):
         parser = BaseParser("")
         # check to make sure we can't do a malformed endif
