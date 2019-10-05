@@ -61,7 +61,7 @@ class MarkdownFileHandler(logging.FileHandler):
             self.acquire()
             try:
                 self.emit(record)
-            except: # silently fail
+            except:  # silently fail
                 pass
             finally:
                 self.release()
