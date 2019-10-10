@@ -68,12 +68,18 @@ class TestBaseParser(unittest.TestCase):
 
     def test_process_conditional_hex_number(self):
         parser = BaseParser("")
-        # check that a hex number doesn't exqual itself
+        # check that a hex number doesn't equal itself
         self.assertTrue(parser.ProcessConditional("!IF 0x30 == 30"))
         self.assertFalse(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!endif"))
+        # Check that two hex doesn't equal each other
         self.assertTrue(parser.ProcessConditional("!IF 0x20 == 0x30"))
         self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
+        # check that hex equals decimal
+        self.assertTrue(parser.ProcessConditional("!IF 0x20 == 32"))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
 
     def test_process_conditional_greater_than(self):
         parser = BaseParser("")
@@ -84,6 +90,9 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!IF 30 > 30"))
         self.assertFalse(parser.InActiveCode())
+        parser.ProcessConditional("!endif")
+        self.assertTrue(parser.ProcessConditional("!IF 50 > 30"))
+        self.assertTrue(parser.InActiveCode())
 
     def test_process_conditional_less_than(self):
         parser = BaseParser("")
