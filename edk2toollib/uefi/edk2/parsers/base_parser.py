@@ -130,36 +130,56 @@ class BaseParser(object):
         Returns:
 
         """
+        ivalue = value
+        ivalue2 = value2
+        # convert it to interpretted value
+        if isinstance(value, str):
+            ivalue = value.upper()
+        if isinstance(value2, str):
+            ivalue2 = value2.upper()
+
+        try:
+            ivalue = self.ConvertToInt(ivalue)
+        except ValueError:
+            self.Logger.error(f"{self.__class__}: Cannot convert value to an int: {ivalue}")
+            raise
+        try:
+            ivalue2 = self.ConvertToInt(ivalue2)
+        except ValueError:
+            self.Logger.error(f"{self.__class__}: Cannot convert value to an int: {ivalue2}")
+            raise
+
+        # check our truthyness
         if(cond == "=="):
             # equal
-            return (value.upper() == value2.upper())
+            return (ivalue == ivalue2)
 
         elif (cond == "!="):
             # not equal
-            return (value.upper() != value2.upper())
+            return (ivalue != ivalue2)
 
-        try:
-            value = self.ConvertToInt(value)
-        except ValueError:
-            self.Logger.error(f"{self.__class__}: Cannot convert value to an int: {value}")
-            raise
-        try:
-            value2 = self.ConvertToInt(value2)
-        except ValueError:
-            self.Logger.error(f"{self.__class__}: Cannot convert value to an int: {value2}")
-            raise
+        # check to make sure we only have digits from here on out
+        if not str.isdigit(value):
+            self.Logger.error(f"{self.__class__}: Unknown value: {value} {ivalue.__class__}")
+            self.Logger.debug(f"{self.__class__}: Conditional: {value} {cond}{value2}")
+            raise RuntimeError("Unknown value")
+
+        if not str.isdigit(value2):
+            self.Logger.error(f"{self.__class__}: Unknown value: {value2} {ivalue2}")
+            self.Logger.debug(f"{self.__class__}: Conditional: {value} {cond} {value2}")
+            raise RuntimeError("Unknown value")
 
         if (cond == "<"):
-            return (value < value2)
+            return (ivalue < ivalue2)
 
         elif (cond == "<="):
-            return (value <= value2)
+            return (ivalue <= ivalue2)
 
         elif (cond == ">"):
-            return (value > value2)
+            return (ivalue > ivalue2)
 
         elif (cond == ">="):
-            return (value >= value2)
+            return (ivalue >= ivalue2)
 
         else:
             self.Logger.error(f"{self.__class__}: Unknown conditional: {cond}")
@@ -178,11 +198,11 @@ class BaseParser(object):
         Returns:
 
         """
-        if (value.upper() == "TRUE"):
+        if (value == "TRUE"):
             return 1
-        elif (value.upper() == "FALSE"):
+        elif (value == "FALSE"):
             return 0
-        elif(value.upper().startswith("0X")):
+        elif(value.startswith("0X")):
             return int(value, 16)
         else:
             return int(value, 10)

@@ -124,7 +124,7 @@ class TestBaseParser(unittest.TestCase):
 
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!IF 50 >= 30"))
-        self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.InActiveCode())
 
     def test_process_conditional_less_than_equal(self):
         parser = BaseParser("")
@@ -149,6 +149,31 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.ProcessConditional("!IF TRUE != FALSE"))
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!EnDiF"))
+
+    def test_process_conditional_false_equals_zero(self):
+        parser = BaseParser("")
+        self.assertTrue(parser.ProcessConditional("!IF FALSE == 0"))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!EnDiF"))
+
+    def test_process_conditional_true_equals_one(self):
+        parser = BaseParser("")
+        # check != with true and false
+        self.assertTrue(parser.ProcessConditional("!IF TRUE == 1"))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!EnDiF"))
+
+    def test_process_conditional_true_cannot_be_greater_than(self):
+        parser = BaseParser("")
+        # check != with true and false
+        with self.assertRaises(RuntimeError):
+            parser.ProcessConditional("!IF TRUE >= 1")
+
+    def test_process_conditional_true_cannot_be_greater_than_hex(self):
+        parser = BaseParser("")
+        # check != with true and false
+        with self.assertRaises(RuntimeError):
+            parser.ProcessConditional("!IF 0x7 >= TRUE")
 
     def test_process_conditional_non_numerical(self):
         parser = BaseParser("")
