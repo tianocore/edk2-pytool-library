@@ -1,5 +1,5 @@
-# @file guid_parser_test.py
-# Contains unit test routines for the guid parser class.
+# @file base_parser_test.py
+# Contains unit test routines for the base parser class.
 #
 #
 # Copyright (c) Microsoft Corporation
@@ -100,9 +100,15 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.ProcessConditional("!IF 70 < 50"))
         self.assertFalse(parser.InActiveCode())
         parser.ProcessConditional("!endif")
+
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!IF 70 < 70"))
         self.assertFalse(parser.InActiveCode())
+        parser.ProcessConditional("!endif")
+
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!IF 50 < 70"))
+        self.assertTrue(parser.InActiveCode())
 
     def test_process_conditional_greater_than_equal(self):
         parser = BaseParser("")
@@ -110,9 +116,15 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.ProcessConditional("!IF 30 >= 50"))
         self.assertFalse(parser.InActiveCode())
         parser.ProcessConditional("!endif")
+
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!IF 30 >= 30"))
         self.assertTrue(parser.InActiveCode())
+        parser.ProcessConditional("!endif")
+
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!IF 50 >= 30"))
+        self.assertFalse(parser.InActiveCode())
 
     def test_process_conditional_less_than_equal(self):
         parser = BaseParser("")
@@ -120,9 +132,16 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.ProcessConditional("!IF 70 <= 50"))
         self.assertFalse(parser.InActiveCode())
         parser.ProcessConditional("!endif")
+
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!IF 70 <= 70"))
         self.assertTrue(parser.InActiveCode())
+        parser.ProcessConditional("!endif")
+
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!IF 50 <= 70"))
+        self.assertTrue(parser.InActiveCode())
+        parser.ProcessConditional("!endif")
 
     def test_process_conditional_not_equals_true_false(self):
         parser = BaseParser("")
