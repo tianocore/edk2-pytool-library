@@ -13,6 +13,7 @@ FmpAuthHeader
 import struct
 import uuid
 
+from edk2toollib.uefi.wincert import Wincert
 
 class FmpAuthHeaderClass (object):
     # ///
@@ -120,25 +121,26 @@ class FmpAuthHeaderClass (object):
         self.Payload = b''
 
     def Encode(self):
-        if self.wRevision != self._WIN_CERT_REVISION:
-            raise ValueError
-        if self.wCertificateType != self._WIN_CERT_TYPE_EFI_GUID:
-            raise ValueError
-        if self.CertType != self._EFI_CERT_TYPE_PKCS7_GUID:
-            raise ValueError
-        self.dwLength = self._StructAuthInfoSize + len(self.CertData)
+        # if self.wRevision != self._WIN_CERT_REVISION:
+        #     raise ValueError
+        # if self.wCertificateType != self._WIN_CERT_TYPE_EFI_GUID:
+        #     raise ValueError
+        # if self.CertType != self._EFI_CERT_TYPE_PKCS7_GUID:
+        #     raise ValueError
+        # self.dwLength = self._StructAuthInfoSize + len(self.CertData)
 
-        FmpAuthHeader = struct.pack(
-            self._StructFormat,
-            self.MonotonicCount,
-            self.dwLength,
-            self.wRevision,
-            self.wCertificateType,
-            self.CertType.bytes_le
-        )
-        self._Valid = True
+        # FmpAuthHeader = struct.pack(
+        #     self._StructFormat,
+        #     self.MonotonicCount,
+        #     self.dwLength,
+        #     self.wRevision,
+        #     self.wCertificateType,
+        #     self.CertType.bytes_le
+        # )
+        # self._Valid = True
 
-        return FmpAuthHeader + self.CertData + self.Payload
+        # return FmpAuthHeader + self.CertData + self.Payload
+        pass
 
     def Decode(self, Buffer):
         if len(Buffer) < self._StructSize:
