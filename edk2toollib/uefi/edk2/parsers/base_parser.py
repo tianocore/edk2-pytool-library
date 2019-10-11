@@ -198,7 +198,7 @@ class BaseParser(object):
             return 1
         elif isinstance(value, str) and value.upper() == "FALSE":
             return 0
-        elif isinstance(value, str) and value.startswith("0X"):
+        elif isinstance(value, str) and value.upper().startswith("0X"):
             return int(value, 16)
         else:
             return int(value, 10)
