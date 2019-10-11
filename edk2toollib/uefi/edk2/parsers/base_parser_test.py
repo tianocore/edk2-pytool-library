@@ -39,6 +39,11 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.InActiveCode())
         # check that nothing is on the stack
         self.assertEqual(len(parser.ConditionalStack), 0)
+        # lower case false
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!IF false"))
+        self.assertFalse(parser.InActiveCode())
+
 
     def test_process_garbage_input(self):
         parser = BaseParser("")

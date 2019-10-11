@@ -133,10 +133,6 @@ class BaseParser(object):
         ivalue = value
         ivalue2 = value2
         # convert it to interpretted value
-        if isinstance(value, str):
-            ivalue = value.upper()
-        if isinstance(value2, str):
-            ivalue2 = value2.upper()
 
         try:
             ivalue = self.ConvertToInt(ivalue)
@@ -193,16 +189,16 @@ class BaseParser(object):
         """
 
         Args:
-          value:
+          value: must be str or int
 
         Returns:
 
         """
-        if (value == "TRUE"):
+        if isinstance(value, str) and value.upper() == "TRUE":
             return 1
-        elif (value == "FALSE"):
+        elif isinstance(value, str) and value.upper() == "FALSE":
             return 0
-        elif(value.startswith("0X")):
+        elif isinstance(value, str) and value.startswith("0X"):
             return int(value, 16)
         else:
             return int(value, 10)
