@@ -3,6 +3,7 @@
 # certificate data and payload data.
 #
 # Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) Microsoft Corporation
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 
