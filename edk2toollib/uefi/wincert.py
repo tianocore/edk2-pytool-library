@@ -13,6 +13,65 @@ from edk2toollib.utility_functions import PrintByteList
 
 
 class WinCertPkcs1(object):
+    # ///
+    # /// Certificate which encapsulates the RSASSA_PKCS1-v1_5 digital signature.
+    # ///
+    # /// The WIN_CERTIFICATE_UEFI_PKCS1_15 structure is derived from
+    # /// WIN_CERTIFICATE and encapsulate the information needed to
+    # /// implement the RSASSA-PKCS1-v1_5 digital signature algorithm as
+    # /// specified in RFC2437.
+    # ///
+    # typedef struct {
+    #   ///
+    #   /// This is the standard WIN_CERTIFICATE header, where
+    #   /// wCertificateType is set to WIN_CERT_TYPE_UEFI_PKCS1_15.
+    #   ///
+    #   WIN_CERTIFICATE Hdr;
+    #   ///
+    #   /// This is the hashing algorithm which was performed on the
+    #   /// UEFI executable when creating the digital signature.
+    #   ///
+    #   EFI_GUID        HashAlgorithm;
+    #   ///
+    #   /// The following is the actual digital signature. The
+    #   /// size of the signature is the same size as the key
+    #   /// (1024-bit key is 128 bytes) and can be determined by
+    #   /// subtracting the length of the other parts of this header
+    #   /// from the total length of the certificate as found in
+    #   /// Hdr.dwLength.
+    #   ///
+    #   /// UINT8 Signature[];
+    #   ///
+    # } WIN_CERTIFICATE_EFI_PKCS1_15;
+    #
+    # ///
+    # /// The WIN_CERTIFICATE structure is part of the PE/COFF specification.
+    # ///
+    # typedef struct {
+    #   ///
+    #   /// The length of the entire certificate,
+    #   /// including the length of the header, in bytes.
+    #   ///
+    #   UINT32  dwLength;
+    #   ///
+    #   /// The revision level of the WIN_CERTIFICATE
+    #   /// structure. The current revision level is 0x0200.
+    #   ///
+    #   UINT16  wRevision;
+    #   ///
+    #   /// The certificate type. See WIN_CERT_TYPE_xxx for the UEFI
+    #   /// certificate types. The UEFI specification reserves the range of
+    #   /// certificate type values from 0x0EF0 to 0x0EFF.
+    #   ///
+    #   UINT16  wCertificateType;
+    #   ///
+    #   /// The following is the actual certificate. The format of
+    #   /// the certificate depends on wCertificateType.
+    #   ///
+    #   /// UINT8 bCertificate[ANYSIZE_ARRAY];
+    #   ///
+    # } WIN_CERTIFICATE;
+
     STATIC_STRUCT_SIZE = (4 + 2 + 2 + 16)
     EFI_HASH_SHA256 = uuid.UUID("{51AA59DE-FDF2-4EA3-BC63-875FB7842EE9}")  # EFI_HASH_SHA256 guid defined by UEFI spec
 
@@ -144,7 +203,6 @@ class WinCertUefiGuid(object):
     PKCS7Guid = _EFI_CERT_TYPE_PKCS7_GUID
 
     def __init__(self, in_data=None):
-        self._Valid = False
         self.Hdr_dwLength = self._StructSize
         self.Hdr_wRevision = WinCert.REVISION
         self.Hdr_wCertificateType = WinCert.WIN_CERT_TYPE_EFI_GUID
@@ -159,9 +217,25 @@ class WinCertUefiGuid(object):
                 self.Decode(in_data)
 
     def Encode(self):
-        pass
+        if self.Hdr_wRevision != self._WIN_CERT_REVISION:
+            raise ValueError
+        if self.Hdr_wCertificateType != self._WIN_CERT_TYPE_EFI_GUID:
+            raise ValueError
+        if self.CertType != self._EFI_CERT_TYPE_PKCS7_GUID:
+            raise ValueError
+        self.Hdr_dwLength = self._StructSize + len(self.CertData)
 
-    def Decode(self):
+        WinCertHeader = struct.pack(
+            self._StructFormat,
+            self.dwLength,
+            self.wRevision,
+            self.wCertificateType,
+            self.CertType.bytes_le
+        )
+
+        return WinCertHeader + self.CertData
+
+    def Decode(self, Buffer):
         if len(Buffer) < self._StructSize:
             raise ValueError
         (dwLength, wRevision, wCertificateType, CertType) = struct.unpack(
@@ -181,63 +255,66 @@ class WinCertUefiGuid(object):
         self.Hdr_wCertificateType = wCertificateType
         self.CertType = uuid.UUID(bytes_le=CertType)
         self.CertData = Buffer[self._StructSize:self.Hdr_dwLength]
-        self._Valid = True
-        return self.Buffer[self.Hdr_dwLength:]
 
-    def AddCertData(self, fs):
-        if(self.CertData is not None):
-            raise Exception("Cert Data not 0")
-        self.CertData = memoryview(fs.read())
+        # Return the remaining buffer, if any exists.
+        return Buffer[self.Hdr_dwLength:]
+
+    def AddCertData(self, in_data):
+        # Account for back compat. Behave differently for file streams.
+        if hasattr(in_data, 'seek'):
+            self.CertData = in_data.read()
+        else:
+            self.CertData = in_data
+
         self.Hdr_dwLength = self.Hdr_dwLength + len(self.CertData)
-        self._Valid = True
+
     #
     # Method to un-serialize from a filestream
     #
 
     def PopulateFromFileStream(self, fs):
         if fs is None:
-            raise Exception("Invalid File stream")
+            raise ValueError
 
-        # only populate from file stream those parts that are complete in the file stream
-        offset = fs.tell()
-        fs.seek(0, 2)
-        end = fs.tell()
-        fs.seek(offset)
+        # Determine the end of the stream.
+        current = fs.tell()
+        end = fs.seek(0, SEEK_END)
+        fs.seek(current)
 
-        if((end - offset) < WinCertUefiGuid.STATIC_STRUCT_SIZE):  # size of the static header data
-            raise Exception("Invalid file stream size")
+        # Make sure that we can at least parse the size field.
+        field_string = "<I"
+        field_size = struct.calcsize(field_string)
+        if (end - current) < field_size:
+            raise ValueError
 
-        self.Hdr_dwLength = struct.unpack("=I", fs.read(4))[0]
-        self.Hdr_wRevision = struct.unpack("=H", fs.read(2))[0]
-        self.Hdr_wCertificateType = struct.unpack("=H", fs.read(2))[0]
-        self.CertType = uuid.UUID(bytes_le=fs.read(16))
-        self.CertData = None
+        # Parse the size field.
+        (buffer_size,) = struct.unpack(field_string, fs.read(field_size))
 
-        if((end - fs.tell()) < 1):
-            raise Exception("Invalid File stream. No data for signature cert data")
+        if (end - current) < buffer_size:
+            raise ValueError
 
-        if((end - fs.tell()) < (self.Hdr_dwLength - WinCertUefiGuid.STATIC_STRUCT_SIZE)):
-            raise Exception("Invalid file stream size ")
+        fs.seek(current)
+        object_buffer = fs.read(buffer_size)
 
-        self.CertData = memoryview(fs.read(self.Hdr_dwLength - WinCertUefiGuid.STATIC_STRUCT_SIZE))
-        self._Valid = True
+        return self.Decode(object_buffer)
 
     def Print(self):
-        print("WinCertUefiGuid")
-        print("  Hdr_dwLength:         0x%X" % self.Hdr_dwLength)
-        print("  Hdr_wRevision:        0x%X" % self.Hdr_wRevision)
-        print("  Hdr_wCertificateType: 0x%X" % self.Hdr_wCertificateType)
-        print("  CertType:             %s" % str(self.CertType))
-        print("  CertData:             ")
-        cdl = self.CertData.tolist()
-        PrintByteList(cdl)
+        self.DumpInfo()
+
+    def DumpInfo(self):
+        print('EFI_FIRMWARE_IMAGE_AUTHENTICATION.AuthInfo.Hdr.dwLength         = {dwLength:08X}'
+              .format(dwLength=self.Hdr_dwLength))
+        print('EFI_FIRMWARE_IMAGE_AUTHENTICATION.AuthInfo.Hdr.wRevision        = {wRevision:04X}'
+              .format(wRevision=self.Hdr_wRevision))
+        print('EFI_FIRMWARE_IMAGE_AUTHENTICATION.AuthInfo.Hdr.wCertificateType = {wCertificateType:04X}'
+              .format(wCertificateType=self.Hdr_wCertificateType))
+        print('EFI_FIRMWARE_IMAGE_AUTHENTICATION.AuthInfo.CertType             = {Guid}'
+              .format(Guid=str(self.CertType).upper()))
+        print('sizeof (EFI_FIRMWARE_IMAGE_AUTHENTICATION.AuthInfo.CertData)    = {Size:08X}'
+              .format(Size=len(self.CertData)))
 
     def Write(self, fs):
-        fs.write(struct.pack("=I", self.Hdr_dwLength))
-        fs.write(struct.pack("=H", self.Hdr_wRevision))
-        fs.write(struct.pack("=H", self.Hdr_wCertificateType))
-        fs.write(self.CertType.bytes_le)
-        fs.write(self.CertData)
+        fs.write(self.Encode)
 
 
 class WinCert(object):
