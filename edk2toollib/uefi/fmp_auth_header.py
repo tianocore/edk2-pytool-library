@@ -11,9 +11,9 @@ FmpAuthHeader
 '''
 
 import struct
-import uuid
 
 from edk2toollib.uefi.wincert import WinCertUefiGuid
+
 
 class FmpAuthHeaderClass (object):
     # ///

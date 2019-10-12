@@ -7,6 +7,7 @@
 ##
 
 
+import io
 import struct
 import uuid
 from edk2toollib.utility_functions import PrintByteList
@@ -278,7 +279,7 @@ class WinCertUefiGuid(object):
 
         # Determine the end of the stream.
         current = fs.tell()
-        end = fs.seek(0, SEEK_END)
+        end = fs.seek(0, io.SEEK_END)
         fs.seek(current)
 
         # Make sure that we can at least parse the size field.
