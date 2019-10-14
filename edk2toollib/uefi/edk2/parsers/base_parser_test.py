@@ -44,7 +44,6 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.ProcessConditional("!IF false"))
         self.assertFalse(parser.InActiveCode())
 
-
     def test_process_garbage_input(self):
         parser = BaseParser("")
         # make sure we fail the garbage input

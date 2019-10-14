@@ -143,7 +143,6 @@ class BaseParser(object):
         except ValueError:
             self.Logger.warning(f"{self.__class__}: Cannot convert value to an int: {ivalue2}")
 
-
         # check our truthyness
         if(cond == "=="):
             # equal
