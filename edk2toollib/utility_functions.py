@@ -390,9 +390,10 @@ def locate_class_in_module(Module, DesiredClass):
     Throws exception if two classes are found that fit the same criterea.
     '''
 
-    DesiredClassInstance = None
+    DesiredClassInstances = []
     # Pull out the contents of the module that was provided
     module_contents = dir(Module)
+    module_file = Module.__file__
     # Filter through the Module, we're only looking for classes.
     classList = [getattr(Module, obj) for obj in module_contents
                  if inspect.isclass(getattr(Module, obj))]
@@ -400,11 +401,19 @@ def locate_class_in_module(Module, DesiredClass):
         # Classes that the module import show up in this list too so we need
         # to make sure it's an INSTANCE of DesiredClass, not DesiredClass itself!
         if _class is not DesiredClass and issubclass(_class, DesiredClass):
-            if DesiredClassInstance is not None:
-                raise RuntimeError(f"Multiple instances were found:\n\t{DesiredClassInstance}\n\t{_class}")
-            DesiredClassInstance = _class
-
-    return DesiredClassInstance
+            try:
+                _class_file = inspect.getfile(_class)  # get the file name of the class we care about
+            except TypeError:
+                _class_file = module_file
+            if _class_file == module_file:  # if this is in the same file put it at the front of the list
+                DesiredClassInstances.insert(0, _class)
+            else:  # otherwise to the back of the list
+                DesiredClassInstances.append(_class)
+    if len(DesiredClassInstances) == 0:
+        return None
+    if len(DesiredClassInstances) > 1:  # we can't log because logging isn't setup yet
+        print(f"WARNING: Multiple setting classes were found. Using {DesiredClassInstances[0]}")
+    return DesiredClassInstances[0]
 
 
 if __name__ == '__main__':
