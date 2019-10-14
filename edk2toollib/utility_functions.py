@@ -403,7 +403,7 @@ def locate_class_in_module(Module, DesiredClass):
         if _class is not DesiredClass and issubclass(_class, DesiredClass):
             try:
                 _class_file = inspect.getfile(_class)  # get the file name of the class we care about
-            except TypeError:
+            except TypeError:  # we throw a type error if a builtin module? PlatformBuild is considered builtin?
                 _class_file = module_file
             if _class_file == module_file:  # if this is in the same file put it at the front of the list
                 DesiredClassInstances.insert(0, _class)
