@@ -155,6 +155,16 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!EnDiF"))
 
+    def test_process_conditional_not_equals_true_false(self):
+        parser = BaseParser("")
+        # check != with true and false
+        self.assertTrue(parser.ProcessConditional("!IF RACECAR != RACECAR"))
+        self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!EnDiF"))
+        self.assertTrue(parser.ProcessConditional("!IF false != FALSE"))
+        self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!EnDiF"))
+
     def test_process_conditional_false_equals_zero(self):
         parser = BaseParser("")
         self.assertTrue(parser.ProcessConditional("!IF FALSE == 0"))

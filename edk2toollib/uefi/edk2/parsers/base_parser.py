@@ -151,7 +151,7 @@ class BaseParser(object):
 
         elif (cond == "!="):
             # not equal
-            return (ivalue != ivalue2) or (value != value2)
+            return (ivalue != ivalue2) and (value != value2)
 
         # check to make sure we only have digits from here on out
         if not str.isdigit(value):
