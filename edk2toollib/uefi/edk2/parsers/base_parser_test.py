@@ -171,13 +171,13 @@ class TestBaseParser(unittest.TestCase):
     def test_process_conditional_true_cannot_be_greater_than(self):
         parser = BaseParser("")
         # check != with true and false
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             parser.ProcessConditional("!IF TRUE >= 1")
 
     def test_process_conditional_true_cannot_be_greater_than_hex(self):
         parser = BaseParser("")
         # check != with true and false
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             parser.ProcessConditional("!IF 0x7 >= TRUE")
 
     def test_process_conditional_non_numerical(self):

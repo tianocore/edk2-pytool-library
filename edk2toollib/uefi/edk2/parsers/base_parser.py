@@ -137,33 +137,32 @@ class BaseParser(object):
         try:
             ivalue = self.ConvertToInt(ivalue)
         except ValueError:
-            self.Logger.error(f"{self.__class__}: Cannot convert value to an int: {ivalue}")
-            raise
+            self.Logger.warning(f"{self.__class__}: Cannot convert value to an int: {ivalue}")
         try:
             ivalue2 = self.ConvertToInt(ivalue2)
         except ValueError:
-            self.Logger.error(f"{self.__class__}: Cannot convert value to an int: {ivalue2}")
-            raise
+            self.Logger.warning(f"{self.__class__}: Cannot convert value to an int: {ivalue2}")
+
 
         # check our truthyness
         if(cond == "=="):
             # equal
-            return (ivalue == ivalue2)
+            return (ivalue == ivalue2) or (value == value2)
 
         elif (cond == "!="):
             # not equal
-            return (ivalue != ivalue2)
+            return (ivalue != ivalue2) or (value != value2)
 
         # check to make sure we only have digits from here on out
         if not str.isdigit(value):
             self.Logger.error(f"{self.__class__}: Unknown value: {value} {ivalue.__class__}")
             self.Logger.debug(f"{self.__class__}: Conditional: {value} {cond}{value2}")
-            raise RuntimeError("Unknown value")
+            raise ValueError("Unknown value")
 
         if not str.isdigit(value2):
             self.Logger.error(f"{self.__class__}: Unknown value: {value2} {ivalue2}")
             self.Logger.debug(f"{self.__class__}: Conditional: {value} {cond} {value2}")
-            raise RuntimeError("Unknown value")
+            raise ValueError("Unknown value")
 
         if (cond == "<"):
             return (ivalue < ivalue2)
