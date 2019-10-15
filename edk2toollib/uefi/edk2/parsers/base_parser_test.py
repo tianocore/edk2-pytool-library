@@ -147,7 +147,7 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.InActiveCode())
         parser.ProcessConditional("!endif")
 
-    def test_process_conditional_not_equals_true_false(self):
+    def test_process_conditional_true_not_equals_false(self):
         parser = BaseParser("")
         # check != with true and false
         self.assertTrue(parser.ProcessConditional("!IF TRUE != FALSE"))
