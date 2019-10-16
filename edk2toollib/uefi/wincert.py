@@ -228,9 +228,9 @@ class WinCertUefiGuid(object):
 
         WinCertHeader = struct.pack(
             self._StructFormat,
-            self.dwLength,
-            self.wRevision,
-            self.wCertificateType,
+            self.Hdr_dwLength,
+            self.Hdr_wRevision,
+            self.Hdr_wCertificateType,
             self.CertType.bytes_le
         )
 
@@ -303,15 +303,15 @@ class WinCertUefiGuid(object):
         self.DumpInfo()
 
     def DumpInfo(self):
-        print('EFI_FIRMWARE_IMAGE_AUTHENTICATION.AuthInfo.Hdr.dwLength         = {dwLength:08X}'
+        print('WIN_CERTIFICATE.dwLength         = {dwLength:08X}'
               .format(dwLength=self.Hdr_dwLength))
-        print('EFI_FIRMWARE_IMAGE_AUTHENTICATION.AuthInfo.Hdr.wRevision        = {wRevision:04X}'
+        print('WIN_CERTIFICATE.wRevision        = {wRevision:04X}'
               .format(wRevision=self.Hdr_wRevision))
-        print('EFI_FIRMWARE_IMAGE_AUTHENTICATION.AuthInfo.Hdr.wCertificateType = {wCertificateType:04X}'
+        print('WIN_CERTIFICATE.wCertificateType = {wCertificateType:04X}'
               .format(wCertificateType=self.Hdr_wCertificateType))
-        print('EFI_FIRMWARE_IMAGE_AUTHENTICATION.AuthInfo.CertType             = {Guid}'
+        print('WIN_CERTIFICATE_UEFI_GUID.CertType             = {Guid}'
               .format(Guid=str(self.CertType).upper()))
-        print('sizeof (EFI_FIRMWARE_IMAGE_AUTHENTICATION.AuthInfo.CertData)    = {Size:08X}'
+        print('sizeof (WIN_CERTIFICATE_UEFI_GUID.CertData)    = {Size:08X}'
               .format(Size=len(self.CertData)))
 
     def Write(self, fs):
