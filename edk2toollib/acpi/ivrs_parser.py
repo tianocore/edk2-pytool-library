@@ -445,13 +445,13 @@ class IVRS_TABLE(object):
             elif self.Type == 66:
                 self.TypeString = "Alias Select"
                 self.Length = IVRS_TABLE.DeviceTableEntryLengthLong
-                (_, self.SourceDeviceID, _) =
+                (_, self.SourceDeviceID, _) =\
                     struct.unpack_from(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                       header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
             elif self.Type == 67:
                 self.TypeString = "Alias Range"
                 self.Length = IVRS_TABLE.DeviceTableEntryLengthLong
-                (_, self.SourceDeviceID, _) =
+                (_, self.SourceDeviceID, _) =\
                     struct.unpack_from(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                        header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
                 (Type,
@@ -464,12 +464,12 @@ class IVRS_TABLE(object):
             elif self.Type == 70:
                 self.TypeString = "Extended Select"
                 self.Length = IVRS_TABLE.DeviceTableEntryLengthLong
-                (self.ExtendedDTESetting,) = 
+                (self.ExtendedDTESetting,) = \
                     struct.unpack_from("=I", header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
             elif self.Type == 71:
                 self.TypeString = "Extended Range"
                 self.Length = IVRS_TABLE.DeviceTableEntryLengthLong
-                (self.ExtendedDTESetting,) =
+                (self.ExtendedDTESetting,) =\
                     struct.unpack_from("=I", header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
                 (Type,
                  self.EndDeviceID,
@@ -481,16 +481,12 @@ class IVRS_TABLE(object):
             elif self.Type == 72:
                 self.TypeString = "Special Device"
                 self.Length = IVRS_TABLE.DeviceTableEntryLengthLong
-                (self.Handle,
-                 self.SourceDeviceID,
-                 self.Variety) = struct.unpack_from(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                    header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
+                (self.Handle, self.SourceDeviceID, self.Variety) =\
+                    struct.unpack_from(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                       header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
             elif self.Type == 240:
                 self.TypeString = "Variable Length ACPI HID Device"
-                (self.HID,
-                 self.CID,
-                 self.UIDFormat,
-                 self.UIDLength) =
+                (self.HID, self.CID, self.UIDFormat, self.UIDLength) =\
                     struct.unpack_from("=8s8sBB", header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
                 self.Length = IVRS_TABLE.DeviceTableEntryLengthVar + self.UIDLength
                 if self.UIDFormat ==0:
@@ -498,7 +494,7 @@ class IVRS_TABLE(object):
                 if self.UIDFormat == 1:
                     self.UID = struct.unpack("=Q", header_byte_array[IVRS_TABLE.DeviceTableEntryLengthVar:])
                 elif self.UIDFormat == 2:
-                    self.UID =
+                    self.UID =\
                         struct.unpack("=%ss" % self.UIDLength,
                                       header_byte_array[IVRS_TABLE.DeviceTableEntryLengthVar:])
             else:
