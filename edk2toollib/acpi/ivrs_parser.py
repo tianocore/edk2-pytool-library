@@ -34,9 +34,7 @@ class IVRS_TABLE(object):
               (remapping_header.Type == 0x11) or\
               (remapping_header.Type == 0x40):
                 remapping_header = self.IVHD_STRUCT(self.data)
-            elif(remapping_header.Type == 0x20) or \
-                (remapping_header.Type == 0x21) or \
-                (remapping_header.Type == 0x22):
+            elif(remapping_header.Type == 0x20) or (remapping_header.Type == 0x21) or (remapping_header.Type == 0x22):
                 remapping_header = self.IVMD_STRUCT(self.data)
                 self.ivrs_table.IVMDlist.append(remapping_header)
                 if (remapping_header.Type == 0x22):
@@ -79,8 +77,7 @@ class IVRS_TABLE(object):
             if (val & 0xFFFFFFFF00000000) != 0:
                 raise Exception("Invalid 32 bit value: %x", val)
             else:
-                sum = ((val & 0xFF) + ((val >> 8) & 0xFF) +
-                       ((val >> 16) & 0xFF) + ((val >> 24) & 0xFF))
+                sum = ((val & 0xFF) + ((val >> 8) & 0xFF) + ((val >> 16) & 0xFF) + ((val >> 24) & 0xFF))
         return sum
 
     @staticmethod
@@ -92,9 +89,9 @@ class IVRS_TABLE(object):
             for ele in val:
                 sum += ele
         else:
-            sum = ((val & 0xFF) + ((val >> 8) & 0xFF) + 
-                   ((val >> 16) & 0xFF) + ((val >> 24) & 0xFF) +
-                   ((val >> 32) & 0xFF) + ((val >> 40) & 0xFF) +
+            sum = ((val & 0xFF) + ((val >> 8) & 0xFF) +\
+                   ((val >> 16) & 0xFF) + ((val >> 24) & 0xFF) +\
+                   ((val >> 32) & 0xFF) + ((val >> 40) & 0xFF) +\
                    ((val >> 48) & 0xFF) + ((val >> 56) & 0xFF))
         return sum
 
