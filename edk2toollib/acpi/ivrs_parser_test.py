@@ -232,5 +232,6 @@ class IvrsParserTest(unittest.TestCase):
         ivrs2 = IVRS_TABLE(ivrs_byte)
         self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -29,7 +29,8 @@ class IVRS_TABLE(object):
         # sanity check on incoming data
         Checksum8 = IVRS_TABLE.validateChecksum8(data)
         if (Checksum8 != 0):
-            raise Exception('Incoming data checksum does not add up: checksum field %x, calculated is %x', self.ivrs_table.Checksum, Checksum8)
+            raise Exception('Incoming data checksum does not add up: checksum field %x, calculated is %x',
+                            self.ivrs_table.Checksum, Checksum8)
 
         while len(self.data) > 0:
             # Get type and length of remapping struct
@@ -282,7 +283,8 @@ class IVRS_TABLE(object):
         def addDTEEntry(self, dte_data):
             # append raw data, update length and checksum
             self.Length += len(dte_data)
-            newdata = self.data[:2] + bytearray([self.Length & 0xff, (self.Length >> 8) & 0xff]) + self.data[4:] + dte_data
+            newdata = self.data[:2] + bytearray([self.Length & 0xff, (self.Length >> 8) & 0xff]) +\
+                self.data[4:] + dte_data
             self.data = newdata
             remapping_header = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_data)
             self.DeviceTableEntries.append(remapping_header)
