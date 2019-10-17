@@ -25,6 +25,12 @@ class IVRS_TABLE(object):
     def __init__(self, data):
         self.ivrs_table = self.ACPI_TABLE_HEADER(data)
         self.data = data[IVRS_TABLE.IVRSHeaderLength:]
+
+        # sanity check on incoming data
+        Checksum8 = IVRS_TABLE.validateChecksum8(data)
+        if (Checksum8 != 0):
+            raise Exception('Incoming data checksum does not add up: checksum field %x, calculated is %x', self.ivrs_table.Checksum, Checksum8)
+
         while len(self.data) > 0:
             # Get type and length of remapping struct
             remapping_header = self.REMAPPING_STRUCT_HEADER(self.data)
@@ -65,6 +71,25 @@ class IVRS_TABLE(object):
 
         return retval
 
+    def toBytes(self):
+        bytesarray = bytearray(IVRS_TABLE.IVRSHeaderLength)
+        struct.pack_into(IVRS_TABLE.ACPI_TABLE_HEADER.struct_format,
+                         bytesarray,
+                         0,
+                         self.ivrs_table.Signature,
+                         self.ivrs_table.Length,
+                         self.ivrs_table.Revision,
+                         self.ivrs_table.Checksum,
+                         self.ivrs_table.OEMID,
+                         self.ivrs_table.OEMTableID,
+                         self.ivrs_table.OEMRevision,
+                         self.ivrs_table.CreatorID,
+                         self.ivrs_table.CreatorRevision,
+                         self.ivrs_table.IVinfo,
+                         self.ivrs_table.Reserved)
+        bytesarray += self.data
+        return bytesarray
+
     @staticmethod
     def byteSum32(val):
         if (type(val)) is bytes:
@@ -95,11 +120,12 @@ class IVRS_TABLE(object):
                   ((val >> 48) & 0xFF) + ((val >> 56) & 0xFF)
         return sum
 
-    def calculateChecksum(self):
+    @staticmethod
+    def validateChecksum8(data):
         sum = 0
-        for byte in self.data:
+        for byte in data:
             sum += byte
-        return 0x100 - (sum & 0xFF)
+        return (0x100 - (sum & 0xFF)) & 0xFF
 
     def addIVHDEntry(self, ivhd):
         # append raw data, update length and checksum
@@ -204,7 +230,7 @@ class IVRS_TABLE(object):
             sum += IVRS_TABLE.byteSum32(self.CreatorRevision)
             sum += IVRS_TABLE.byteSum32(self.IVinfo)
             sum += IVRS_TABLE.byteSum64(self.Reserved)
-            return 0x100 - (sum & 0xFF)
+            return (0x100 - (sum & 0xFF)) & 0xFF
 
     class REMAPPING_STRUCT_HEADER(object):
         struct_format = '=B'
