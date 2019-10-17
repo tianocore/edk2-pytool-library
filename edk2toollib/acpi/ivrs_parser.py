@@ -294,7 +294,7 @@ class IVRS_TABLE(object):
     IOMMU Info            : 0x%04X
     IOMMU Feature Info    : 0x%08X
 """ % (self.Type, self.Flags, self.Length, self.DeviceID, self.CapabilityOffset,
-       self.IOMMUBaseAddress, self.SegmentGroup, self.IOMMUInfo, self.IOMMUFeatureInfo)
+self.IOMMUBaseAddress, self.SegmentGroup, self.IOMMUInfo, self.IOMMUFeatureInfo)
 
             for item in self.DeviceTableEntries:
                 retstring += str(item)
@@ -447,7 +447,7 @@ class IVRS_TABLE(object):
                 self.Length = IVRS_TABLE.DeviceTableEntryLengthLong
                 (_, self.SourceDeviceID, _) =\
                     struct.unpack_from(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                      header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
+                                       header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
             elif self.Type == 67:
                 self.TypeString = "Alias Range"
                 self.Length = IVRS_TABLE.DeviceTableEntryLengthLong
@@ -489,7 +489,7 @@ class IVRS_TABLE(object):
                 (self.HID, self.CID, self.UIDFormat, self.UIDLength) =\
                     struct.unpack_from("=8s8sBB", header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
                 self.Length = IVRS_TABLE.DeviceTableEntryLengthVar + self.UIDLength
-                if self.UIDFormat ==0:
+                if self.UIDFormat == 0:
                     self.UID = None
                 if self.UIDFormat == 1:
                     self.UID = struct.unpack("=Q", header_byte_array[IVRS_TABLE.DeviceTableEntryLengthVar:])
