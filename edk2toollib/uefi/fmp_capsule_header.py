@@ -70,6 +70,10 @@ class FmpCapsuleImageHeaderClass (object):
         self.FmpAuthHeader = None
 
     def Encode(self):
+        # If we have an FmpAuthHeader, let's collapse that now.
+        if self.FmpAuthHeader is not None:
+            self.Payload = self.FmpAuthHeader.Encode()
+
         self.UpdateImageSize = len(self.Payload)
         self.UpdateVendorCodeSize = len(self.VendorCodeBytes)
         FmpCapsuleImageHeader = struct.pack(
@@ -82,10 +86,7 @@ class FmpCapsuleImageHeaderClass (object):
             self.UpdateVendorCodeSize,
             self.UpdateHardwareInstance
         )
-        if self.FmpAuthHeader is not None:
-            return FmpCapsuleImageHeader + self.FmpAuthHeader.Encode() + self.VendorCodeBytes
-        else:
-            return FmpCapsuleImageHeader + self.Payload + self.VendorCodeBytes
+        return FmpCapsuleImageHeader + self.Payload + self.VendorCodeBytes
 
     def Decode(self, Buffer):
         if len(Buffer) < self._StructSize:

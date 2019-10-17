@@ -71,6 +71,10 @@ class UefiCapsuleHeaderClass (object):
         if self.InitiateReset:
             Flags = Flags | self._CAPSULE_FLAGS_INITIATE_RESET
 
+        # If we have an FmpCapsuleHeader, let's collapse that now.
+        if self.FmpCapsuleHeader is not None:
+            self.Payload = self.FmpCapsuleHeader.Encode()
+
         self.CapsuleImageSize = self.HeaderSize + len(self.Payload)
 
         UefiCapsuleHeader = struct.pack(
@@ -82,10 +86,7 @@ class UefiCapsuleHeaderClass (object):
             0
         )
 
-        if self.FmpCapsuleHeader is None:
-            return UefiCapsuleHeader + self.Payload
-        else:
-            return UefiCapsuleHeader + self.FmpCapsuleHeader.Encode()
+        return UefiCapsuleHeader + self.Payload
 
     def Decode(self, Buffer):
         if len(Buffer) < self._StructSize:
