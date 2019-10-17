@@ -132,14 +132,14 @@ class IVRS_TABLE(object):
         self.data += ivhd.data
         self.ivrs_table.Length += ivhd.Length
         self.ivrs_table.SubStructs.append(ivhd)
-        self.ivrs_table.Checksum = self.ivrs_table.calculateACPISum()
+        self.ivrs_table.Checksum = self.ivrs_table.calculateACPISum(self.data)
 
     def addIVMDEntry(self, ivmd):
         # append raw data, update length and checksum
         self.data += ivmd.data
         self.ivrs_table.Length += ivmd.Length
         self.ivrs_table.IVMDlist.append(ivmd)
-        self.ivrs_table.Checksum = self.ivrs_table.calculateACPISum()
+        self.ivrs_table.Checksum = self.ivrs_table.calculateACPISum(self.data)
 
     def IVRSBitEnabled(self):
         return bool(self.ivrs_table.IVRSBit)
@@ -216,21 +216,22 @@ class IVRS_TABLE(object):
             xml_repr.set('IVinfo', '0x%X' % self.IVinfo)
             return xml_repr
 
-        def calculateACPISum(self):
-            sum = 0
-            sum += IVRS_TABLE.byteSum32(self.Signature)
-            sum += IVRS_TABLE.byteSum32(self.Length)
-            sum += self.Revision
+        def calculateACPISum(self, data):
+            temp_sum = 0
+            temp_sum += IVRS_TABLE.byteSum32(self.Signature)
+            temp_sum += IVRS_TABLE.byteSum32(self.Length)
+            temp_sum += self.Revision
             # intentionally miss checksum
             # oem id is 6 byte wide, but just use 64 bit
-            sum += IVRS_TABLE.byteSum64(self.OEMID)
-            sum += IVRS_TABLE.byteSum64(self.OEMTableID)
-            sum += IVRS_TABLE.byteSum32(self.OEMRevision)
-            sum += IVRS_TABLE.byteSum32(self.CreatorID)
-            sum += IVRS_TABLE.byteSum32(self.CreatorRevision)
-            sum += IVRS_TABLE.byteSum32(self.IVinfo)
-            sum += IVRS_TABLE.byteSum64(self.Reserved)
-            return (0x100 - (sum & 0xFF)) & 0xFF
+            temp_sum += IVRS_TABLE.byteSum64(self.OEMID)
+            temp_sum += IVRS_TABLE.byteSum64(self.OEMTableID)
+            temp_sum += IVRS_TABLE.byteSum32(self.OEMRevision)
+            temp_sum += IVRS_TABLE.byteSum32(self.CreatorID)
+            temp_sum += IVRS_TABLE.byteSum32(self.CreatorRevision)
+            temp_sum += IVRS_TABLE.byteSum32(self.IVinfo)
+            temp_sum += IVRS_TABLE.byteSum64(self.Reserved)
+            temp_sum += sum(data)
+            return (0x100 - (temp_sum & 0xFF)) & 0xFF
 
     class REMAPPING_STRUCT_HEADER(object):
         struct_format = '=B'
@@ -258,7 +259,7 @@ class IVRS_TABLE(object):
              self.IOMMUInfo,
              self.IOMMUFeatureInfo) = struct.unpack_from(IVRS_TABLE.IVHD_STRUCT.struct_format, header_byte_array)
 
-            self.data = header_byte_array[:self.Length - 1]
+            self.data = header_byte_array[:self.Length]
 
             if (self.Type == 0x11) or (self.Type == 0x40):
                 (self.IOMMUEFRImage,
@@ -280,8 +281,9 @@ class IVRS_TABLE(object):
 
         def addDTEEntry(self, dte_data):
             # append raw data, update length and checksum
-            self.data += dte_data
             self.Length += len(dte_data)
+            newdata = self.data[:2] + bytearray([self.Length & 0xff, (self.Length >> 8) & 0xff]) + self.data[4:] + dte_data
+            self.data = newdata
             remapping_header = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_data)
             self.DeviceTableEntries.append(remapping_header)
 
@@ -340,7 +342,7 @@ class IVRS_TABLE(object):
              self.Reserved,
              self.IVMDStartAddress,
              self.IVMDMemoryBlockLength) = struct.unpack_from(IVRS_TABLE.IVMD_STRUCT.struct_format, header_byte_array)
-            self.data = header_byte_array[:self.Length - 1]
+            self.data = header_byte_array[:self.Length]
 
         def toXml(self):
             xml_repr = ET.Element('IVMD')
@@ -519,7 +521,7 @@ class IVRS_TABLE(object):
                 if self.UIDFormat == 0:
                     self.UID = None
                 if self.UIDFormat == 1:
-                    self.UID = struct.unpack("=Q", header_byte_array[IVRS_TABLE.DeviceTableEntryLengthVar:])
+                    self.UID = struct.unpack_from("=Q", header_byte_array[IVRS_TABLE.DeviceTableEntryLengthVar:])
                 elif self.UIDFormat == 2:
                     self.UID =\
                         struct.unpack("=%ss" % self.UIDLength,
@@ -528,7 +530,7 @@ class IVRS_TABLE(object):
                 print("Unknown Reserved Device Scope Type Found %d" % self.Type)
                 sys.exit(-1)
 
-            self.data = header_byte_array[:self.Length - 1]
+            self.data = header_byte_array[:self.Length]
 
         def set_xml(self, xml_item):
             is_range_device = self.Type == 3 or self.Type == 67 or self.Type == 71

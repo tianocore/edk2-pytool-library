@@ -108,8 +108,10 @@ class IvrsParserTest(unittest.TestCase):
 
     def test_ivrs_parser_init(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
-        # if we didn't throw an exception, then we are good
         self.assertNotEqual(ivrs, None)
+
+        ivrs_byte = ivrs.toBytes()
+        self.assertNotEqual(ivrs, ivrs_byte)
 
     def test_ivrs_parser_ivhd_10h(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
@@ -122,6 +124,10 @@ class IvrsParserTest(unittest.TestCase):
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
 
+        ivrs_byte = ivrs.toBytes()
+        ivrs2 = IVRS_TABLE(ivrs_byte)
+        self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
+
     def test_ivrs_parser_ivhd_11h(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
         ivhd = ivrs.IVHD_STRUCT(IvrsParserTest.ivhd_t_11h)
@@ -131,8 +137,10 @@ class IvrsParserTest(unittest.TestCase):
         logging.info(str(ivrs))
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
-        ivrs2 = IVRS_TABLE(ivrs.toBytes())
-        self.assertNotEqual(ivrs2, None)
+
+        ivrs_byte = ivrs.toBytes()
+        ivrs2 = IVRS_TABLE(ivrs_byte)
+        self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
 
     def test_ivrs_parser_ivhd_10h_2(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
@@ -148,6 +156,10 @@ class IvrsParserTest(unittest.TestCase):
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
 
+        ivrs_byte = ivrs.toBytes()
+        ivrs2 = IVRS_TABLE(ivrs_byte)
+        self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
+
     def test_ivrs_parser_ivhd_40h(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
         ivhd = ivrs.IVHD_STRUCT(IvrsParserTest.ivhd_t_40h)
@@ -158,6 +170,10 @@ class IvrsParserTest(unittest.TestCase):
         logging.info(str(ivrs))
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
+
+        ivrs_byte = ivrs.toBytes()
+        ivrs2 = IVRS_TABLE(ivrs_byte)
+        self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
 
     def test_ivrs_parser_ivmd_20h(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
@@ -174,6 +190,10 @@ class IvrsParserTest(unittest.TestCase):
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
 
+        ivrs_byte = ivrs.toBytes()
+        ivrs2 = IVRS_TABLE(ivrs_byte)
+        self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
+
     def test_ivrs_parser_ivmd_21h(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
 
@@ -188,6 +208,10 @@ class IvrsParserTest(unittest.TestCase):
         logging.info(str(ivrs))
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
+
+        ivrs_byte = ivrs.toBytes()
+        ivrs2 = IVRS_TABLE(ivrs_byte)
+        self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
 
     def test_ivrs_parser_ivmd_22h(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
@@ -204,6 +228,9 @@ class IvrsParserTest(unittest.TestCase):
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
 
+        ivrs_byte = ivrs.toBytes()
+        ivrs2 = IVRS_TABLE(ivrs_byte)
+        self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
 
 if __name__ == '__main__':
     unittest.main()
