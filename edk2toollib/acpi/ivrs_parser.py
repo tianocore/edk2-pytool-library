@@ -294,7 +294,7 @@ class IVRS_TABLE(object):
     IOMMU Info            : 0x%04X
     IOMMU Feature Info    : 0x%08X
 """ % (self.Type, self.Flags, self.Length, self.DeviceID, self.CapabilityOffset,
-self.IOMMUBaseAddress, self.SegmentGroup, self.IOMMUInfo, self.IOMMUFeatureInfo)
+       self.IOMMUBaseAddress, self.SegmentGroup, self.IOMMUInfo, self.IOMMUFeatureInfo)
 
             for item in self.DeviceTableEntries:
                 retstring += str(item)
