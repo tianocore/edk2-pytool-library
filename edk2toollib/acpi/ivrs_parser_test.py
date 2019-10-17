@@ -17,7 +17,7 @@ class IvrsParserTest(unittest.TestCase):
     ivrs_header = bytes([0x49, 0x56, 0x52, 0x53,
                          0x30, 0x00, 0x00, 0x00,
                          0x02,
-                         0x2F,
+                         0xBC,
                          0x41, 0x4D, 0x44, 0x20, 0x20, 0x00,
                          0x41, 0x4D, 0x44, 0x20, 0x49, 0x56, 0x52, 0x53,
                          0x01, 0x00, 0x00, 0x00,
@@ -131,6 +131,8 @@ class IvrsParserTest(unittest.TestCase):
         logging.info(str(ivrs))
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
+        ivrs2 = IVRS_TABLE(ivrs.toBytes())
+        self.assertNotEqual(ivrs2, None)
 
     def test_ivrs_parser_ivhd_10h_2(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
