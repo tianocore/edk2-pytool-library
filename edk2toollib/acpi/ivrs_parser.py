@@ -89,10 +89,10 @@ class IVRS_TABLE(object):
             for ele in val:
                 sum += ele
         else:
-            sum = ((val & 0xFF) + ((val >> 8) & 0xFF)
-                   + ((val >> 16) & 0xFF) + ((val >> 24) & 0xFF)
-                   + ((val >> 32) & 0xFF) + ((val >> 40) & 0xFF)
-                   + ((val >> 48) & 0xFF) + ((val >> 56) & 0xFF))
+            sum = (val & 0xFF) + ((val >> 8) & 0xFF) +\
+                  ((val >> 16) & 0xFF) + ((val >> 24) & 0xFF) +\
+                  ((val >> 32) & 0xFF) + ((val >> 40) & 0xFF) +\
+                  ((val >> 48) & 0xFF) + ((val >> 56) & 0xFF)
         return sum
 
     def calculateChecksum(self):
@@ -340,56 +340,56 @@ class IVRS_TABLE(object):
             if self.Type == 0x20:
                 # This type will be applied to all devices, address has to belong to known good range
                 for each_golden_ignore in golden_ignores:
-                    if(int(each_golden_ignore.get("Type"), 0) == self.Type) and\
-                      (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
-                      (int(each_golden_ignore.get("DeviceID"), 0) == self.DeviceID) and\
-                      (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
-                      (int(each_golden_ignore.get("IVMDStartAddress"), 0)
-                       + int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0)
-                       >= self.IVMDStartAddress + self.IVMDMemoryBlockLength):
+                    if (int(each_golden_ignore.get("Type"), 0) == self.Type) and\
+                       (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
+                       (int(each_golden_ignore.get("DeviceID"), 0) == self.DeviceID) and\
+                       (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
+                       int(each_golden_ignore.get("IVMDStartAddress"), 0) +\
+                       int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0) >=\
+                       (self.IVMDStartAddress + self.IVMDMemoryBlockLength):
                         return True
             elif self.Type == 0x21:
                 # This type is select device, so both device ID and address has to belong to known good range
                 for each_golden_ignore in golden_ignores:
-                    if(int(each_golden_ignore.get("Type"), 0) == 0x21) and\
-                      (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
-                      (int(each_golden_ignore.get("DeviceID"), 0) == self.DeviceID) and\
-                      (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
-                      (int(each_golden_ignore.get("IVMDStartAddress"), 0)
-                       + int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0)
-                       >= self.IVMDStartAddress + self.IVMDMemoryBlockLength):
+                    if (int(each_golden_ignore.get("Type"), 0) == 0x21) and\
+                       (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
+                       (int(each_golden_ignore.get("DeviceID"), 0) == self.DeviceID) and\
+                       (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
+                       int(each_golden_ignore.get("IVMDStartAddress"), 0) +\
+                       int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0) >=\
+                       (self.IVMDStartAddress + self.IVMDMemoryBlockLength):
                         return True
-                    elif(int(each_golden_ignore.get("Type"), 0) == 0x22) and\
-                        (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
-                        (int(each_golden_ignore.get("DeviceID"), 0) <= self.DeviceID) and\
-                        (int(each_golden_ignore.get("AuxiliaryData"), 0) >= self.DeviceID) and\
-                        (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
-                        (int(each_golden_ignore.get("IVMDStartAddress"), 0)
-                         + int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0)
-                         >= self.IVMDStartAddress + self.IVMDMemoryBlockLength):
+                    elif (int(each_golden_ignore.get("Type"), 0) == 0x22) and\
+                         (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
+                         (int(each_golden_ignore.get("DeviceID"), 0) <= self.DeviceID) and\
+                         (int(each_golden_ignore.get("AuxiliaryData"), 0) >= self.DeviceID) and\
+                         (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
+                        int(each_golden_ignore.get("IVMDStartAddress"), 0) +\
+                        int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0) >=\
+                         (self.IVMDStartAddress + self.IVMDMemoryBlockLength):
                         return True
             elif self.Type == 0x22:
                 # This type is range, so both device ID range and address has to belong to known good range
                 for each_golden_ignore in golden_ignores:
-                    if(int(each_golden_ignore.get("Type"), 0) == 0x21) and\
-                      (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
-                      (int(each_golden_ignore.get("DeviceID"), 0) == self.DeviceID) and\
-                      (int(each_golden_ignore.get("AuxiliaryData"), 0) == self.DeviceID) and\
-                      (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
-                      (int(each_golden_ignore.get("IVMDStartAddress"), 0)
-                       + int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0)
-                       >= self.IVMDStartAddress + self.IVMDMemoryBlockLength):
+                    if (int(each_golden_ignore.get("Type"), 0) == 0x21) and\
+                       (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
+                       (int(each_golden_ignore.get("DeviceID"), 0) == self.DeviceID) and\
+                       (int(each_golden_ignore.get("AuxiliaryData"), 0) == self.DeviceID) and\
+                       (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
+                       int(each_golden_ignore.get("IVMDStartAddress"), 0) +\
+                       int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0) >=\
+                       (self.IVMDStartAddress + self.IVMDMemoryBlockLength):
                         # This is a strange case, but, as you wish...
                         print("Review your golden copy, it looks a select device is mapped to a range")
                         return True
-                    elif(int(each_golden_ignore.get("Type"), 0) == 0x22) and\
-                        (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
-                        (int(each_golden_ignore.get("DeviceID"), 0) <= self.DeviceID) and\
-                        (int(each_golden_ignore.get("AuxiliaryData"), 0) >= self.AuxiliaryData) and\
-                        (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
-                        (int(each_golden_ignore.get("IVMDStartAddress"), 0)
-                         + int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0)
-                         >= self.IVMDStartAddress + self.IVMDMemoryBlockLength):
+                    elif (int(each_golden_ignore.get("Type"), 0) == 0x22) and\
+                         (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
+                         (int(each_golden_ignore.get("DeviceID"), 0) <= self.DeviceID) and\
+                         (int(each_golden_ignore.get("AuxiliaryData"), 0) >= self.AuxiliaryData) and\
+                         (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
+                        int(each_golden_ignore.get("IVMDStartAddress"), 0) +\
+                        int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0) >=\
+                         (self.IVMDStartAddress + self.IVMDMemoryBlockLength):
                         return True
             else:
                 print("Unrecognized IVMD type %d" % self.Type)
