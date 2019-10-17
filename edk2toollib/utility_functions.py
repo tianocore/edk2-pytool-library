@@ -387,10 +387,10 @@ def import_module_by_file_name(module_file_path):
 def locate_class_in_module(Module, DesiredClass):
     '''
     Given a module and a class, this function will return the subclass of DesiredClass in Module.
-    Throws exception if two classes are found that fit the same criterea.
+    It gives preference to classes that are defined in the module itself
     '''
 
-    DesiredClassInstances = []
+    DesiredClassInstances = []  # a list of all the matching classes that we find
     # Pull out the contents of the module that was provided
     module_contents = dir(Module)
     module_file = Module.__file__
@@ -405,15 +405,15 @@ def locate_class_in_module(Module, DesiredClass):
                 _class_file = inspect.getfile(_class)  # get the file name of the class we care about
             except TypeError:  # we throw a type error if a builtin module? PlatformBuild is considered builtin?
                 _class_file = module_file
-            if _class_file == module_file:  # if this is in the same file put it at the front of the list
-                DesiredClassInstances.insert(0, _class)
+            if _class_file == module_file:  # if this is in the same file as the module
+                DesiredClassInstances.insert(0, _class)  # put it at the front of the list
             else:  # otherwise to the back of the list
                 DesiredClassInstances.append(_class)
-    if len(DesiredClassInstances) == 0:
+    if len(DesiredClassInstances) == 0:  # we didn't find anything
         return None
     if len(DesiredClassInstances) > 1:  # we can't log because logging isn't setup yet
         print(f"WARNING: Multiple setting classes were found. Using {DesiredClassInstances[0]}")
-    return DesiredClassInstances[0]
+    return DesiredClassInstances[0]  # return the first (highest priority class)
 
 
 if __name__ == '__main__':
