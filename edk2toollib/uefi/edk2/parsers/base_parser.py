@@ -231,7 +231,7 @@ class BaseParser(object):
                 v = self.InputVars.get(token)
 
                 if(v is None):
-                    self.Logger.error("Unknown variable %s in  %s" % (token, line))
+                    self.Logger.info("Unknown variable %s in  %s" % (token, line))
                     # raise Exception("Invalid Variable Replacement", token)
                     # just skip it because we need to support ifdef
                 else:
