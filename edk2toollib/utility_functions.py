@@ -412,7 +412,7 @@ def locate_class_in_module(Module, DesiredClass):
     if len(DesiredClassInstances) == 0:  # we didn't find anything
         return None
     if len(DesiredClassInstances) > 1:  # we can't log because logging isn't setup yet
-        print(f"WARNING: Multiple setting classes were found. Using {DesiredClassInstances[0]}")
+        print(f"Multiple {DesiredClass.__name__} classes were found. Using {DesiredClassInstances[0].__name__}")
     return DesiredClassInstances[0]  # return the first (highest priority class)
 
 
