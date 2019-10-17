@@ -14,6 +14,7 @@ FmpAuthHeader
 import struct
 
 from edk2toollib.uefi.wincert import WinCertUefiGuid
+from edk2toollib.uefi.edk2.fmp_payload_header import FmpPayloadHeaderClass
 
 
 class FmpAuthHeaderClass (object):
@@ -40,19 +41,21 @@ class FmpAuthHeaderClass (object):
     _MonotonicCountSize = struct.calcsize(_MonotonicCountFormat)
 
     def __init__(self):
-        self._Valid = False
         self.MonotonicCount = 0
         self.AuthInfo = WinCertUefiGuid()
         self.Payload = b''
+        self.FmpPayloadHeader = None
 
     def Encode(self):
         FmpAuthHeader = struct.pack(
             self._MonotonicCountFormat,
             self.MonotonicCount
         )
-        self._Valid = True
 
-        return FmpAuthHeader + self.AuthInfo.Encode() + self.Payload
+        if self.FmpPayloadHeader is not None:
+            return FmpAuthHeader + self.AuthInfo.Encode() + self.FmpPayloadHeader.Encode()
+        else:
+            return FmpAuthHeader + self.AuthInfo.Encode() + self.Payload
 
     def Decode(self, Buffer):
         if len(Buffer) < self._MonotonicCountSize:
@@ -64,8 +67,9 @@ class FmpAuthHeaderClass (object):
         self.MonotonicCount = MonotonicCount
 
         self.Payload = self.AuthInfo.Decode(Buffer[self._MonotonicCountSize:])
-        self._Valid = True
-
+        if len(self.Payload) > 0:
+            self.FmpPayloadHeader = FmpPayloadHeaderClass()
+            self.FmpPayloadHeader.Decode(self.Payload)
         return self.Payload
 
     def IsSigned(self, Buffer):
@@ -78,10 +82,10 @@ class FmpAuthHeaderClass (object):
         return True
 
     def DumpInfo(self):
-        if not self._Valid:
-            raise ValueError
         print('EFI_FIRMWARE_IMAGE_AUTHENTICATION.MonotonicCount                = {MonotonicCount:016X}'
               .format(MonotonicCount=self.MonotonicCount))
         self.AuthInfo.DumpInfo()
         print('sizeof (Payload)                                                = {Size:08X}'
               .format(Size=len(self.Payload)))
+        if self.FmpPayloadHeader is not None:
+            self.FmpPayloadHeader.DumpInfo()

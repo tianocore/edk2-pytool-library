@@ -218,9 +218,9 @@ class WinCertUefiGuid(object):
                 self.Decode(in_data)
 
     def Encode(self):
-        if self.Hdr_wRevision != self._WIN_CERT_REVISION:
+        if self.Hdr_wRevision != WinCert.REVISION:
             raise ValueError
-        if self.Hdr_wCertificateType != self._WIN_CERT_TYPE_EFI_GUID:
+        if self.Hdr_wCertificateType != WinCert.WIN_CERT_TYPE_EFI_GUID:
             raise ValueError
         if self.CertType != self._EFI_CERT_TYPE_PKCS7_GUID:
             raise ValueError

@@ -87,7 +87,7 @@ class UefiCapsuleHeaderClass (object):
         else:
             return UefiCapsuleHeader + self.FmpCapsuleHeader.Encode()
 
-    def Decode(self, Buffer, AttemptNested=False):
+    def Decode(self, Buffer):
         if len(Buffer) < self._StructSize:
             raise ValueError
         (CapsuleGuid, HeaderSize, Flags, CapsuleImageSize, Reserved) = struct.unpack(
@@ -106,9 +106,8 @@ class UefiCapsuleHeaderClass (object):
         self.InitiateReset = (Flags & self._CAPSULE_FLAGS_INITIATE_RESET) != 0
         self.CapsuleImageSize = CapsuleImageSize
         self.Payload = Buffer[self.HeaderSize:]
-        if len(self.Payload) > 0 and self.CapsuleGuid == self.EFI_FIRMWARE_MANAGEMENT_CAPSULE_ID_GUID and AttemptNested:
+        if len(self.Payload) > 0 and self.CapsuleGuid == self.EFI_FIRMWARE_MANAGEMENT_CAPSULE_ID_GUID:
             self.FmpCapsuleHeader = FmpCapsuleHeaderClass()
-            # self.FmpCapsuleHeader.Decode(self.Payload, AttemptNested=AttemptNested)
             self.FmpCapsuleHeader.Decode(self.Payload)
 
         return self.Payload

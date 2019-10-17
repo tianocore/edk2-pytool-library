@@ -39,7 +39,6 @@ class FmpPayloadHeaderClass (object):
     _FMP_PAYLOAD_HEADER_SIGNATURE = _SIGNATURE_32('M', 'S', 'S', '1')
 
     def __init__(self):
-        self._Valid = False
         self.Signature = self._FMP_PAYLOAD_HEADER_SIGNATURE
         self.HeaderSize = self._StructSize
         self.FwVersion = 0x00000000
@@ -54,7 +53,6 @@ class FmpPayloadHeaderClass (object):
             self.FwVersion,
             self.LowestSupportedVersion
         )
-        self._Valid = True
         return FmpPayloadHeader + self.Payload
 
     def Decode(self, Buffer):
@@ -74,12 +72,9 @@ class FmpPayloadHeaderClass (object):
         self.LowestSupportedVersion = LowestSupportedVersion
         self.Payload = Buffer[self.HeaderSize:]
 
-        self._Valid = True
         return self.Payload
 
     def DumpInfo(self):
-        if not self._Valid:
-            raise ValueError
         print('FMP_PAYLOAD_HEADER.Signature              = {Signature:08X} ({SignatureString})'
               .format(Signature=self.Signature, SignatureString=_SIGNATURE_32_TO_STRING(self.Signature)))
         print('FMP_PAYLOAD_HEADER.HeaderSize             = {HeaderSize:08X}'.format(HeaderSize=self.HeaderSize))
