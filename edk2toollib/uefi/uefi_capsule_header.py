@@ -11,6 +11,7 @@ UefiCapsuleHeader
 
 import struct
 import uuid
+from edk2toollib.uefi.fmp_capsule_header import FmpCapsuleHeaderClass
 
 
 class UefiCapsuleHeaderClass (object):
@@ -51,7 +52,6 @@ class UefiCapsuleHeaderClass (object):
     _CAPSULE_FLAGS_INITIATE_RESET = 0x00040000
 
     def __init__(self):
-        self._Valid = False
         self.CapsuleGuid = self.EFI_FIRMWARE_MANAGEMENT_CAPSULE_ID_GUID
         self.HeaderSize = self._StructSize
         self.OemFlags = 0x0000
@@ -60,6 +60,7 @@ class UefiCapsuleHeaderClass (object):
         self.InitiateReset = False
         self.CapsuleImageSize = self.HeaderSize
         self.Payload = b''
+        self.FmpCapsuleHeader = None
 
     def Encode(self):
         Flags = self.OemFlags
@@ -69,6 +70,10 @@ class UefiCapsuleHeaderClass (object):
             Flags = Flags | self._CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE
         if self.InitiateReset:
             Flags = Flags | self._CAPSULE_FLAGS_INITIATE_RESET
+
+        # If we have an FmpCapsuleHeader, let's collapse that now.
+        if self.FmpCapsuleHeader is not None:
+            self.Payload = self.FmpCapsuleHeader.Encode()
 
         self.CapsuleImageSize = self.HeaderSize + len(self.Payload)
 
@@ -80,7 +85,7 @@ class UefiCapsuleHeaderClass (object):
             self.CapsuleImageSize,
             0
         )
-        self._Valid = True
+
         return UefiCapsuleHeader + self.Payload
 
     def Decode(self, Buffer):
@@ -102,13 +107,13 @@ class UefiCapsuleHeaderClass (object):
         self.InitiateReset = (Flags & self._CAPSULE_FLAGS_INITIATE_RESET) != 0
         self.CapsuleImageSize = CapsuleImageSize
         self.Payload = Buffer[self.HeaderSize:]
+        if len(self.Payload) > 0 and self.CapsuleGuid == self.EFI_FIRMWARE_MANAGEMENT_CAPSULE_ID_GUID:
+            self.FmpCapsuleHeader = FmpCapsuleHeaderClass()
+            self.FmpCapsuleHeader.Decode(self.Payload)
 
-        self._Valid = True
         return self.Payload
 
     def DumpInfo(self):
-        if not self._Valid:
-            raise ValueError
         Flags = self.OemFlags
         if self.PersistAcrossReset:
             Flags = Flags | self._CAPSULE_FLAGS_PERSIST_ACROSS_RESET
@@ -128,3 +133,5 @@ class UefiCapsuleHeaderClass (object):
             print('  CAPSULE_FLAGS_INITIATE_RESET')
         print('EFI_CAPSULE_HEADER.CapsuleImageSize = {Size:08X}'.format(Size=self.CapsuleImageSize))
         print('sizeof (Payload)                    = {Size:08X}'.format(Size=len(self.Payload)))
+        if self.FmpCapsuleHeader is not None:
+            self.FmpCapsuleHeader.DumpInfo()
