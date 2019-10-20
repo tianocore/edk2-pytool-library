@@ -42,7 +42,7 @@ EFI_FVH_SIGNATURE = b"_FVH"
 # } EFI_FIRMWARE_VOLUME_HEADER;
 class EfiFirmwareVolumeHeader(object):
     def __init__(self):
-        self.StructString = "=16s16sQ4sLHHHBBQQ"
+        self.StructString = "=16s16sQ4sLHHHBBQQ"  # spell-checker: disable-line
         self.ZeroVector = None
         self.FileSystemGuid = None
         self.FvLength = None

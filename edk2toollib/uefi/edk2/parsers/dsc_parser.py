@@ -44,9 +44,9 @@ class DscParser(HashFileParser):
         # check for include file and import lines from file
         if(line_resolved.strip().lower().startswith("!include")):
             # include line.
-            toks = line_resolved.split()
-            self.Logger.debug("Opening Include File %s" % os.path.join(self.RootPath, toks[1]))
-            sp = self.FindPath(toks[1])
+            tokens = line_resolved.split()
+            self.Logger.debug("Opening Include File %s" % os.path.join(self.RootPath, tokens[1]))
+            sp = self.FindPath(tokens[1])
             lf = open(sp, "r")
             loc = lf.readlines()
             lf.close()
@@ -178,9 +178,9 @@ class DscParser(HashFileParser):
         # check for include file and import lines from file
         if(line_resolved.strip().lower().startswith("!include")):
             # include line.
-            toks = line_resolved.split()
-            self.Logger.debug("Opening Include File %s" % os.path.join(self.RootPath, toks[1]))
-            sp = self.FindPath(toks[1])
+            tokens = line_resolved.split()
+            self.Logger.debug("Opening Include File %s" % os.path.join(self.RootPath, tokens[1]))
+            sp = self.FindPath(tokens[1])
             lf = open(sp, "r")
             loc = lf.readlines()
             lf.close()

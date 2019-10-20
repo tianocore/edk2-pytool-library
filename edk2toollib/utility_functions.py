@@ -137,7 +137,7 @@ def timing(f):
 
 
 ####
-# Run a shell commmand and print the output to the log file
+# Run a shell command and print the output to the log file
 # This is the public function that should be used to run commands from the shell in python environment
 # @param cmd - command being run, either quoted or not quoted
 # @param parameters - parameters string taken as is
@@ -168,10 +168,10 @@ def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstre
     logging.log(logging_level, "------------------------------------------------")
     c = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=workingdir, shell=True, env=environ)
     if(capture):
-        outr = PropagatingThread(target=reader, args=(outfile, outstream, c.stdout, logging_level))
-        outr.start()
+        thread = PropagatingThread(target=reader, args=(outfile, outstream, c.stdout, logging_level))
+        thread.start()
         c.wait()
-        outr.join()
+        thread.join()
     else:
         c.wait()
 
@@ -269,7 +269,7 @@ def DetachedSignWithSignTool(SignToolPath, ToSignFilePath, SignatureOutputFile, 
         return ret
     signedfile = os.path.join(OutputDir, os.path.basename(ToSignFilePath) + ".p7")
     if(not os.path.isfile(signedfile)):
-        raise Exception("Output file doesn't eixst %s" % signedfile)
+        raise Exception("Output file doesn't exist %s" % signedfile)
 
     shutil.move(signedfile, SignatureOutputFile)
     return ret
@@ -349,7 +349,7 @@ def PrintByteList(ByteList, IncludeAscii=True, IncludeOffset=True, IncludeHexSep
 
             while(index % 16 != 15):
                 print("     ", end='')
-                if(index % 16 == 7):  # acount for the - symbol in the hex dump
+                if(index % 16 == 7):  # account for the - symbol in the hex dump
                     if(IncludeOffset):
                         print("  ", end='')
                 index += 1
@@ -387,7 +387,7 @@ def import_module_by_file_name(module_file_path):
 def locate_class_in_module(Module, DesiredClass):
     '''
     Given a module and a class, this function will return the subclass of DesiredClass in Module.
-    Throws exception if two classes are found that fit the same criterea.
+    Throws exception if two classes are found that fit the same criteria.
     '''
 
     DesiredClassInstance = None

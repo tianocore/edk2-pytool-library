@@ -1,5 +1,5 @@
 ##
-# Handle basic logging with color via ANSI comamnds
+# Handle basic logging with color via ANSI commands
 # Will call into win32 commands as needed when needed
 #
 # Copyright (c) Microsoft Corporation
@@ -165,7 +165,7 @@ class AnsiColor(object):
         return False
 
 
-# the formatter that ouputs ANSI codes as needed
+# the formatter that outputs ANSI codes as needed
 class ColoredFormatter(logging.Formatter):
     AZURE_COLORS = {
         'CRITICAL': "section",

@@ -4,7 +4,7 @@ import re
 import os
 import collections
 """
-gitignore parser configurd to work for edk2-pytool-library
+gitignore parser configured to work for edk2-pytool-library
 """
 
 # Copyright (c) Microsoft Corporation

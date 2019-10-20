@@ -164,7 +164,7 @@ class DMARTable(object):
     """ % (self.Type, self.Length)
 
     class DRHDStruct(RemappingStructHeader):
-        STRUCT_FORMAT = '=HHBBHQ'
+        STRUCT_FORMAT = '=HHBBHQ' # spell-checker: disable-line
 
         def __init__(self, header_byte_array, length):
             (self.Type,
@@ -221,7 +221,7 @@ class DMARTable(object):
             return retstring
 
     class RMRRStruct(RemappingStructHeader):
-        STRUCT_FORMAT = '=HHHHQQ'
+        STRUCT_FORMAT = '=HHHHQQ' # spell-checker: disable-line
 
         def __init__(self, header_byte_array, length):
             (self.Type,
@@ -288,7 +288,7 @@ class DMARTable(object):
             return retstring
 
     class ATSRStruct(RemappingStructHeader):
-        STRUCT_FORMAT = '=HHBBH'
+        STRUCT_FORMAT = '=HHBBH' # spell-checker: disable-line
 
         def __init__(self, header_byte_array, length):
             (self.Type,
@@ -342,7 +342,7 @@ class DMARTable(object):
             return retstring
 
     class RHSAStruct(RemappingStructHeader):
-        STRUCT_FORMAT = '=HHIQI'
+        STRUCT_FORMAT = '=HHIQI' # spell-checker: disable-line
 
         def __init__(self, header_byte_array, length):
             (self.Type,
@@ -412,7 +412,7 @@ class DMARTable(object):
     """ % (self.Type, self.Length, self.Reserved, self.ACPIDeviceNumber, self.ACPIObjectName)
 
     class DeviceScopeStruct(object):
-        STRUCT_FORMAT = '=BBHBB'
+        STRUCT_FORMAT = '=BBHBB' # spell-checker: disable-line
 
         def __init__(self, header_byte_array):
             (self.Type,

@@ -25,7 +25,7 @@ import sys
 
 class EfiFirmwareFileSystemHeader(object):
     def __init__(self):
-        self.StructString = "=16sHBBBBBB"
+        self.StructString = "=16sHBBBBBB"  # spell-checker: disable-line
         self.FileSystemGuid = None
         self.Size0 = None
         self.Size1 = None
