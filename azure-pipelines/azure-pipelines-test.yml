@@ -10,6 +10,7 @@ resources:
       type: github
       name: spbrogan/edk2-pytool-extensions
       ref: refs/heads/pipelinec
+      endpoint: spbrogan
 
 # trigger on master for CI and all PRs for master
 trigger: 
