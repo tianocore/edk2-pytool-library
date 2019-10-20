@@ -6,7 +6,7 @@
 ##
 resources:
   repositories:
-    - repository: pytool-extensions
+    - repository: pytool_extensions
       type: github
       name: spbrogan/edk2-pytool-extensions
       ref: refs/heads/pipelinec
@@ -19,13 +19,13 @@ pr:
 - master
 
 jobs:
-- template: azure-pipelines/templates/build-test-job.yml@pytool-extensions
+- template: azure-pipelines/templates/build-test-job.yml@pytool_extensions
   parameters:
     vm_image: 'windows-latest'
     root_package_folder: "edk2toollib"
     name: 'windows'
 
-- template: azure-pipelines/templates/build-test-job.yml@pytool-extensions
+- template: azure-pipelines/templates/build-test-job.yml@pytool_extensions
   parameters:
     vm_image: 'ubuntu-latest'
     root_package_folder: "edk2toollib"
