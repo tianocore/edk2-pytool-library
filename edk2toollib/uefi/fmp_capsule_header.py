@@ -53,7 +53,7 @@ class FmpCapsuleImageHeaderClass (object):
     #
     #  #define EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER_INIT_VERSION 0x00000002
 
-    _StructFormat = '<I16sB3BIIQ'
+    _StructFormat = '<I16sB3BIIQ'  # spell-checker: disable-line
     _StructSize = struct.calcsize(_StructFormat)
 
     EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER_INIT_VERSION = 0x00000002

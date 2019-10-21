@@ -32,7 +32,7 @@ EdkiiWorkingBlockSignatureGuid = uuid.UUID(fields=(0x9E58292B, 0x7C68, 0x497D, 0
 
 class EfiFtwWorkingBlockHeader(object):
     def __init__(self):
-        self.StructString = "=16sLBBBBQ"
+        self.StructString = "=16sLBBBBQ"  # spell-checker: disable-line
         self.Signature = None
         self.Crc = None
         self.WorkingBlockValidFields = None
@@ -131,7 +131,7 @@ class EfiFtwWriteHeader(object):
 
 class EfiFtwWriteRecord(object):
     def __init__(self):
-        self.StructString = "=BBBBLQQQQ"
+        self.StructString = "=BBBBLQQQQ"  # spell-checker: disable-line
         self.StatusBits = None
         self.ReservedByte1 = None
         self.ReservedByte2 = None

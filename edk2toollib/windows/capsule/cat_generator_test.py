@@ -85,7 +85,7 @@ class CatGeneratorTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             CatGenerator("Invalid Arch", "win10")
 
-    def test_invalid_pathtotool(self):
+    def test_invalid_path_to_tool(self):
         o = CatGenerator("amd64", "10")
         with self.assertRaises(Exception) as cm:
             o.MakeCat("garbage", os.path.join("c:", "test", "badpath", "inf2cat.exe"))

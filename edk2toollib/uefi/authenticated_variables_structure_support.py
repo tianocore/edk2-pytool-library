@@ -14,6 +14,7 @@ import uuid
 from edk2toollib.uefi.wincert import WinCert, WinCertUefiGuid
 from edk2toollib.utility_functions import PrintByteList
 
+# spell-checker: ignore decodefs, createfs
 
 '''
 Structures definition based on UEFI specification (UEFI 2.7)
