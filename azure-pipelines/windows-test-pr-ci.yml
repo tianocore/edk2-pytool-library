@@ -1,0 +1,27 @@
+##
+# Azure Pipeline CI build and PR build
+
+# Copyright (c) 2019, Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+resources:
+  repositories:
+    - repository: pytool_extensions
+      type: github
+      name: tianocore/edk2-pytool-extensions
+      ref: refs/heads/master
+      endpoint: edk2-pytool-extensions-for-pipeline-access
+
+# trigger on master for CI and all PRs for master
+trigger: 
+- master
+
+pr: 
+- master
+
+jobs:
+- template: azure-pipelines/templates/build-test-job.yml@pytool_extensions
+  parameters:
+    vm_image: 'windows-latest'
+    root_package_folder: "edk2toollib"
+    name: 'windows'

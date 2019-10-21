@@ -8,9 +8,9 @@ resources:
   repositories:
     - repository: pytool_extensions
       type: github
-      name: spbrogan/edk2-pytool-extensions
-      ref: refs/heads/pipelinec
-      endpoint: spbrogan
+      name: tianocore/edk2-pytool-extensions
+      ref: refs/heads/master
+      endpoint: edk2-pytool-extensions-for-pipeline-access
 
 # trigger on master for CI and all PRs for master
 trigger: 
@@ -20,11 +20,6 @@ pr:
 - master
 
 jobs:
-- template: azure-pipelines/templates/build-test-job.yml@pytool_extensions
-  parameters:
-    vm_image: 'windows-latest'
-    root_package_folder: "edk2toollib"
-    name: 'windows'
 
 - template: azure-pipelines/templates/build-test-job.yml@pytool_extensions
   parameters:
