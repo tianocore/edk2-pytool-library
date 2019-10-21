@@ -199,7 +199,7 @@ def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_versi
 
         logging.error("We were not able to find on the keys requested from vcvarsall.")
         logging.error("We didn't find: %s" % str(difference))
-        raise ValueError("Missing keyes when querying vcvarsall: " + str(difference))
+        raise ValueError("Missing keys when querying vcvarsall: " + str(difference))
     return result
 
 

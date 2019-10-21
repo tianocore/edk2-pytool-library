@@ -45,7 +45,7 @@ VAR_ADDED = 0x3F  # Variable has been completely added.
 
 class VariableStoreHeader(object):
     def __init__(self):
-        self.StructString = "=16sLBBHL"
+        self.StructString = "=16sLBBHL"  # spell-checker: disable-line
         self.StructSize = struct.calcsize(self.StructString)
         self.Signature = None
         self.Size = None
@@ -108,7 +108,7 @@ class VariableStoreHeader(object):
 
 class VariableHeader(object):
     def __init__(self):
-        self.StructString = "=HBBLLL16s"
+        self.StructString = "=HBBLLL16s"  # spell-checker: disable-line
         self.StructSize = struct.calcsize(self.StructString)
         self.StartId = VARIABLE_DATA
         self.State = VAR_ADDED
@@ -247,7 +247,7 @@ class VariableHeader(object):
 class AuthenticatedVariableHeader(VariableHeader):
     def __init__(self):
         super(AuthenticatedVariableHeader, self).__init__()
-        self.StructString = "=HBBLQ16sLLL16s"
+        self.StructString = "=HBBLQ16sLLL16s"  # spell-checker: disable-line
         self.StructSize = struct.calcsize(self.StructString)
         self.MonotonicCount = 0
         self.TimeStamp = b''

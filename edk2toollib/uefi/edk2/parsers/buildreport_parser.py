@@ -88,15 +88,15 @@ class ModuleSummary(object):
                         # first is the library instance INF
                         # second is the library class
 
-                        libc = templine.partition('{')[2].partition('}')[0].partition(':')[0].strip()
-                        libi = templine.partition('{')[0].strip()
+                        lib_class = templine.partition('{')[2].partition('}')[0].partition(':')[0].strip()
+                        lib_instance = templine.partition('{')[0].strip()
 
                         # Take absolute path and convert to EDK build path
-                        RelativePath = pathConverter.GetEdk2RelativePathFromAbsolutePath(libi)
+                        RelativePath = pathConverter.GetEdk2RelativePathFromAbsolutePath(lib_instance)
                         if(RelativePath is not None):
-                            self.Libraries[libc] = RelativePath
+                            self.Libraries[lib_class] = RelativePath
                         else:
-                            self.Libraries[libc] = libi
+                            self.Libraries[lib_class] = lib_instance
                         i += 1
                         continue
 
@@ -290,7 +290,7 @@ class BuildReport(object):
                         logging.error("Failed to find component for INF path %a" % RelativePath)
 
             elif a.startswith("Fv Name:"):
-                # Fv Name:            FVDXE (99.5% Full)
+                # Fv Name:            FV_DXE (99.5% Full)
                 FvName = a.partition(":")[2].strip().split()[0]
                 logging.debug("Found FvName. RAW: %s  Name: %s" % (a, FvName))
             else:
