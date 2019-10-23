@@ -274,7 +274,7 @@ class BaseParser(object):
             return True
 
         elif(tokens[0].lower() == "!ifdef"):
-            self.PushConditional(not (self.LocalVars.get(tokens[1]) is None))
+            self.PushConditional(self.LocalVars.get(tokens[1]) is not None)
             return True
 
         elif(tokens[0].lower() == "!ifndef"):
