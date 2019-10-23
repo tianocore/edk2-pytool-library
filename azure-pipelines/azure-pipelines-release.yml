@@ -1,0 +1,30 @@
+##
+# Azure Pipeline build file for a releasing to pypi
+
+# Copyright (c) 2019, Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+resources:
+  repositories:
+    - repository: pytool_extensions
+      type: github
+      name: tianocore/edk2-pytool-extensions
+      ref: refs/heads/master
+      endpoint: edk2-pytool-extensions-for-pipeline-access
+
+# trigger when a vXX.XX.XX tag is created
+trigger: 
+  tags:
+    include:
+    - v*
+
+pr: none  # not a pr target
+
+jobs:
+- template: azure-pipelines/templates/build-test-job.yml@pytool_extensions
+  parameters:
+    vm_image: 'windows-latest'
+    pypi_auth_feed: 'Pypi-edk2-pytool-library'
+    root_package_folder: "edk2toollib"
+    name: 'windows'

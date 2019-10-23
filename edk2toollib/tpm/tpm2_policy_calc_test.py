@@ -89,18 +89,18 @@ class TestPolicyTreeSolo(unittest.TestCase):
         test2 = t2pc.PolicyTreeSolo(t2pc.PolicyCommandCode("TPM_CC_Clear"))
         test3 = t2pc.PolicyTreeSolo(t2pc.PolicyCommandCode("TPM_CC_NV_UndefineSpaceSpecial"))
 
-        phash = t2pc.PolicyHasher('sha256')
-        self.assertEqual(test1.get_policy(phash), expected_result_1)
-        self.assertEqual(test2.get_policy(phash), expected_result_2)
-        self.assertEqual(test3.get_policy(phash), expected_result_3)
+        policy_hash = t2pc.PolicyHasher('sha256')
+        self.assertEqual(test1.get_policy(policy_hash), expected_result_1)
+        self.assertEqual(test2.get_policy(policy_hash), expected_result_2)
+        self.assertEqual(test3.get_policy(policy_hash), expected_result_3)
 
     def test_policy_locality(self):
         expected_result = bytearray.fromhex("07039B45BAF2CC169B0D84AF7C53FD1622B033DF0A5DCDA66360AA99E54947CD")
 
         test = t2pc.PolicyTreeSolo(t2pc.PolicyLocality([3, 4]))
 
-        phash = t2pc.PolicyHasher('sha256')
-        self.assertEqual(test.get_policy(phash), expected_result)
+        policy_hash = t2pc.PolicyHasher('sha256')
+        self.assertEqual(test.get_policy(policy_hash), expected_result)
 
 
 class TestPolicyTreeAnd(unittest.TestCase):
@@ -109,8 +109,8 @@ class TestPolicyTreeAnd(unittest.TestCase):
         soloTest = t2pc.PolicyTreeSolo(t2pc.PolicyCommandCode("TPM_CC_Clear"))
         andTest = t2pc.PolicyTreeAnd([t2pc.PolicyCommandCode("TPM_CC_Clear")])
 
-        phash = t2pc.PolicyHasher('sha256')
-        self.assertEqual(soloTest.get_policy(phash), andTest.get_policy(phash))
+        policy_hash = t2pc.PolicyHasher('sha256')
+        self.assertEqual(soloTest.get_policy(policy_hash), andTest.get_policy(policy_hash))
 
 
 class TestPolicyTreeOr(unittest.TestCase):
@@ -122,8 +122,8 @@ class TestPolicyTreeOr(unittest.TestCase):
         test2 = t2pc.PolicyTreeSolo(t2pc.PolicyCommandCode("TPM_CC_Clear"))
         orTest = t2pc.PolicyTreeOr([test1, test2])
 
-        phash = t2pc.PolicyHasher('sha256')
-        self.assertEqual(orTest.get_policy(phash), expected_result)
+        policy_hash = t2pc.PolicyHasher('sha256')
+        self.assertEqual(orTest.get_policy(policy_hash), expected_result)
 
 
 class TestPolicyTree(unittest.TestCase):
@@ -145,8 +145,8 @@ class TestPolicyTree(unittest.TestCase):
         leg2 = t2pc.PolicyTreeAnd([a, b])
         final = t2pc.PolicyTreeOr([leg1, leg2])
 
-        phash = t2pc.PolicyHasher('sha256')
-        self.assertEqual(final.get_policy(phash), expected_result)
+        policy_hash = t2pc.PolicyHasher('sha256')
+        self.assertEqual(final.get_policy(policy_hash), expected_result)
 
 
 if __name__ == '__main__':

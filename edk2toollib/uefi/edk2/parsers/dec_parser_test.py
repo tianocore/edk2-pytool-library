@@ -162,7 +162,7 @@ TestDecFile
   #  need change it except some special cases such as when initializing the CSM bin
   gPcAtChipsetPkgTokenSpaceGuid.Pcd8259LegacyModeMask|0xFFFF|UINT16|0x00000001
 
-  ## Pcd8259LegacyModeEdgeLevel defines the default edge level for legacy mode's interrrupt controller.
+  ## Pcd8259LegacyModeEdgeLevel defines the default edge level for legacy mode's interrupt controller.
   #  For the corresponding bits, 0 = Edge triggered and 1 = Level triggered.
   # @Prompt 8259 Legacy Mode edge level.
   gPcAtChipsetPkgTokenSpaceGuid.Pcd8259LegacyModeEdgeLevel|0x0000|UINT16|0x00000002

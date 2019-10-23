@@ -138,13 +138,13 @@ REG_DWORD     = 0x00010001
 
     @property
     def EsrtGuid(self):
-        return self._esrtguid
+        return self._esrt_guid
 
     @EsrtGuid.setter
     def EsrtGuid(self, value):
         uuid.UUID(value)  # if this works it is valid...otherwise throws exception
         # todo - make sure it is formatted exactly right
-        self._esrtguid = value
+        self._esrt_guid = value
 
     @property
     def VersionString(self):

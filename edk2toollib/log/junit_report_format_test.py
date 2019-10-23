@@ -164,7 +164,7 @@ class TestJunitTestReport(unittest.TestCase):
         jr = junit_report_format.JunitTestReport()
         jts = jr.create_new_testsuite("testname", "testpackage")
         jtc = jts.create_new_testcase("test_error", "testcase.test.error")
-        jtc.SetError("Message in Error case", 'Eror&')
+        jtc.SetError("Message in Error case", 'Error&')
         f = os.path.join(self.test_dir, "testoutput.xml")
         jr.Output(f)
         self.assertTrue(os.path.isfile(f))
