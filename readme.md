@@ -38,7 +38,7 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 ### Version 0.10.3
 
 * Features:
-  * If Multiple classes are found (ie when searching for a SettingsManager), it can now pick the one that is closest to the origional module file
+  * If Multiple classes are found (ie when searching for a SettingsManager), it can now pick the one that is closest to the original module file
   * Unified Azure Pipeline
   * Added Capsule object classes to support decoding and encoding
 * Bugs
