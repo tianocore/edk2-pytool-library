@@ -274,11 +274,11 @@ class BaseParser(object):
             return True
 
         elif(tokens[0].lower() == "!ifdef"):
-            self.PushConditional((tokens[1].count("$") == 0))
+            self.PushConditional(not (self.LocalVars.get(tokens[1]) is None))
             return True
 
         elif(tokens[0].lower() == "!ifndef"):
-            self.PushConditional((tokens[1].count("$") > 0))
+            self.PushConditional(self.LocalVars.get(tokens[1]) is None)
             return True
 
         elif(tokens[0].lower() == "!else"):
