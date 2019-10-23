@@ -35,6 +35,16 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 
 ## Release Version History
 
+### Version 0.10.3
+
+* Features:
+  * If multiple classes are found (ie when searching for a SettingsManager), it can now pick the one that is closest to the original module file
+  * Unified Azure Pipeline
+  * Added Capsule object classes to support decoding and encoding
+* Bugs
+  * Catch errors when emitting invalid characters to the markdown log handler
+  * Processor info is now checked in a case insensitive manner (fixes OpenBSD)
+
 ### Version 0.10.2
 
 * Features:
