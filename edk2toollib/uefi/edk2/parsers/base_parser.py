@@ -197,16 +197,16 @@ class BaseParser(object):
     def _FindReplacementForToken(self, token):
 
         v = self.LocalVars.get(token)
-        
+
         if(v is None):
             v = self.InputVars.get(token)
-        
+
         if(v is None):
             v = self.MacroNotDefinedValue
 
         if(v.upper() == "TRUE" or v.upper == "FALSE"):
             v = v.upper()
-        
+
         return v
 
     #

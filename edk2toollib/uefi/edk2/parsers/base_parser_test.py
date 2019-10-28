@@ -91,3 +91,35 @@ class TestBaseParser(unittest.TestCase):
 
         line = "!IFnDEF name"
         self.assertEqual(parser.ReplaceVariables(line), "!IFnDEF sean")
+
+    def test_conditional_ifdef(self):
+        parser = BaseParser("")
+
+        # simple confirmation of expected behavior
+        # don't need to test VariableReplacement
+        # that is done in the tests replace methods
+        self.assertTrue(parser.InActiveCode())
+        parser.ProcessConditional("!ifdef 0")
+        self.assertFalse(parser.InActiveCode())
+        parser.PopConditional()
+
+        self.assertTrue(parser.InActiveCode())
+        parser.ProcessConditional("!ifdef blahblah")
+        self.assertTrue(parser.InActiveCode())
+        parser.PopConditional()
+
+    def test_conditional_ifndef(self):
+        parser = BaseParser("")
+
+        # simple confirmation of expected behavior
+        # don't need to test VariableReplacement
+        # that is done in the tests replace methods
+        self.assertTrue(parser.InActiveCode())
+        parser.ProcessConditional("!ifndef 0")
+        self.assertTrue(parser.InActiveCode())
+        parser.PopConditional()
+
+        self.assertTrue(parser.InActiveCode())
+        parser.ProcessConditional("!ifndef blahblah")
+        self.assertFalse(parser.InActiveCode())
+        parser.PopConditional()
