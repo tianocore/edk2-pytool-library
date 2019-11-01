@@ -63,9 +63,9 @@ def TestRequiredLicense(apath):
 
 
 p = os.path.join(os.getcwd(), "edk2toollib")
-pyfiles = glob.glob(os.path.join(p, "**", "*.py"), recursive=True)
+py_files = glob.glob(os.path.join(p, "**", "*.py"), recursive=True)
 error = 0
-for a in pyfiles:
+for a in py_files:
     aRelativePath = os.path.relpath(a, os.getcwd())
     if(not TestEncodingOk(a, "ascii")):
         error += 1
@@ -76,5 +76,5 @@ for a in pyfiles:
     if(not TestRequiredLicense(a)):
         error += 1
 
-logging.critical(f"Found {error} error(s) in {len(pyfiles)} file(s)")
+logging.critical(f"Found {error} error(s) in {len(py_files)} file(s)")
 sys.exit(error)

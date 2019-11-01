@@ -200,9 +200,9 @@ TestDecFile
 
     def test_unsupported_file_type(self):
         # write dec and inf sample files to tempdir
-        with open(os.path.join(self.test_dir, "test.deccc"), "w") as f:
+        with open(os.path.join(self.test_dir, "test.unsupported_dec"), "w") as f:
             f.write(TestGuidList.SAMPLE_DEC_FILE)
-        with open(os.path.join(self.test_dir, "test.infff"), "w") as f:
+        with open(os.path.join(self.test_dir, "test.unsupported_inf"), "w") as f:
             f.write(TestGuidList.SAMPLE_INF_FILE)
 
         ResultList = GuidList.guidlist_from_filesystem(self.test_dir)
@@ -220,22 +220,22 @@ TestDecFile
 
     def test_ignore_folder_pattern(self):
         # write dec and inf sample files to tempdir
-        os.makedirs(os.path.join(self.test_dir, "myignore"))
-        with open(os.path.join(self.test_dir, "myignore", "test.dec"), "w") as f:
+        os.makedirs(os.path.join(self.test_dir, "my_ignore"))
+        with open(os.path.join(self.test_dir, "my_ignore", "test.dec"), "w") as f:
             f.write(TestGuidList.SAMPLE_DEC_FILE)
         with open(os.path.join(self.test_dir, "test.inf"), "w") as f:
             f.write(TestGuidList.SAMPLE_INF_FILE)
 
-        ResultList = GuidList.guidlist_from_filesystem(self.test_dir, ["myignore"])
+        ResultList = GuidList.guidlist_from_filesystem(self.test_dir, ["my_ignore"])
         self.assertEqual(len(ResultList), 1)
 
     def test_ignore_file_pattern2(self):
         # write dec and inf sample files to tempdir
-        os.makedirs(os.path.join(self.test_dir, "myignore"))
-        with open(os.path.join(self.test_dir, "myignore", "test.dec"), "w") as f:
+        os.makedirs(os.path.join(self.test_dir, "my_ignore"))
+        with open(os.path.join(self.test_dir, "my_ignore", "test.dec"), "w") as f:
             f.write(TestGuidList.SAMPLE_DEC_FILE)
         with open(os.path.join(self.test_dir, "test.inf"), "w") as f:
             f.write(TestGuidList.SAMPLE_INF_FILE)
 
-        ResultList = GuidList.guidlist_from_filesystem(self.test_dir, ["myignore/test.dec"])
+        ResultList = GuidList.guidlist_from_filesystem(self.test_dir, ["my_ignore/test.dec"])
         self.assertEqual(len(ResultList), 1)

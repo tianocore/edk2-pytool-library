@@ -54,8 +54,8 @@ class GuidList():
                     logging.debug(f"Ignore file: {fullpath}")
                     continue
 
-                newg = GuidList.parse_guids_from_edk2_file(fullpath)
-                guids.extend(newg)
+                new_guids = GuidList.parse_guids_from_edk2_file(fullpath)
+                guids.extend(new_guids)
         return guids
 
     @staticmethod

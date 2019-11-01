@@ -214,10 +214,10 @@ class BaseParser(object):
             end = line.find(")", start)
 
             token = line[start + 2:end]
-            retoken = line[start:end + 1]
+            replacement_token = line[start:end + 1]
             self.Logger.debug("Token is %s" % token)
             v = self.LocalVars.get(token)
-            self.Logger.debug("Trying to replace %s" % retoken)
+            self.Logger.debug("Trying to replace %s" % replacement_token)
             if(v is not None):
                 #
                 # fixme: This should just be a workaround!!!!!
@@ -225,13 +225,13 @@ class BaseParser(object):
                 if (v.upper() == "TRUE" or v.upper() == "FALSE"):
                     v = v.upper()
                 self.Logger.debug("with %s  [From Local Vars]" % v)
-                result = result.replace(retoken, v, 1)
+                result = result.replace(replacement_token, v, 1)
             else:
                 # use the passed in Env
                 v = self.InputVars.get(token)
 
                 if(v is None):
-                    self.Logger.error("Unknown variable %s in  %s" % (token, line))
+                    self.Logger.info("Unknown variable %s in  %s" % (token, line))
                     # raise Exception("Invalid Variable Replacement", token)
                     # just skip it because we need to support ifdef
                 else:
@@ -242,7 +242,7 @@ class BaseParser(object):
                     if (v.upper() == "TRUE" or v.upper() == "FALSE"):
                         v = v.upper()
                     self.Logger.debug("with %s [From Input Vars]" % v)
-                    result = result.replace(retoken, v, 1)
+                    result = result.replace(replacement_token, v, 1)
 
             index = end + 1
             rep = rep - 1

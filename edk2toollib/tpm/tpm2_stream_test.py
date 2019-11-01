@@ -1,5 +1,5 @@
 # @file tpm2_stream_test.py
-# This file contains utility classes to help marshal and unmarshal data to/from the TPM.
+# This file contains utility classes to help marshal and un-marshal data to/from the TPM.
 #
 #
 # Copyright (c) Microsoft Corporation

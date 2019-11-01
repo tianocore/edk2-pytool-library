@@ -19,6 +19,8 @@
 # Copyright (c) 2013 - 2015, Intel Corporation. All rights reserved. <BR>
 ##
 
+# spell-checker:disable
+
 
 # Table 7 - TPM_ALG_ID Constants
 TPM_ALG_Size = 2
