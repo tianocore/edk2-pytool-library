@@ -8,7 +8,7 @@
 ##
 import unittest
 import pytest
-from edk2toollib.uefi.fmp_capsule_header import FmpCapsuleHeaderClass, FmpCapsuleImageHeaderClass
+from edk2toollib.uefi.fmp_capsule_header import FmpCapsuleHeaderClass
 
 
 class TestFmpCapsuleHeaderClass(unittest.TestCase):
