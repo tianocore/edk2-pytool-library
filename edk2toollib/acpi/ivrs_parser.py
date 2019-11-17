@@ -14,17 +14,10 @@ IVRSParserVersion = '1.00'
 
 
 class IVRS_TABLE(object):
-    # Header Lengths
-    IVRSHeaderLength = 48
-    IVHDHeader10HLength = 24
-    IVHDHeaderExLength = 40
-    DeviceTableEntryLengthShort = 4
-    DeviceTableEntryLengthLong = 8
-    DeviceTableEntryLengthVar = 22
 
     def __init__(self, data):
         self.ivrs_table = self.ACPI_TABLE_HEADER(data)
-        self.data = data[IVRS_TABLE.IVRSHeaderLength:]
+        self.data = data[IVRS_TABLE.ACPI_TABLE_HEADER.struct_format_size:]
 
         # sanity check on incoming data
         Checksum8 = IVRS_TABLE.validateChecksum8(data)
@@ -73,7 +66,7 @@ class IVRS_TABLE(object):
         return retval
 
     def toBytes(self):
-        bytesarray = bytearray(IVRS_TABLE.IVRSHeaderLength)
+        bytesarray = bytearray(IVRS_TABLE.ACPI_TABLE_HEADER.struct_format_size)
         struct.pack_into(IVRS_TABLE.ACPI_TABLE_HEADER.struct_format,
                          bytesarray,
                          0,
@@ -166,7 +159,7 @@ class IVRS_TABLE(object):
 
     class ACPI_TABLE_HEADER(object):
         struct_format = '=4sIBB6s8sI4sIIQ'
-        size = struct.calcsize(struct_format)
+        struct_format_size = struct.calcsize(struct_format)
 
         def __init__(self, header_byte_array):
             (self.Signature,
@@ -248,6 +241,7 @@ class IVRS_TABLE(object):
 
     class IVHD_STRUCT(REMAPPING_STRUCT_HEADER):
         struct_format = '=BBHHHQHHI'
+        struct_format_size = struct.calcsize(struct_format)
 
         def __init__(self, header_byte_array):
             (self.Type,
@@ -263,13 +257,16 @@ class IVRS_TABLE(object):
             self.data = header_byte_array[:self.Length]
 
             if (self.Type == 0x11) or (self.Type == 0x40):
+                ex_format = "=QQ"
+                ex_format_size = struct.calcsize(ex_format)
                 (self.IOMMUEFRImage,
-                 self.Reserved) = struct.unpack_from("=QQ", header_byte_array[IVRS_TABLE.IVHDHeader10HLength:])
-                header_byte_array = header_byte_array[IVRS_TABLE.IVHDHeaderExLength:]
-                bytes_left = self.Length - IVRS_TABLE.IVHDHeaderExLength
+                 self.Reserved) = struct.unpack_from(ex_format,
+                                                     header_byte_array[IVRS_TABLE.IVHD_STRUCT.struct_format_size:])
+                header_byte_array = header_byte_array[(IVRS_TABLE.IVHD_STRUCT.struct_format_size + ex_format_size):]
+                bytes_left = self.Length - (IVRS_TABLE.IVHD_STRUCT.struct_format_size + ex_format_size)
             else:
-                header_byte_array = header_byte_array[IVRS_TABLE.IVHDHeader10HLength:]
-                bytes_left = self.Length - IVRS_TABLE.IVHDHeader10HLength
+                header_byte_array = header_byte_array[IVRS_TABLE.IVHD_STRUCT.struct_format_size:]
+                bytes_left = self.Length - IVRS_TABLE.IVHD_STRUCT.struct_format_size
 
             # Get Sub Structs
             self.DeviceTableEntries = list()
@@ -445,6 +442,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY(object):
         struct_format = '=BHB'
+        struct_format_size = struct.calcsize(struct_format)
 
         def __init__(self, header_byte_array):
             (self.Type,
@@ -453,81 +451,95 @@ class IVRS_TABLE(object):
 
             if self.Type == 0:
                 self.TypeString = "Reserved"
-                self.Length = IVRS_TABLE.DeviceTableEntryLengthShort
+                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
             elif self.Type == 1:
                 self.TypeString = "All"
-                self.Length = IVRS_TABLE.DeviceTableEntryLengthShort
+                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
             elif self.Type == 2:
                 self.TypeString = "Select"
-                self.Length = IVRS_TABLE.DeviceTableEntryLengthShort
+                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
             elif self.Type == 3:
                 self.TypeString = "Range"
-                self.Length = IVRS_TABLE.DeviceTableEntryLengthShort
+                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
                 (Type,
                  self.EndDeviceID,
                  _) = struct.unpack_from(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, header_byte_array[self.Length:])
                 if Type != 4:
                     print("Start of range does not follow end of range")
                     sys.exit(-1)
-                self.Length += IVRS_TABLE.DeviceTableEntryLengthShort
+                self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
             elif self.Type == 4:
                 self.TypeString = "End of Range"
-                self.Length = IVRS_TABLE.DeviceTableEntryLengthShort
+                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
             elif self.Type == 66:
                 self.TypeString = "Alias Select"
-                self.Length = IVRS_TABLE.DeviceTableEntryLengthLong
+                # Two DevID, one for alias, one for source
+                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
+                    IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
                 (_, self.SourceDeviceID, _) =\
                     struct.unpack_from(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                       header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
+                                       header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:])
             elif self.Type == 67:
                 self.TypeString = "Alias Range"
-                self.Length = IVRS_TABLE.DeviceTableEntryLengthLong
+                # Two DevID, one for alias start, one for source start
+                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
+                    IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
                 (_, self.SourceDeviceID, _) =\
                     struct.unpack_from(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                       header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
+                                       header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:])
                 (Type,
                  self.EndDeviceID,
                  _) = struct.unpack_from(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, header_byte_array[self.Length:])
                 if Type != 4:
                     print("Start of range does not follow end of range")
                     sys.exit(-1)
-                self.Length += IVRS_TABLE.DeviceTableEntryLengthShort
+                self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
             elif self.Type == 70:
                 self.TypeString = "Extended Select"
-                self.Length = IVRS_TABLE.DeviceTableEntryLengthLong
+                # Two DTE setting, one for standard setting, one for extended setting (AtsDisabled, etc.)
+                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
+                    IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
                 (self.ExtendedDTESetting,) = \
-                    struct.unpack_from("=I", header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
+                    struct.unpack_from("=I", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:])
             elif self.Type == 71:
                 self.TypeString = "Extended Range"
-                self.Length = IVRS_TABLE.DeviceTableEntryLengthLong
+                # Two DTE setting, one for standard setting start, one for extended setting start
+                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
+                    IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
                 (self.ExtendedDTESetting,) =\
-                    struct.unpack_from("=I", header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
+                    struct.unpack_from("=I", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:])
                 (Type,
                  self.EndDeviceID,
                  _) = struct.unpack_from(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, header_byte_array[self.Length:])
                 if Type != 4:
                     print("Start of range does not follow end of range")
                     sys.exit(-1)
-                self.Length += IVRS_TABLE.DeviceTableEntryLengthShort
+                self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
             elif self.Type == 72:
                 self.TypeString = "Special Device"
-                self.Length = IVRS_TABLE.DeviceTableEntryLengthLong
+                # First half for standard DTE setting, second half for special DevID and its variety (APIC, HPET, etc.)
+                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
+                    IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
                 (self.Handle, self.SourceDeviceID, self.Variety) =\
                     struct.unpack_from(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                       header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
+                                       header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:])
             elif self.Type == 240:
+                dte_var_ext_format = "=8s8sBB"
+                dte_var_len = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
+                    struct.calcsize(dte_var_ext_format)
                 self.TypeString = "Variable Length ACPI HID Device"
                 (self.HID, self.CID, self.UIDFormat, self.UIDLength) =\
-                    struct.unpack_from("=8s8sBB", header_byte_array[IVRS_TABLE.DeviceTableEntryLengthShort:])
-                self.Length = IVRS_TABLE.DeviceTableEntryLengthVar + self.UIDLength
+                    struct.unpack_from(dte_var_ext_format,
+                                       header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:])
+                self.Length = dte_var_len + self.UIDLength
                 if self.UIDFormat == 0:
                     self.UID = None
                 if self.UIDFormat == 1:
-                    self.UID = struct.unpack_from("=Q", header_byte_array[IVRS_TABLE.DeviceTableEntryLengthVar:])
+                    self.UID = struct.unpack_from("=Q", header_byte_array[dte_var_len:])
                 elif self.UIDFormat == 2:
                     self.UID =\
                         struct.unpack("=%ss" % self.UIDLength,
-                                      header_byte_array[IVRS_TABLE.DeviceTableEntryLengthVar:])
+                                      header_byte_array[dte_var_len:])
             else:
                 print("Unknown Reserved Device Scope Type Found %d" % self.Type)
                 sys.exit(-1)
