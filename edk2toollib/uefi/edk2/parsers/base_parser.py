@@ -231,7 +231,7 @@ class BaseParser(object):
         result = line
         tokens = result.split()
         if tokens[0].lower() in ["!ifdef", "!ifndef"]:
-            if not tokens[1].startswith("$("):
+            if tokens > 1 and not tokens[1].startswith("$("):
                 v = self._FindReplacementForToken(tokens[1])
                 result = result.replace(tokens[1], v, 1)
 
@@ -278,11 +278,11 @@ class BaseParser(object):
             return True
 
         elif(tokens[0].lower() == "!ifdef"):
-            self.PushConditional((tokens[1] != "0"))
+            self.PushConditional((tokens[1] != self._MacroNotDefinedValue))
             return True
 
         elif(tokens[0].lower() == "!ifndef"):
-            self.PushConditional((tokens[1] == "0"))
+            self.PushConditional((tokens[1] == self._MacroNotDefinedValue))
             return True
 
         elif(tokens[0].lower() == "!else"):
