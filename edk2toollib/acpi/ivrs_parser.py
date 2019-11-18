@@ -15,10 +15,13 @@ IVRSParserVersion = '1.00'
 
 class IVRS_TABLE(object):
 
-    def __init__(self):
+    def __init__(self, data=None):
         self.ivrs_table = None
         self.SubStructs = list()
         self.IVMDlist = list()
+
+        if data is not None:
+            self.Decode(data)
 
     def Decode(self, data):
         self.ivrs_table = self.ACPI_TABLE_HEADER(data)
@@ -161,17 +164,17 @@ class IVRS_TABLE(object):
 
         def Encode(self):
             return struct.pack(self.struct_format,
-                                self.Signature,
-                                self.Length,
-                                self.Revision,
-                                self.Checksum,
-                                self.OEMID,
-                                self.OEMTableID,
-                                self.OEMRevision,
-                                self.CreatorID,
-                                self.CreatorRevision,
-                                self.IVinfo,
-                                self.Reserved)
+                               self.Signature,
+                               self.Length,
+                               self.Revision,
+                               self.Checksum,
+                               self.OEMID,
+                               self.OEMTableID,
+                               self.OEMRevision,
+                               self.CreatorID,
+                               self.CreatorRevision,
+                               self.IVinfo,
+                               self.Reserved)
 
         def __str__(self):
             return """\n  ACPI Table Header
@@ -257,7 +260,8 @@ class IVRS_TABLE(object):
                 (self.IOMMUEFRImage,
                  self.Reserved) = struct.unpack_from(self.ex_format,
                                                      header_byte_array[IVRS_TABLE.IVHD_STRUCT.struct_format_size:])
-                header_byte_array = header_byte_array[(IVRS_TABLE.IVHD_STRUCT.struct_format_size + self.ex_format_size):]
+                header_byte_array = \
+                    header_byte_array[(IVRS_TABLE.IVHD_STRUCT.struct_format_size + self.ex_format_size):]
                 bytes_left = self.Length - (IVRS_TABLE.IVHD_STRUCT.struct_format_size + self.ex_format_size)
             else:
                 header_byte_array = header_byte_array[IVRS_TABLE.IVHD_STRUCT.struct_format_size:]
@@ -275,16 +279,16 @@ class IVRS_TABLE(object):
         def Encode(self):
             byte_str = b''
             byte_str += struct.pack(self.Type,
-                                self.Flags,
-                                self.Length,
-                                self.DeviceID,
-                                self.CapabilityOffset,
-                                self.IOMMUBaseAddress,
-                                self.SegmentGroup,
-                                self.IOMMUInfo,
-                                self.IOMMUFeatureInfo)
+                                    self.Flags,
+                                    self.Length,
+                                    self.DeviceID,
+                                    self.CapabilityOffset,
+                                    self.IOMMUBaseAddress,
+                                    self.SegmentGroup,
+                                    self.IOMMUInfo,
+                                    self.IOMMUFeatureInfo)
 
-            if self.IOMMUEFRImage != None:
+            if self.IOMMUEFRImage is not None:
                 byte_str += struct.pack(self.IOMMUEFRImage, self.Reserved)
 
             for dte in self.DeviceTableEntries:
@@ -354,7 +358,7 @@ class IVRS_TABLE(object):
             self.IVMDStartAddress = 0
             self.IVMDMemoryBlockLength = 0
 
-            if data != None:
+            if data is not None:
                 self.Decode(data)
 
         def Decode(self, header_byte_array):
@@ -369,13 +373,13 @@ class IVRS_TABLE(object):
 
         def Encode(self):
             return struct.pack(self.Type,
-                            self.Flags,
-                            self.Length,
-                            self.DeviceID,
-                            self.AuxiliaryData,
-                            self.Reserved,
-                            self.IVMDStartAddress,
-                            self.IVMDMemoryBlockLength)    
+                               self.Flags,
+                               self.Length,
+                               self.DeviceID,
+                               self.AuxiliaryData,
+                               self.Reserved,
+                               self.IVMDStartAddress,
+                               self.IVMDMemoryBlockLength)
 
         def toXml(self):
             xml_repr = ET.Element('IVMD')
@@ -484,7 +488,7 @@ class IVRS_TABLE(object):
             self.DTESetting = 0
             # Intentionally keep this field to avoid complicated table-look-up logic
             self.data = None
-            if data != None:
+            if data is not None:
                 self.Decode(data)
 
         def Decode(self, header_byte_array):
