@@ -231,7 +231,7 @@ class BaseParser(object):
         result = line
         tokens = result.split()
         if tokens[0].lower() in ["!ifdef", "!ifndef"]:
-            if tokens > 1 and not tokens[1].startswith("$("):
+            if len(tokens) > 1 and not tokens[1].startswith("$("):
                 v = self._FindReplacementForToken(tokens[1])
                 result = result.replace(tokens[1], v, 1)
 
