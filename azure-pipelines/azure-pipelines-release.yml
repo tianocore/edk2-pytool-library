@@ -11,7 +11,7 @@ resources:
       type: github
       name: tianocore/edk2-pytool-extensions
       ref: refs/heads/master
-      endpoint: edk2-pytool-extensions-for-pipeline-access
+      endpoint: tianocore
 
 # trigger when a vXX.XX.XX tag is created
 trigger: 
