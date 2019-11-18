@@ -12,7 +12,7 @@ import logging
 class BaseParser(object):
     """ """
 
-    def __init__(self, log=""):
+    def __init__(self, log):
         self.Logger = logging.getLogger(log)
         self.Lines = []
         self.LocalVars = {}
@@ -25,7 +25,6 @@ class BaseParser(object):
         self.PPs = []
         self.TargetFile = None
         self.TargetFilePath = None
-        self.CurrentLine = -1
         self._MacroNotDefinedValue = "0"  # value to used for undefined macro
 
     #
@@ -131,54 +130,25 @@ class BaseParser(object):
         Returns:
 
         """
-        ivalue = value
-        ivalue2 = value2
-        # convert it to interpretted value
-
-        try:
-            ivalue = self.ConvertToInt(ivalue)
-        except ValueError:
-            self.Logger.warning(f"{self.__class__}: Cannot convert value to an int: {ivalue}")
-        try:
-            ivalue2 = self.ConvertToInt(ivalue2)
-        except ValueError:
-            self.Logger.warning(f"{self.__class__}: Cannot convert value to an int: {ivalue2}")
-
-        # check our truthyness
         if(cond == "=="):
             # equal
-            return (ivalue == ivalue2) or (value == value2)
+            return (value.upper() == value2.upper())
 
         elif (cond == "!="):
             # not equal
-            return (ivalue != ivalue2) and (value != value2)
+            return (value.upper() != value2.upper())
 
-        # check to make sure we only have digits from here on out
-        if not str.isdigit(value):
-            self.Logger.error(f"{self.__class__}: Unknown value: {value} {ivalue.__class__}")
-            self.Logger.debug(f"{self.__class__}: Conditional: {value} {cond}{value2}")
-            raise ValueError("Unknown value")
-
-        if not str.isdigit(value2):
-            self.Logger.error(f"{self.__class__}: Unknown value: {value2} {ivalue2}")
-            self.Logger.debug(f"{self.__class__}: Conditional: {value} {cond} {value2}")
-            raise ValueError("Unknown value")
-
-        if (cond == "<"):
-            return (ivalue < ivalue2)
+        elif (cond == "<"):
+            return (self.ConvertToInt(value) < (self.ConvertToInt(value2)))
 
         elif (cond == "<="):
-            return (ivalue <= ivalue2)
+            return (self.ConvertToInt(value) <= (self.ConvertToInt(value2)))
 
         elif (cond == ">"):
-            return (ivalue > ivalue2)
+            return (self.ConvertToInt(value) > (self.ConvertToInt(value2)))
 
         elif (cond == ">="):
-            return (ivalue >= ivalue2)
-
-        else:
-            self.Logger.error(f"{self.__class__}: Unknown conditional: {cond}")
-            raise RuntimeError("Unknown conditional")
+            return (self.ConvertToInt(value) >= (self.ConvertToInt(value2)))
 
     #
     # convert to int based on prefix
@@ -188,16 +158,12 @@ class BaseParser(object):
         """
 
         Args:
-          value: must be str or int
+          value:
 
         Returns:
 
         """
-        if isinstance(value, str) and value.upper() == "TRUE":
-            return 1
-        elif isinstance(value, str) and value.upper() == "FALSE":
-            return 0
-        elif isinstance(value, str) and value.upper().startswith("0X"):
+        if(value.upper().startswith("0X")):
             return int(value, 16)
         else:
             return int(value, 10)
@@ -304,16 +270,11 @@ class BaseParser(object):
         tokens = text.split()
         if(tokens[0].lower() == "!if"):
             # need to add support for OR/AND
-            if (len(tokens) == 2):
-                value = self.ConvertToInt(tokens[1].strip())
-                self.PushConditional(value == 1)  # if the value is true
-            # we can have tokens in 4, 8, 12 etc
-            elif len(tokens) >= 4 and len(tokens) % 4 == 0:
-                con = self.ComputeResult(tokens[1].strip(), tokens[2].strip(), tokens[3].strip())
-                self.PushConditional(con)
-            else:
+            if(len(tokens) < 4):
                 self.Logger.error("!if conditionals need to be formatted correctly (spaces between each token)")
-                raise RuntimeError("Invalid conditional", text)
+                raise Exception("Invalid conditional", text)
+            con = self.ComputeResult(tokens[1].strip(), tokens[2].strip(), tokens[3].strip())
+            self.PushConditional(con)
             return True
 
         elif(tokens[0].lower() == "!ifdef"):
@@ -325,18 +286,11 @@ class BaseParser(object):
             return True
 
         elif(tokens[0].lower() == "!else"):
-            if len(tokens) != 1:
-                self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
-                raise RuntimeError("Invalid conditional", text)
             v = self.PopConditional()
-            # TODO make sure we can't do multiple else statements
             self.PushConditional(not v)
             return True
 
         elif(tokens[0].lower() == "!endif"):
-            if len(tokens) != 1:
-                self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
-                raise RuntimeError("Invalid conditional", text)
             self.PopConditional()
             return True
 
@@ -355,10 +309,14 @@ class BaseParser(object):
 
         return ret
 
+    #
+    # will return true if the the line has
+    # { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
+    #
+
     def IsGuidString(self, l):
         """
-        will return true if the the line has
-        = { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
+
         Args:
           l:
 
