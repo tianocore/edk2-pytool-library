@@ -25,7 +25,7 @@ class BaseParser(object):
         self.PPs = []
         self.TargetFile = None
         self.TargetFilePath = None
-        self.MacroNotDefinedValue = "0"  # value to used for undefined macro
+        self._MacroNotDefinedValue = "0"  # value to used for undefined macro
 
     #
     # For include files set the base root path
@@ -202,9 +202,12 @@ class BaseParser(object):
             v = self.InputVars.get(token)
 
         if(v is None):
-            v = self.MacroNotDefinedValue
+            v = self._MacroNotDefinedValue
 
-        if(v.upper() == "TRUE" or v.upper == "FALSE"):
+        if (type(v) is bool):
+            v = "true" if v else "false"
+
+        if(type(v) is str and (v.upper() == "TRUE" or v.upper() == "FALSE")):
             v = v.upper()
 
         return v

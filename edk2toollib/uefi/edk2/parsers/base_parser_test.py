@@ -11,6 +11,24 @@ from edk2toollib.uefi.edk2.parsers.base_parser import BaseParser
 
 class TestBaseParser(unittest.TestCase):
 
+    def test_replace_boolean_constants(self):
+        parser = BaseParser("")
+        parser.SetInputVars({
+            "true": "True",
+            "false": "False",
+            "b_true": True,
+            "b_false": False
+        })
+        line = "$(true)"
+        self.assertEqual(parser.ReplaceVariables(line), "TRUE")
+        line = "$(false)"
+        self.assertEqual(parser.ReplaceVariables(line), "FALSE")
+        line = "$(b_true)"
+        self.assertEqual(parser.ReplaceVariables(line), "TRUE")
+        line = "$(b_false)"
+        self.assertEqual(parser.ReplaceVariables(line), "FALSE")
+
+
     def test_replace_macro_using_dollarsign(self):
         parser = BaseParser("")
         parser.SetInputVars({
