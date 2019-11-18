@@ -15,9 +15,14 @@ IVRSParserVersion = '1.00'
 
 class IVRS_TABLE(object):
 
-    def __init__(self, data):
+    def __init__(self):
+        self.ivrs_table = None
+        self.SubStructs = list()
+        self.IVMDlist = list()
+
+    def Decode(self, data):
         self.ivrs_table = self.ACPI_TABLE_HEADER(data)
-        self.data = data[IVRS_TABLE.ACPI_TABLE_HEADER.struct_format_size:]
+        t_data = data[IVRS_TABLE.ACPI_TABLE_HEADER.struct_format_size:]
 
         # sanity check on incoming data
         Checksum8 = IVRS_TABLE.validateChecksum8(data)
@@ -25,17 +30,17 @@ class IVRS_TABLE(object):
             raise Exception('Incoming data checksum does not add up: checksum field %x, calculated is %x',
                             self.ivrs_table.Checksum, Checksum8)
 
-        while len(self.data) > 0:
+        while len(t_data) > 0:
             # Get type and length of remapping struct
-            remapping_header = self.REMAPPING_STRUCT_HEADER(self.data)
+            remapping_header = self.REMAPPING_STRUCT_HEADER(t_data)
 
             # Parse remapping struct
             if(remapping_header.Type == 0x10) or\
               (remapping_header.Type == 0x11) or\
               (remapping_header.Type == 0x40):
-                remapping_header = self.IVHD_STRUCT(self.data)
+                remapping_header = self.IVHD_STRUCT(t_data)
             elif(remapping_header.Type == 0x20) or (remapping_header.Type == 0x21) or (remapping_header.Type == 0x22):
-                remapping_header = self.IVMD_STRUCT(self.data)
+                remapping_header = self.IVMD_STRUCT(t_data)
                 self.ivrs_table.IVMDlist.append(remapping_header)
                 if (remapping_header.Type == 0x22):
                     self.IVRSBit = 0
@@ -43,16 +48,27 @@ class IVRS_TABLE(object):
                 print('Reserved remapping struct found in IVRS table %d' % remapping_header.Type)
                 sys.exit(-1)
 
+            # IVMD has to follow the corresponding IVHD, thus the list records all entries to maintain order
             self.ivrs_table.SubStructs.append(remapping_header)
-            # Add to XML
-            self.data = self.data[remapping_header.Length:]
 
-        self.xml = self.toXml()
+            # Update data position
+            t_data = t_data[remapping_header.Length:]
+
+    def Encode(self):
+        bytes_str = b''
+
+        # Append ACPI header
+        bytes_str += self.ivrs_table.Encode()
+
+        # All IVHD/IVMD entries
+        for ivxd in self.SubStructs:
+            bytes_str += ivxd.Encode()
+        return bytes_str
 
     def toXml(self):
         root = ET.Element('IVRSTable')
         root.append(self.ivrs_table.toXml())
-        for sub in self.ivrs_table.SubStructs:
+        for sub in self.SubStructs:
             root.append(sub.toXml())
 
         return root
@@ -60,59 +76,10 @@ class IVRS_TABLE(object):
     def __str__(self):
         retval = str(self.ivrs_table)
 
-        for sub in self.ivrs_table.SubStructs:
+        for sub in self.SubStructs:
             retval += str(sub)
 
         return retval
-
-    def toBytes(self):
-        bytesarray = bytearray(IVRS_TABLE.ACPI_TABLE_HEADER.struct_format_size)
-        struct.pack_into(IVRS_TABLE.ACPI_TABLE_HEADER.struct_format,
-                         bytesarray,
-                         0,
-                         self.ivrs_table.Signature,
-                         self.ivrs_table.Length,
-                         self.ivrs_table.Revision,
-                         self.ivrs_table.Checksum,
-                         self.ivrs_table.OEMID,
-                         self.ivrs_table.OEMTableID,
-                         self.ivrs_table.OEMRevision,
-                         self.ivrs_table.CreatorID,
-                         self.ivrs_table.CreatorRevision,
-                         self.ivrs_table.IVinfo,
-                         self.ivrs_table.Reserved)
-        bytesarray += self.data
-        return bytesarray
-
-    @staticmethod
-    def byteSum32(val):
-        if (type(val)) is bytes:
-            if len(val) > 4:
-                raise Exception("Invalid 32 bit value: %d", len(val))
-            sum = 0
-            for ele in val:
-                sum += ele
-        else:
-            if (val & 0xFFFFFFFF00000000) != 0:
-                raise Exception("Invalid 32 bit value: %x", val)
-            else:
-                sum = ((val & 0xFF) + ((val >> 8) & 0xFF) + ((val >> 16) & 0xFF) + ((val >> 24) & 0xFF))
-        return sum
-
-    @staticmethod
-    def byteSum64(val):
-        if (type(val)) is bytes:
-            if len(val) > 8:
-                raise Exception("Invalid 64 bit value: %x", val)
-            sum = 0
-            for ele in val:
-                sum += ele
-        else:
-            sum = (val & 0xFF) + ((val >> 8) & 0xFF) +\
-                  ((val >> 16) & 0xFF) + ((val >> 24) & 0xFF) +\
-                  ((val >> 32) & 0xFF) + ((val >> 40) & 0xFF) +\
-                  ((val >> 48) & 0xFF) + ((val >> 56) & 0xFF)
-        return sum
 
     @staticmethod
     def validateChecksum8(data):
@@ -122,18 +89,17 @@ class IVRS_TABLE(object):
         return (0x100 - (sum & 0xFF)) & 0xFF
 
     def addIVHDEntry(self, ivhd):
-        # append raw data, update length and checksum
-        self.data += ivhd.data
+        # append entry to the list, update length and checksum
         self.ivrs_table.Length += ivhd.Length
-        self.ivrs_table.SubStructs.append(ivhd)
-        self.ivrs_table.Checksum = self.ivrs_table.calculateACPISum(self.data)
+        self.SubStructs.append(ivhd)
+        self.ivrs_table.calculateACPISum()
 
     def addIVMDEntry(self, ivmd):
-        # append raw data, update length and checksum
-        self.data += ivmd.data
+        # append entry to the list, update length and checksum
         self.ivrs_table.Length += ivmd.Length
-        self.ivrs_table.IVMDlist.append(ivmd)
-        self.ivrs_table.Checksum = self.ivrs_table.calculateACPISum(self.data)
+        self.SubStructs.append(ivmd)
+        self.IVMDlist.append(ivmd)
+        self.ivrs_table.calculateACPISum()
 
     def IVRSBitEnabled(self):
         return bool(self.ivrs_table.IVRSBit)
@@ -150,7 +116,7 @@ class IVRS_TABLE(object):
                 if entry.tag == "IVMD":
                     goldenignores.append(entry.attrib)
 
-        for IVMD in self.ivrs_table.IVMDlist:
+        for IVMD in self.IVMDlist:
             if not IVMD.validateIVMD(goldenignores):
                 print("IVMD PCIe Endpoint " + str(IVMD) + " found but not in golden XML")
                 return False
@@ -162,6 +128,21 @@ class IVRS_TABLE(object):
         struct_format_size = struct.calcsize(struct_format)
 
         def __init__(self, header_byte_array):
+            self.Signature = None
+            self.Length = 0
+            self.Revision = 0
+            self.Checksum = 0
+            self.OEMID = 0
+            self.OEMTableID = 0
+            self.OEMRevision = 0
+            self.CreatorID = 0
+            self.CreatorRevision = 0
+            self.IVinfo = None
+            self.Reserved = 0
+
+            self.IVRSBit = 0
+
+        def Decode(self, header_byte_array):
             (self.Signature,
              self.Length,
              self.Revision,
@@ -177,8 +158,20 @@ class IVRS_TABLE(object):
             self.IVRSBit = self.IVinfo & 0x02
             if (self.IVinfo & 0x1E) == 0:
                 sys.exit(-1)
-            self.IVMDlist = list()
-            self.SubStructs = list()
+
+        def Encode(self):
+            return struct.pack(self.struct_format,
+                                self.Signature,
+                                self.Length,
+                                self.Revision,
+                                self.Checksum,
+                                self.OEMID,
+                                self.OEMTableID,
+                                self.OEMRevision,
+                                self.CreatorID,
+                                self.CreatorRevision,
+                                self.IVinfo,
+                                self.Reserved)
 
         def __str__(self):
             return """\n  ACPI Table Header
@@ -210,22 +203,13 @@ class IVRS_TABLE(object):
             xml_repr.set('IVinfo', '0x%X' % self.IVinfo)
             return xml_repr
 
-        def calculateACPISum(self, data):
+        def calculateACPISum(self):
             temp_sum = 0
-            temp_sum += IVRS_TABLE.byteSum32(self.Signature)
-            temp_sum += IVRS_TABLE.byteSum32(self.Length)
-            temp_sum += self.Revision
-            # intentionally miss checksum
-            # oem id is 6 byte wide, but just use 64 bit
-            temp_sum += IVRS_TABLE.byteSum64(self.OEMID)
-            temp_sum += IVRS_TABLE.byteSum64(self.OEMTableID)
-            temp_sum += IVRS_TABLE.byteSum32(self.OEMRevision)
-            temp_sum += IVRS_TABLE.byteSum32(self.CreatorID)
-            temp_sum += IVRS_TABLE.byteSum32(self.CreatorRevision)
-            temp_sum += IVRS_TABLE.byteSum32(self.IVinfo)
-            temp_sum += IVRS_TABLE.byteSum64(self.Reserved)
-            temp_sum += sum(data)
-            return (0x100 - (temp_sum & 0xFF)) & 0xFF
+            # Clear the checksum before calculating sum
+            self.Checksum = 0
+            temp_str = self.Encode()
+            temp_sum = sum(temp_str)
+            self.Checksum = (0x100 - (temp_sum & 0xFF)) & 0xFF
 
     class REMAPPING_STRUCT_HEADER(object):
         struct_format = '=B'
@@ -242,8 +226,23 @@ class IVRS_TABLE(object):
     class IVHD_STRUCT(REMAPPING_STRUCT_HEADER):
         struct_format = '=BBHHHQHHI'
         struct_format_size = struct.calcsize(struct_format)
+        ex_format = "=QQ"
+        ex_format_size = struct.calcsize(ex_format)
 
-        def __init__(self, header_byte_array):
+        def __init__(self, data=None):
+            self.Type = None
+            self.Flags = None
+            self.Length = 0
+            self.DeviceID = 0
+            self.CapabilityOffset = 0
+            self.IOMMUBaseAddress = 0
+            self.SegmentGroup = 0
+            self.IOMMUInfo = None
+            self.IOMMUFeatureInfo = None
+            self.IOMMUEFRImage = None
+            self.Reserved = 0
+
+        def Decode(self, header_byte_array):
             (self.Type,
              self.Flags,
              self.Length,
@@ -254,16 +253,12 @@ class IVRS_TABLE(object):
              self.IOMMUInfo,
              self.IOMMUFeatureInfo) = struct.unpack_from(IVRS_TABLE.IVHD_STRUCT.struct_format, header_byte_array)
 
-            self.data = header_byte_array[:self.Length]
-
             if (self.Type == 0x11) or (self.Type == 0x40):
-                ex_format = "=QQ"
-                ex_format_size = struct.calcsize(ex_format)
                 (self.IOMMUEFRImage,
-                 self.Reserved) = struct.unpack_from(ex_format,
+                 self.Reserved) = struct.unpack_from(self.ex_format,
                                                      header_byte_array[IVRS_TABLE.IVHD_STRUCT.struct_format_size:])
-                header_byte_array = header_byte_array[(IVRS_TABLE.IVHD_STRUCT.struct_format_size + ex_format_size):]
-                bytes_left = self.Length - (IVRS_TABLE.IVHD_STRUCT.struct_format_size + ex_format_size)
+                header_byte_array = header_byte_array[(IVRS_TABLE.IVHD_STRUCT.struct_format_size + self.ex_format_size):]
+                bytes_left = self.Length - (IVRS_TABLE.IVHD_STRUCT.struct_format_size + self.ex_format_size)
             else:
                 header_byte_array = header_byte_array[IVRS_TABLE.IVHD_STRUCT.struct_format_size:]
                 bytes_left = self.Length - IVRS_TABLE.IVHD_STRUCT.struct_format_size
@@ -277,12 +272,29 @@ class IVRS_TABLE(object):
                 if (device_scope.Type != 0) and (device_scope.Type != 4):
                     self.DeviceTableEntries.append(device_scope)
 
+        def Encode(self):
+            byte_str = b''
+            byte_str += struct.pack(self.Type,
+                                self.Flags,
+                                self.Length,
+                                self.DeviceID,
+                                self.CapabilityOffset,
+                                self.IOMMUBaseAddress,
+                                self.SegmentGroup,
+                                self.IOMMUInfo,
+                                self.IOMMUFeatureInfo)
+
+            if self.IOMMUEFRImage != None:
+                byte_str += struct.pack(self.IOMMUEFRImage, self.Reserved)
+
+            for dte in self.DeviceTableEntries:
+                byte_str += dte.Encode()
+
+            return byte_str
+
         def addDTEEntry(self, dte_data):
             # append raw data, update length and checksum
             self.Length += len(dte_data)
-            newdata = self.data[:2] + bytearray([self.Length & 0xff, (self.Length >> 8) & 0xff]) +\
-                self.data[4:] + dte_data
-            self.data = newdata
             remapping_header = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_data)
             self.DeviceTableEntries.append(remapping_header)
 
@@ -332,7 +344,20 @@ class IVRS_TABLE(object):
     class IVMD_STRUCT(REMAPPING_STRUCT_HEADER):
         struct_format = '=BBHHHQQQ'
 
-        def __init__(self, header_byte_array):
+        def __init__(self, data=None):
+            self.Type = None
+            self.Flags = None
+            self.Length = 0
+            self.DeviceID = 0
+            self.AuxiliaryData = None
+            self.Reserved = 0
+            self.IVMDStartAddress = 0
+            self.IVMDMemoryBlockLength = 0
+
+            if data != None:
+                self.Decode(data)
+
+        def Decode(self, header_byte_array):
             (self.Type,
              self.Flags,
              self.Length,
@@ -341,7 +366,16 @@ class IVRS_TABLE(object):
              self.Reserved,
              self.IVMDStartAddress,
              self.IVMDMemoryBlockLength) = struct.unpack_from(IVRS_TABLE.IVMD_STRUCT.struct_format, header_byte_array)
-            self.data = header_byte_array[:self.Length]
+
+        def Encode(self):
+            return struct.pack(self.Type,
+                            self.Flags,
+                            self.Length,
+                            self.DeviceID,
+                            self.AuxiliaryData,
+                            self.Reserved,
+                            self.IVMDStartAddress,
+                            self.IVMDMemoryBlockLength)    
 
         def toXml(self):
             xml_repr = ET.Element('IVMD')
@@ -444,7 +478,16 @@ class IVRS_TABLE(object):
         struct_format = '=BHB'
         struct_format_size = struct.calcsize(struct_format)
 
-        def __init__(self, header_byte_array):
+        def __init__(self, data=None):
+            self.Type = 0
+            self.DeviceID = 0
+            self.DTESetting = 0
+            # Intentionally keep this field to avoid complicated table-look-up logic
+            self.data = None
+            if data != None:
+                self.Decode(data)
+
+        def Decode(self, header_byte_array):
             (self.Type,
              self.DeviceID,
              self.DTESetting) = struct.unpack_from(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, header_byte_array)
