@@ -28,7 +28,6 @@ class TestBaseParser(unittest.TestCase):
         line = "$(b_false)"
         self.assertEqual(parser.ReplaceVariables(line), "FALSE")
 
-
     def test_replace_macro_using_dollarsign(self):
         parser = BaseParser("")
         parser.SetInputVars({
