@@ -26,6 +26,7 @@ class BaseParser(object):
         self.TargetFile = None
         self.TargetFilePath = None
         self.CurrentLine = -1
+        self._MacroNotDefinedValue = "0"  # value to used for undefined macro
 
     #
     # For include files set the base root path
@@ -227,6 +228,24 @@ class BaseParser(object):
             self.Logger.critical("Tried to pop an empty conditional stack.  Line Number %d" % self.CurrentLine)
             return self.ConditionalStack.pop()  # this should cause a crash but will give trace.
 
+    def _FindReplacementForToken(self, token):
+
+        v = self.LocalVars.get(token)
+
+        if(v is None):
+            v = self.InputVars.get(token)
+
+        if(v is None):
+            v = self._MacroNotDefinedValue
+
+        if (type(v) is bool):
+            v = "true" if v else "false"
+
+        if(type(v) is str and (v.upper() == "TRUE" or v.upper() == "FALSE")):
+            v = v.upper()
+
+        return v
+
     #
     # Method to replace variables
     # in a line with their value from input dict or local dict
@@ -240,8 +259,18 @@ class BaseParser(object):
         Returns:
 
         """
-        rep = line.count("$")
+        # first tokenize and look for tokens require special macro
+        # handling without $.  This must be done first otherwise
+        # both syntax options can not be supported.
         result = line
+        tokens = result.split()
+        if tokens[0].lower() in ["!ifdef", "!ifndef"]:
+            if len(tokens) > 1 and not tokens[1].startswith("$("):
+                v = self._FindReplacementForToken(tokens[1])
+                result = result.replace(tokens[1], v, 1)
+
+        # use line to avoid change by handling above
+        rep = line.count("$")
         index = 0
         while(rep > 0):
             start = line.find("$(", index)
@@ -250,35 +279,8 @@ class BaseParser(object):
             token = line[start + 2:end]
             replacement_token = line[start:end + 1]
             self.Logger.debug("Token is %s" % token)
-            v = self.LocalVars.get(token)
-            self.Logger.debug("Trying to replace %s" % replacement_token)
-            if(v is not None):
-                v = str(v)
-                #
-                # fixme: This should just be a workaround!!!!!
-                #
-                if (v.upper() == "TRUE" or v.upper() == "FALSE"):
-                    v = v.upper()
-                self.Logger.debug("with %s  [From Local Vars]" % v)
-                result = result.replace(replacement_token, v, 1)
-            else:
-                # use the passed in Env
-                v = self.InputVars.get(token)
-
-                if(v is None):
-                    self.Logger.info("Unknown variable %s in  %s" % (token, line))
-                    # raise Exception("Invalid Variable Replacement", token)
-                    # just skip it because we need to support ifdef
-                else:
-                    v = str(v)
-                    # found in the Env
-                    #
-                    # fixme: This should just be a workaround!!!!!
-                    #
-                    if (v.upper() == "TRUE" or v.upper() == "FALSE"):
-                        v = v.upper()
-                    self.Logger.debug("with %s [From Input Vars]" % v)
-                    result = result.replace(replacement_token, v, 1)
+            v = self._FindReplacementForToken(token)
+            result = result.replace(replacement_token, v, 1)
 
             index = end + 1
             rep = rep - 1
@@ -315,17 +317,11 @@ class BaseParser(object):
             return True
 
         elif(tokens[0].lower() == "!ifdef"):
-            if len(tokens) != 2:
-                self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
-                raise RuntimeError("Invalid conditional", text)
-            self.PushConditional((tokens[1].count("$") == 0))
+            self.PushConditional((tokens[1] != self._MacroNotDefinedValue))
             return True
 
         elif(tokens[0].lower() == "!ifndef"):
-            if len(tokens) != 2:
-                self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
-                raise RuntimeError("Invalid conditional", text)
-            self.PushConditional((tokens[1].count("$") > 0))
+            self.PushConditional((tokens[1] == self._MacroNotDefinedValue))
             return True
 
         elif(tokens[0].lower() == "!else"):
