@@ -174,18 +174,19 @@ class FmpCapsuleHeaderClass (object):
         self.Version = self.EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER_INIT_VERSION
         self.EmbeddedDriverCount = 0
         self.PayloadItemCount = 0
-        self._ItemOffsetList = []
         self._EmbeddedDriverList = []
         self._FmpCapsuleImageHeaderList = []
 
     def AddEmbeddedDriver(self, EmbeddedDriver):
         self._EmbeddedDriverList.append(EmbeddedDriver)
+        self.EmbeddedDriverCount += 1
 
     def GetEmbeddedDriver(self, Index):
         return self._EmbeddedDriverList[Index]
 
     def AddFmpCapsuleImageHeader(self, FmpCapsuleHeader):
         self._FmpCapsuleImageHeaderList.append(FmpCapsuleHeader)
+        self.PayloadItemCount += 1
 
     def GetFmpCapsuleImageHeader(self, Index):
         return self._FmpCapsuleImageHeaderList[Index]
@@ -202,18 +203,19 @@ class FmpCapsuleHeaderClass (object):
         )
 
         FmpCapsuleData = b''
+        offset_list = []
         Offset = self._StructSize + (self.EmbeddedDriverCount + self.PayloadItemCount) * self._ItemOffsetSize
         for EmbeddedDriver in self._EmbeddedDriverList:
             FmpCapsuleData = FmpCapsuleData + EmbeddedDriver
-            self._ItemOffsetList.append(Offset)
+            offset_list.append(Offset)
             Offset = Offset + len(EmbeddedDriver)
         for FmpCapsuleImageHeader in self._FmpCapsuleImageHeaderList:
             FmpCapsuleImage = FmpCapsuleImageHeader.Encode()
             FmpCapsuleData = FmpCapsuleData + FmpCapsuleImage
-            self._ItemOffsetList.append(Offset)
+            offset_list.append(Offset)
             Offset = Offset + len(FmpCapsuleImage)
 
-        for Offset in self._ItemOffsetList:
+        for Offset in offset_list:
             FmpCapsuleHeader = FmpCapsuleHeader + struct.pack(self._ItemOffsetFormat, Offset)
 
         return FmpCapsuleHeader + FmpCapsuleData
@@ -231,9 +233,10 @@ class FmpCapsuleHeaderClass (object):
         self.Version = Version
         self.EmbeddedDriverCount = EmbeddedDriverCount
         self.PayloadItemCount = PayloadItemCount
-        self._ItemOffsetList = []
         self._EmbeddedDriverList = []
         self._FmpCapsuleImageHeaderList = []
+
+        offset_list = []
 
         #
         # Parse the ItemOffsetList values
@@ -243,7 +246,7 @@ class FmpCapsuleHeaderClass (object):
             ItemOffset = struct.unpack(self._ItemOffsetFormat, Buffer[Offset:Offset + self._ItemOffsetSize])[0]
             if ItemOffset >= len(Buffer):
                 raise ValueError
-            self._ItemOffsetList.append(ItemOffset)
+            offset_list.append(ItemOffset)
             Offset = Offset + self._ItemOffsetSize
         Result = Buffer[Offset:]
 
@@ -251,9 +254,9 @@ class FmpCapsuleHeaderClass (object):
         # Parse the EmbeddedDrivers
         #
         for Index in range(0, EmbeddedDriverCount):
-            Offset = self._ItemOffsetList[Index]
-            if Index < (len(self._ItemOffsetList) - 1):
-                Length = self._ItemOffsetList[Index + 1] - Offset
+            Offset = offset_list[Index]
+            if Index < (len(offset_list) - 1):
+                Length = offset_list[Index + 1] - Offset
             else:
                 Length = len(Buffer) - Offset
             self.AddEmbeddedDriver(Buffer[Offset:Offset + Length])
@@ -262,9 +265,9 @@ class FmpCapsuleHeaderClass (object):
         # Parse the Payloads that are FMP Capsule Images
         #
         for Index in range(EmbeddedDriverCount, EmbeddedDriverCount + PayloadItemCount):
-            Offset = self._ItemOffsetList[Index]
-            if Index < (len(self._ItemOffsetList) - 1):
-                Length = self._ItemOffsetList[Index + 1] - Offset
+            Offset = offset_list[Index]
+            if Index < (len(offset_list) - 1):
+                Length = offset_list[Index + 1] - Offset
             else:
                 Length = len(Buffer) - Offset
             FmpCapsuleImageHeader = FmpCapsuleImageHeaderClass()
@@ -283,7 +286,5 @@ class FmpCapsuleHeaderClass (object):
         print('EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER.PayloadItemCount    = {PayloadItemCount:08X}'.format(
             PayloadItemCount=self.PayloadItemCount))
         print('EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER.ItemOffsetList      = ')
-        for Offset in self._ItemOffsetList:
-            print('  {Offset:016X}'.format(Offset=Offset))
         for FmpCapsuleImageHeader in self._FmpCapsuleImageHeaderList:
             FmpCapsuleImageHeader.DumpInfo()
