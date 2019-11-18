@@ -110,77 +110,94 @@ class IvrsParserTest(unittest.TestCase):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
         self.assertNotEqual(ivrs, None)
 
-        ivrs_byte = ivrs.toBytes()
-        self.assertNotEqual(ivrs, ivrs_byte)
+        ivrs_byte = ivrs.Encode()
+        ivrs2 = IVRS_TABLE(ivrs_byte)
+        self.assertEqual(ivrs2.Encode(), ivrs_byte)
 
     def test_ivrs_parser_ivhd_10h(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
         ivhd = ivrs.IVHD_STRUCT(IvrsParserTest.ivhd_t_10h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_02h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_03h + IvrsParserTest.dte_t_04h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_00h)
+        dte_02h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_02h)
+        dte_03h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_03h + IvrsParserTest.dte_t_04h)
+        dte_00h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_00h)
+        ivhd.addDTEEntry(dte_02h)
+        ivhd.addDTEEntry(dte_03h)
+        ivhd.addDTEEntry(dte_00h)
         ivrs.addIVHDEntry(ivhd)
         logging.info(str(ivrs))
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
 
-        ivrs_byte = ivrs.toBytes()
+        ivrs_byte = ivrs.Encode()
         ivrs2 = IVRS_TABLE(ivrs_byte)
-        self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
+        self.assertEqual(ivrs2.Encode(), ivrs_byte)
 
     def test_ivrs_parser_ivhd_11h(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
         ivhd = ivrs.IVHD_STRUCT(IvrsParserTest.ivhd_t_11h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_02h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_03h + IvrsParserTest.dte_t_04h)
+        dte_02h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_02h)
+        dte_03h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_03h + IvrsParserTest.dte_t_04h)
+        ivhd.addDTEEntry(dte_02h)
+        ivhd.addDTEEntry(dte_03h)
         ivrs.addIVHDEntry(ivhd)
         logging.info(str(ivrs))
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
 
-        ivrs_byte = ivrs.toBytes()
+        ivrs_byte = ivrs.Encode()
         ivrs2 = IVRS_TABLE(ivrs_byte)
-        self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
+        self.assertEqual(ivrs2.Encode(), ivrs_byte)
 
     def test_ivrs_parser_ivhd_10h_2(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
         ivhd = ivrs.IVHD_STRUCT(IvrsParserTest.ivhd_t_10h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_42h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_43h + IvrsParserTest.dte_t_04h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_00h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_46h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_47h + IvrsParserTest.dte_t_04h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_48h)
+        dte_42h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_42h)
+        dte_43h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_43h + IvrsParserTest.dte_t_04h)
+        dte_00h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_00h)
+        dte_46h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_46h)
+        dte_47h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_47h + IvrsParserTest.dte_t_04h)
+        dte_48h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_48h)
+        ivhd.addDTEEntry(dte_42h)
+        ivhd.addDTEEntry(dte_43h)
+        ivhd.addDTEEntry(dte_00h)
+        ivhd.addDTEEntry(dte_46h)
+        ivhd.addDTEEntry(dte_47h)
+        ivhd.addDTEEntry(dte_48h)
         ivrs.addIVHDEntry(ivhd)
         logging.info(str(ivrs))
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
 
-        ivrs_byte = ivrs.toBytes()
+        ivrs_byte = ivrs.Encode()
         ivrs2 = IVRS_TABLE(ivrs_byte)
-        self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
+        self.assertEqual(ivrs2.Encode(), ivrs_byte)
 
     def test_ivrs_parser_ivhd_40h(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
         ivhd = ivrs.IVHD_STRUCT(IvrsParserTest.ivhd_t_40h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_f0h_0)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_f0h_1)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_f0h_2)
+        dte_f0h_0 = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_f0h_0)
+        dte_f0h_1 = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_f0h_1)
+        dte_f0h_2 = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_f0h_2)
+        ivhd.addDTEEntry(dte_f0h_0)
+        ivhd.addDTEEntry(dte_f0h_1)
+        ivhd.addDTEEntry(dte_f0h_2)
         ivrs.addIVHDEntry(ivhd)
         logging.info(str(ivrs))
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
 
-        ivrs_byte = ivrs.toBytes()
+        ivrs_byte = ivrs.Encode()
         ivrs2 = IVRS_TABLE(ivrs_byte)
-        self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
+        self.assertEqual(ivrs2.Encode(), ivrs_byte)
 
     def test_ivrs_parser_ivmd_20h(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
 
         ivhd = ivrs.IVHD_STRUCT(IvrsParserTest.ivhd_t_11h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_02h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_03h + IvrsParserTest.dte_t_04h)
+        dte_02h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_02h)
+        dte_03h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_03h + IvrsParserTest.dte_t_04h)
+        ivhd.addDTEEntry(dte_02h)
+        ivhd.addDTEEntry(dte_03h)
         ivrs.addIVHDEntry(ivhd)
 
         ivmd = ivrs.IVMD_STRUCT(IvrsParserTest.ivmd_t_20h)
@@ -190,16 +207,18 @@ class IvrsParserTest(unittest.TestCase):
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
 
-        ivrs_byte = ivrs.toBytes()
+        ivrs_byte = ivrs.Encode()
         ivrs2 = IVRS_TABLE(ivrs_byte)
-        self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
+        self.assertEqual(ivrs2.Encode(), ivrs_byte)
 
     def test_ivrs_parser_ivmd_21h(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
 
         ivhd = ivrs.IVHD_STRUCT(IvrsParserTest.ivhd_t_11h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_02h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_03h + IvrsParserTest.dte_t_04h)
+        dte_02h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_02h)
+        dte_03h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_03h + IvrsParserTest.dte_t_04h)
+        ivhd.addDTEEntry(dte_02h)
+        ivhd.addDTEEntry(dte_03h)
         ivrs.addIVHDEntry(ivhd)
 
         ivmd = ivrs.IVMD_STRUCT(IvrsParserTest.ivmd_t_21h)
@@ -209,16 +228,18 @@ class IvrsParserTest(unittest.TestCase):
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
 
-        ivrs_byte = ivrs.toBytes()
+        ivrs_byte = ivrs.Encode()
         ivrs2 = IVRS_TABLE(ivrs_byte)
-        self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
+        self.assertEqual(ivrs2.Encode(), ivrs_byte)
 
     def test_ivrs_parser_ivmd_22h(self):
         ivrs = IVRS_TABLE(IvrsParserTest.ivrs_header)
 
         ivhd = ivrs.IVHD_STRUCT(IvrsParserTest.ivhd_t_11h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_02h)
-        ivhd.addDTEEntry(IvrsParserTest.dte_t_03h + IvrsParserTest.dte_t_04h)
+        dte_02h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_02h)
+        dte_03h = ivrs.DEVICE_TABLE_ENTRY(IvrsParserTest.dte_t_03h + IvrsParserTest.dte_t_04h)
+        ivhd.addDTEEntry(dte_02h)
+        ivhd.addDTEEntry(dte_03h)
         ivrs.addIVHDEntry(ivhd)
 
         ivmd = ivrs.IVMD_STRUCT(IvrsParserTest.ivmd_t_22h)
@@ -228,9 +249,9 @@ class IvrsParserTest(unittest.TestCase):
         ivrs.toXml()
         self.assertNotEqual(ivrs, None)
 
-        ivrs_byte = ivrs.toBytes()
+        ivrs_byte = ivrs.Encode()
         ivrs2 = IVRS_TABLE(ivrs_byte)
-        self.assertNotEqual(ivrs2.toBytes(), ivrs_byte)
+        self.assertEqual(ivrs2.Encode(), ivrs_byte)
 
 
 if __name__ == '__main__':

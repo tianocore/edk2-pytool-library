@@ -44,7 +44,7 @@ class IVRS_TABLE(object):
                 remapping_header = self.IVHD_STRUCT(t_data)
             elif(remapping_header.Type == 0x20) or (remapping_header.Type == 0x21) or (remapping_header.Type == 0x22):
                 remapping_header = self.IVMD_STRUCT(t_data)
-                self.ivrs_table.IVMDlist.append(remapping_header)
+                self.IVMDlist.append(remapping_header)
                 if (remapping_header.Type == 0x22):
                     self.IVRSBit = 0
             else:
@@ -52,7 +52,7 @@ class IVRS_TABLE(object):
                 sys.exit(-1)
 
             # IVMD has to follow the corresponding IVHD, thus the list records all entries to maintain order
-            self.ivrs_table.SubStructs.append(remapping_header)
+            self.SubStructs.append(remapping_header)
 
             # Update data position
             t_data = t_data[remapping_header.Length:]
@@ -86,23 +86,28 @@ class IVRS_TABLE(object):
 
     @staticmethod
     def validateChecksum8(data):
-        sum = 0
-        for byte in data:
-            sum += byte
-        return (0x100 - (sum & 0xFF)) & 0xFF
+        return sum(data) & 0xFF
+
+    def updateACPISum(self):
+        temp_sum = 0
+        # Clear the checksum before calculating sum
+        self.ivrs_table.Checksum = 0
+        temp_str = self.Encode()
+        temp_sum = sum(temp_str)
+        self.ivrs_table.Checksum = (0x100 - (temp_sum & 0xFF)) & 0xFF
 
     def addIVHDEntry(self, ivhd):
         # append entry to the list, update length and checksum
-        self.ivrs_table.Length += ivhd.Length
+        self.ivrs_table.Length += len(ivhd.Encode())
         self.SubStructs.append(ivhd)
-        self.ivrs_table.calculateACPISum()
+        self.updateACPISum()
 
     def addIVMDEntry(self, ivmd):
         # append entry to the list, update length and checksum
-        self.ivrs_table.Length += ivmd.Length
+        self.ivrs_table.Length += len(ivmd.Encode())
         self.SubStructs.append(ivmd)
         self.IVMDlist.append(ivmd)
-        self.ivrs_table.calculateACPISum()
+        self.updateACPISum()
 
     def IVRSBitEnabled(self):
         return bool(self.ivrs_table.IVRSBit)
@@ -209,14 +214,6 @@ class IVRS_TABLE(object):
             xml_repr.set('IVinfo', '0x%X' % self.IVinfo)
             return xml_repr
 
-        def calculateACPISum(self):
-            temp_sum = 0
-            # Clear the checksum before calculating sum
-            self.Checksum = 0
-            temp_str = self.Encode()
-            temp_sum = sum(temp_str)
-            self.Checksum = (0x100 - (temp_sum & 0xFF)) & 0xFF
-
     class REMAPPING_STRUCT_HEADER(object):
         struct_format = '=B'
 
@@ -266,11 +263,11 @@ class IVRS_TABLE(object):
 
             if (self.Type == 0x11) or (self.Type == 0x40):
                 (self.IOMMUEFRImage,
-                 self.Reserved) = struct.unpack_from(self.ex_format,
+                 self.Reserved) = struct.unpack_from(IVRS_TABLE.IVHD_STRUCT.ex_format,
                                                      header_byte_array[IVRS_TABLE.IVHD_STRUCT.struct_format_size:])
                 header_byte_array = \
-                    header_byte_array[(IVRS_TABLE.IVHD_STRUCT.struct_format_size + self.ex_format_size):]
-                bytes_left = self.Length - (IVRS_TABLE.IVHD_STRUCT.struct_format_size + self.ex_format_size)
+                    header_byte_array[(IVRS_TABLE.IVHD_STRUCT.struct_format_size + IVRS_TABLE.IVHD_STRUCT.ex_format_size):]
+                bytes_left = self.Length - (IVRS_TABLE.IVHD_STRUCT.struct_format_size + IVRS_TABLE.IVHD_STRUCT.ex_format_size)
             else:
                 header_byte_array = header_byte_array[IVRS_TABLE.IVHD_STRUCT.struct_format_size:]
                 bytes_left = self.Length - IVRS_TABLE.IVHD_STRUCT.struct_format_size
@@ -280,7 +277,7 @@ class IVRS_TABLE(object):
                 device_scope = IVRS_TABLE.DEVICE_TABLE_ENTRY(header_byte_array)
                 header_byte_array = header_byte_array[device_scope.Length:]
                 bytes_left -= device_scope.Length
-                if (device_scope.Type != 0) and (device_scope.Type != 4):
+                if (device_scope.Type != 4):
                     self.DeviceTableEntries.append(device_scope)
 
         def Encode(self):
@@ -297,18 +294,17 @@ class IVRS_TABLE(object):
                                     self.IOMMUFeatureInfo)
 
             if self.IOMMUEFRImage is not None:
-                byte_str += struct.pack(self.IOMMUEFRImage, self.Reserved)
+                byte_str += struct.pack(IVRS_TABLE.IVHD_STRUCT.ex_format, self.IOMMUEFRImage, self.Reserved)
 
             for dte in self.DeviceTableEntries:
                 byte_str += dte.Encode()
 
             return byte_str
 
-        def addDTEEntry(self, dte_data):
-            # append raw data, update length and checksum
-            self.Length += len(dte_data)
-            remapping_header = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_data)
-            self.DeviceTableEntries.append(remapping_header)
+        def addDTEEntry(self, dte):
+            # append raw data, update length. checksum will be left untouched
+            self.Length += len(dte.Encode())
+            self.DeviceTableEntries.append(dte)
 
         def toXml(self):
             xml_repr = ET.Element('IVHD')
@@ -380,7 +376,8 @@ class IVRS_TABLE(object):
              self.IVMDMemoryBlockLength) = struct.unpack_from(IVRS_TABLE.IVMD_STRUCT.struct_format, header_byte_array)
 
         def Encode(self):
-            return struct.pack(self.Type,
+            return struct.pack(IVRS_TABLE.IVMD_STRUCT.struct_format,
+                               self.Type,
                                self.Flags,
                                self.Length,
                                self.DeviceID,
@@ -587,9 +584,9 @@ class IVRS_TABLE(object):
                 if self.UIDFormat == 0:
                     self.UID = None
                 elif self.UIDFormat == 1:
-                    self.UID = struct.unpack_from("=Q", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len:])
+                    (self.UID,) = struct.unpack_from("=Q", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len:])
                 elif self.UIDFormat == 2:
-                    self.UID =\
+                    (self.UID,) =\
                         struct.unpack("=%ss" % self.UIDLength,
                                       header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len:])
             else:
