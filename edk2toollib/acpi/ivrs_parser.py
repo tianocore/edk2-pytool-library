@@ -265,9 +265,10 @@ class IVRS_TABLE(object):
                 (self.IOMMUEFRImage,
                  self.Reserved) = struct.unpack_from(IVRS_TABLE.IVHD_STRUCT.ex_format,
                                                      header_byte_array[IVRS_TABLE.IVHD_STRUCT.struct_format_size:])
-                header_byte_array = \
-                    header_byte_array[(IVRS_TABLE.IVHD_STRUCT.struct_format_size + IVRS_TABLE.IVHD_STRUCT.ex_format_size):]
-                bytes_left = self.Length - (IVRS_TABLE.IVHD_STRUCT.struct_format_size + IVRS_TABLE.IVHD_STRUCT.ex_format_size)
+                header_byte_array = header_byte_array[
+                    (IVRS_TABLE.IVHD_STRUCT.struct_format_size + IVRS_TABLE.IVHD_STRUCT.ex_format_size):]
+                bytes_left = self.Length -\
+                    (IVRS_TABLE.IVHD_STRUCT.struct_format_size + IVRS_TABLE.IVHD_STRUCT.ex_format_size)
             else:
                 header_byte_array = header_byte_array[IVRS_TABLE.IVHD_STRUCT.struct_format_size:]
                 bytes_left = self.Length - IVRS_TABLE.IVHD_STRUCT.struct_format_size
@@ -584,7 +585,8 @@ class IVRS_TABLE(object):
                 if self.UIDFormat == 0:
                     self.UID = None
                 elif self.UIDFormat == 1:
-                    (self.UID,) = struct.unpack_from("=Q", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len:])
+                    (self.UID,) = struct.unpack_from("=Q",
+                                                     header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len:])
                 elif self.UIDFormat == 2:
                     (self.UID,) =\
                         struct.unpack("=%ss" % self.UIDLength,
@@ -595,9 +597,9 @@ class IVRS_TABLE(object):
 
         def Encode(self):
             byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                self.Type,
-                                self.DeviceID,
-                                self.DTESetting)
+                                   self.Type,
+                                   self.DeviceID,
+                                   self.DTESetting)
 
             if self.Type == 3:
                 # Range
@@ -622,10 +624,17 @@ class IVRS_TABLE(object):
             elif self.Type == 72:
                 # Special Device
                 # First half for standard DTE setting, second half for special DevID and its variety (APIC, HPET, etc.)
-                byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, self.Handle, self.SourceDeviceID, self.Variety)
+                byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                        self.Handle,
+                                        self.SourceDeviceID,
+                                        self.Variety)
             elif self.Type == 240:
                 # Variable Length ACPI HID Device
-                byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_ext_format, self.HID, self.CID, self.UIDFormat, self.UIDLength)
+                byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_ext_format,
+                                        self.HID,
+                                        self.CID,
+                                        self.UIDFormat,
+                                        self.UIDLength)
                 if self.UIDFormat == 1:
                     byte_str += struct.pack("=Q", self.UID)
                 elif self.UIDFormat == 2:
