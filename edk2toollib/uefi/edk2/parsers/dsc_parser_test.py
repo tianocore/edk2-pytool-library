@@ -17,7 +17,7 @@ class TestDscParser(unittest.TestCase):
     def download_file(self, url, file_path):
       urllib.request.urlretrieve(url, file_path)
 
-    def test_process_kablylake_rvp3_dsc(self):
+    def test_process_kablylake_rvp3_pcd_dsc(self):
         # first we download the DSC we care about
         dsc_location = tempfile.mkdtemp()
         commit = "3badb2a8e8b56191d8a3f8417c984c497568aee6"
