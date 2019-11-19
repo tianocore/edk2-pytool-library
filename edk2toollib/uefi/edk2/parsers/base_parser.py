@@ -12,7 +12,7 @@ import logging
 class BaseParser(object):
     """ """
 
-    def __init__(self, log):
+    def __init__(self, log=""):
         self.Logger = logging.getLogger(log)
         self.Lines = []
         self.LocalVars = {}
@@ -25,6 +25,7 @@ class BaseParser(object):
         self.PPs = []
         self.TargetFile = None
         self.TargetFilePath = None
+        self.CurrentLine = -1
         self._MacroNotDefinedValue = "0"  # value to used for undefined macro
 
     #
@@ -130,25 +131,54 @@ class BaseParser(object):
         Returns:
 
         """
+        ivalue = value
+        ivalue2 = value2
+        # convert it to interpretted value
+
+        try:
+            ivalue = self.ConvertToInt(ivalue)
+        except ValueError:
+            pass
+        try:
+            ivalue2 = self.ConvertToInt(ivalue2)
+        except ValueError:
+            pass
+
+        # check our truthyness
         if(cond == "=="):
             # equal
-            return (value.upper() == value2.upper())
+            return (ivalue == ivalue2) or (value == value2)
 
         elif (cond == "!="):
             # not equal
-            return (value.upper() != value2.upper())
+            return (ivalue != ivalue2) and (value != value2)
 
-        elif (cond == "<"):
-            return (self.ConvertToInt(value) < (self.ConvertToInt(value2)))
+        # check to make sure we only have digits from here on out
+        if not str.isdigit(value):
+            self.Logger.error(f"{self.__class__}: Unknown value: {value} {ivalue.__class__}")
+            self.Logger.debug(f"{self.__class__}: Conditional: {value} {cond}{value2}")
+            raise ValueError("Unknown value")
+
+        if not str.isdigit(value2):
+            self.Logger.error(f"{self.__class__}: Unknown value: {value2} {ivalue2}")
+            self.Logger.debug(f"{self.__class__}: Conditional: {value} {cond} {value2}")
+            raise ValueError("Unknown value")
+
+        if (cond == "<"):
+            return (ivalue < ivalue2)
 
         elif (cond == "<="):
-            return (self.ConvertToInt(value) <= (self.ConvertToInt(value2)))
+            return (ivalue <= ivalue2)
 
         elif (cond == ">"):
-            return (self.ConvertToInt(value) > (self.ConvertToInt(value2)))
+            return (ivalue > ivalue2)
 
         elif (cond == ">="):
-            return (self.ConvertToInt(value) >= (self.ConvertToInt(value2)))
+            return (ivalue >= ivalue2)
+
+        else:
+            self.Logger.error(f"{self.__class__}: Unknown conditional: {cond}")
+            raise RuntimeError("Unknown conditional")
 
     #
     # convert to int based on prefix
@@ -158,12 +188,16 @@ class BaseParser(object):
         """
 
         Args:
-          value:
+          value: must be str or int
 
         Returns:
 
         """
-        if(value.upper().startswith("0X")):
+        if isinstance(value, str) and value.upper() == "TRUE":
+            return 1
+        elif isinstance(value, str) and value.upper() == "FALSE":
+            return 0
+        elif isinstance(value, str) and value.upper().startswith("0X"):
             return int(value, 16)
         else:
             return int(value, 10)
@@ -230,8 +264,8 @@ class BaseParser(object):
         # both syntax options can not be supported.
         result = line
         tokens = result.split()
-        if tokens[0].lower() in ["!ifdef", "!ifndef"]:
-            if len(tokens) > 1 and not tokens[1].startswith("$("):
+        if len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef"]:
+            if not tokens[1].startswith("$("):
                 v = self._FindReplacementForToken(tokens[1])
                 result = result.replace(tokens[1], v, 1)
 
@@ -270,27 +304,45 @@ class BaseParser(object):
         tokens = text.split()
         if(tokens[0].lower() == "!if"):
             # need to add support for OR/AND
-            if(len(tokens) < 4):
+            if (len(tokens) == 2):
+                value = self.ConvertToInt(tokens[1].strip())
+                self.PushConditional(value == 1)  # if the value is true
+            # we can have tokens in 4, 8, 12 etc
+            elif len(tokens) >= 4 and len(tokens) % 4 == 0:
+                con = self.ComputeResult(tokens[1].strip(), tokens[2].strip(), tokens[3].strip())
+                self.PushConditional(con)
+            else:
                 self.Logger.error("!if conditionals need to be formatted correctly (spaces between each token)")
-                raise Exception("Invalid conditional", text)
-            con = self.ComputeResult(tokens[1].strip(), tokens[2].strip(), tokens[3].strip())
-            self.PushConditional(con)
+                raise RuntimeError("Invalid conditional", text)
             return True
 
         elif(tokens[0].lower() == "!ifdef"):
+            if len(tokens) != 2:
+                self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
+                raise RuntimeError("Invalid conditional", text)
             self.PushConditional((tokens[1] != self._MacroNotDefinedValue))
             return True
 
         elif(tokens[0].lower() == "!ifndef"):
+            if len(tokens) != 2:
+                self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
+                raise RuntimeError("Invalid conditional", text)
             self.PushConditional((tokens[1] == self._MacroNotDefinedValue))
             return True
 
         elif(tokens[0].lower() == "!else"):
+            if len(tokens) != 1:
+                self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
+                raise RuntimeError("Invalid conditional", text)
             v = self.PopConditional()
+            # TODO make sure we can't do multiple else statements
             self.PushConditional(not v)
             return True
 
         elif(tokens[0].lower() == "!endif"):
+            if len(tokens) != 1:
+                self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
+                raise RuntimeError("Invalid conditional", text)
             self.PopConditional()
             return True
 
@@ -309,14 +361,10 @@ class BaseParser(object):
 
         return ret
 
-    #
-    # will return true if the the line has
-    # { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
-    #
-
     def IsGuidString(self, l):
         """
-
+        will return true if the the line has
+        = { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
         Args:
           l:
 
@@ -329,17 +377,17 @@ class BaseParser(object):
 
     def ParseGuid(self, l):
         """
-
+        parse a guid into a different format
+        Will throw exception if missing any of the 11 parts of isn't long enough
         Args:
-          l:
+          l: the guid to parse ex: { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
 
-        Returns:
+        Returns: a string of the guid. ex: D3B36F2C-D551-11D4-9A46-0090273FC14D
 
         """
-        # parse a guid in format
-        # { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
-        # into F7FDE4A6-294C-493c-B50F-9734553BB757  (NOTE these are not same guid this is just example of format)
         entries = l.lstrip(' {').rstrip(' }').split(',')
+        if len(entries) != 11:
+            raise RuntimeError(f"Invalid GUID found {l}. We are missing some parts since we only found: {len(entries)}")
         gu = entries[0].lstrip(' 0').lstrip('x').strip()
         # pad front until 8 chars
         while(len(gu) < 8):
@@ -395,6 +443,12 @@ class BaseParser(object):
         while(len(gut) < 2):
             gut = "0" + gut
         gu = gu + gut
+
+        proper_guid_length = 36
+        if len(gu) > proper_guid_length:
+            raise RuntimeError(f"The guid we parsed was too long: {gu}")
+        if len(gu) < proper_guid_length:
+            raise RuntimeError(f"The guid we parsed was too short: {gu}")
 
         return gu.upper()
 
