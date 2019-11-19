@@ -125,7 +125,7 @@ class IvrsParserTest(unittest.TestCase):
         ivhd.addDTEEntry(dte_00h)
         ivrs.addIVHDEntry(ivhd)
         logging.info(str(ivrs))
-        ivrs.toXml()
+        ivrs.ToXmlElementTree()
         self.assertNotEqual(ivrs, None)
 
         ivrs_byte = ivrs.Encode()
@@ -141,7 +141,7 @@ class IvrsParserTest(unittest.TestCase):
         ivhd.addDTEEntry(dte_03h)
         ivrs.addIVHDEntry(ivhd)
         logging.info(str(ivrs))
-        ivrs.toXml()
+        ivrs.ToXmlElementTree()
         self.assertNotEqual(ivrs, None)
 
         ivrs_byte = ivrs.Encode()
@@ -165,7 +165,7 @@ class IvrsParserTest(unittest.TestCase):
         ivhd.addDTEEntry(dte_48h)
         ivrs.addIVHDEntry(ivhd)
         logging.info(str(ivrs))
-        ivrs.toXml()
+        ivrs.ToXmlElementTree()
         self.assertNotEqual(ivrs, None)
 
         ivrs_byte = ivrs.Encode()
@@ -183,7 +183,7 @@ class IvrsParserTest(unittest.TestCase):
         ivhd.addDTEEntry(dte_f0h_2)
         ivrs.addIVHDEntry(ivhd)
         logging.info(str(ivrs))
-        ivrs.toXml()
+        ivrs.ToXmlElementTree()
         self.assertNotEqual(ivrs, None)
 
         ivrs_byte = ivrs.Encode()
@@ -204,7 +204,7 @@ class IvrsParserTest(unittest.TestCase):
         ivrs.addIVMDEntry(ivmd)
 
         logging.info(str(ivrs))
-        ivrs.toXml()
+        ivrs.ToXmlElementTree()
         self.assertNotEqual(ivrs, None)
 
         ivrs_byte = ivrs.Encode()
@@ -225,7 +225,7 @@ class IvrsParserTest(unittest.TestCase):
         ivrs.addIVMDEntry(ivmd)
 
         logging.info(str(ivrs))
-        ivrs.toXml()
+        ivrs.ToXmlElementTree()
         self.assertNotEqual(ivrs, None)
 
         ivrs_byte = ivrs.Encode()
@@ -246,7 +246,7 @@ class IvrsParserTest(unittest.TestCase):
         ivrs.addIVMDEntry(ivmd)
 
         logging.info(str(ivrs))
-        ivrs.toXml()
+        ivrs.ToXmlElementTree()
         self.assertNotEqual(ivrs, None)
 
         ivrs_byte = ivrs.Encode()
