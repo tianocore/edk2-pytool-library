@@ -315,7 +315,7 @@ class WinCertUefiGuid(object):
               .format(Size=len(self.CertData)))
 
     def Write(self, fs):
-        fs.write(self.Encode)
+        fs.write(self.Encode())
 
 
 class WinCert(object):
