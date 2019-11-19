@@ -77,13 +77,11 @@ class IVRS_TABLE(object):
 
         return root
 
-    def __str__(self):
-        retval = str(self.ivrs_table)
+    def DumpInfo(self):
+        self.ivrs_table.DumpInfo()
 
         for sub in self.SubStructs:
-            retval += str(sub)
-
-        return retval
+            sub.DumpInfo()
 
     @staticmethod
     def validateChecksum8(data):
@@ -166,21 +164,19 @@ class IVRS_TABLE(object):
                                self.IVinfo,
                                self.Reserved)
 
-        def __str__(self):
-            return """\n  ACPI Table Header
-------------------------------------------------------------------
-  Signature          : %s
-  Length             : 0x%08X
-  Revision           : 0x%02X
-  Checksum           : 0x%02X
-  OEM ID             : %s
-  OEM Table ID       : %s
-  OEM Revision       : 0x%08X
-  Creator ID         : %s
-  Creator Revision   : 0x%08X
-  IVinfo             : 0x%08X\n""" % (self.Signature, self.Length, self.Revision, self.Checksum,
-                                      self.OEMID, self.OEMTableID, self.OEMRevision, self.CreatorID,
-                                      self.CreatorRevision, self.IVinfo)
+        def DumpInfo(self):
+            print('  ACPI Table Header')
+            print('------------------------------------------------------------------')
+            print('Signature          : {Signature:s}'.format(Signature=self.Signature))
+            print('Length             : 0x{Length:08X}'.format(Length=self.Length))
+            print('Revision           : 0x{Revision:02X}'.format(Revision=self.Revision))
+            print('Checksum           : 0x{Checksum:02X}'.format(Checksum=self.Checksum))
+            print('OEM ID             : {OEMID:s}'.format(OEMID=self.OEMID))
+            print('OEM Table ID       : {OEMTableID:s}'.format(OEMTableID=self.OEMTableID))
+            print('OEM Revision       : 0x{OEMRevision:08X}'.format(OEMRevision=self.OEMRevision))
+            print('Creator ID         : {CreatorID:s}'.format(CreatorID=self.CreatorID))
+            print('Creator Revision   : 0x{CreatorRevision:08X}'.format(CreatorRevision=self.CreatorRevision))
+            print('IVinfo             : 0x{IVinfo:08X}'.format(IVinfo=self.IVinfo))
 
         def ToXmlElementTree(self):
             xml_repr = ET.Element('AcpiTableHeader')
@@ -203,11 +199,11 @@ class IVRS_TABLE(object):
         def __init__(self, header_byte_array):
             (self.Type, ) = struct.unpack(IVRS_TABLE.REMAPPING_STRUCT_HEADER.struct_format, header_byte_array[:IVRS_TABLE.REMAPPING_STRUCT_HEADER.struct_format_size])
 
-        def __str__(self):
-            return """\n  Remapping Struct Header
-    ----------------------------------------------------------------
-      Type               : 0x%01X
-    """ % (self.Type)
+    #     def DumpInfo(self):
+    #         return """\n  Remapping Struct Header
+    # ----------------------------------------------------------------
+    #   Type               : 0x%01X
+    # """ % (self.Type)
 
     class IVHD_STRUCT(REMAPPING_STRUCT_HEADER):
         struct_format = '=BBHHHQHHI'
@@ -311,26 +307,21 @@ class IVRS_TABLE(object):
 
             return xml_repr
 
-        def __str__(self):
-            retstring = """\n\t  IVHD
-  ----------------------------------------------------------------
-    Type                  : 0x%02X
-    Flags                 : 0x%02X
-    Length                : 0x%04X
-    IOMMU Device ID       : 0x%04X
-    Capability Offset     : 0x%04X
-    IOMMU Base Address    : 0x%016X
-    Segment Group         : 0x%04X
-    IOMMU Info            : 0x%04X
-    IOMMU Feature Info    : 0x%08X\n""" % (self.Type, self.Flags, self.Length,
-                                           self.DeviceID, self.CapabilityOffset,
-                                           self.IOMMUBaseAddress, self.SegmentGroup,
-                                           self.IOMMUInfo, self.IOMMUFeatureInfo)
+        def DumpInfo(self):
+            print("\t  IVHD")
+            print("----------------------------------------------------------------")
+            print('Type                  : 0x{Type:02X}'.format(Type=self.Type))
+            print('Flags                 : 0x{Flags:02X}'.format(Flags=self.Flags))
+            print('Length                : 0x{Length:04X}'.format(Length=self.Length))
+            print('IOMMU Device ID       : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+            print('Capability Offset     : 0x{CapabilityOffset:04X}'.format(CapabilityOffset=self.CapabilityOffset))
+            print('IOMMU Base Address    : 0x{IOMMUBaseAddress:016X}'.format(IOMMUBaseAddress=self.IOMMUBaseAddress))
+            print('Segment Group         : 0x{SegmentGroup:04X}'.format(SegmentGroup=self.SegmentGroup))
+            print('IOMMU Info            : 0x{IOMMUInfo:04X}'.format(IOMMUInfo=self.IOMMUInfo))
+            print('IOMMU Feature Info    : 0x{IOMMUFeatureInfo:08X}'.format(IOMMUFeatureInfo=self.IOMMUFeatureInfo))
 
             for item in self.DeviceTableEntries:
-                retstring += str(item)
-
-            return retstring
+                item.DumpInfo()
 
     class IVMD_STRUCT(REMAPPING_STRUCT_HEADER):
         struct_format = '=BBHHHQQQ'
@@ -451,21 +442,17 @@ class IVRS_TABLE(object):
 
             return False
 
-        def __str__(self):
-            retstring = """\n\t  IVMD
-  ----------------------------------------------------------------
-    Type                                 : 0x%02X
-    Flags                                : 0x%02X
-    Length                               : 0x%04X
-    DeviceID                             : 0x%04X
-    AuxiliaryData                        : 0x%04X
-    Reserved                             : 0x%016X
-    IVMD Start Address                   : 0x%016x
-    IVMD Memory Block Length             : 0x%016x\n""" % (self.Type, self.Flags, self.Length, self.DeviceID,
-                                                           self.AuxiliaryData, self.Reserved,
-                                                           self.IVMDStartAddress, self.IVMDMemoryBlockLength)
-
-            return retstring
+        def DumpInfo(self):
+            print("\t  IVMD")
+            print("----------------------------------------------------------------")
+            print('Type                                 : 0x{Type:02X}'.format(Type=self.Type))
+            print('Flags                                : 0x{Flags:02X}'.format(Flags=self.Flags))
+            print('Length                               : 0x{Length:04X}'.format(Length=self.Length))
+            print('DeviceID                             : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+            print('AuxiliaryData                        : 0x{AuxiliaryData:04X}'.format(AuxiliaryData=self.AuxiliaryData))
+            print('Reserved                             : 0x{Reserved:016X}'.format(Reserved=self.Reserved))
+            print('IVMD Start Address                   : 0x{IVMDStartAddress:016X}'.format(IVMDStartAddress=self.IVMDStartAddress))
+            print('IVMD Memory Block Length             : 0x{IVMDMemoryBlockLength:016X}'.format(IVMDMemoryBlockLength=self.Type))
 
     class DEVICE_TABLE_ENTRY(object):
         struct_format = '=BHB'
@@ -682,58 +669,55 @@ class IVRS_TABLE(object):
 
             return xml_item
 
-        def __str__(self):
+        def DumpInfo(self):
+            print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
+            print('\t\t--------------------------------------------------')
+            print('\t\t  Type                  : 0x{Type:02X}'.format(Type=self.Type))
+
             is_range_device = self.Type == 3 or self.Type == 67 or self.Type == 71
             is_alias_device = self.Type == 66 or self.Type == 67
             is_ex_dte_device = self.Type == 70 or self.Type == 71
             is_special_device = self.Type == 72
             is_acpi_hid_device = self.Type == 240
 
-            retstring = """\n\t\t  %s
-\t\t--------------------------------------------------
-\t\t  Type                  : 0x%02X""" % (self.TypeString, self.Type)
-
             if is_range_device:
-                retstring += "\n\t\t  Start of Range        : 0x%04X" % (self.DeviceID)
-                retstring += "\n\t\t  End of Range          : 0x%04X" % (self.EndDeviceID)
+                print('\t\t  Start of Range        : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+                print('\t\t  End of Range          : 0x{EndDeviceID:04X}'.format(EndDeviceID=self.EndDeviceID))
             else:
-                retstring += "\n\t\t  Device ID             : 0x%04X" % (self.DeviceID)
+                print('\t\t  Device ID             : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
 
-            retstring += "\n\t\t  DTE Setting           : 0x%02X" % (self.DTESetting)
+            print('\t\t  DTE Setting           : 0x{DTESetting:02X}'.format(DTESetting=self.DTESetting))
 
             if is_alias_device or is_special_device:
-                retstring += "\n\t\t  Source Device ID      : 0x%04X" % (self.SourceDeviceID)
+                print('\t\t  Source Device ID      : 0x{SourceDeviceID:04X}'.format(SourceDeviceID=self.SourceDeviceID))
 
             if is_ex_dte_device:
-                retstring += "\n\t\t  Extended DTE Setting  : "
                 if (self.ExtendedDTESetting & 0x80000000) != 0:
-                    retstring += "ATS requests blocked"
+                    ats_str = "ATS requests blocked"
                 else:
-                    retstring += "ATS allowed"
+                    ats_str = "ATS allowed"
+                print('\t\t  Extended DTE Setting  : {ExtendedDTESetting:s}'.format(ExtendedDTESetting=ats_str))
 
             if is_special_device:
-                retstring += "\n\t\t  Handle                : 0x%02X" % (self.Handle)
-                retstring += "\n\t\t  Variety               : "
                 if self.Variety == 1:
-                    retstring += "IOAPIC"
+                    var_str = "IOAPIC"
                 elif self.Variety == 2:
-                    retstring += "HPET"
+                    var_str = "HPET"
                 else:
-                    retstring += "Reserved %02X" % (self.Variety)
+                    var_str = "Reserved %02X" % (self.Variety)
+                print('\t\t  Handle                : {Handle:02X}'.format(Handle=self.Handle))
+                print('\t\t  Variety               : {Variety:s}'.format(Variety=var_str))
 
             if is_acpi_hid_device:
-                retstring += "\n\t\t  Hardware ID           : %s" % (self.HID)
-                retstring += "\n\t\t  Extended DTE Setting  : %s" % (self.CID)
-                retstring += "\n\t\t  Unique ID Format      : %d" % (self.UIDFormat)
-                retstring += "\n\t\t  Unique ID Length      : %d" % (self.UIDLength)
+                print('\t\t  Hardware ID           : {HID:s}'.format(HID=self.HID))
+                print('\t\t  Extended DTE Setting  : {CID:s}'.format(CID=self.CID))
+                print('\t\t  Unique ID Format      : {UIDFormat:s}'.format(UIDFormat=self.UIDFormat))
+                print('\t\t  Unique ID Length      : {UIDLength:s}'.format(UIDLength=self.UIDLength))
                 if self.UIDFormat == 0:
-                    retstring += "\n\t\t  Unique ID             : None"
+                    print('\t\t  Unique ID             : None')
                 elif self.UIDFormat == 1:
-                    retstring += "\n\t\t  Unique ID             : 0x%X" % (self.UID)
+                    print('\t\t  Unique ID             : 0x{UID:X}'.format(UID=self.UID))
                 elif self.UIDFormat == 2:
-                    retstring += "\n\t\t  Unique ID             : %s" % (self.UID)
+                    print('\t\t  Unique ID             : 0x{UID:s}'.format(UID=self.UID))
                 else:
-                    print("Unrecognized UID format detected %d", self.UIDFormat)
-                    sys.exit(-1)
-            retstring += '\n'
-            return retstring
+                    raise Exception("Unrecognized UID format detected %d", self.UIDFormat)
