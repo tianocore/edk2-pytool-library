@@ -19,11 +19,15 @@ class UefiStatusCode(object):
 
     def Convert32BitToString(self, i):
         # convert a 32bit value to string
+        if((i & 0xFFF) > len(UefiStatusCode.StatusCodeStrings)):
+            return "Undefined StatusCode"
+
         return UefiStatusCode.StatusCodeStrings[(i & 0xFFF)]
 
     def Convert64BitToString(self, l):
-        if(l > len(UefiStatusCode.StatusCodeStrings)):
-            return ""
+        if((l & 0xFFF) > len(UefiStatusCode.StatusCodeStrings)):
+            return "Undefined StatusCode"
+
         return UefiStatusCode.StatusCodeStrings[(l & 0xFFF)]
 
     def ConvertHexString64ToString(self, hexstring):
