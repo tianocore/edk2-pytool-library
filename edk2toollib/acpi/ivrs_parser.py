@@ -167,14 +167,14 @@ class IVRS_TABLE(object):
         def DumpInfo(self):
             print('  ACPI Table Header')
             print('------------------------------------------------------------------')
-            print('Signature          : {Signature:s}'.format(Signature=self.Signature))
+            print('Signature          : {Signature:s}'.format(Signature=self.Signature.decode()))
             print('Length             : 0x{Length:08X}'.format(Length=self.Length))
             print('Revision           : 0x{Revision:02X}'.format(Revision=self.Revision))
             print('Checksum           : 0x{Checksum:02X}'.format(Checksum=self.Checksum))
-            print('OEM ID             : {OEMID:s}'.format(OEMID=self.OEMID))
-            print('OEM Table ID       : {OEMTableID:s}'.format(OEMTableID=self.OEMTableID))
+            print('OEM ID             : {OEMID:s}'.format(OEMID=self.OEMID.decode()))
+            print('OEM Table ID       : {OEMTableID:s}'.format(OEMTableID=self.OEMTableID.decode()))
             print('OEM Revision       : 0x{OEMRevision:08X}'.format(OEMRevision=self.OEMRevision))
-            print('Creator ID         : {CreatorID:s}'.format(CreatorID=self.CreatorID))
+            print('Creator ID         : {CreatorID:s}'.format(CreatorID=self.CreatorID.decode()))
             print('Creator Revision   : 0x{CreatorRevision:08X}'.format(CreatorRevision=self.CreatorRevision))
             print('IVinfo             : 0x{IVinfo:08X}'.format(IVinfo=self.IVinfo))
 
@@ -309,16 +309,16 @@ class IVRS_TABLE(object):
 
         def DumpInfo(self):
             print("\t  IVHD")
-            print("----------------------------------------------------------------")
-            print('Type                  : 0x{Type:02X}'.format(Type=self.Type))
-            print('Flags                 : 0x{Flags:02X}'.format(Flags=self.Flags))
-            print('Length                : 0x{Length:04X}'.format(Length=self.Length))
-            print('IOMMU Device ID       : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
-            print('Capability Offset     : 0x{CapabilityOffset:04X}'.format(CapabilityOffset=self.CapabilityOffset))
-            print('IOMMU Base Address    : 0x{IOMMUBaseAddress:016X}'.format(IOMMUBaseAddress=self.IOMMUBaseAddress))
-            print('Segment Group         : 0x{SegmentGroup:04X}'.format(SegmentGroup=self.SegmentGroup))
-            print('IOMMU Info            : 0x{IOMMUInfo:04X}'.format(IOMMUInfo=self.IOMMUInfo))
-            print('IOMMU Feature Info    : 0x{IOMMUFeatureInfo:08X}'.format(IOMMUFeatureInfo=self.IOMMUFeatureInfo))
+            print("\t----------------------------------------------------------------")
+            print('\tType                  : 0x{Type:02X}'.format(Type=self.Type))
+            print('\tFlags                 : 0x{Flags:02X}'.format(Flags=self.Flags))
+            print('\tLength                : 0x{Length:04X}'.format(Length=self.Length))
+            print('\tIOMMU Device ID       : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+            print('\tCapability Offset     : 0x{CapabilityOffset:04X}'.format(CapabilityOffset=self.CapabilityOffset))
+            print('\tIOMMU Base Address    : 0x{IOMMUBaseAddress:016X}'.format(IOMMUBaseAddress=self.IOMMUBaseAddress))
+            print('\tSegment Group         : 0x{SegmentGroup:04X}'.format(SegmentGroup=self.SegmentGroup))
+            print('\tIOMMU Info            : 0x{IOMMUInfo:04X}'.format(IOMMUInfo=self.IOMMUInfo))
+            print('\tIOMMU Feature Info    : 0x{IOMMUFeatureInfo:08X}'.format(IOMMUFeatureInfo=self.IOMMUFeatureInfo))
 
             for item in self.DeviceTableEntries:
                 item.DumpInfo()
@@ -444,15 +444,15 @@ class IVRS_TABLE(object):
 
         def DumpInfo(self):
             print("\t  IVMD")
-            print("----------------------------------------------------------------")
-            print('Type                                 : 0x{Type:02X}'.format(Type=self.Type))
-            print('Flags                                : 0x{Flags:02X}'.format(Flags=self.Flags))
-            print('Length                               : 0x{Length:04X}'.format(Length=self.Length))
-            print('DeviceID                             : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
-            print('AuxiliaryData                        : 0x{AuxiliaryData:04X}'.format(AuxiliaryData=self.AuxiliaryData))
-            print('Reserved                             : 0x{Reserved:016X}'.format(Reserved=self.Reserved))
-            print('IVMD Start Address                   : 0x{IVMDStartAddress:016X}'.format(IVMDStartAddress=self.IVMDStartAddress))
-            print('IVMD Memory Block Length             : 0x{IVMDMemoryBlockLength:016X}'.format(IVMDMemoryBlockLength=self.Type))
+            print("\t----------------------------------------------------------------")
+            print('\tType                                 : 0x{Type:02X}'.format(Type=self.Type))
+            print('\tFlags                                : 0x{Flags:02X}'.format(Flags=self.Flags))
+            print('\tLength                               : 0x{Length:04X}'.format(Length=self.Length))
+            print('\tDeviceID                             : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+            print('\tAuxiliaryData                        : 0x{AuxiliaryData:04X}'.format(AuxiliaryData=self.AuxiliaryData))
+            print('\tReserved                             : 0x{Reserved:016X}'.format(Reserved=self.Reserved))
+            print('\tIVMD Start Address                   : 0x{IVMDStartAddress:016X}'.format(IVMDStartAddress=self.IVMDStartAddress))
+            print('\tIVMD Memory Block Length             : 0x{IVMDMemoryBlockLength:016X}'.format(IVMDMemoryBlockLength=self.Type))
 
     class DEVICE_TABLE_ENTRY(object):
         struct_format = '=BHB'
@@ -672,7 +672,7 @@ class IVRS_TABLE(object):
         def DumpInfo(self):
             print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
             print('\t\t--------------------------------------------------')
-            print('\t\t  Type                  : 0x{Type:02X}'.format(Type=self.Type))
+            print('\t\tType                  : 0x{Type:02X}'.format(Type=self.Type))
 
             is_range_device = self.Type == 3 or self.Type == 67 or self.Type == 71
             is_alias_device = self.Type == 66 or self.Type == 67
@@ -681,22 +681,22 @@ class IVRS_TABLE(object):
             is_acpi_hid_device = self.Type == 240
 
             if is_range_device:
-                print('\t\t  Start of Range        : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
-                print('\t\t  End of Range          : 0x{EndDeviceID:04X}'.format(EndDeviceID=self.EndDeviceID))
+                print('\t\tStart of Range        : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+                print('\t\tEnd of Range          : 0x{EndDeviceID:04X}'.format(EndDeviceID=self.EndDeviceID))
             else:
-                print('\t\t  Device ID             : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+                print('\t\tDevice ID             : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
 
-            print('\t\t  DTE Setting           : 0x{DTESetting:02X}'.format(DTESetting=self.DTESetting))
+            print('\t\tDTE Setting           : 0x{DTESetting:02X}'.format(DTESetting=self.DTESetting))
 
             if is_alias_device or is_special_device:
-                print('\t\t  Source Device ID      : 0x{SourceDeviceID:04X}'.format(SourceDeviceID=self.SourceDeviceID))
+                print('\t\tSource Device ID      : 0x{SourceDeviceID:04X}'.format(SourceDeviceID=self.SourceDeviceID))
 
             if is_ex_dte_device:
                 if (self.ExtendedDTESetting & 0x80000000) != 0:
                     ats_str = "ATS requests blocked"
                 else:
                     ats_str = "ATS allowed"
-                print('\t\t  Extended DTE Setting  : {ExtendedDTESetting:s}'.format(ExtendedDTESetting=ats_str))
+                print('\t\tExtended DTE Setting  : {ExtendedDTESetting:s}'.format(ExtendedDTESetting=ats_str))
 
             if is_special_device:
                 if self.Variety == 1:
@@ -704,20 +704,20 @@ class IVRS_TABLE(object):
                 elif self.Variety == 2:
                     var_str = "HPET"
                 else:
-                    var_str = "Reserved %02X" % (self.Variety)
-                print('\t\t  Handle                : {Handle:02X}'.format(Handle=self.Handle))
-                print('\t\t  Variety               : {Variety:s}'.format(Variety=var_str))
+                    var_str = "Reserved 0x%02X" % (self.Variety)
+                print('\t\tHandle                : 0x{Handle:02X}'.format(Handle=self.Handle))
+                print('\t\tVariety               : {Variety:s}'.format(Variety=var_str))
 
             if is_acpi_hid_device:
-                print('\t\t  Hardware ID           : {HID:s}'.format(HID=self.HID))
-                print('\t\t  Extended DTE Setting  : {CID:s}'.format(CID=self.CID))
-                print('\t\t  Unique ID Format      : {UIDFormat:s}'.format(UIDFormat=self.UIDFormat))
-                print('\t\t  Unique ID Length      : {UIDLength:s}'.format(UIDLength=self.UIDLength))
+                print('\t\tHardware ID           : {HID:s}'.format(HID=self.HID.decode()))
+                print('\t\tExtended DTE Setting  : {CID:s}'.format(CID=self.CID.decode()))
+                print('\t\tUnique ID Format      : {UIDFormat:d}'.format(UIDFormat=self.UIDFormat))
+                print('\t\tUnique ID Length      : {UIDLength:d}'.format(UIDLength=self.UIDLength))
                 if self.UIDFormat == 0:
-                    print('\t\t  Unique ID             : None')
+                    print('\t\tUnique ID             : None')
                 elif self.UIDFormat == 1:
-                    print('\t\t  Unique ID             : 0x{UID:X}'.format(UID=self.UID))
+                    print('\t\tUnique ID             : 0x{UID:X}'.format(UID=self.UID))
                 elif self.UIDFormat == 2:
-                    print('\t\t  Unique ID             : 0x{UID:s}'.format(UID=self.UID))
+                    print('\t\tUnique ID             : {UID:s}'.format(UID=self.UID.decode()))
                 else:
                     raise Exception("Unrecognized UID format detected %d", self.UIDFormat)
