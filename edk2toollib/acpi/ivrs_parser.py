@@ -69,11 +69,11 @@ class IVRS_TABLE(object):
             bytes_str += ivxd.Encode()
         return bytes_str
 
-    def toXml(self):
+    def ToXmlElementTree(self):
         root = ET.Element('IVRSTable')
-        root.append(self.ivrs_table.toXml())
+        root.append(self.ivrs_table.ToXmlElementTree())
         for sub in self.SubStructs:
-            root.append(sub.toXml())
+            root.append(sub.ToXmlElementTree())
 
         return root
 
@@ -112,25 +112,6 @@ class IVRS_TABLE(object):
 
     def IVRSBitEnabled(self):
         return bool(self.ivrs_table.IVRSBit)
-
-    def CheckIVMDCount(self, goldenxml=None):
-        goldenignores = list()
-
-        if goldenxml is None or not os.path.isfile(goldenxml):
-            print("XML File not found")
-        else:
-            goldenfile = ET.parse(goldenxml)
-            goldenroot = goldenfile.getroot()
-            for entry in goldenroot:
-                if entry.tag == "IVMD":
-                    goldenignores.append(entry.attrib)
-
-        for IVMD in self.IVMDlist:
-            if not IVMD.validateIVMD(goldenignores):
-                print("IVMD PCIe Endpoint " + str(IVMD) + " found but not in golden XML")
-                return False
-
-        return True
 
     class ACPI_TABLE_HEADER(object):
         struct_format = '=4sIBB6s8sI4sIIQ'
@@ -201,7 +182,7 @@ class IVRS_TABLE(object):
                                       self.OEMID, self.OEMTableID, self.OEMRevision, self.CreatorID,
                                       self.CreatorRevision, self.IVinfo)
 
-        def toXml(self):
+        def ToXmlElementTree(self):
             xml_repr = ET.Element('AcpiTableHeader')
             xml_repr.set('Signature', '%s' % self.Signature)
             xml_repr.set('Length', '0x%X' % self.Length)
@@ -309,7 +290,7 @@ class IVRS_TABLE(object):
             self.Length += len(dte.Encode())
             self.DeviceTableEntries.append(dte)
 
-        def toXml(self):
+        def ToXmlElementTree(self):
             xml_repr = ET.Element('IVHD')
             xml_repr.set('Type', '0x%X' % self.Type)
             xml_repr.set('Flags', '0x%X' % self.Flags)
@@ -326,8 +307,7 @@ class IVRS_TABLE(object):
 
             # Add SubStructs
             for item in self.DeviceTableEntries:
-                xml_subitem = ET.SubElement(xml_repr, item.TypeString.replace(" ", ""))
-                item.set_xml(xml_subitem)
+                xml_repr.append(item.ToXmlElementTree())
 
             return xml_repr
 
@@ -390,7 +370,7 @@ class IVRS_TABLE(object):
                                self.IVMDStartAddress,
                                self.IVMDMemoryBlockLength)
 
-        def toXml(self):
+        def ToXmlElementTree(self):
             xml_repr = ET.Element('IVMD')
 
             xml_repr.set('Type', '0x%X' % self.Type)
@@ -646,7 +626,9 @@ class IVRS_TABLE(object):
 
             return byte_str
 
-        def set_xml(self, xml_item):
+        def ToXmlElementTree(self):
+            xml_item = ET.Element(self.TypeString.replace(" ", ""))
+
             is_range_device = self.Type == 3 or self.Type == 67 or self.Type == 71
             is_alias_device = self.Type == 66 or self.Type == 67
             is_ex_dte_device = self.Type == 70 or self.Type == 71
@@ -697,6 +679,8 @@ class IVRS_TABLE(object):
                 else:
                     print("Unrecognized UID format detected")
                     sys.exit(-1)
+
+            return xml_item
 
         def __str__(self):
             is_range_device = self.Type == 3 or self.Type == 67 or self.Type == 71
