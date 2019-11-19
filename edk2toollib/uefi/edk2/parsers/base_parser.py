@@ -244,7 +244,7 @@ class BaseParser(object):
         if(type(v) is str and (v.upper() == "TRUE" or v.upper() == "FALSE")):
             v = v.upper()
 
-        return v
+        return str(v)
 
     #
     # Method to replace variables

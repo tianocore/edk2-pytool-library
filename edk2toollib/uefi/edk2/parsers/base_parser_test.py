@@ -145,7 +145,6 @@ class TestBaseParser(unittest.TestCase):
         self.assertFalse(parser.InActiveCode())
         parser.PopConditional()
 
-
     def test_process_conditional_single_boolean(self):
         parser = BaseParser("")
         # check that nothing is on the stack
