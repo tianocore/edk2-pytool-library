@@ -15,7 +15,7 @@ class UefiStatusCode(object):
                          "No Response", "No Mapping", "Time Out", "Not Started", "Already Started", "Aborted",
                          "ICMP Error", "TFTP Error", "Protocol Error", "Incompatible Error", "Security Violation",
                          "CRC Error", "End of Media", "Reserved(29)", "Reserved(30)", "End of File",
-                         "Invalid Language", "Compromised Data"]
+                         "Invalid Language", "Compromised Data", "IP Address Conflict", "HTTP Error"]
 
     def Convert32BitToString(self, i):
         # convert a 32bit value to string
