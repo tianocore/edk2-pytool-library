@@ -395,27 +395,22 @@ def locate_class_in_module(Module, DesiredClass):
     DesiredClassInstances = []  # a list of all the matching classes that we find
     # Pull out the contents of the module that was provided
     module_contents = dir(Module)
-    module_file = Module.__file__
     # Filter through the Module, we're only looking for classes.
     classList = [getattr(Module, obj) for obj in module_contents
                  if inspect.isclass(getattr(Module, obj))]
+
     for _class in classList:
-        # Classes that the module import show up in this list too so we need
+       # Classes that the module import show up in this list too so we need
         # to make sure it's an INSTANCE of DesiredClass, not DesiredClass itself!
+        # if multiple instances are found in the same class hierarchy, pick the
+        # most specific one. If multiple instances are found belonging to different
+        # class hierarchies, raise an error.
         if _class is not DesiredClass and issubclass(_class, DesiredClass):
-            try:
-                _class_file = inspect.getfile(_class)  # get the file name of the class we care about
-            except TypeError:  # we throw a type error if a builtin module? PlatformBuild is considered builtin?
-                _class_file = module_file
-            if _class_file == module_file:  # if this is in the same file as the module
-                DesiredClassInstances.insert(0, _class)  # put it at the front of the list
-            else:  # otherwise to the back of the list
-                DesiredClassInstances.append(_class)
-    if len(DesiredClassInstances) == 0:  # we didn't find anything
-        return None
-    if len(DesiredClassInstances) > 1:  # we can't log because logging isn't setup yet
-        print(f"Multiple {DesiredClass.__name__} classes were found. Using {DesiredClassInstances[0].__name__}")
-    return DesiredClassInstances[0]  # return the first (highest priority class)
+            if (DesiredClassInstance is None) or issubclass(_class, DesiredClassInstance):
+              DesiredClassInstance = _class
+            elif not issubclass(DesiredClassInstance, _class):
+                raise RuntimeError(f"Multiple instances were found:\n\t{DesiredClassInstance}\n\t{_class}")
+    return DesiredClassInstances
 
 
 if __name__ == '__main__':
