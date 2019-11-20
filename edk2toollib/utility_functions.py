@@ -407,7 +407,7 @@ def locate_class_in_module(Module, DesiredClass):
         # class hierarchies, raise an error.
         if _class is not DesiredClass and issubclass(_class, DesiredClass):
             if (DesiredClassInstance is None) or issubclass(_class, DesiredClassInstance):
-              DesiredClassInstance = _class
+                DesiredClassInstance = _class
             elif not issubclass(DesiredClassInstance, _class):
                 raise RuntimeError(f"Multiple instances were found:\n\t{DesiredClassInstance}\n\t{_class}")
     return DesiredClassInstance
