@@ -400,7 +400,7 @@ def locate_class_in_module(Module, DesiredClass):
                  if inspect.isclass(getattr(Module, obj))]
 
     for _class in classList:
-       # Classes that the module import show up in this list too so we need
+        # Classes that the module import show up in this list too so we need
         # to make sure it's an INSTANCE of DesiredClass, not DesiredClass itself!
         # if multiple instances are found in the same class hierarchy, pick the
         # most specific one. If multiple instances are found belonging to different
