@@ -26,6 +26,10 @@ class IVRS_TABLE(object):
 
     def Decode(self, data):
         self.ivrs_table = IVRS_TABLE.ACPI_TABLE_HEADER(data[:IVRS_TABLE.ACPI_TABLE_HEADER.struct_format_size])
+
+        # Start from the end of ACPI header
+        t_length = self.ivrs_table.Length
+        self.ivrs_table.Length = IVRS_TABLE.ACPI_TABLE_HEADER.struct_format_size
         t_data = data[IVRS_TABLE.ACPI_TABLE_HEADER.struct_format_size:]
 
         # sanity check on incoming data
@@ -43,20 +47,21 @@ class IVRS_TABLE(object):
               (remapping_header.Type == 0x11) or\
               (remapping_header.Type == 0x40):
                 remapping_header = self.IVHD_STRUCT(t_data)
+                self.addIVHDEntry(remapping_header)
             elif(remapping_header.Type == 0x20) or (remapping_header.Type == 0x21) or (remapping_header.Type == 0x22):
                 remapping_header = self.IVMD_STRUCT(t_data[:IVRS_TABLE.IVMD_STRUCT.struct_format_size])
-                self.IVMDlist.append(remapping_header)
+                self.addIVMDEntry(remapping_header)
                 if (remapping_header.Type == 0x22):
                     self.IVRSBit = 0
             else:
                 print('Reserved remapping struct found in IVRS table %d' % remapping_header.Type)
                 sys.exit(-1)
 
-            # IVMD has to follow the corresponding IVHD, thus the list records all entries to maintain order
-            self.SubStructs.append(remapping_header)
-
             # Update data position
             t_data = t_data[remapping_header.Length:]
+
+        if (self.ivrs_table.Length != t_length) or (len(t_data) != 0):
+            raise Exception("IVRS length does not add up. Parsed len: %d, reported len: %d" % (t_length, self.ivrs_table.Length))
 
     def Encode(self):
         bytes_str = b''
@@ -104,6 +109,7 @@ class IVRS_TABLE(object):
     def addIVMDEntry(self, ivmd):
         # append entry to the list, update length and checksum
         self.ivrs_table.Length += len(ivmd.Encode())
+        # IVMD has to follow the corresponding IVHD, thus the list records all entries to maintain order
         self.SubStructs.append(ivmd)
         self.IVMDlist.append(ivmd)
         self.updateACPISum()
@@ -199,12 +205,6 @@ class IVRS_TABLE(object):
         def __init__(self, header_byte_array):
             (self.Type, ) = struct.unpack(IVRS_TABLE.REMAPPING_STRUCT_HEADER.struct_format, header_byte_array[:IVRS_TABLE.REMAPPING_STRUCT_HEADER.struct_format_size])
 
-    #     def DumpInfo(self):
-    #         return """\n  Remapping Struct Header
-    # ----------------------------------------------------------------
-    #   Type               : 0x%01X
-    # """ % (self.Type)
-
     class IVHD_STRUCT(REMAPPING_STRUCT_HEADER):
         struct_format = '=BBHHHQHHI'
         struct_format_size = struct.calcsize(struct_format)
@@ -232,7 +232,7 @@ class IVRS_TABLE(object):
         def Decode(self, header_byte_array):
             (self.Type,
              self.Flags,
-             self.Length,
+             t_Length,
              self.DeviceID,
              self.CapabilityOffset,
              self.IOMMUBaseAddress,
@@ -240,17 +240,19 @@ class IVRS_TABLE(object):
              self.IOMMUInfo,
              self.IOMMUFeatureInfo) = struct.unpack(IVRS_TABLE.IVHD_STRUCT.struct_format, header_byte_array[:IVRS_TABLE.IVHD_STRUCT.struct_format_size])
 
+            self.Length = 0
+
             if (self.Type == 0x11) or (self.Type == 0x40):
+                ivhd_hdr_size = (IVRS_TABLE.IVHD_STRUCT.struct_format_size + IVRS_TABLE.IVHD_STRUCT.ex_format_size)
                 (self.IOMMUEFRImage,
                  self.Reserved) = struct.unpack(IVRS_TABLE.IVHD_STRUCT.ex_format,
-                                                     header_byte_array[IVRS_TABLE.IVHD_STRUCT.struct_format_size:(IVRS_TABLE.IVHD_STRUCT.struct_format_size + IVRS_TABLE.IVHD_STRUCT.ex_format_size)])
-                header_byte_array = header_byte_array[
-                    (IVRS_TABLE.IVHD_STRUCT.struct_format_size + IVRS_TABLE.IVHD_STRUCT.ex_format_size):]
-                bytes_left = self.Length -\
-                    (IVRS_TABLE.IVHD_STRUCT.struct_format_size + IVRS_TABLE.IVHD_STRUCT.ex_format_size)
+                                                header_byte_array[IVRS_TABLE.IVHD_STRUCT.struct_format_size:ivhd_hdr_size])
             else:
-                header_byte_array = header_byte_array[IVRS_TABLE.IVHD_STRUCT.struct_format_size:]
-                bytes_left = self.Length - IVRS_TABLE.IVHD_STRUCT.struct_format_size
+                ivhd_hdr_size = IVRS_TABLE.IVHD_STRUCT.struct_format_size
+
+            header_byte_array = header_byte_array[ivhd_hdr_size:]
+            bytes_left = t_Length - ivhd_hdr_size
+            self.Length += ivhd_hdr_size
 
             # Get Sub Structs
             while bytes_left > 0:
@@ -258,7 +260,10 @@ class IVRS_TABLE(object):
                 header_byte_array = header_byte_array[device_scope.Length:]
                 bytes_left -= device_scope.Length
                 if (device_scope.Type != 4):
-                    self.DeviceTableEntries.append(device_scope)
+                    self.addDTEEntry(device_scope)
+
+            if (t_Length != self.Length) or (bytes_left != 0):
+                raise Exception("IVHD length does not add up. Parsed len: %d, reported len: %d" % (self.Length, t_Length))
 
         def Encode(self):
             byte_str = b''
@@ -349,6 +354,9 @@ class IVRS_TABLE(object):
              self.Reserved,
              self.IVMDStartAddress,
              self.IVMDMemoryBlockLength) = struct.unpack(IVRS_TABLE.IVMD_STRUCT.struct_format, header_byte_array)
+            # IVMD is simple, the length is fixed, so assert if not
+            if (self.Length != len(header_byte_array)):
+                raise Exception("Bad IVMD entry size %d, expecting %d" % (self.Length, len(header_byte_array)))
 
         def Encode(self):
             return struct.pack(IVRS_TABLE.IVMD_STRUCT.struct_format,
@@ -720,4 +728,4 @@ class IVRS_TABLE(object):
                 elif self.UIDFormat == 2:
                     print('\t\tUnique ID             : {UID:s}'.format(UID=self.UID.decode()))
                 else:
-                    raise Exception("Unrecognized UID format detected %d", self.UIDFormat)
+                    raise Exception("Unrecognized UID format detected %d" % self.UIDFormat)
