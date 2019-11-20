@@ -441,12 +441,12 @@ class TestBaseParser(unittest.TestCase):
     def test_replace_local_variables(self):
         parser = BaseParser("")
         variables = {
-            "VARFIFTY": 50,
-            "VARTEST": "TEST",
-            "VARFOURTY": 40,
-            "VARHEX": "0x20",
-            "VARBOOLEAN": "TRUE",
-            "VARBOOLEANFAL": "FALSE",
+            "FIFTY": 50,
+            "TEST": "TEST",
+            "FOURTY": 40,
+            "HEX": "0x20",
+            "BOOLEAN": "TRUE",
+            "BOOLEAN FALSE": "FALSE",
         }
         parser.LocalVars = variables
         # check to make sure we don't modify if we don't have variables
