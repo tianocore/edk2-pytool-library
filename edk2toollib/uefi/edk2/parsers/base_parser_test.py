@@ -415,7 +415,7 @@ class TestBaseParser(unittest.TestCase):
         variables = {
             "FIFTY": 50,
             "TEST": "TEST",
-            "FOURTY": 40,
+            "LOWER NUMBER": 40,
             "HEX": "0x20",
             "BOOLEAN TRUE": "TRUE",
             "BOOLEAN FALSE": "FALSE",
@@ -443,7 +443,7 @@ class TestBaseParser(unittest.TestCase):
         variables = {
             "FIFTY": 50,
             "TEST": "TEST",
-            "FOURTY": 40,
+            "LOWER NUMBER": 40,
             "HEX": "0x20",
             "BOOLEAN": "TRUE",
             "BOOLEAN FALSE": "FALSE",
