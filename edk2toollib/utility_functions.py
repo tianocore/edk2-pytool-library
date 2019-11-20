@@ -392,7 +392,7 @@ def locate_class_in_module(Module, DesiredClass):
     there is a class defined in the module that subclasses DesiredClass.
     '''
 
-    DesiredClassInstances = []  # a list of all the matching classes that we find
+    DesiredClassInstance = None
     # Pull out the contents of the module that was provided
     module_contents = dir(Module)
     # Filter through the Module, we're only looking for classes.
@@ -410,7 +410,7 @@ def locate_class_in_module(Module, DesiredClass):
               DesiredClassInstance = _class
             elif not issubclass(DesiredClassInstance, _class):
                 raise RuntimeError(f"Multiple instances were found:\n\t{DesiredClassInstance}\n\t{_class}")
-    return DesiredClassInstances
+    return DesiredClassInstance
 
 
 if __name__ == '__main__':
