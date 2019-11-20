@@ -19,7 +19,7 @@ class TestBaseParser(unittest.TestCase):
         res, sect = parser.ParseNewSection(section1)
         self.assertTrue(res)
         self.assertEqual(sect, "Defines")
-        # invalud section
+        # invalid section
         section2 = "[Defines"
         res, sect = parser.ParseNewSection(section2)
         self.assertFalse(res)

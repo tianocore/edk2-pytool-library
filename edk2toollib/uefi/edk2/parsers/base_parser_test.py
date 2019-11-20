@@ -179,7 +179,7 @@ class TestBaseParser(unittest.TestCase):
         # make sure we fail the garbage input
         conditional_count = len(parser.ConditionalStack)
         self.assertFalse(parser.ProcessConditional("GARBAGE INPUT"))
-        # make sure our coutn didn't change
+        # make sure our count didn't change
         self.assertEqual(len(parser.ConditionalStack), conditional_count)
 
     def test_process_conditional_ands_ors(self):
