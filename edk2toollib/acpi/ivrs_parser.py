@@ -10,6 +10,7 @@ import os
 import sys
 import struct
 import xml.etree.ElementTree as ET
+from enum import IntEnum
 
 IVRSParserVersion = '1.00'
 
@@ -17,7 +18,7 @@ IVRSParserVersion = '1.00'
 class IVRS_TABLE(object):
 
     def __init__(self, data=None):
-        self.ivrs_table = None
+        self.acpi_header = None
         self.SubStructs = list()
         self.IVMDlist = list()
 
@@ -25,33 +26,35 @@ class IVRS_TABLE(object):
             self.Decode(data)
 
     def Decode(self, data):
-        self.ivrs_table = IVRS_TABLE.ACPI_TABLE_HEADER(data[:IVRS_TABLE.ACPI_TABLE_HEADER.struct_format_size])
+        self.acpi_header = IVRS_TABLE.ACPI_TABLE_HEADER(data[:IVRS_TABLE.ACPI_TABLE_HEADER.struct_format_size])
 
-        # Start from the end of ACPI header
-        t_length = self.ivrs_table.Length
-        self.ivrs_table.Length = IVRS_TABLE.ACPI_TABLE_HEADER.struct_format_size
+        # Start from the end of ACPI header, but store the parsed length for verification
+        t_length = self.acpi_header.Length
+        self.acpi_header.Length = IVRS_TABLE.ACPI_TABLE_HEADER.struct_format_size
         t_data = data[IVRS_TABLE.ACPI_TABLE_HEADER.struct_format_size:]
 
         # sanity check on incoming data
         Checksum8 = IVRS_TABLE.validateChecksum8(data)
         if (Checksum8 != 0):
-            raise Exception('Incoming data checksum does not add up: checksum field %x, calculated is %x',
-                            self.ivrs_table.Checksum, Checksum8)
+            raise Exception('Incoming data checksum does not add up: checksum field %x, calculated is %x' %
+                            (self.acpi_header.Checksum, Checksum8))
 
         while len(t_data) > 0:
             # Get type and length of remapping struct
             remapping_header = self.REMAPPING_STRUCT_HEADER(t_data)
 
             # Parse remapping struct
-            if(remapping_header.Type == 0x10) or\
-              (remapping_header.Type == 0x11) or\
-              (remapping_header.Type == 0x40):
+            if(remapping_header.Type == IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE.TYPE_10H) or\
+              (remapping_header.Type == IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE.TYPE_11H) or\
+              (remapping_header.Type == IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE.TYPE_40H):
                 remapping_header = self.IVHD_STRUCT(t_data)
                 self.addIVHDEntry(remapping_header)
-            elif(remapping_header.Type == 0x20) or (remapping_header.Type == 0x21) or (remapping_header.Type == 0x22):
+            elif(remapping_header.Type == IVRS_TABLE.IVMD_STRUCT.IVMD_TYPE.TYPE_20H) or\
+                (remapping_header.Type == IVRS_TABLE.IVMD_STRUCT.IVMD_TYPE.TYPE_21H) or\
+                (remapping_header.Type == IVRS_TABLE.IVMD_STRUCT.IVMD_TYPE.TYPE_22H):
                 remapping_header = self.IVMD_STRUCT(t_data[:IVRS_TABLE.IVMD_STRUCT.struct_format_size])
                 self.addIVMDEntry(remapping_header)
-                if (remapping_header.Type == 0x22):
+                if (remapping_header.Type == IVRS_TABLE.IVMD_STRUCT.IVMD_TYPE.TYPE_20H):
                     self.IVRSBit = 0
             else:
                 print('Reserved remapping struct found in IVRS table %d' % remapping_header.Type)
@@ -60,14 +63,14 @@ class IVRS_TABLE(object):
             # Update data position
             t_data = t_data[remapping_header.Length:]
 
-        if (self.ivrs_table.Length != t_length) or (len(t_data) != 0):
-            raise Exception("IVRS length does not add up. Parsed len: %d, reported len: %d" % (t_length, self.ivrs_table.Length))
+        if (self.acpi_header.Length != t_length) or (len(t_data) != 0):
+            raise Exception("IVRS length does not add up. Parsed len: %d, reported len: %d" % (t_length, self.acpi_header.Length))
 
     def Encode(self):
         bytes_str = b''
 
         # Append ACPI header
-        bytes_str += self.ivrs_table.Encode()
+        bytes_str += self.acpi_header.Encode()
 
         # All IVHD/IVMD entries
         for ivxd in self.SubStructs:
@@ -76,14 +79,14 @@ class IVRS_TABLE(object):
 
     def ToXmlElementTree(self):
         root = ET.Element('IVRSTable')
-        root.append(self.ivrs_table.ToXmlElementTree())
+        root.append(self.acpi_header.ToXmlElementTree())
         for sub in self.SubStructs:
             root.append(sub.ToXmlElementTree())
 
         return root
 
     def DumpInfo(self):
-        self.ivrs_table.DumpInfo()
+        self.acpi_header.DumpInfo()
 
         for sub in self.SubStructs:
             sub.DumpInfo()
@@ -95,27 +98,27 @@ class IVRS_TABLE(object):
     def updateACPISum(self):
         temp_sum = 0
         # Clear the checksum before calculating sum
-        self.ivrs_table.Checksum = 0
+        self.acpi_header.Checksum = 0
         temp_str = self.Encode()
         temp_sum = sum(temp_str)
-        self.ivrs_table.Checksum = (0x100 - (temp_sum & 0xFF)) & 0xFF
+        self.acpi_header.Checksum = (0x100 - (temp_sum & 0xFF)) & 0xFF
 
     def addIVHDEntry(self, ivhd):
         # append entry to the list, update length and checksum
-        self.ivrs_table.Length += len(ivhd.Encode())
+        self.acpi_header.Length += len(ivhd.Encode())
         self.SubStructs.append(ivhd)
         self.updateACPISum()
 
     def addIVMDEntry(self, ivmd):
         # append entry to the list, update length and checksum
-        self.ivrs_table.Length += len(ivmd.Encode())
+        self.acpi_header.Length += len(ivmd.Encode())
         # IVMD has to follow the corresponding IVHD, thus the list records all entries to maintain order
         self.SubStructs.append(ivmd)
         self.IVMDlist.append(ivmd)
         self.updateACPISum()
 
     def IVRSBitEnabled(self):
-        return bool(self.ivrs_table.IVRSBit)
+        return bool(self.acpi_header.IVRSBit)
 
     class ACPI_TABLE_HEADER(object):
         struct_format = '=4sIBB6s8sI4sIIQ'
@@ -211,6 +214,11 @@ class IVRS_TABLE(object):
         ex_format = "=QQ"
         ex_format_size = struct.calcsize(ex_format)
 
+        class IVHD_TYPE(IntEnum):
+            TYPE_10H            = 0x10
+            TYPE_11H            = 0x11
+            TYPE_40H            = 0x40
+
         def __init__(self, data=None):
             self.Type = None
             self.Flags = None
@@ -242,7 +250,7 @@ class IVRS_TABLE(object):
 
             self.Length = 0
 
-            if (self.Type == 0x11) or (self.Type == 0x40):
+            if (self.Type == IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE.TYPE_11H) or (self.Type == IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE.TYPE_40H):
                 ivhd_hdr_size = (IVRS_TABLE.IVHD_STRUCT.struct_format_size + IVRS_TABLE.IVHD_STRUCT.ex_format_size)
                 (self.IOMMUEFRImage,
                  self.Reserved) = struct.unpack(IVRS_TABLE.IVHD_STRUCT.ex_format,
@@ -332,6 +340,11 @@ class IVRS_TABLE(object):
         struct_format = '=BBHHHQQQ'
         struct_format_size = struct.calcsize(struct_format)
 
+        class IVMD_TYPE(IntEnum):
+            TYPE_20H            = 0x20  # All peripherals
+            TYPE_21H            = 0x21  # Specified peripheral
+            TYPE_22H            = 0x22  # Peripheral range
+
         def __init__(self, data=None):
             self.Type = None
             self.Flags = None
@@ -376,7 +389,7 @@ class IVRS_TABLE(object):
             xml_repr.set('Flags', '0x%X' % self.Flags)
             xml_repr.set('Length', '0x%X' % self.Length)
             xml_repr.set('DeviceID', '0x%X' % self.DeviceID)
-            if (self.Type != 0x22):
+            if (self.Type != IVRS_TABLE.IVMD_STRUCT.IVMD_TYPE.TYPE_22H):
                 xml_repr.set('AuxiliaryData', '0x%X' % self.AuxiliaryData)
             else:
                 xml_repr.set('EndofRange', '0x%X' % self.AuxiliaryData)
@@ -385,70 +398,6 @@ class IVRS_TABLE(object):
             xml_repr.set('IVMDMemoryBlockLength', '0x%X' % self.IVMDMemoryBlockLength)
 
             return xml_repr
-
-        def validateIVMD(self, golden_ignores):
-            if golden_ignores is None:
-                return False
-
-            if self.Type == 0x20:
-                # This type will be applied to all devices, address has to belong to known good range
-                for each_golden_ignore in golden_ignores:
-                    if (int(each_golden_ignore.get("Type"), 0) == self.Type) and\
-                       (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
-                       (int(each_golden_ignore.get("DeviceID"), 0) == self.DeviceID) and\
-                       (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
-                       int(each_golden_ignore.get("IVMDStartAddress"), 0) +\
-                       int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0) >=\
-                       (self.IVMDStartAddress + self.IVMDMemoryBlockLength):
-                        return True
-            elif self.Type == 0x21:
-                # This type is select device, so both device ID and address has to belong to known good range
-                for each_golden_ignore in golden_ignores:
-                    if (int(each_golden_ignore.get("Type"), 0) == 0x21) and\
-                       (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
-                       (int(each_golden_ignore.get("DeviceID"), 0) == self.DeviceID) and\
-                       (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
-                       int(each_golden_ignore.get("IVMDStartAddress"), 0) +\
-                       int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0) >=\
-                       (self.IVMDStartAddress + self.IVMDMemoryBlockLength):
-                        return True
-                    elif (int(each_golden_ignore.get("Type"), 0) == 0x22) and\
-                         (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
-                         (int(each_golden_ignore.get("DeviceID"), 0) <= self.DeviceID) and\
-                         (int(each_golden_ignore.get("AuxiliaryData"), 0) >= self.DeviceID) and\
-                         (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
-                        int(each_golden_ignore.get("IVMDStartAddress"), 0) +\
-                        int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0) >=\
-                         (self.IVMDStartAddress + self.IVMDMemoryBlockLength):
-                        return True
-            elif self.Type == 0x22:
-                # This type is range, so both device ID range and address has to belong to known good range
-                for each_golden_ignore in golden_ignores:
-                    if (int(each_golden_ignore.get("Type"), 0) == 0x21) and\
-                       (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
-                       (int(each_golden_ignore.get("DeviceID"), 0) == self.DeviceID) and\
-                       (int(each_golden_ignore.get("AuxiliaryData"), 0) == self.DeviceID) and\
-                       (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
-                       int(each_golden_ignore.get("IVMDStartAddress"), 0) +\
-                       int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0) >=\
-                       (self.IVMDStartAddress + self.IVMDMemoryBlockLength):
-                        # This is a strange case, but, as you wish...
-                        print("Review your golden copy, it looks a select device is mapped to a range")
-                        return True
-                    elif (int(each_golden_ignore.get("Type"), 0) == 0x22) and\
-                         (int(each_golden_ignore.get("Flags"), 0) == self.Flags) and\
-                         (int(each_golden_ignore.get("DeviceID"), 0) <= self.DeviceID) and\
-                         (int(each_golden_ignore.get("AuxiliaryData"), 0) >= self.AuxiliaryData) and\
-                         (int(each_golden_ignore.get("IVMDStartAddress"), 0) <= self.IVMDStartAddress) and\
-                        int(each_golden_ignore.get("IVMDStartAddress"), 0) +\
-                        int(each_golden_ignore.get("IVMDMemoryBlockLength"), 0) >=\
-                         (self.IVMDStartAddress + self.IVMDMemoryBlockLength):
-                        return True
-            else:
-                print("Unrecognized IVMD type %d" % self.Type)
-                sys.exit(-1)
-
-            return False
 
         def DumpInfo(self):
             print("\t  IVMD")
@@ -468,6 +417,19 @@ class IVRS_TABLE(object):
         dte_var_ext_format = "=8s8sBB"
         dte_var_len = struct_format_size + struct.calcsize(dte_var_ext_format)
 
+        class DTE_TYPE(IntEnum):
+            RESERVED            = 0
+            ALL                 = 1
+            SELECT              = 2
+            RANGE_START         = 3
+            RANGE_END           = 4
+            ALIAS_SELECT        = 66
+            ALIAS_RANGE_START   = 67
+            EX_SELECT           = 70
+            EX_RANGE_START      = 71
+            SPECIAL             = 72
+            ACPI                = 240
+
         def __init__(self, data=None):
             self.Type = 0
             self.DeviceID = 0
@@ -480,29 +442,29 @@ class IVRS_TABLE(object):
              self.DeviceID,
              self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
 
-            if self.Type == 0:
+            if self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RESERVED:
                 self.TypeString = "Reserved"
                 self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            elif self.Type == 1:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALL:
                 self.TypeString = "All"
                 self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            elif self.Type == 2:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SELECT:
                 self.TypeString = "Select"
                 self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            elif self.Type == 3:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_START:
                 self.TypeString = "Range"
                 self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
                 (Type,
                  self.EndDeviceID,
                  _) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, header_byte_array[self.Length:(self.Length + IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size)])
-                if Type != 4:
+                if Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END:
                     print("Start of range does not follow end of range")
                     sys.exit(-1)
                 self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            elif self.Type == 4:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END:
                 self.TypeString = "End of Range"
                 self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            elif self.Type == 66:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT:
                 self.TypeString = "Alias Select"
                 # Two DevID, one for alias, one for source
                 self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
@@ -510,7 +472,7 @@ class IVRS_TABLE(object):
                 (_, self.SourceDeviceID, _) =\
                     struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                        header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
-            elif self.Type == 67:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START:
                 self.TypeString = "Alias Range"
                 # Two DevID, one for alias start, one for source start
                 self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
@@ -521,18 +483,18 @@ class IVRS_TABLE(object):
                 (Type,
                  self.EndDeviceID,
                  _) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, header_byte_array[self.Length:(self.Length + IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size)])
-                if Type != 4:
+                if Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END:
                     print("Start of range does not follow end of range")
                     sys.exit(-1)
                 self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            elif self.Type == 70:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT:
                 self.TypeString = "Extended Select"
                 # Two DTE setting, one for standard setting, one for extended setting (AtsDisabled, etc.)
                 self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
                     IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
                 (self.ExtendedDTESetting,) = \
                     struct.unpack("=I", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
-            elif self.Type == 71:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START:
                 self.TypeString = "Extended Range"
                 # Two DTE setting, one for standard setting start, one for extended setting start
                 self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
@@ -542,11 +504,11 @@ class IVRS_TABLE(object):
                 (Type,
                  self.EndDeviceID,
                  _) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, header_byte_array[self.Length:(self.Length + IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size)])
-                if Type != 4:
+                if Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END:
                     print("Start of range does not follow end of range")
                     sys.exit(-1)
                 self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            elif self.Type == 72:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL:
                 self.TypeString = "Special Device"
                 # First half for standard DTE setting, second half for special DevID and its variety (APIC, HPET, etc.)
                 self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
@@ -554,7 +516,7 @@ class IVRS_TABLE(object):
                 (self.Handle, self.SourceDeviceID, self.Variety) =\
                     struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                        header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
-            elif self.Type == 240:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI:
                 self.TypeString = "Variable Length ACPI HID Device"
                 (self.HID, self.CID, self.UIDFormat, self.UIDLength) =\
                     struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_ext_format,
@@ -580,34 +542,34 @@ class IVRS_TABLE(object):
                                    self.DeviceID,
                                    self.DTESetting)
 
-            if self.Type == 3:
+            if self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_START:
                 # Range
                 byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 4, self.EndDeviceID, 0)
-            elif self.Type == 66:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT:
                 # Alias Select
                 byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 0, self.SourceDeviceID, 0)
-            elif self.Type == 67:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START:
                 # Alias Range
                 # Two DevID, one for alias start, one for source start
                 byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 0, self.SourceDeviceID, 0)
                 byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 4, self.EndDeviceID, 0)
-            elif self.Type == 70:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT:
                 # Extended Select
                 # Two DTE setting, one for standard setting, one for extended setting (AtsDisabled, etc.)
                 byte_str += struct.pack("=I", self.ExtendedDTESetting)
-            elif self.Type == 71:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START:
                 # Extended Range
                 # Two DTE setting, one for standard setting start, one for extended setting start
                 byte_str += struct.pack("=I", self.ExtendedDTESetting)
                 byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 4, self.EndDeviceID, 0)
-            elif self.Type == 72:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL:
                 # Special Device
                 # First half for standard DTE setting, second half for special DevID and its variety (APIC, HPET, etc.)
                 byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                         self.Handle,
                                         self.SourceDeviceID,
                                         self.Variety)
-            elif self.Type == 240:
+            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI:
                 # Variable Length ACPI HID Device
                 byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_ext_format,
                                         self.HID,
@@ -624,11 +586,11 @@ class IVRS_TABLE(object):
         def ToXmlElementTree(self):
             xml_item = ET.Element(self.TypeString.replace(" ", ""))
 
-            is_range_device = self.Type == 3 or self.Type == 67 or self.Type == 71
-            is_alias_device = self.Type == 66 or self.Type == 67
-            is_ex_dte_device = self.Type == 70 or self.Type == 71
-            is_special_device = self.Type == 72
-            is_acpi_hid_device = self.Type == 240
+            is_range_device = self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START or self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START or self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START
+            is_alias_device = self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT or self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START
+            is_ex_dte_device = self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT or self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START
+            is_special_device = self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL
+            is_acpi_hid_device = self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI
 
             xml_item.set('Type', '0x%X' % self.Type)
 
@@ -682,11 +644,11 @@ class IVRS_TABLE(object):
             print('\t\t--------------------------------------------------')
             print('\t\tType                  : 0x{Type:02X}'.format(Type=self.Type))
 
-            is_range_device = self.Type == 3 or self.Type == 67 or self.Type == 71
-            is_alias_device = self.Type == 66 or self.Type == 67
-            is_ex_dte_device = self.Type == 70 or self.Type == 71
-            is_special_device = self.Type == 72
-            is_acpi_hid_device = self.Type == 240
+            is_range_device = self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START or self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START or self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START
+            is_alias_device = self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT or self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START
+            is_ex_dte_device = self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT or self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START
+            is_special_device = self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL
+            is_acpi_hid_device = self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI
 
             if is_range_device:
                 print('\t\tStart of Range        : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
