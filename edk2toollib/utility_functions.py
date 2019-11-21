@@ -392,7 +392,9 @@ def locate_class_in_module(Module, DesiredClass):
     there is a class defined in the module that subclasses DesiredClass.
 
     In this hypothetical class hierarchy, GrandChildClass would be picked
-    DesiredClass -> ChildClass  -> GrandChildClass
+    --------------      ------------      -----------------
+    |DesiredClass|  ->  |ChildClass|  ->  |GrandChildClass|
+    --------------      ------------      -----------------
     '''
 
     DesiredClassInstance = None
