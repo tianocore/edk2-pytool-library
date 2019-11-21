@@ -9,7 +9,32 @@
 
 import unittest
 import os
+import tempfile
+import sys
 import edk2toollib.utility_functions as utilities
+
+
+class DesiredClass():
+    def __str__(self):
+        return "DesiredClass"
+
+
+class ChildOfDesiredClass(DesiredClass):
+    def __str__(self):
+        return "Child of DesiredClass"
+
+
+class GrandChildOfDesiredClass(ChildOfDesiredClass):
+    def __str__(self):
+        return "GrandChild of DesiredClass"
+
+
+'''
+The current solution can't handle a brother class
+class BrotherOfChildOfDesiredClass(DesiredClass):
+    def __str__(self):
+        return "Brother of Child of DesiredClass"
+'''
 
 
 class UtilityFunctionsTest(unittest.TestCase):
@@ -32,6 +57,13 @@ class UtilityFunctionsTest(unittest.TestCase):
             ret = utilities.RunPythonScript(bad_path, "", capture=False, workingdir=None,
                                             raise_exception_on_nonzero=True)
             self.assertNotEqual(ret, 0)
+
+    def test_locate_class_in_module(self):
+        module = sys.modules[__name__]
+
+        found_class = utilities.locate_class_in_module(module, DesiredClass)
+        self.assertIsNotNone(found_class)
+        self.assertEqual(found_class, GrandChildOfDesiredClass)
 
 
 # DO NOT PUT A MAIN FUNCTION HERE

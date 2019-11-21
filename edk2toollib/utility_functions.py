@@ -390,6 +390,9 @@ def locate_class_in_module(Module, DesiredClass):
     It gives preference to classes that are defined in the module itself.
     This means that if you have an import that subclasses DesiredClass, it will be picked unless
     there is a class defined in the module that subclasses DesiredClass.
+
+    In this hypothetical class hierarchy, GrandChildClass would be picked
+    DesiredClass -> ChildClass  -> GrandChildClass
     '''
 
     DesiredClassInstance = None
