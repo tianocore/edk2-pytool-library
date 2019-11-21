@@ -31,7 +31,7 @@ class UefiStatusCode(object):
             StatusStrings = UefiStatusCode.ErrorCodeStrings
             value = value & 0x7FFFFFFF  # mask off upper bit
 
-        if(value >= len(StatusStrings)):
+        if (value >= len(StatusStrings)):
             return "Undefined StatusCode"
 
         return StatusStrings[value]
@@ -45,7 +45,7 @@ class UefiStatusCode(object):
             StatusStrings = UefiStatusCode.ErrorCodeStrings
             value = value & 0x7FFFFFFFFFFFFFFF  # mask off upper bit
 
-        if(value >= len(StatusStrings)):
+        if (value >= len(StatusStrings)):
             return "Undefined StatusCode"
 
         return StatusStrings[value]
