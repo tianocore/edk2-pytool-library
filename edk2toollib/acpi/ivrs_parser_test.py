@@ -6,7 +6,6 @@
 ##
 
 import unittest
-import logging
 from edk2toollib.acpi.ivrs_parser import IVRS_TABLE
 
 
@@ -130,8 +129,8 @@ class IvrsParserTest(unittest.TestCase):
     def test_ivrs_parser_dte_f0h_0(self):
         # ACPI device without UID
         dte_t_f0h_0 = bytes([0xF0, 0x11, 0x11, 0xF6,
-                            0x46, 0x41, 0x4B, 0x45, 0x30, 0x30, 0x30, 0x30, # HID: 'FAKE0000'
-                            0x43, 0x4F, 0x4D, 0x50, 0x30, 0x30, 0x30, 0x30, # CID: 'COMP0000'
+                            0x46, 0x41, 0x4B, 0x45, 0x30, 0x30, 0x30, 0x30,     # HID: 'FAKE0000'
+                            0x43, 0x4F, 0x4D, 0x50, 0x30, 0x30, 0x30, 0x30,     # CID: 'COMP0000'
                             0x00,   # UID format
                             0x00])  # UID length
         IvrsParserTest.dte_f0h_0 = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_f0h_0)
@@ -147,11 +146,11 @@ class IvrsParserTest(unittest.TestCase):
     def test_ivrs_parser_dte_f0h_1(self):
         # ACPI device with integer UID
         dte_t_f0h_1 = bytes([0xF0, 0x11, 0x11, 0xF6,
-                            0x46, 0x41, 0x4B, 0x45, 0x30, 0x30, 0x30, 0x30, # HID: 'FAKE0000'
-                            0x43, 0x4F, 0x4D, 0x50, 0x30, 0x30, 0x30, 0x30, # CID: 'COMP0000'
+                            0x46, 0x41, 0x4B, 0x45, 0x30, 0x30, 0x30, 0x30,     # HID: 'FAKE0000'
+                            0x43, 0x4F, 0x4D, 0x50, 0x30, 0x30, 0x30, 0x30,     # CID: 'COMP0000'
                             0x01,   # UID format
                             0x08,   # UID length
-                            0x0D, 0xF0, 0xED, 0xFE, 0xEF, 0xBE, 0xAD, 0xDE])# UID: 0xDEADBEEFFEEDF00D
+                            0x0D, 0xF0, 0xED, 0xFE, 0xEF, 0xBE, 0xAD, 0xDE])    # UID: 0xDEADBEEFFEEDF00D
         IvrsParserTest.dte_f0h_1 = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_f0h_1)
         self.assertNotEqual(IvrsParserTest.dte_f0h_1.Encode(), None)
         self.assertEqual(IvrsParserTest.dte_f0h_1.Type, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI)
@@ -166,11 +165,11 @@ class IvrsParserTest(unittest.TestCase):
     def test_ivrs_parser_dte_f0h_2(self):
         # ACPI device with string UID
         dte_t_f0h_2 = bytes([0xF0, 0x11, 0x11, 0xF6,
-                            0x46, 0x41, 0x4B, 0x45, 0x30, 0x30, 0x30, 0x30, # HID: 'FAKE0000'
-                            0x43, 0x4F, 0x4D, 0x50, 0x30, 0x30, 0x30, 0x30, # CID: 'COMP0000'
+                            0x46, 0x41, 0x4B, 0x45, 0x30, 0x30, 0x30, 0x30,     # HID: 'FAKE0000'
+                            0x43, 0x4F, 0x4D, 0x50, 0x30, 0x30, 0x30, 0x30,     # CID: 'COMP0000'
                             0x02,   # UID format
                             0x09,   # UID length
-                            0x5C, 0x5F, 0x53, 0x42, 0x2E, 0x46, 0x55, 0x52, 0x30])# UID: '\_SB.FUR0'
+                            0x5C, 0x5F, 0x53, 0x42, 0x2E, 0x46, 0x55, 0x52, 0x30])  # UID: '\_SB.FUR0'
         IvrsParserTest.dte_f0h_2 = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_f0h_2)
         self.assertNotEqual(IvrsParserTest.dte_f0h_2.Encode(), None)
         self.assertEqual(IvrsParserTest.dte_f0h_2.Type, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI)
@@ -184,14 +183,14 @@ class IvrsParserTest(unittest.TestCase):
 
     def test_ivrs_parser_ivhd_10h(self):
         # I/O Virtualization Hardware Definition (IVHD) Type 10h header
-        ivhd_t_10h = bytes([0x10,   # Type
-                            0x90,   # Flags
-                            0x18, 0x00, # Length
-                            0x02, 0x00, # DeviceID
-                            0x40, 0x00, # Capability offset
-                            0xEF, 0xBE, 0xAD, 0xDE, 0x0D, 0xF0, 0xED, 0xFE, # IOMMU base address
-                            0x00, 0x00, # PCI Segment Group
-                            0x00, 0x00, # IOMMU info
+        ivhd_t_10h = bytes([0x10,           # Type
+                            0x90,           # Flags
+                            0x18, 0x00,     # Length
+                            0x02, 0x00,     # DeviceID
+                            0x40, 0x00,     # Capability offset
+                            0xEF, 0xBE, 0xAD, 0xDE, 0x0D, 0xF0, 0xED, 0xFE,     # IOMMU base address
+                            0x00, 0x00,     # PCI Segment Group
+                            0x00, 0x00,     # IOMMU info
                             0xBE, 0xBA, 0xAD, 0xAB])    # IOMMU Feature Reporting
 
         IvrsParserTest.ivhd_10h = IVRS_TABLE.IVHD_STRUCT(ivhd_t_10h)
@@ -208,17 +207,17 @@ class IvrsParserTest(unittest.TestCase):
 
     def test_ivrs_parser_ivhd_11h(self):
         # I/O Virtualization Hardware Definition (IVHD) Type 11h header
-        ivhd_t_11h = bytes([0x11,   # Type
-                            0x90,   # Flags
-                            0x28, 0x00, # Length
-                            0x02, 0x00, # DeviceID
-                            0x40, 0x00, # Capability offset
-                            0xEF, 0xBE, 0xAD, 0xDE, 0x0D, 0xF0, 0xED, 0xFE, # IOMMU base address
-                            0x00, 0x00, # PCI Segment Group
-                            0x00, 0x00, # IOMMU info
+        ivhd_t_11h = bytes([0x11,           # Type
+                            0x90,           # Flags
+                            0x28, 0x00,     # Length
+                            0x02, 0x00,     # DeviceID
+                            0x40, 0x00,     # Capability offset
+                            0xEF, 0xBE, 0xAD, 0xDE, 0x0D, 0xF0, 0xED, 0xFE,     # IOMMU base address
+                            0x00, 0x00,     # PCI Segment Group
+                            0x00, 0x00,     # IOMMU info
                             0xBE, 0xBA, 0xAD, 0xAB,    # IOMMU Attributes
-                            0xDA, 0x4A, 0x29, 0x22, 0xEF, 0x77, 0x4F, 0x00, # EFR Register Image
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])# Reserved
+                            0xDA, 0x4A, 0x29, 0x22, 0xEF, 0x77, 0x4F, 0x00,     # EFR Register Image
+                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])    # Reserved
 
         IvrsParserTest.ivhd_11h = IVRS_TABLE.IVHD_STRUCT(ivhd_t_11h)
         self.assertNotEqual(IvrsParserTest.ivhd_11h.Encode(), None)
@@ -235,17 +234,17 @@ class IvrsParserTest(unittest.TestCase):
 
     def test_ivrs_parser_ivhd_40h(self):
         # I/O Virtualization Hardware Definition (IVHD) Type 40h header
-        ivhd_t_40h = bytes([0x40,   # Type
-                            0x90,   # Flags
-                            0x28, 0x00, # Length
-                            0x02, 0x00, # DeviceID
-                            0x40, 0x00, # Capability offset
-                            0xEF, 0xBE, 0xAD, 0xDE, 0x0D, 0xF0, 0xED, 0xFE, # IOMMU base address
-                            0x00, 0x00, # PCI Segment Group
-                            0x00, 0x00, # IOMMU info
+        ivhd_t_40h = bytes([0x40,           # Type
+                            0x90,           # Flags
+                            0x28, 0x00,     # Length
+                            0x02, 0x00,     # DeviceID
+                            0x40, 0x00,     # Capability offset
+                            0xEF, 0xBE, 0xAD, 0xDE, 0x0D, 0xF0, 0xED, 0xFE,     # IOMMU base address
+                            0x00, 0x00,     # PCI Segment Group
+                            0x00, 0x00,     # IOMMU info
                             0xBE, 0xBA, 0xAD, 0xAB,    # IOMMU Attributes
-                            0xDA, 0x4A, 0x29, 0x22, 0xEF, 0x77, 0x4F, 0x00, # EFR Register Image
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])# Reserved
+                            0xDA, 0x4A, 0x29, 0x22, 0xEF, 0x77, 0x4F, 0x00,     # EFR Register Image
+                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])    # Reserved
 
         IvrsParserTest.ivhd_40h = IVRS_TABLE.IVHD_STRUCT(ivhd_t_40h)
         self.assertNotEqual(IvrsParserTest.ivhd_40h.Encode(), None)
@@ -262,14 +261,14 @@ class IvrsParserTest(unittest.TestCase):
 
     def test_ivrs_parser_ivmd_20h(self):
         # IVMD Types 20h Format
-        ivmd_t_20h = bytes([0x20,       # Type
-                            0x08,       # Flags
-                            0x20, 0x00, # Length
-                            0x00, 0x00, # DeviceID
-                            0x00, 0x00, # Auxiliary data
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, # Reserved
-                            0xEF, 0xBE, 0xAD, 0xDE, 0x0D, 0xF0, 0xED, 0xFE, # IVMD start address
-                            0x00, 0xAD, 0xBB, 0xDA, 0xDE, 0xC0, 0x05, 0xB1])# IVMD memory block length
+        ivmd_t_20h = bytes([0x20,           # Type
+                            0x08,           # Flags
+                            0x20, 0x00,     # Length
+                            0x00, 0x00,     # DeviceID
+                            0x00, 0x00,     # Auxiliary data
+                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     # Reserved
+                            0xEF, 0xBE, 0xAD, 0xDE, 0x0D, 0xF0, 0xED, 0xFE,     # IVMD start address
+                            0x00, 0xAD, 0xBB, 0xDA, 0xDE, 0xC0, 0x05, 0xB1])    # IVMD memory block length
 
         IvrsParserTest.ivmd_20h = IVRS_TABLE.IVMD_STRUCT(ivmd_t_20h)
         self.assertNotEqual(IvrsParserTest.ivmd_20h.Encode(), None)
@@ -284,14 +283,14 @@ class IvrsParserTest(unittest.TestCase):
 
     def test_ivrs_parser_ivmd_21h(self):
         # IVMD Types 21h Format
-        ivmd_t_21h = bytes([0x21,       # Type
-                            0x08,       # Flags
-                            0x20, 0x00, # Length
-                            0x00, 0x00, # DeviceID
-                            0x00, 0x00, # Auxiliary data
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, # Reserved
-                            0xEF, 0xBE, 0xAD, 0xDE, 0x0D, 0xF0, 0xED, 0xFE, # IVMD start address
-                            0x00, 0xAD, 0xBB, 0xDA, 0xDE, 0xC0, 0x05, 0xB1])# IVMD memory block length
+        ivmd_t_21h = bytes([0x21,           # Type
+                            0x08,           # Flags
+                            0x20, 0x00,     # Length
+                            0x00, 0x00,     # DeviceID
+                            0x00, 0x00,     # Auxiliary data
+                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     # Reserved
+                            0xEF, 0xBE, 0xAD, 0xDE, 0x0D, 0xF0, 0xED, 0xFE,     # IVMD start address
+                            0x00, 0xAD, 0xBB, 0xDA, 0xDE, 0xC0, 0x05, 0xB1])    # IVMD memory block length
 
         IvrsParserTest.ivmd_21h = IVRS_TABLE.IVMD_STRUCT(ivmd_t_21h)
         self.assertNotEqual(IvrsParserTest.ivmd_21h.Encode(), None)
@@ -306,14 +305,14 @@ class IvrsParserTest(unittest.TestCase):
 
     def test_ivrs_parser_ivmd_22h(self):
         # IVMD Types 22h Format
-        ivmd_t_22h = bytes([0x22,       # Type
-                            0x08,       # Flags
-                            0x20, 0x00, # Length
-                            0x00, 0x00, # DeviceID
-                            0x00, 0x00, # Auxiliary data
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, # Reserved
-                            0xEF, 0xBE, 0xAD, 0xDE, 0x0D, 0xF0, 0xED, 0xFE, # IVMD start address
-                            0x00, 0xAD, 0xBB, 0xDA, 0xDE, 0xC0, 0x05, 0xB1])# IVMD memory block length
+        ivmd_t_22h = bytes([0x22,           # Type
+                            0x08,           # Flags
+                            0x20, 0x00,     # Length
+                            0x00, 0x00,     # DeviceID
+                            0x00, 0x00,     # Auxiliary data
+                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     # Reserved
+                            0xEF, 0xBE, 0xAD, 0xDE, 0x0D, 0xF0, 0xED, 0xFE,     # IVMD start address
+                            0x00, 0xAD, 0xBB, 0xDA, 0xDE, 0xC0, 0x05, 0xB1])    # IVMD memory block length
 
         IvrsParserTest.ivmd_22h = IVRS_TABLE.IVMD_STRUCT(ivmd_t_22h)
         self.assertNotEqual(IvrsParserTest.ivmd_22h.Encode(), None)
@@ -331,8 +330,8 @@ class IvrsParserTest(unittest.TestCase):
                             0x30, 0x00, 0x00, 0x00,     # Length
                             0x02,                       # Rivision
                             0x9C,                       # Checksum
-                            0x41, 0x4D, 0x44, 0x20, 0x20, 0x20, # OEM ID: 'AMD  '
-                            0x41, 0x4D, 0x44, 0x20, 0x49, 0x56, 0x52, 0x53, # OEM Table ID: 'AMD IVRS'
+                            0x41, 0x4D, 0x44, 0x20, 0x20, 0x20,     # OEM ID: 'AMD  '
+                            0x41, 0x4D, 0x44, 0x20, 0x49, 0x56, 0x52, 0x53,     # OEM Table ID: 'AMD IVRS'
                             0x01, 0x00, 0x00, 0x00,     # OEM Revision
                             0x41, 0x4D, 0x44, 0x20,     # CreatorID: 'AMD '
                             0x00, 0x00, 0x00, 0x00,     # Creator revision
