@@ -23,7 +23,7 @@ class UefiStatusCode(object):
                            "Stale Data", "File System", "Reset Required"]
 
     def Convert32BitToString(self, value: int) -> str:
-        ''' convert 632bit int to a friendly UEFI status code string value'''
+        ''' convert 32 bit int to a friendly UEFI status code string value'''
         StatusStrings = UefiStatusCode.NonErrorCodeStrings
 
         if (value >> 31) & 1 == 1:
@@ -37,7 +37,7 @@ class UefiStatusCode(object):
         return StatusStrings[value]
 
     def Convert64BitToString(self, value: int) -> str:
-        ''' convert 64bit int to a friendly UEFI status code string value'''
+        ''' convert 64 bit int to a friendly UEFI status code string value'''
         StatusStrings = UefiStatusCode.NonErrorCodeStrings
 
         if (value >> 63) & 1 == 1:
