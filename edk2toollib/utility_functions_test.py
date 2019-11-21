@@ -9,7 +9,6 @@
 
 import unittest
 import os
-import tempfile
 import sys
 import edk2toollib.utility_functions as utilities
 
