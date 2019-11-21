@@ -34,3 +34,7 @@ class TestUefiStatusCodes (unittest.TestCase):
     def test_Hex32ToString_Error_Invalid_Len(self):
         StatusCode = hex(len(UefiStatusCode.ErrorCodeStrings) + 0x80000000)
         self.assertEqual(UefiStatusCode().ConvertHexString32ToString(StatusCode), "Undefined StatusCode")
+
+    def test_Hex32ToString_NonError_Invalid_Len(self):
+        StatusCode = hex(len(UefiStatusCode.NonErrorCodeStrings))
+        self.assertEqual(UefiStatusCode().ConvertHexString32ToString(StatusCode), "Undefined StatusCode")

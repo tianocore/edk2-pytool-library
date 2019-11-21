@@ -22,33 +22,33 @@ class UefiStatusCode(object):
     NonErrorCodeStrings = ["Success", "Unknown Glyph", "Delete Failure", "Write Failure", "Buffer Too Small",
                            "Stale Data", "File System", "Reset Required"]
 
-    def Convert32BitToString(self, i: int) -> str:
+    def Convert32BitToString(self, value: int) -> str:
         ''' convert 632bit int to a friendly UEFI status code string value'''
-        a = UefiStatusCode.NonErrorCodeStrings
+        StatusStrings = UefiStatusCode.NonErrorCodeStrings
 
-        if (i >> 31) & 1 == 1:
+        if (value >> 31) & 1 == 1:
             # error
-            a = UefiStatusCode.ErrorCodeStrings
-            i = i & 0x7FFFFFFF  # mask off upper bit
+            StatusStrings = UefiStatusCode.ErrorCodeStrings
+            value = value & 0x7FFFFFFF  # mask off upper bit
 
-        if(i >= len(a)):
+        if(value >= len(StatusStrings)):
             return "Undefined StatusCode"
 
-        return a[i]
+        return StatusStrings[value]
 
-    def Convert64BitToString(self, l: int) -> str:
+    def Convert64BitToString(self, value: int) -> str:
         ''' convert 64bit int to a friendly UEFI status code string value'''
-        a = UefiStatusCode.NonErrorCodeStrings
+        StatusStrings = UefiStatusCode.NonErrorCodeStrings
 
-        if (l >> 63) & 1 == 1:
+        if (value >> 63) & 1 == 1:
             # error
-            a = UefiStatusCode.ErrorCodeStrings
-            l = l & 0x7FFFFFFFFFFFFFFF  # mask off upper bit
+            StatusStrings = UefiStatusCode.ErrorCodeStrings
+            value = value & 0x7FFFFFFFFFFFFFFF  # mask off upper bit
 
-        if(l >= len(a)):
+        if(value >= len(StatusStrings)):
             return "Undefined StatusCode"
 
-        return a[l]
+        return StatusStrings[value]
 
     def ConvertHexString64ToString(self, hexstring: str) -> str:
         ''' convert 64 bit hexstring in 0x format to a UEFI status code '''
