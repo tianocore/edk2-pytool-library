@@ -276,6 +276,9 @@ class BaseParser(object):
             start = line.find("$(", index)
             end = line.find(")", start)
 
+            if (start == -1 or end == -1):
+                return result
+
             token = line[start + 2:end]
             replacement_token = line[start:end + 1]
             self.Logger.debug("Token is %s" % token)

@@ -11,7 +11,12 @@ import os
 
 
 class RecipeParser(DscParser):
-    ''' This acts like a normal DscParser, but outputs recipes '''
+    ''' 
+    This acts like a normal DscParser, but outputs recipes 
+    Returns none if a file has not been parsed yet
+    '''
     def GetRecipe(self):
-        recipe = recipe()
-        return recipe
+        if not self.Parsed:
+            return None
+        rec = recipe()
+        return rec
