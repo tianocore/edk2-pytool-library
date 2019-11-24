@@ -468,12 +468,13 @@ class TestRecipeParser(unittest.TestCase):
         self.assertIsNotNone(rec)
 
     def test_simple_dsc(self):
-        rec = RecipeParser()
+        parser = RecipeParser()
         temp_dir = tempfile.mkdtemp()
         file_path = os.path.join(temp_dir, "test.dsc")
         print(file_path)
         self.write_file(file_path, self.test_dsc)
-        rec.ParseFile(file_path)
-        full_rec = rec.GetRecipe()
+        parser.ParseFile(file_path)
+        full_rec = parser.GetRecipe()
+        self.assertEqual(len(full_rec.components), len(parser.GetMods()))
 
         pass

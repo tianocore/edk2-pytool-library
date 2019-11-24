@@ -15,19 +15,32 @@ class recipe:
 
 class component:
   ''' Contains the data for a component for the EDK build system to build '''
-  def __init__(self, source:str, phases:list = []):
+  def __init__(self, inf, phases:list = [], source_info = None):
     
     self.libraries = set()  # a list of libraries that this component uses
     self.phases = set(phases) # a set of phases that this component is in (PEIM, DXE_RUNTIME, ...)
     self.pcds = set()  # a set of PCD's that
-    self.source_inf = source  # the EDK2 relative path to the source INF
+    self.inf = inf  # the EDK2 relative path to the source INF
+    self.source_info = source_info
     build_options = {}  # map of build option to flags
     target = "NOOPT"  # the target to build this module in
     tags = []  # a list of tags defined by the various parts of the build system
     _transform_history = []
 
   def __eq__(self, other):
-    return self.source_inf == other.source_inf
+    return self.inf == other.inf
+
+class library:
+  ''' Contains the data for a specific library '''
+  def __init__(self, libraryclass:str, inf:str, source_info = None):
+    self.libraryclass = libraryclass
+    self.inf = inf
+    self.source_info = source_info
+
+  def __eq__(self, other):
+    if (self.libraryclass.lower() == "null")
+      return self.inf == other.inf
+    return self.libraryclass.lower() == other.libraryclass.lower()
 
 class pcd:
   ''' Contains the data for a specific pcd '''
@@ -47,3 +60,13 @@ class map_object:
 
   def __eq__(self, other):
     return self.guid == other.guid
+  
+class source_info:
+  def __init__(self, file: str, lineno: int = None):
+    self.file = file
+    self.lineno = lineno
+  
+  def __str__(self):
+    if lineno is None:
+      return self.file
+    return f"{self.file}@{self.lineno}"

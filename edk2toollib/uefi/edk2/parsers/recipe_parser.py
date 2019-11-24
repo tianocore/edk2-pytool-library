@@ -19,4 +19,12 @@ class RecipeParser(DscParser):
         if not self.Parsed:
             return None
         rec = recipe()
+        libraries = self.GetLibsEnhanced()
+        for library in libraries:
+            print(library)
+            raise ValueError()
+        modules = self.GetModsEnhanced()
+        for module in modules:
+            print(module)
+            raise ValueError()
         return rec
