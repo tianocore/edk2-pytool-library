@@ -8,28 +8,54 @@
 
 
 class UefiStatusCode(object):
-    # string Array
-    StatusCodeStrings = ["Success", "Load Error", "Invalid Parameter", "Unsupported", "Bad BufferSize",
-                         "Buffer Too Small", "Not Ready", "Device Error", "Write Protected", "Out of Resources",
-                         "Volume Corrupt", "Volume Full", "No Media", "Media Changed", "Not Found", "Access Denied",
-                         "No Response", "No Mapping", "Time Out", "Not Started", "Already Started", "Aborted",
-                         "ICMP Error", "TFTP Error", "Protocol Error", "Incompatible Error", "Security Violation",
-                         "CRC Error", "End of Media", "Reserved(29)", "Reserved(30)", "End of File",
-                         "Invalid Language", "Compromised Data"]
+    # See appendix D of the UEFI spec
 
-    def Convert32BitToString(self, i):
-        # convert a 32bit value to string
-        return UefiStatusCode.StatusCodeStrings[(i & 0xFFF)]
+    # high bit set
+    ErrorCodeStrings = ["NOT VALID", "Load Error", "Invalid Parameter", "Unsupported", "Bad BufferSize",
+                        "Buffer Too Small", "Not Ready", "Device Error", "Write Protected", "Out of Resources",
+                        "Volume Corrupt", "Volume Full", "No Media", "Media Changed", "Not Found", "Access Denied",
+                        "No Response", "No Mapping", "Time Out", "Not Started", "Already Started", "Aborted",
+                        "ICMP Error", "TFTP Error", "Protocol Error", "Incompatible Error", "Security Violation",
+                        "CRC Error", "End of Media", "Reserved(29)", "Reserved(30)", "End of File",
+                        "Invalid Language", "Compromised Data", "IP Address Conflict", "HTTP Error"]
 
-    def Convert64BitToString(self, l):
-        if(l > len(UefiStatusCode.StatusCodeStrings)):
-            return ""
-        return UefiStatusCode.StatusCodeStrings[(l & 0xFFF)]
+    NonErrorCodeStrings = ["Success", "Unknown Glyph", "Delete Failure", "Write Failure", "Buffer Too Small",
+                           "Stale Data", "File System", "Reset Required"]
 
-    def ConvertHexString64ToString(self, hexstring):
+    def Convert32BitToString(self, value: int) -> str:
+        ''' convert 32 bit int to a friendly UEFI status code string value'''
+        StatusStrings = UefiStatusCode.NonErrorCodeStrings
+
+        if (value >> 31) & 1 == 1:
+            # error
+            StatusStrings = UefiStatusCode.ErrorCodeStrings
+            value = value & 0x7FFFFFFF  # mask off upper bit
+
+        if (value >= len(StatusStrings)):
+            return "Undefined StatusCode"
+
+        return StatusStrings[value]
+
+    def Convert64BitToString(self, value: int) -> str:
+        ''' convert 64 bit int to a friendly UEFI status code string value'''
+        StatusStrings = UefiStatusCode.NonErrorCodeStrings
+
+        if (value >> 63) & 1 == 1:
+            # error
+            StatusStrings = UefiStatusCode.ErrorCodeStrings
+            value = value & 0x7FFFFFFFFFFFFFFF  # mask off upper bit
+
+        if (value >= len(StatusStrings)):
+            return "Undefined StatusCode"
+
+        return StatusStrings[value]
+
+    def ConvertHexString64ToString(self, hexstring: str) -> str:
+        ''' convert 64 bit hexstring in 0x format to a UEFI status code '''
         value = int(hexstring, 16)
         return self.Convert64BitToString(value)
 
     def ConvertHexString32ToString(self, hexstring):
+        ''' convert 32 bit hexstring in 0x format to a UEFI status code '''
         value = int(hexstring, 16)
         return self.Convert32BitToString(value)
