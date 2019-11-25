@@ -35,6 +35,15 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 
 ## Release Version History
 
+### Version 0.10.4
+
+* Features:
+  * If multiple classes are found (ie when searching for a SettingsManager), it will now pick the one that is deepest in hierarchy from the desired class
+  * Updated parsers for DSC, FDF, and DEC
+* Bugs
+  * Fixed bugs #42, 48, 49, and 51
+
+
 ### Version 0.10.3
 
 * Features:
