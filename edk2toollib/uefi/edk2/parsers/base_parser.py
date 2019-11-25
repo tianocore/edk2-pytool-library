@@ -228,14 +228,14 @@ class BaseParser(object):
             self.Logger.critical("Tried to pop an empty conditional stack.  Line Number %d" % self.CurrentLine)
             return self.ConditionalStack.pop()  # this should cause a crash but will give trace.
 
-    def _FindReplacementForToken(self, token):
+    def _FindReplacementForToken(self, token, replace_if_not_found=False):
 
         v = self.LocalVars.get(token)
 
         if(v is None):
             v = self.InputVars.get(token)
 
-        if(v is None):
+        if(v is None and replace_if_not_found):
             v = self._MacroNotDefinedValue
 
         if (type(v) is bool):
@@ -266,7 +266,7 @@ class BaseParser(object):
         tokens = result.split()
         if len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef"]:
             if not tokens[1].startswith("$("):
-                v = self._FindReplacementForToken(tokens[1])
+                v = self._FindReplacementForToken(tokens[1], replace_if_not_found=True)
                 result = result.replace(tokens[1], v, 1)
 
         # use line to avoid change by handling above
