@@ -264,9 +264,11 @@ class BaseParser(object):
         # both syntax options can not be supported.
         result = line
         tokens = result.split()
+        replace = False
         if len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef"]:
+            replace = True
             if not tokens[1].startswith("$("):
-                v = self._FindReplacementForToken(tokens[1], replace_if_not_found=True)
+                v = self._FindReplacementForToken(tokens[1], replace)
                 result = result.replace(tokens[1], v, 1)
 
         # use line to avoid change by handling above
@@ -279,7 +281,7 @@ class BaseParser(object):
             token = line[start + 2:end]
             replacement_token = line[start:end + 1]
             self.Logger.debug("Token is %s" % token)
-            v = self._FindReplacementForToken(token)
+            v = self._FindReplacementForToken(token, replace)
             result = result.replace(replacement_token, v, 1)
 
             index = end + 1
