@@ -238,6 +238,9 @@ class BaseParser(object):
         if(v is None and replace_if_not_found):
             v = self._MacroNotDefinedValue
 
+        elif(v is None):
+            return None
+
         if (type(v) is bool):
             v = "true" if v else "false"
 
@@ -264,12 +267,12 @@ class BaseParser(object):
         # both syntax options can not be supported.
         result = line
         tokens = result.split()
-        replace = False
+        replace = len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef", "!if"]
         if len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef"]:
-            replace = True
             if not tokens[1].startswith("$("):
                 v = self._FindReplacementForToken(tokens[1], replace)
-                result = result.replace(tokens[1], v, 1)
+                if v is not None:
+                    result = result.replace(tokens[1], v, 1)
 
         # use line to avoid change by handling above
         rep = line.count("$")
@@ -282,7 +285,8 @@ class BaseParser(object):
             replacement_token = line[start:end + 1]
             self.Logger.debug("Token is %s" % token)
             v = self._FindReplacementForToken(token, replace)
-            result = result.replace(replacement_token, v, 1)
+            if v is not None:
+                result = result.replace(replacement_token, v, 1)
 
             index = end + 1
             rep = rep - 1
