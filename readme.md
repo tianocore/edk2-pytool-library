@@ -44,6 +44,14 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 
 [![PyPI](https://img.shields.io/pypi/v/edk2_pytool_library.svg)](https://pypi.org/project/edk2-pytool-library/)
 
+### Version 0.10.4
+
+* Features:
+  * If multiple classes are found (ie when searching for a SettingsManager), it will now pick the one that is deepest in hierarchy from the desired class
+  * Updated parsers for DSC, FDF, and DEC
+* Bugs:
+  * See the bugs in the [milestone](https://github.com/tianocore/edk2-pytool-library/milestone/2?closed=1) for this release
+
 ### Version 0.10.3
 
 * Features:
