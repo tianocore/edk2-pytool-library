@@ -488,7 +488,8 @@ class IVRS_TABLE(object):
              self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                               header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
             if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RESERVED):
-                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RESERVED, self.Type)
+                raise Exception("Input device type (%d) does not match expectation (%d)",
+                                IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RESERVED, self.Type)
 
             self.TypeString = "Reserved"
             self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
@@ -529,7 +530,9 @@ class IVRS_TABLE(object):
              self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                               header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
             if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALL):
-                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALL, self.Type)
+                raise Exception("Input device type (%d) does not match expectation (%d)",
+                                IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALL,
+                                self.Type)
 
             self.TypeString = "All"
             self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
@@ -570,7 +573,9 @@ class IVRS_TABLE(object):
              self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                               header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
             if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SELECT):
-                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SELECT, self.Type)
+                raise Exception("Input device type (%d) does not match expectation (%d)",
+                                IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SELECT,
+                                self.Type)
 
             self.TypeString = "Reserved"
             self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
@@ -611,14 +616,15 @@ class IVRS_TABLE(object):
              self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                               header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
             if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_START):
-                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_START, self.Type)
+                raise Exception("Input device type (%d) does not match expectation (%d)",
+                                IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_START,
+                                self.Type)
 
             self.TypeString = "Range"
             self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            (Type,
-            self.EndDeviceID,
-            _) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                            header_byte_array[self.Length:
+            (Type, self.EndDeviceID, _) =\
+                struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                              header_byte_array[self.Length:
                                                 (self.Length + IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size)])
             if Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END:
                 print("Start of range does not follow end of range")
@@ -627,10 +633,13 @@ class IVRS_TABLE(object):
 
         def Encode(self):
             byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                               self.Type,
-                               self.DeviceID,
-                               self.DTESetting)
-            byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END, self.EndDeviceID, 0)
+                                   self.Type,
+                                   self.DeviceID,
+                                   self.DTESetting)
+            byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                    IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END,
+                                    self.EndDeviceID,
+                                    0)
             return byte_str
 
         def ToXmlElementTree(self):
@@ -666,7 +675,9 @@ class IVRS_TABLE(object):
              self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                               header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
             if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT):
-                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT, self.Type)
+                raise Exception("Input device type (%d) does not match expectation (%d)",
+                                IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT,
+                                self.Type)
 
             self.TypeString = "Alias Select"
             # Two DevID, one for alias, one for source
@@ -674,13 +685,13 @@ class IVRS_TABLE(object):
                 IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
             (_, self.SourceDeviceID, _) =\
                 struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
+                              header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
 
         def Encode(self):
             byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                               self.Type,
-                               self.DeviceID,
-                               self.DTESetting)
+                                   self.Type,
+                                   self.DeviceID,
+                                   self.DTESetting)
             byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 0, self.SourceDeviceID, 0)
             return byte_str
 
@@ -718,7 +729,9 @@ class IVRS_TABLE(object):
              self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                               header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
             if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START):
-                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START, self.Type)
+                raise Exception("Input device type (%d) does not match expectation (%d)",
+                                IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START,
+                                self.Type)
 
             self.TypeString = "Alias Range"
             # Two DevID, one for alias start, one for source start
@@ -726,10 +739,10 @@ class IVRS_TABLE(object):
                 IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
             (_, self.SourceDeviceID, _) =\
                 struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
+                              header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
             (Type, self.EndDeviceID, _) =\
                 struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                header_byte_array[self.Length:
+                              header_byte_array[self.Length:
                                                 (self.Length + IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size)])
             if Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END:
                 print("Start of range does not follow end of range")
@@ -738,11 +751,14 @@ class IVRS_TABLE(object):
 
         def Encode(self):
             byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                               self.Type,
-                               self.DeviceID,
-                               self.DTESetting)
+                                   self.Type,
+                                   self.DeviceID,
+                                   self.DTESetting)
             byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 0, self.SourceDeviceID, 0)
-            byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END, self.EndDeviceID, 0)
+            byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                    IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END,
+                                    self.EndDeviceID,
+                                    0)
             return byte_str
 
         def ToXmlElementTree(self):
@@ -780,7 +796,9 @@ class IVRS_TABLE(object):
              self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                               header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
             if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT):
-                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT, self.Type)
+                raise Exception("Input device type (%d) does not match expectation (%d)",
+                                IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT,
+                                self.Type)
 
             self.TypeString = "Extended Select"
             # Two DTE setting, one for standard setting, one for extended setting (AtsDisabled, etc.)
@@ -791,9 +809,9 @@ class IVRS_TABLE(object):
 
         def Encode(self):
             byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                               self.Type,
-                               self.DeviceID,
-                               self.DTESetting)
+                                   self.Type,
+                                   self.DeviceID,
+                                   self.DTESetting)
             # Two DTE setting, one for standard setting, one for extended setting (AtsDisabled, etc.)
             byte_str += struct.pack("=I", self.ExtendedDTESetting)
             return byte_str
@@ -837,7 +855,9 @@ class IVRS_TABLE(object):
              self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                               header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
             if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START):
-                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START, self.Type)
+                raise Exception("Input device type (%d) does not match expectation (%d)",
+                                IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START,
+                                self.Type)
 
             self.TypeString = "Extended Range"
             # Two DTE setting, one for standard setting start, one for extended setting start
@@ -847,7 +867,7 @@ class IVRS_TABLE(object):
                 struct.unpack("=I", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
             (Type, self.EndDeviceID, _) =\
                 struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                header_byte_array[self.Length:
+                              header_byte_array[self.Length:
                                                 (self.Length + IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size)])
             if Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END:
                 print("Start of range does not follow end of range")
@@ -856,9 +876,9 @@ class IVRS_TABLE(object):
 
         def Encode(self):
             byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                               self.Type,
-                               self.DeviceID,
-                               self.DTESetting)
+                                   self.Type,
+                                   self.DeviceID,
+                                   self.DTESetting)
             # Two DTE setting, one for standard setting start, one for extended setting start
             byte_str += struct.pack("=I", self.ExtendedDTESetting)
             byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 4, self.EndDeviceID, 0)
@@ -906,7 +926,9 @@ class IVRS_TABLE(object):
              self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                               header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
             if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL):
-                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL, self.Type)
+                raise Exception("Input device type (%d) does not match expectation (%d)",
+                                IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL,
+                                self.Type)
 
             self.TypeString = "Special Device"
             # First half for standard DTE setting, second half for special DevID and its variety (APIC, HPET, etc.)
@@ -914,13 +936,13 @@ class IVRS_TABLE(object):
                 IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
             (self.Handle, self.SourceDeviceID, self.Variety) =\
                 struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
+                              header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
 
         def Encode(self):
             byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                               self.Type,
-                               self.DeviceID,
-                               self.DTESetting)
+                                   self.Type,
+                                   self.DeviceID,
+                                   self.DTESetting)
             # First half for standard DTE setting, second half for special DevID and its variety (APIC, HPET, etc.)
             byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                     self.Handle,
@@ -978,12 +1000,14 @@ class IVRS_TABLE(object):
              self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                               header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
             if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI):
-                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI, self.Type)
+                raise Exception("Input device type (%d) does not match expectation (%d)",
+                                IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI,
+                                self.Type)
 
             self.TypeString = "Variable Length ACPI HID Device"
             (self.HID, self.CID, self.UIDFormat, self.UIDLength) =\
                 struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_ext_format,
-                                header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:
+                              header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:
                                                 IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len])
             self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len + self.UIDLength
             if self.UIDFormat == 0:
@@ -994,13 +1018,13 @@ class IVRS_TABLE(object):
             elif self.UIDFormat == 2:
                 (self.UID,) =\
                     struct.unpack("=%ss" % self.UIDLength,
-                                    header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len:self.Length])
+                                  header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len:self.Length])
 
         def Encode(self):
             byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                               self.Type,
-                               self.DeviceID,
-                               self.DTESetting)
+                                   self.Type,
+                                   self.DeviceID,
+                                   self.DTESetting)
             # Variable Length ACPI HID Device
             byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_ext_format,
                                     self.HID,
