@@ -38,7 +38,7 @@ class IvrsParserTest(unittest.TestCase):
     def test_ivrs_parser_dte_00h(self):
         # Reserved device
         dte_t_00h = bytes([0x00, 0x00, 0x00, 0x00])
-        IvrsParserTest.dte_00h = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_00h)
+        IvrsParserTest.dte_00h = IVRS_TABLE.DEVICE_TABLE_ENTRY.Factory(dte_t_00h)
         self.assertNotEqual(IvrsParserTest.dte_00h.Encode(), None)
         self.assertEqual(IvrsParserTest.dte_00h.Type, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RESERVED)
         self.assertEqual(IvrsParserTest.dte_00h.DeviceID, 0)
@@ -47,14 +47,14 @@ class IvrsParserTest(unittest.TestCase):
     def test_ivrs_parser_dte_01h(self):
         # All devices
         dte_t_01h = bytes([0x01, 0xFF, 0xFF, 0x00])
-        IvrsParserTest.dte_01h = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_01h)
+        IvrsParserTest.dte_01h = IVRS_TABLE.DEVICE_TABLE_ENTRY.Factory(dte_t_01h)
         self.assertEqual(IvrsParserTest.dte_01h.Type, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALL)
         self.assertEqual(IvrsParserTest.dte_01h.DTESetting, 0)
 
     def test_ivrs_parser_dte_02h(self):
         # Select device
         dte_t_02h = bytes([0x02, 0x5A, 0x5A, 0x00])
-        IvrsParserTest.dte_02h = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_02h)
+        IvrsParserTest.dte_02h = IVRS_TABLE.DEVICE_TABLE_ENTRY.Factory(dte_t_02h)
         self.assertNotEqual(IvrsParserTest.dte_02h.Encode(), None)
         self.assertEqual(IvrsParserTest.dte_02h.Type, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SELECT)
         self.assertEqual(IvrsParserTest.dte_02h.DeviceID, 0x5A5A)
@@ -64,7 +64,7 @@ class IvrsParserTest(unittest.TestCase):
         # Start of device range
         dte_t_03h = bytes([0x03, 0xBE, 0xBA, 0x00])
         dte_t_04h = bytes([0x04, 0xFF, 0xFF, 0x00])
-        IvrsParserTest.dte_03h = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_03h + dte_t_04h)
+        IvrsParserTest.dte_03h = IVRS_TABLE.DEVICE_TABLE_ENTRY.Factory(dte_t_03h + dte_t_04h)
         self.assertNotEqual(IvrsParserTest.dte_03h.Encode(), None)
         self.assertEqual(IvrsParserTest.dte_03h.Type, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_START)
         self.assertEqual(IvrsParserTest.dte_03h.DeviceID, 0xBABE)
@@ -74,7 +74,7 @@ class IvrsParserTest(unittest.TestCase):
     def test_ivrs_parser_dte_42h(self):
         # Alias select device
         dte_t_42h = bytes([0x42, 0xAD, 0xDE, 0x00, 0x00, 0xEF, 0xBE, 0x00])
-        IvrsParserTest.dte_42h = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_42h)
+        IvrsParserTest.dte_42h = IVRS_TABLE.DEVICE_TABLE_ENTRY.Factory(dte_t_42h)
         self.assertNotEqual(IvrsParserTest.dte_42h.Encode(), None)
         self.assertEqual(IvrsParserTest.dte_42h.Type, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT)
         self.assertEqual(IvrsParserTest.dte_42h.DeviceID, 0xDEAD)
@@ -85,7 +85,7 @@ class IvrsParserTest(unittest.TestCase):
         # Alias range device
         dte_t_43h = bytes([0x43, 0xED, 0xFE, 0x00, 0x00, 0x0D, 0xF0, 0x00])
         dte_t_04h = bytes([0x04, 0xFF, 0xFF, 0x00])
-        IvrsParserTest.dte_43h = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_43h + dte_t_04h)
+        IvrsParserTest.dte_43h = IVRS_TABLE.DEVICE_TABLE_ENTRY.Factory(dte_t_43h + dte_t_04h)
         self.assertNotEqual(IvrsParserTest.dte_43h.Encode(), None)
         self.assertEqual(IvrsParserTest.dte_43h.Type, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START)
         self.assertEqual(IvrsParserTest.dte_43h.DeviceID, 0xFEED)
@@ -96,7 +96,7 @@ class IvrsParserTest(unittest.TestCase):
     def test_ivrs_parser_dte_46h(self):
         # Extended select device
         dte_t_46h = bytes([0x46, 0x05, 0xB1, 0x00, 0xFE, 0xCA, 0xEF, 0xBE])
-        IvrsParserTest.dte_46h = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_46h)
+        IvrsParserTest.dte_46h = IVRS_TABLE.DEVICE_TABLE_ENTRY.Factory(dte_t_46h)
         self.assertNotEqual(IvrsParserTest.dte_46h.Encode(), None)
         self.assertEqual(IvrsParserTest.dte_46h.Type, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT)
         self.assertEqual(IvrsParserTest.dte_46h.DeviceID, 0xB105)
@@ -107,7 +107,7 @@ class IvrsParserTest(unittest.TestCase):
         # Extended range of device
         dte_t_47h = bytes([0x47, 0xDE, 0xC0, 0x00, 0xBE, 0xBA, 0xAD, 0xAB])
         dte_t_04h = bytes([0x04, 0xFF, 0xFF, 0x00])
-        IvrsParserTest.dte_47h = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_47h + dte_t_04h)
+        IvrsParserTest.dte_47h = IVRS_TABLE.DEVICE_TABLE_ENTRY.Factory(dte_t_47h + dte_t_04h)
         self.assertNotEqual(IvrsParserTest.dte_47h.Encode(), None)
         self.assertEqual(IvrsParserTest.dte_47h.Type, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START)
         self.assertEqual(IvrsParserTest.dte_47h.DeviceID, 0xC0DE)
@@ -118,7 +118,7 @@ class IvrsParserTest(unittest.TestCase):
     def test_ivrs_parser_dte_48h(self):
         # Special device (IOAPIC, HPET)
         dte_t_48h = bytes([0x48, 0x00, 0x00, 0x00, 0x15, 0xAD, 0xDE, 0x01])
-        IvrsParserTest.dte_48h = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_48h)
+        IvrsParserTest.dte_48h = IVRS_TABLE.DEVICE_TABLE_ENTRY.Factory(dte_t_48h)
         self.assertNotEqual(IvrsParserTest.dte_48h.Encode(), None)
         self.assertEqual(IvrsParserTest.dte_48h.Type, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL)
         self.assertEqual(IvrsParserTest.dte_48h.DTESetting, 0)
@@ -133,7 +133,7 @@ class IvrsParserTest(unittest.TestCase):
                             0x43, 0x4F, 0x4D, 0x50, 0x30, 0x30, 0x30, 0x30,     # CID: 'COMP0000'
                             0x00,   # UID format
                             0x00])  # UID length
-        IvrsParserTest.dte_f0h_0 = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_f0h_0)
+        IvrsParserTest.dte_f0h_0 = IVRS_TABLE.DEVICE_TABLE_ENTRY.Factory(dte_t_f0h_0)
         self.assertNotEqual(IvrsParserTest.dte_f0h_0.Encode(), None)
         self.assertEqual(IvrsParserTest.dte_f0h_0.Type, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI)
         self.assertEqual(IvrsParserTest.dte_f0h_0.DeviceID, 0x1111)
@@ -151,7 +151,7 @@ class IvrsParserTest(unittest.TestCase):
                             0x01,   # UID format
                             0x08,   # UID length
                             0x0D, 0xF0, 0xED, 0xFE, 0xEF, 0xBE, 0xAD, 0xDE])    # UID: 0xDEADBEEFFEEDF00D
-        IvrsParserTest.dte_f0h_1 = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_f0h_1)
+        IvrsParserTest.dte_f0h_1 = IVRS_TABLE.DEVICE_TABLE_ENTRY.Factory(dte_t_f0h_1)
         self.assertNotEqual(IvrsParserTest.dte_f0h_1.Encode(), None)
         self.assertEqual(IvrsParserTest.dte_f0h_1.Type, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI)
         self.assertEqual(IvrsParserTest.dte_f0h_1.DeviceID, 0x1111)
@@ -170,7 +170,7 @@ class IvrsParserTest(unittest.TestCase):
                             0x02,   # UID format
                             0x09,   # UID length
                             0x5C, 0x5F, 0x53, 0x42, 0x2E, 0x46, 0x55, 0x52, 0x30])  # UID: '\_SB.FUR0'
-        IvrsParserTest.dte_f0h_2 = IVRS_TABLE.DEVICE_TABLE_ENTRY(dte_t_f0h_2)
+        IvrsParserTest.dte_f0h_2 = IVRS_TABLE.DEVICE_TABLE_ENTRY.Factory(dte_t_f0h_2)
         self.assertNotEqual(IvrsParserTest.dte_f0h_2.Encode(), None)
         self.assertEqual(IvrsParserTest.dte_f0h_2.Type, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI)
         self.assertEqual(IvrsParserTest.dte_f0h_2.DeviceID, 0x1111)
