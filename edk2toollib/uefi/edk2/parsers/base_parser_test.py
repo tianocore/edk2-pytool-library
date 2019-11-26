@@ -113,6 +113,17 @@ class TestBaseParser(unittest.TestCase):
         line = "!IFnDEF name"
         self.assertEqual(parser.ReplaceVariables(line), "!IFnDEF sean")
 
+    def test_replace_macro_elseif(self):
+        parser = BaseParser("")
+        parser.SetInputVars({
+            "name": "matt"
+        })
+        line = "!elseif $(name)"
+        self.assertEqual(parser.ReplaceVariables(line), "!elseif matt")
+
+        line = "!ELSEIF $(Invalid_Token)"
+        self.assertEqual(parser.ReplaceVariables(line), "!ELSEIF 0")
+
     def test_conditional_ifdef(self):
         parser = BaseParser("")
 

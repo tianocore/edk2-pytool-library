@@ -267,7 +267,7 @@ class BaseParser(object):
         # both syntax options can not be supported.
         result = line
         tokens = result.split()
-        replace = len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef", "!if"]
+        replace = len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef", "!if", "!elseif"]
         if len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef"]:
             if not tokens[1].startswith("$("):
                 v = self._FindReplacementForToken(tokens[1], replace)
