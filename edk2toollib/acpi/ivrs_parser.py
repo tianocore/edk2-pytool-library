@@ -267,10 +267,10 @@ class IVRS_TABLE(object):
 
             # Get Sub Structs
             while bytes_left > 0:
-                device_scope = IVRS_TABLE.DEVICE_TABLE_ENTRY(header_byte_array)
+                device_scope = IVRS_TABLE.DEVICE_TABLE_ENTRY.Factory(header_byte_array)
                 header_byte_array = header_byte_array[device_scope.Length:]
                 bytes_left -= device_scope.Length
-                if (device_scope.Type != 4):
+                if (device_scope.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END):
                     self.addDTEEntry(device_scope)
 
             if (t_Length != self.Length) or (bytes_left != 0):
@@ -315,7 +315,8 @@ class IVRS_TABLE(object):
             xml_repr.set('IOMMUInfo', '0x%X' % self.IOMMUInfo)
             xml_repr.set('IOMMUFeatureInfo', '0x%X' % self.IOMMUFeatureInfo)
 
-            if (self.Type == 0x11) or (self.Type == 0x40):
+            if (self.Type == IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE.TYPE_11H) or\
+               (self.Type == IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE.TYPE_40H):
                 xml_repr.set('IOMMUEFRImage', '0x%X' % self.IOMMUEFRImage)
 
             # Add SubStructs
@@ -437,10 +438,47 @@ class IVRS_TABLE(object):
             SPECIAL = 72
             ACPI = 240
 
+        #
+        # this method is a factory
+        #
+        @staticmethod
+        def Factory(data):
+            if(data is None):
+                raise Exception("Invalid File stream")
+
+            RemapHeader = IVRS_TABLE.REMAPPING_STRUCT_HEADER(data)
+            Type = RemapHeader.Type
+
+            if(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RESERVED):
+                return IVRS_TABLE.DEVICE_TABLE_ENTRY_RESERVED(data)
+            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALL):
+                return IVRS_TABLE.DEVICE_TABLE_ENTRY_ALL(data)
+            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SELECT):
+                return IVRS_TABLE.DEVICE_TABLE_ENTRY_SELECT(data)
+            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_START):
+                return IVRS_TABLE.DEVICE_TABLE_ENTRY_RANGE_START(data)
+            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT):
+                return IVRS_TABLE.DEVICE_TABLE_ENTRY_ALIAS_SELECT(data)
+            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START):
+                return IVRS_TABLE.DEVICE_TABLE_ENTRY_ALIAS_RANGE_START(data)
+            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT):
+                return IVRS_TABLE.DEVICE_TABLE_ENTRY_EX_SELECT(data)
+            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START):
+                return IVRS_TABLE.DEVICE_TABLE_ENTRY_EX_RANGE_START(data)
+            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL):
+                return IVRS_TABLE.DEVICE_TABLE_ENTRY_SPECIAL(data)
+            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI):
+                return IVRS_TABLE.DEVICE_TABLE_ENTRY_ACPI(data)
+            else:
+                return None
+
+    class DEVICE_TABLE_ENTRY_RESERVED(object):
         def __init__(self, data=None):
             self.Type = 0
             self.DeviceID = 0
             self.DTESetting = 0
+            self.TypeString = None
+            self.Length = 0
             if data is not None:
                 self.Decode(data)
 
@@ -449,265 +487,569 @@ class IVRS_TABLE(object):
              self.DeviceID,
              self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                                               header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
+            if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RESERVED):
+                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RESERVED, self.Type)
 
-            if self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RESERVED:
-                self.TypeString = "Reserved"
-                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALL:
-                self.TypeString = "All"
-                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SELECT:
-                self.TypeString = "Select"
-                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_START:
-                self.TypeString = "Range"
-                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-                (Type,
-                 self.EndDeviceID,
-                 _) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                    header_byte_array[self.Length:
-                                                      (self.Length + IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size)])
-                if Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END:
-                    print("Start of range does not follow end of range")
-                    sys.exit(-1)
-                self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END:
-                self.TypeString = "End of Range"
-                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT:
-                self.TypeString = "Alias Select"
-                # Two DevID, one for alias, one for source
-                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
-                    IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-                (_, self.SourceDeviceID, _) =\
-                    struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                  header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START:
-                self.TypeString = "Alias Range"
-                # Two DevID, one for alias start, one for source start
-                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
-                    IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-                (_, self.SourceDeviceID, _) =\
-                    struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                  header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
-                (Type, self.EndDeviceID, _) =\
-                    struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                  header_byte_array[self.Length:
-                                                    (self.Length + IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size)])
-                if Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END:
-                    print("Start of range does not follow end of range")
-                    sys.exit(-1)
-                self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT:
-                self.TypeString = "Extended Select"
-                # Two DTE setting, one for standard setting, one for extended setting (AtsDisabled, etc.)
-                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
-                    IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-                (self.ExtendedDTESetting,) = \
-                    struct.unpack("=I", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START:
-                self.TypeString = "Extended Range"
-                # Two DTE setting, one for standard setting start, one for extended setting start
-                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
-                    IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-                (self.ExtendedDTESetting,) =\
-                    struct.unpack("=I", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
-                (Type, self.EndDeviceID, _) =\
-                    struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                  header_byte_array[self.Length:
-                                                    (self.Length + IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size)])
-                if Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END:
-                    print("Start of range does not follow end of range")
-                    sys.exit(-1)
-                self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL:
-                self.TypeString = "Special Device"
-                # First half for standard DTE setting, second half for special DevID and its variety (APIC, HPET, etc.)
-                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
-                    IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
-                (self.Handle, self.SourceDeviceID, self.Variety) =\
-                    struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                  header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI:
-                self.TypeString = "Variable Length ACPI HID Device"
-                (self.HID, self.CID, self.UIDFormat, self.UIDLength) =\
-                    struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_ext_format,
-                                  header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:
-                                                    IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len])
-                self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len + self.UIDLength
-                if self.UIDFormat == 0:
-                    self.UID = None
-                elif self.UIDFormat == 1:
-                    (self.UID,) = struct.unpack("=Q", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len:
-                                                self.Length])
-                elif self.UIDFormat == 2:
-                    (self.UID,) =\
-                        struct.unpack("=%ss" % self.UIDLength,
-                                      header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len:self.Length])
-            else:
-                print("Unknown Reserved Device Scope Type Found %d" % self.Type)
-                sys.exit(-1)
+            self.TypeString = "Reserved"
+            self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
 
         def Encode(self):
-            byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                   self.Type,
-                                   self.DeviceID,
-                                   self.DTESetting)
-
-            if self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_START:
-                # Range
-                byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 4, self.EndDeviceID, 0)
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT:
-                # Alias Select
-                byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 0, self.SourceDeviceID, 0)
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START:
-                # Alias Range
-                # Two DevID, one for alias start, one for source start
-                byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 0, self.SourceDeviceID, 0)
-                byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 4, self.EndDeviceID, 0)
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT:
-                # Extended Select
-                # Two DTE setting, one for standard setting, one for extended setting (AtsDisabled, etc.)
-                byte_str += struct.pack("=I", self.ExtendedDTESetting)
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START:
-                # Extended Range
-                # Two DTE setting, one for standard setting start, one for extended setting start
-                byte_str += struct.pack("=I", self.ExtendedDTESetting)
-                byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 4, self.EndDeviceID, 0)
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL:
-                # Special Device
-                # First half for standard DTE setting, second half for special DevID and its variety (APIC, HPET, etc.)
-                byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
-                                        self.Handle,
-                                        self.SourceDeviceID,
-                                        self.Variety)
-            elif self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI:
-                # Variable Length ACPI HID Device
-                byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_ext_format,
-                                        self.HID,
-                                        self.CID,
-                                        self.UIDFormat,
-                                        self.UIDLength)
-                if self.UIDFormat == 1:
-                    byte_str += struct.pack("=Q", self.UID)
-                elif self.UIDFormat == 2:
-                    byte_str += struct.pack("=%ss" % self.UIDLength, self.UID)
-
-            return byte_str
+            return struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                               self.Type,
+                               self.DeviceID,
+                               self.DTESetting)
 
         def ToXmlElementTree(self):
             xml_item = ET.Element(self.TypeString.replace(" ", ""))
-
-            is_range_device = (self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START) or\
-                              (self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START) or\
-                              (self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START)
-            is_alias_device = (self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT) or\
-                              (self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START)
-            is_ex_dte_device = (self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT) or\
-                               (self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START)
-            is_special_device = self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL
-            is_acpi_hid_device = self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI
-
-            xml_item.set('Type', '0x%X' % self.Type)
-
-            if is_range_device:
-                xml_item.set('StartofRange', '0x%X' % self.DeviceID)
-                xml_item.set('EndofRange', '0x%X' % (self.EndDeviceID))
-            else:
-                xml_item.set('DeviceID', '0x%X' % (self.DeviceID))
-
+            xml_item.set('DeviceID', '0x%X' % (self.DeviceID))
             xml_item.set('DTESetting', '0x%X' % (self.DTESetting))
-
-            if is_alias_device or is_special_device:
-                xml_item.set('SourceDeviceID', '0x%X' % (self.SourceDeviceID))
-
-            if is_ex_dte_device:
-
-                if (self.ExtendedDTESetting & 0x80000000) != 0:
-                    xml_item.set('ExtendedDTESetting', 'ATS requests blocked')
-                else:
-                    xml_item.set('ExtendedDTESetting', 'ATS allowed')
-
-            if is_special_device:
-                xml_item.set('Handle', '0x%X' % (self.Handle))
-
-                if self.Variety == 1:
-                    xml_item.set('Variety', 'IOAPIC')
-                elif self.Variety == 2:
-                    xml_item.set('Variety', 'HPET')
-                else:
-                    xml_item.set('Variety', 'Reserved %X' % (self.Variety))
-
-            if is_acpi_hid_device:
-                xml_item.set('HardwareID', '%s' % (self.HID))
-                xml_item.set('ExtendedDTE Setting', '%s' % (self.CID))
-                xml_item.set('UniqueIDFormat', '%d' % (self.UIDFormat))
-                xml_item.set('UniqueIDLength', '%d' % (self.UIDLength))
-                if self.UIDFormat == 0:
-                    xml_item.set('UniqueID', 'None')
-                elif self.UIDFormat == 1:
-                    xml_item.set('UniqueID', '0x%X' % (self.UID))
-                elif self.UIDFormat == 2:
-                    xml_item.set('UniqueID', '%s' % (self.UID))
-                else:
-                    print("Unrecognized UID format detected")
-                    sys.exit(-1)
-
+            xml_item.set('Type', '0x%X' % self.Type)
             return xml_item
 
         def DumpInfo(self):
             print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
             print('\t\t--------------------------------------------------')
             print('\t\tType                  : 0x{Type:02X}'.format(Type=self.Type))
-
-            is_range_device = (self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START) or\
-                              (self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START) or\
-                              (self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START)
-            is_alias_device = (self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT) or\
-                              (self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START)
-            is_ex_dte_device = (self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT) or\
-                               (self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START)
-            is_special_device = self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL
-            is_acpi_hid_device = self.Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI
-
-            if is_range_device:
-                print('\t\tStart of Range        : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
-                print('\t\tEnd of Range          : 0x{EndDeviceID:04X}'.format(EndDeviceID=self.EndDeviceID))
-            else:
-                print('\t\tDevice ID             : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
-
+            print('\t\tDevice ID             : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
             print('\t\tDTE Setting           : 0x{DTESetting:02X}'.format(DTESetting=self.DTESetting))
 
-            if is_alias_device or is_special_device:
-                print('\t\tSource Device ID      : 0x{SourceDeviceID:04X}'.format(SourceDeviceID=self.SourceDeviceID))
+    class DEVICE_TABLE_ENTRY_ALL(object):
+        def __init__(self, data=None):
+            self.Type = 0
+            self.DeviceID = 0
+            self.DTESetting = 0
+            self.TypeString = None
+            self.Length = 0
+            if data is not None:
+                self.Decode(data)
 
-            if is_ex_dte_device:
-                if (self.ExtendedDTESetting & 0x80000000) != 0:
-                    ats_str = "ATS requests blocked"
-                else:
-                    ats_str = "ATS allowed"
-                print('\t\tExtended DTE Setting  : {ExtendedDTESetting:s}'.format(ExtendedDTESetting=ats_str))
+        def Decode(self, header_byte_array):
+            (self.Type,
+             self.DeviceID,
+             self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                              header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
+            if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALL):
+                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALL, self.Type)
 
-            if is_special_device:
-                if self.Variety == 1:
-                    var_str = "IOAPIC"
-                elif self.Variety == 2:
-                    var_str = "HPET"
-                else:
-                    var_str = "Reserved 0x%02X" % (self.Variety)
-                print('\t\tHandle                : 0x{Handle:02X}'.format(Handle=self.Handle))
-                print('\t\tVariety               : {Variety:s}'.format(Variety=var_str))
+            self.TypeString = "All"
+            self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
 
-            if is_acpi_hid_device:
-                print('\t\tHardware ID           : {HID:s}'.format(HID=self.HID.decode()))
-                print('\t\tExtended DTE Setting  : {CID:s}'.format(CID=self.CID.decode()))
-                print('\t\tUnique ID Format      : {UIDFormat:d}'.format(UIDFormat=self.UIDFormat))
-                print('\t\tUnique ID Length      : {UIDLength:d}'.format(UIDLength=self.UIDLength))
-                if self.UIDFormat == 0:
-                    print('\t\tUnique ID             : None')
-                elif self.UIDFormat == 1:
-                    print('\t\tUnique ID             : 0x{UID:X}'.format(UID=self.UID))
-                elif self.UIDFormat == 2:
-                    print('\t\tUnique ID             : {UID:s}'.format(UID=self.UID.decode()))
-                else:
-                    raise Exception("Unrecognized UID format detected %d" % self.UIDFormat)
+        def Encode(self):
+            return struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                               self.Type,
+                               self.DeviceID,
+                               self.DTESetting)
+
+        def ToXmlElementTree(self):
+            xml_item = ET.Element(self.TypeString.replace(" ", ""))
+            xml_item.set('Type', '0x%X' % self.Type)
+            xml_item.set('DeviceID', '0x%X' % (self.DeviceID))
+            xml_item.set('DTESetting', '0x%X' % (self.DTESetting))
+            return xml_item
+
+        def DumpInfo(self):
+            print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
+            print('\t\t--------------------------------------------------')
+            print('\t\tType                  : 0x{Type:02X}'.format(Type=self.Type))
+            print('\t\tDevice ID             : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+            print('\t\tDTE Setting           : 0x{DTESetting:02X}'.format(DTESetting=self.DTESetting))
+
+    class DEVICE_TABLE_ENTRY_SELECT(object):
+        def __init__(self, data=None):
+            self.Type = 0
+            self.DeviceID = 0
+            self.DTESetting = 0
+            self.TypeString = None
+            self.Length = 0
+            if data is not None:
+                self.Decode(data)
+
+        def Decode(self, header_byte_array):
+            (self.Type,
+             self.DeviceID,
+             self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                              header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
+            if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SELECT):
+                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SELECT, self.Type)
+
+            self.TypeString = "Reserved"
+            self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
+
+        def Encode(self):
+            return struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                               self.Type,
+                               self.DeviceID,
+                               self.DTESetting)
+
+        def ToXmlElementTree(self):
+            xml_item = ET.Element(self.TypeString.replace(" ", ""))
+            xml_item.set('Type', '0x%X' % self.Type)
+            xml_item.set('DeviceID', '0x%X' % (self.DeviceID))
+            xml_item.set('DTESetting', '0x%X' % (self.DTESetting))
+            return xml_item
+
+        def DumpInfo(self):
+            print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
+            print('\t\t--------------------------------------------------')
+            print('\t\tType                  : 0x{Type:02X}'.format(Type=self.Type))
+            print('\t\tDevice ID             : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+            print('\t\tDTE Setting           : 0x{DTESetting:02X}'.format(DTESetting=self.DTESetting))
+
+    class DEVICE_TABLE_ENTRY_RANGE_START(object):
+        def __init__(self, data=None):
+            self.Type = 0
+            self.DeviceID = 0
+            self.DTESetting = 0
+            self.TypeString = None
+            self.Length = 0
+            if data is not None:
+                self.Decode(data)
+
+        def Decode(self, header_byte_array):
+            (self.Type,
+             self.DeviceID,
+             self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                              header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
+            if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_START):
+                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_START, self.Type)
+
+            self.TypeString = "Range"
+            self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
+            (Type,
+            self.EndDeviceID,
+            _) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                            header_byte_array[self.Length:
+                                                (self.Length + IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size)])
+            if Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END:
+                print("Start of range does not follow end of range")
+                sys.exit(-1)
+            self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
+
+        def Encode(self):
+            byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                               self.Type,
+                               self.DeviceID,
+                               self.DTESetting)
+            byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END, self.EndDeviceID, 0)
+            return byte_str
+
+        def ToXmlElementTree(self):
+            xml_item = ET.Element(self.TypeString.replace(" ", ""))
+            xml_item.set('Type', '0x%X' % self.Type)
+            xml_item.set('StartofRange', '0x%X' % self.DeviceID)
+            xml_item.set('EndofRange', '0x%X' % (self.EndDeviceID))
+            xml_item.set('DTESetting', '0x%X' % (self.DTESetting))
+            return xml_item
+
+        def DumpInfo(self):
+            print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
+            print('\t\t--------------------------------------------------')
+            print('\t\tType                  : 0x{Type:02X}'.format(Type=self.Type))
+            print('\t\tStart of Range        : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+            print('\t\tEnd of Range          : 0x{EndDeviceID:04X}'.format(EndDeviceID=self.EndDeviceID))
+            print('\t\tDTE Setting           : 0x{DTESetting:02X}'.format(DTESetting=self.DTESetting))
+
+    class DEVICE_TABLE_ENTRY_ALIAS_SELECT(object):
+        def __init__(self, data=None):
+            self.Type = 0
+            self.DeviceID = 0
+            self.DTESetting = 0
+            self.SourceDeviceID = 0
+            self.TypeString = None
+            self.Length = 0
+            if data is not None:
+                self.Decode(data)
+
+        def Decode(self, header_byte_array):
+            (self.Type,
+             self.DeviceID,
+             self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                              header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
+            if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT):
+                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT, self.Type)
+
+            self.TypeString = "Alias Select"
+            # Two DevID, one for alias, one for source
+            self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
+                IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
+            (_, self.SourceDeviceID, _) =\
+                struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
+
+        def Encode(self):
+            byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                               self.Type,
+                               self.DeviceID,
+                               self.DTESetting)
+            byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 0, self.SourceDeviceID, 0)
+            return byte_str
+
+        def ToXmlElementTree(self):
+            xml_item = ET.Element(self.TypeString.replace(" ", ""))
+            xml_item.set('Type', '0x%X' % self.Type)
+            xml_item.set('DeviceID', '0x%X' % (self.DeviceID))
+            xml_item.set('DTESetting', '0x%X' % (self.DTESetting))
+            xml_item.set('SourceDeviceID', '0x%X' % (self.SourceDeviceID))
+            return xml_item
+
+        def DumpInfo(self):
+            print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
+            print('\t\t--------------------------------------------------')
+            print('\t\tType                  : 0x{Type:02X}'.format(Type=self.Type))
+            print('\t\tDevice ID             : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+            print('\t\tDTE Setting           : 0x{DTESetting:02X}'.format(DTESetting=self.DTESetting))
+            print('\t\tSource Device ID      : 0x{SourceDeviceID:04X}'.format(SourceDeviceID=self.SourceDeviceID))
+
+    class DEVICE_TABLE_ENTRY_ALIAS_RANGE_START(object):
+        def __init__(self, data=None):
+            self.Type = 0
+            self.DeviceID = 0
+            self.DTESetting = 0
+            self.SourceDeviceID = 0
+            self.EndDeviceID = 0
+            self.TypeString = None
+            self.Length = 0
+            if data is not None:
+                self.Decode(data)
+
+        def Decode(self, header_byte_array):
+            (self.Type,
+             self.DeviceID,
+             self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                              header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
+            if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START):
+                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START, self.Type)
+
+            self.TypeString = "Alias Range"
+            # Two DevID, one for alias start, one for source start
+            self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
+                IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
+            (_, self.SourceDeviceID, _) =\
+                struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
+            (Type, self.EndDeviceID, _) =\
+                struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                header_byte_array[self.Length:
+                                                (self.Length + IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size)])
+            if Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END:
+                print("Start of range does not follow end of range")
+                sys.exit(-1)
+            self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
+
+        def Encode(self):
+            byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                               self.Type,
+                               self.DeviceID,
+                               self.DTESetting)
+            byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 0, self.SourceDeviceID, 0)
+            byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END, self.EndDeviceID, 0)
+            return byte_str
+
+        def ToXmlElementTree(self):
+            xml_item = ET.Element(self.TypeString.replace(" ", ""))
+            xml_item.set('Type', '0x%X' % self.Type)
+            xml_item.set('StartofRange', '0x%X' % self.DeviceID)
+            xml_item.set('EndofRange', '0x%X' % (self.EndDeviceID))
+            xml_item.set('DTESetting', '0x%X' % (self.DTESetting))
+            xml_item.set('SourceDeviceID', '0x%X' % (self.SourceDeviceID))
+            return xml_item
+
+        def DumpInfo(self):
+            print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
+            print('\t\t--------------------------------------------------')
+            print('\t\tType                  : 0x{Type:02X}'.format(Type=self.Type))
+            print('\t\tStart of Range        : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+            print('\t\tEnd of Range          : 0x{EndDeviceID:04X}'.format(EndDeviceID=self.EndDeviceID))
+            print('\t\tDTE Setting           : 0x{DTESetting:02X}'.format(DTESetting=self.DTESetting))
+            print('\t\tSource Device ID      : 0x{SourceDeviceID:04X}'.format(SourceDeviceID=self.SourceDeviceID))
+
+    class DEVICE_TABLE_ENTRY_EX_SELECT(object):
+        def __init__(self, data=None):
+            self.Type = 0
+            self.DeviceID = 0
+            self.DTESetting = 0
+            self.ExtendedDTESetting = 0
+            self.TypeString = None
+            self.Length = 0
+            if data is not None:
+                self.Decode(data)
+
+        def Decode(self, header_byte_array):
+            (self.Type,
+             self.DeviceID,
+             self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                              header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
+            if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT):
+                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT, self.Type)
+
+            self.TypeString = "Extended Select"
+            # Two DTE setting, one for standard setting, one for extended setting (AtsDisabled, etc.)
+            self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
+                IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
+            (self.ExtendedDTESetting,) = \
+                struct.unpack("=I", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
+
+        def Encode(self):
+            byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                               self.Type,
+                               self.DeviceID,
+                               self.DTESetting)
+            # Two DTE setting, one for standard setting, one for extended setting (AtsDisabled, etc.)
+            byte_str += struct.pack("=I", self.ExtendedDTESetting)
+            return byte_str
+
+        def ToXmlElementTree(self):
+            xml_item = ET.Element(self.TypeString.replace(" ", ""))
+            xml_item.set('Type', '0x%X' % self.Type)
+            xml_item.set('DeviceID', '0x%X' % (self.DeviceID))
+            xml_item.set('DTESetting', '0x%X' % (self.DTESetting))
+            if (self.ExtendedDTESetting & 0x80000000) != 0:
+                xml_item.set('ExtendedDTESetting', 'ATS requests blocked')
+            else:
+                xml_item.set('ExtendedDTESetting', 'ATS allowed')
+            return xml_item
+
+        def DumpInfo(self):
+            print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
+            print('\t\t--------------------------------------------------')
+            print('\t\tType                  : 0x{Type:02X}'.format(Type=self.Type))
+            print('\t\tDevice ID             : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+            print('\t\tDTE Setting           : 0x{DTESetting:02X}'.format(DTESetting=self.DTESetting))
+            if (self.ExtendedDTESetting & 0x80000000) != 0:
+                ats_str = "ATS requests blocked"
+            else:
+                ats_str = "ATS allowed"
+            print('\t\tExtended DTE Setting  : {ExtendedDTESetting:s}'.format(ExtendedDTESetting=ats_str))
+
+    class DEVICE_TABLE_ENTRY_EX_RANGE_START(object):
+        def __init__(self, data=None):
+            self.Type = 0
+            self.DeviceID = 0
+            self.DTESetting = 0
+            self.TypeString = None
+            self.Length = 0
+            if data is not None:
+                self.Decode(data)
+
+        def Decode(self, header_byte_array):
+            (self.Type,
+             self.DeviceID,
+             self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                              header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
+            if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START):
+                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START, self.Type)
+
+            self.TypeString = "Extended Range"
+            # Two DTE setting, one for standard setting start, one for extended setting start
+            self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
+                IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
+            (self.ExtendedDTESetting,) =\
+                struct.unpack("=I", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
+            (Type, self.EndDeviceID, _) =\
+                struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                header_byte_array[self.Length:
+                                                (self.Length + IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size)])
+            if Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_END:
+                print("Start of range does not follow end of range")
+                sys.exit(-1)
+            self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
+
+        def Encode(self):
+            byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                               self.Type,
+                               self.DeviceID,
+                               self.DTESetting)
+            # Two DTE setting, one for standard setting start, one for extended setting start
+            byte_str += struct.pack("=I", self.ExtendedDTESetting)
+            byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 4, self.EndDeviceID, 0)
+            return byte_str
+
+        def ToXmlElementTree(self):
+            xml_item = ET.Element(self.TypeString.replace(" ", ""))
+            xml_item.set('Type', '0x%X' % self.Type)
+            xml_item.set('StartofRange', '0x%X' % self.DeviceID)
+            xml_item.set('EndofRange', '0x%X' % (self.EndDeviceID))
+            xml_item.set('DTESetting', '0x%X' % (self.DTESetting))
+            if (self.ExtendedDTESetting & 0x80000000) != 0:
+                xml_item.set('ExtendedDTESetting', 'ATS requests blocked')
+            else:
+                xml_item.set('ExtendedDTESetting', 'ATS allowed')
+            return xml_item
+
+        def DumpInfo(self):
+            print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
+            print('\t\t--------------------------------------------------')
+            print('\t\tType                  : 0x{Type:02X}'.format(Type=self.Type))
+            print('\t\tStart of Range        : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+            print('\t\tEnd of Range          : 0x{EndDeviceID:04X}'.format(EndDeviceID=self.EndDeviceID))
+            print('\t\tDTE Setting           : 0x{DTESetting:02X}'.format(DTESetting=self.DTESetting))
+            if (self.ExtendedDTESetting & 0x80000000) != 0:
+                ats_str = "ATS requests blocked"
+            else:
+                ats_str = "ATS allowed"
+            print('\t\tExtended DTE Setting  : {ExtendedDTESetting:s}'.format(ExtendedDTESetting=ats_str))
+
+    class DEVICE_TABLE_ENTRY_SPECIAL(object):
+        def __init__(self, data=None):
+            self.Type = 0
+            self.DeviceID = 0
+            self.DTESetting = 0
+            self.ExtendedDTESetting = 0
+            self.TypeString = None
+            self.Length = 0
+            if data is not None:
+                self.Decode(data)
+
+        def Decode(self, header_byte_array):
+            (self.Type,
+             self.DeviceID,
+             self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                              header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
+            if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL):
+                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL, self.Type)
+
+            self.TypeString = "Special Device"
+            # First half for standard DTE setting, second half for special DevID and its variety (APIC, HPET, etc.)
+            self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size +\
+                IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
+            (self.Handle, self.SourceDeviceID, self.Variety) =\
+                struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
+
+        def Encode(self):
+            byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                               self.Type,
+                               self.DeviceID,
+                               self.DTESetting)
+            # First half for standard DTE setting, second half for special DevID and its variety (APIC, HPET, etc.)
+            byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                    self.Handle,
+                                    self.SourceDeviceID,
+                                    self.Variety)
+            return byte_str
+
+        def ToXmlElementTree(self):
+            xml_item = ET.Element(self.TypeString.replace(" ", ""))
+            xml_item.set('Type', '0x%X' % self.Type)
+            xml_item.set('DeviceID', '0x%X' % (self.DeviceID))
+            xml_item.set('DTESetting', '0x%X' % (self.DTESetting))
+            xml_item.set('SourceDeviceID', '0x%X' % (self.SourceDeviceID))
+
+            xml_item.set('Handle', '0x%X' % (self.Handle))
+            if self.Variety == 1:
+                xml_item.set('Variety', 'IOAPIC')
+            elif self.Variety == 2:
+                xml_item.set('Variety', 'HPET')
+            else:
+                xml_item.set('Variety', 'Reserved %X' % (self.Variety))
+            return xml_item
+
+        def DumpInfo(self):
+            print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
+            print('\t\t--------------------------------------------------')
+            print('\t\tType                  : 0x{Type:02X}'.format(Type=self.Type))
+            print('\t\tDevice ID             : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+            print('\t\tDTE Setting           : 0x{DTESetting:02X}'.format(DTESetting=self.DTESetting))
+            print('\t\tSource Device ID      : 0x{SourceDeviceID:04X}'.format(SourceDeviceID=self.SourceDeviceID))
+
+            if self.Variety == 1:
+                var_str = "IOAPIC"
+            elif self.Variety == 2:
+                var_str = "HPET"
+            else:
+                var_str = "Reserved 0x%02X" % (self.Variety)
+            print('\t\tHandle                : 0x{Handle:02X}'.format(Handle=self.Handle))
+            print('\t\tVariety               : {Variety:s}'.format(Variety=var_str))
+
+    class DEVICE_TABLE_ENTRY_ACPI(object):
+        def __init__(self, data=None):
+            self.Type = 0
+            self.DeviceID = 0
+            self.DTESetting = 0
+            self.ExtendedDTESetting = 0
+            self.TypeString = None
+            self.Length = 0
+            if data is not None:
+                self.Decode(data)
+
+        def Decode(self, header_byte_array):
+            (self.Type,
+             self.DeviceID,
+             self.DTESetting) = struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                                              header_byte_array[:IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size])
+            if (self.Type != IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI):
+                raise Exception ("Input device type (%d) does not match expectation (%d)", IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI, self.Type)
+
+            self.TypeString = "Variable Length ACPI HID Device"
+            (self.HID, self.CID, self.UIDFormat, self.UIDLength) =\
+                struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_ext_format,
+                                header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:
+                                                IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len])
+            self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len + self.UIDLength
+            if self.UIDFormat == 0:
+                self.UID = None
+            elif self.UIDFormat == 1:
+                (self.UID,) = struct.unpack("=Q", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len:
+                                            self.Length])
+            elif self.UIDFormat == 2:
+                (self.UID,) =\
+                    struct.unpack("=%ss" % self.UIDLength,
+                                    header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len:self.Length])
+
+        def Encode(self):
+            byte_str = struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
+                               self.Type,
+                               self.DeviceID,
+                               self.DTESetting)
+            # Variable Length ACPI HID Device
+            byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_ext_format,
+                                    self.HID,
+                                    self.CID,
+                                    self.UIDFormat,
+                                    self.UIDLength)
+            if self.UIDFormat == 1:
+                byte_str += struct.pack("=Q", self.UID)
+            elif self.UIDFormat == 2:
+                byte_str += struct.pack("=%ss" % self.UIDLength, self.UID)
+            return byte_str
+
+        def ToXmlElementTree(self):
+            xml_item = ET.Element(self.TypeString.replace(" ", ""))
+            xml_item.set('Type', '0x%X' % self.Type)
+            xml_item.set('DeviceID', '0x%X' % (self.DeviceID))
+            xml_item.set('DTESetting', '0x%X' % (self.DTESetting))
+
+            xml_item.set('HardwareID', '%s' % (self.HID))
+            xml_item.set('ExtendedDTE Setting', '%s' % (self.CID))
+            xml_item.set('UniqueIDFormat', '%d' % (self.UIDFormat))
+            xml_item.set('UniqueIDLength', '%d' % (self.UIDLength))
+            if self.UIDFormat == 0:
+                xml_item.set('UniqueID', 'None')
+            elif self.UIDFormat == 1:
+                xml_item.set('UniqueID', '0x%X' % (self.UID))
+            elif self.UIDFormat == 2:
+                xml_item.set('UniqueID', '%s' % (self.UID))
+            else:
+                print("Unrecognized UID format detected")
+                sys.exit(-1)
+            return xml_item
+
+        def DumpInfo(self):
+            print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
+            print('\t\t--------------------------------------------------')
+            print('\t\tType                  : 0x{Type:02X}'.format(Type=self.Type))
+            print('\t\tDevice ID             : 0x{DeviceID:04X}'.format(DeviceID=self.DeviceID))
+            print('\t\tDTE Setting           : 0x{DTESetting:02X}'.format(DTESetting=self.DTESetting))
+
+            print('\t\tHardware ID           : {HID:s}'.format(HID=self.HID.decode()))
+            print('\t\tExtended DTE Setting  : {CID:s}'.format(CID=self.CID.decode()))
+            print('\t\tUnique ID Format      : {UIDFormat:d}'.format(UIDFormat=self.UIDFormat))
+            print('\t\tUnique ID Length      : {UIDLength:d}'.format(UIDLength=self.UIDLength))
+            if self.UIDFormat == 0:
+                print('\t\tUnique ID             : None')
+            elif self.UIDFormat == 1:
+                print('\t\tUnique ID             : 0x{UID:X}'.format(UID=self.UID))
+            elif self.UIDFormat == 2:
+                print('\t\tUnique ID             : {UID:s}'.format(UID=self.UID.decode()))
+            else:
+                raise Exception("Unrecognized UID format detected %d" % self.UIDFormat)
