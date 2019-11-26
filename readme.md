@@ -41,10 +41,7 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
   * If multiple classes are found (ie when searching for a SettingsManager), it will now pick the one that is deepest in hierarchy from the desired class
   * Updated parsers for DSC, FDF, and DEC
 * Bugs:
-  * #42 - Fix bug causing incorrect decoding in FMP capsule when called twice
-  * #41, #58 - Improve Macro resolution in edk2 parsers
-  * #49  - Wincert class had bug in write routine
-  * #51 - UEFI Status Code did not support error, warning, info bits and did not safely parse the input.  
+  * See the bugs in the [milestone](https://github.com/tianocore/edk2-pytool-library/milestone/2?closed=1) for this release
 
 
 ### Version 0.10.3
