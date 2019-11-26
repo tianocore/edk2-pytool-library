@@ -40,8 +40,11 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 * Features:
   * If multiple classes are found (ie when searching for a SettingsManager), it will now pick the one that is deepest in hierarchy from the desired class
   * Updated parsers for DSC, FDF, and DEC
-* Bugs
-  * Fixed bugs #42, 48, 49, and 51
+* Bugs:
+  * #42 - Fix bug causing incorrect decoding in FMP capsule when called twice
+  * #41, #58 - Improve Macro resolution in edk2 parsers
+  * #49  - Wincert class had bug in write routine
+  * #51 - UEFI Status Code did not support error, warning, info bits and did not safely parse the input.  
 
 
 ### Version 0.10.3
