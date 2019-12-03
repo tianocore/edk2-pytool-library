@@ -54,8 +54,8 @@ class TestBaseParser(unittest.TestCase):
         parser.SetInputVars({
             "name": "sean"
         })
-        line = "Hello $(Unknown_Token)!"
-        self.assertEqual(parser.ReplaceVariables(line), "Hello 0!")
+        line = "!if $(Unknown_Token)!"
+        self.assertEqual(parser.ReplaceVariables(line), "!if 0!")
 
     def test_replace_macro_ifdef_dollarsign(self):
         parser = BaseParser("")
@@ -112,6 +112,17 @@ class TestBaseParser(unittest.TestCase):
 
         line = "!IFnDEF name"
         self.assertEqual(parser.ReplaceVariables(line), "!IFnDEF sean")
+
+    def test_replace_macro_elseif(self):
+        parser = BaseParser("")
+        parser.SetInputVars({
+            "name": "matt"
+        })
+        line = "!elseif $(name)"
+        self.assertEqual(parser.ReplaceVariables(line), "!elseif matt")
+
+        line = "!ELSEIF $(Invalid_Token)"
+        self.assertEqual(parser.ReplaceVariables(line), "!ELSEIF 0")
 
     def test_conditional_ifdef(self):
         parser = BaseParser("")
@@ -427,7 +438,7 @@ class TestBaseParser(unittest.TestCase):
         self.assertEqual(no_var_result, no_var)
         # make sure we don't fail when we have unknown variables
         na_var = "unknown var $(UNKNOWN)"
-        na_var_after = "unknown var 0"
+        na_var_after = "unknown var $(UNKNOWN)"
         na_var_result = parser.ReplaceVariables(na_var)
         self.assertEqual(na_var_result, na_var_after)
         # make sure we're good for all the variables
@@ -455,7 +466,7 @@ class TestBaseParser(unittest.TestCase):
         self.assertEqual(no_var_result, no_var)
         # make sure we don't fail when we have unknown variables
         na_var = "unknown var $(UNKNOWN)"
-        na_var_after = "unknown var 0"
+        na_var_after = "unknown var $(UNKNOWN)"
         na_var_result = parser.ReplaceVariables(na_var)
         self.assertEqual(na_var_result, na_var_after)
         # make sure we're good for all the variables
