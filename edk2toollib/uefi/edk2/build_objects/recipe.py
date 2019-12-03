@@ -38,7 +38,7 @@ class library:
     self.source_info = source_info
 
   def __eq__(self, other):
-    if (self.libraryclass.lower() == "null")
+    if (self.libraryclass.lower() == "null"):
       return self.inf == other.inf
     return self.libraryclass.lower() == other.libraryclass.lower()
 

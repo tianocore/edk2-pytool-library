@@ -15,7 +15,7 @@ In the future, we hope to include FDF's as well.
 Build objects are for anyone dealing with complex and large projects.
 In projects, more and more DSC's are taking advantage of the !include functionality. However, there are a few problems with that fact. 
 1. DSC's are fragile
-2. Includes have no idea what is already in your file. An include might expect you to be in a defines section. You have no way to know this.
+2. Includes have no idea what is already in your file. An include might expect you to be in a defines section. You have no way to know this from the main DSC file.
 3. 
 
 ## Why were they made?
