@@ -228,15 +228,18 @@ class BaseParser(object):
             self.Logger.critical("Tried to pop an empty conditional stack.  Line Number %d" % self.CurrentLine)
             return self.ConditionalStack.pop()  # this should cause a crash but will give trace.
 
-    def _FindReplacementForToken(self, token):
+    def _FindReplacementForToken(self, token, replace_if_not_found=False):
 
         v = self.LocalVars.get(token)
 
         if(v is None):
             v = self.InputVars.get(token)
 
-        if(v is None):
+        if(v is None and replace_if_not_found):
             v = self._MacroNotDefinedValue
+
+        elif(v is None):
+            return None
 
         if (type(v) is bool):
             v = "true" if v else "false"
@@ -264,10 +267,12 @@ class BaseParser(object):
         # both syntax options can not be supported.
         result = line
         tokens = result.split()
+        replace = len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef", "!if", "!elseif"]
         if len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef"]:
             if not tokens[1].startswith("$("):
-                v = self._FindReplacementForToken(tokens[1])
-                result = result.replace(tokens[1], v, 1)
+                v = self._FindReplacementForToken(tokens[1], replace)
+                if v is not None:
+                    result = result.replace(tokens[1], v, 1)
 
         # use line to avoid change by handling above
         rep = line.count("$")
@@ -282,8 +287,9 @@ class BaseParser(object):
             token = line[start + 2:end]
             replacement_token = line[start:end + 1]
             self.Logger.debug("Token is %s" % token)
-            v = self._FindReplacementForToken(token)
-            result = result.replace(replacement_token, v, 1)
+            v = self._FindReplacementForToken(token, replace)
+            if v is not None:
+                result = result.replace(replacement_token, v, 1)
 
             index = end + 1
             rep = rep - 1
