@@ -475,6 +475,7 @@ class TestRecipeParser(unittest.TestCase):
         self.write_file(file_path, self.test_dsc)
         parser.ParseFile(file_path)
         full_rec = parser.GetRecipe()
+        self.assertEqual(len(full_rec.skus), len(parser.GetSkus()))
         self.assertEqual(len(full_rec.components), len(parser.GetMods()))
 
         pass

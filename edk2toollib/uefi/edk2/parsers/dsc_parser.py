@@ -23,6 +23,7 @@ class DscParser(HashFileParser):
         self.ParsingInBuildOption = 0
         self.LibraryClassToInstanceDict = {}
         self.Pcds = []
+        self.Skus = []
 
     def __ParseLine(self, Line, file_name=None, lineno=None):
         line_stripped = self.StripComment(Line).strip()
@@ -136,6 +137,24 @@ class DscParser(HashFileParser):
 
             self.ParsingInBuildOption = self.ParsingInBuildOption + line_resolved.count("{")
             self.ParsingInBuildOption = self.ParsingInBuildOption - line_resolved.count("}")
+            return (line_resolved, [], None)
+        
+        # process line in sku id section
+        elif(self.CurrentSection.upper() == "SKUIDS"):
+            tokens = line_resolved.split("|")
+            if len(tokens) > 1:
+                id = tokens[0]
+                name = tokens[1]
+                parent = "DEFAULT" if len(tokens) < 3 else tokens[2]
+                data = {
+                    "id": id,
+                    "name": name,
+                    "parent": parent
+                }
+                self.Skus.append(data)
+                self.Logger.debug("Found Sku in SKU ID Section: %s" % data)
+            else:
+                self.Logger.info(f"Unknown SKU Id {line_resolved}")
             return (line_resolved, [], None)
 
         # process line in library class section (don't use full name)
@@ -277,3 +296,9 @@ class DscParser(HashFileParser):
 
     def GetLibsEnhanced(self):
         return self.LibsEnhanced
+
+    def GetSkus(self):
+        return self.Skus
+    
+    def GetPcds(self):
+        return self.Pcds
