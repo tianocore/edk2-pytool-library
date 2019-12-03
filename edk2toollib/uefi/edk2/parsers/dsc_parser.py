@@ -138,7 +138,7 @@ class DscParser(HashFileParser):
             self.ParsingInBuildOption = self.ParsingInBuildOption + line_resolved.count("{")
             self.ParsingInBuildOption = self.ParsingInBuildOption - line_resolved.count("}")
             return (line_resolved, [], None)
-        
+
         # process line in sku id section
         elif(self.CurrentSection.upper() == "SKUIDS"):
             tokens = line_resolved.split("|")
@@ -299,6 +299,6 @@ class DscParser(HashFileParser):
 
     def GetSkus(self):
         return self.Skus
-    
+
     def GetPcds(self):
         return self.Pcds

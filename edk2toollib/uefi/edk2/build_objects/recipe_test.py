@@ -58,12 +58,13 @@ class TestRecipe(unittest.TestCase):
         rec.components.add(comp3_good)
         self.assertEqual(len(rec.components), 4)
 
+
 class TestComponent(unittest.TestCase):
 
     def test_null_creation(self):
         comp = component("test.inf")
         self.assertIsNotNone(comp)
-    
+
     def test_add_pcd(self):
         comp = component("test.inf")
         pcd1 = pcd("namespace", "name", "TRUE")
@@ -74,7 +75,7 @@ class TestComponent(unittest.TestCase):
         self.assertEqual(len(comp.pcds), 2)
         comp.pcds.add(pcd1_bad)
         self.assertEqual(len(comp.pcds), 2)
-    
+
     def test_add_library(self):
         comp = component("test.inf")
         lib1 = library("BaseLib", "test1.inf")
@@ -104,6 +105,7 @@ class TestLibrary(unittest.TestCase):
         comp = library("test", "test.inf")
         self.assertIsNotNone(comp)
 
+
 class TestPcd(unittest.TestCase):
 
     def test_null_creation(self):
@@ -112,9 +114,9 @@ class TestPcd(unittest.TestCase):
         pcd2 = pcd("Namespace", "Name", "VALUE")
         self.assertIsNotNone(pcd2)
 
+
 class TestSourceInfo(unittest.TestCase):
 
     def test_null_creation(self):
         source = source_info("inf", 50)
         self.assertIsNotNone(source)
-    

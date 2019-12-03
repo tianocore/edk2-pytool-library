@@ -31,7 +31,7 @@ class RecipeParser(DscParser):
             pass
             # print(library)
             # raise ValueError()
-        
+
         # process Skus
         skus = self.GetSkus()
         for s in skus:
@@ -43,11 +43,11 @@ class RecipeParser(DscParser):
         for p in pcds:
             namespace, name = p.split(".")
             new_pcd = pcd(namespace, name)
-            pcd_store.add(new_pcd)            
+            pcd_store.add(new_pcd)
             # TODO extend PCD in base parser
-            
+
         print(pcd_store)
-        
+
         # process components
         modules = self.GetModsEnhanced()
         for module in modules:
@@ -57,6 +57,6 @@ class RecipeParser(DscParser):
             rec.components.add(comp)
             # TODO - we should have parsed all the libraries
             # TODO- we should have parsed the skus
-            
+
             #raise ValueError()
         return rec
