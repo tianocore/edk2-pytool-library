@@ -479,3 +479,31 @@ class TestRecipeParser(unittest.TestCase):
         self.assertEqual(len(full_rec.components), len(parser.GetMods()))
 
         pass
+    
+    def test_read_output_read(self):
+        parser = RecipeParser()
+        temp_dir = tempfile.mkdtemp()
+        file_path = os.path.join(temp_dir, "test.dsc")
+        print(file_path)
+        self.write_file(file_path, self.test_dsc)
+        parser.ParseFile(file_path)
+        full_rec = parser.GetRecipe()
+        self.assertIsNotNone(full_rec)
+        # convert the recipe into a dsc
+        rec_dsc = full_rec.to_dsc()
+        file_path2 = os.path.join(temp_dir, "test2.dsc")
+        self.write_file(file_path2, rec_dsc)
+        print(file_path2)
+        # read the created dsc back into the recipe
+        parser2 = RecipeParser()
+        parser2.ParseFile(file_path2)
+        full_rec2 = parser.GetRecipe()
+        print(full_rec2)
+        # test to make sure the two are the same?
+        self.assertIsNotNone(full_rec2)
+        self.assertEqual(len(full_rec.skus), len(full_rec2.skus))
+        #self.assertEqual(len(full_rec.components), len(full_rec2.components))
+        self.assertEqual(full_rec, full_rec2)
+        pass
+
+        

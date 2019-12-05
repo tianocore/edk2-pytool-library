@@ -20,6 +20,10 @@ class RecipeParser(DscParser):
     Returns none if a file has not been parsed yet
     '''
 
+    def __init__(self):
+        super().__init__()
+        self.EmitWarnings = False
+
     def GetRecipe(self):
         if not self.Parsed:
             return None
@@ -46,7 +50,7 @@ class RecipeParser(DscParser):
             pcd_store.add(new_pcd)
             # TODO extend PCD in base parser
 
-        print(pcd_store)
+        #print(pcd_store)
 
         # process components
         modules = self.GetModsEnhanced()

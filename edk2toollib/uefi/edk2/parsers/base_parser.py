@@ -26,6 +26,7 @@ class BaseParser(object):
         self.TargetFile = None
         self.TargetFilePath = None
         self.CurrentLine = -1
+        self.EmitWarnings = True
         self._MacroNotDefinedValue = "0"  # value to used for undefined macro
 
     #
@@ -99,7 +100,8 @@ class BaseParser(object):
 
         # log invalid file path
         Path = os.path.join(self.RootPath, *p)
-        self.Logger.error("Invalid file path %s" % Path)
+        if self.EmitWarnings:
+            self.Logger.error("Invalid file path %s" % Path)
         return Path
 
     def WriteLinesToFile(self, filepath):

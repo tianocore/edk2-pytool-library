@@ -14,6 +14,30 @@ class recipe:
         self.skus = set()  # a list of skus to build
         self.output_dir = ""  # an EDK2 relative path to the output directory
         self.flash_map = None  # the map of the flash layout
+    
+    def get_all_comp_arch(self) -> list:
+        arches = set
+        for comp in self.components:
+            arches.add(comp.architecture)
+        return arches
+    
+    def to_dsc(self) -> str:
+        ''' outputs the current data to string DSC format'''
+        lines = []
+        # First create the defines
+        lines.append("[Defines]")
+
+        # Second do the Skus
+        lines.append("[SkuIds]")
+        lines += [x.to_dsc() for x in self.skus]
+        return "\n".join(lines)
+    
+    def __eq__(self, other):
+        if type(other) is not recipe:
+            return False
+        if not self.skus == other.skus:
+            return False
+        return True
 
 
 class sku_id:
@@ -38,17 +62,22 @@ class sku_id:
 
     def __repr__(self):
         return f"{self.id}|{self.name}|{self.parent}"
+    
+    def to_dsc(self) -> str:
+        ''' outputs the current data to string DSC format'''
+        return self.__repr__()
 
 
 class component:
     ''' Contains the data for a component for the EDK build system to build '''
 
-    def __init__(self, inf, phases: list = [], source_info=None):
+    def __init__(self, inf, phases: list = [], architecture="ALL", source_info=None):
 
         self.libraries = set()  # a list of libraries that this component uses
         # TODO: should there only be one phase allowed for a component
         self.phases = set(phases)  # a set of phases that this component is in (PEIM, DXE_RUNTIME, ...)
         self.pcds = set()  # a set of PCD's that
+        self.architecture = architecture
         self.inf = inf  # the EDK2 relative path to the source INF
         self.source_info = source_info
         build_options = {}  # map of build option to flags
@@ -62,7 +91,8 @@ class component:
         if len(self.phases) > 0 and len(other.phases) > 0:
             if len(self.phases.intersection(other.phases)) == 0:
                 return False  # if we don't overlap in phases?
-        return self.inf == other.inf  # TODO: should this be case insensitive?
+        arch_overlap = self.architecture == other.architecture or self.architecture == "ALL" or other.architecture == "ALL"
+        return self.inf == other.inf and self.architecture == other.architecture # TODO: should this be case insensitive?
 
     def __hash__(self):
         hashes = [hash(x) for x in self.phases]
@@ -73,6 +103,10 @@ class component:
         source = str(self.source_info) if source_info is not None else ""
         phases = str(self.phases) if len(self.phases) > 0 else ""
         return f"{self.inf} {phases} {source}"
+    
+    def to_dsc(self) -> str:
+        ''' outputs the current data to string DSC format'''
+        return ""
 
 
 class library:
@@ -99,6 +133,10 @@ class library:
 
     def __repr__(self):
         return f"{self.libraryclass}|{self.inf}"
+    
+    def to_dsc(self) -> str:
+        ''' outputs the current data to string DSC format'''
+        return self.__repr__()
 
 
 class pcd:
@@ -119,6 +157,10 @@ class pcd:
 
     def __repr__(self):
         return f"{self.namespace}.{self.name} = {self.value}"
+    
+    def to_dsc(self) -> str:
+        ''' outputs the current data to string DSC format'''
+        return ""
 
 
 class map_object:

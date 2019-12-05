@@ -23,7 +23,8 @@ class DscParser(HashFileParser):
         self.ParsingInBuildOption = 0
         self.LibraryClassToInstanceDict = {}
         self.Pcds = []
-        self.Skus = []
+        self.PcdsEnhanced = []
+        self.Skus = []        
 
     def __ParseLine(self, Line, file_name=None, lineno=None):
         line_stripped = self.StripComment(Line).strip()
@@ -166,6 +167,7 @@ class DscParser(HashFileParser):
             return (line_resolved, [], None)
         # process line in PCD section
         elif(self.CurrentSection.upper().startswith("PCDS")):
+            #raise RuntimeError(line_resolved)
             if "tokenspaceguid" in line_resolved.lower() and \
                     line_resolved.count('|') > 0 and line_resolved.count('.') > 0:
                 # should be a pcd statement
