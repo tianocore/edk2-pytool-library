@@ -11,7 +11,7 @@ import unittest
 import os
 import tempfile
 from edk2toollib.uefi.edk2.build_objects.recipe import recipe
-from edk2toollib.uefi.edk2.parsers.recipe_parser import RecipeParser
+from edk2toollib.uefi.edk2.parsers.recipe_dsc_parser import RecipeBasedDscParser
 
 
 class TestRecipeParser(unittest.TestCase):
@@ -468,7 +468,7 @@ class TestRecipeParser(unittest.TestCase):
         self.assertIsNotNone(rec)
 
     def test_simple_dsc(self):
-        parser = RecipeParser()
+        parser = RecipeBasedDscParser()
         temp_dir = tempfile.mkdtemp()
         file_path = os.path.join(temp_dir, "test.dsc")
         print(file_path)
@@ -476,12 +476,12 @@ class TestRecipeParser(unittest.TestCase):
         parser.ParseFile(file_path)
         full_rec = parser.GetRecipe()
         self.assertEqual(len(full_rec.skus), len(parser.GetSkus()))
-        self.assertEqual(len(full_rec.components), len(parser.GetMods()))
+        self.assertEqual(len(full_rec.components), len(parser.GetModsEnhanced()))
 
         pass
     
     def test_read_output_read(self):
-        parser = RecipeParser()
+        parser = RecipeBasedDscParser()
         temp_dir = tempfile.mkdtemp()
         file_path = os.path.join(temp_dir, "test.dsc")
         print(file_path)
@@ -490,12 +490,12 @@ class TestRecipeParser(unittest.TestCase):
         full_rec = parser.GetRecipe()
         self.assertIsNotNone(full_rec)
         # convert the recipe into a dsc
-        rec_dsc = full_rec.to_dsc()
+        rec_dsc = RecipeBasedDscParser.GetDscFromRecipe(full_rec)
         file_path2 = os.path.join(temp_dir, "test2.dsc")
         self.write_file(file_path2, rec_dsc)
         print(file_path2)
         # read the created dsc back into the recipe
-        parser2 = RecipeParser()
+        parser2 = RecipeBasedDscParser()
         parser2.ParseFile(file_path2)
         full_rec2 = parser.GetRecipe()
         print(full_rec2)
@@ -504,6 +504,9 @@ class TestRecipeParser(unittest.TestCase):
         self.assertEqual(len(full_rec.skus), len(full_rec2.skus))
         self.assertEqual(len(full_rec.components), len(full_rec2.components))
         self.assertEqual(full_rec, full_rec2)
+        print(full_rec.components)
+        print(full_rec2.components)
+        # self.fail()
         pass
 
         

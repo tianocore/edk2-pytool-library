@@ -14,7 +14,7 @@ from edk2toollib.uefi.edk2.build_objects.recipe import pcd
 import os
 
 
-class RecipeParser(DscParser):
+class RecipeBasedDscParser(DscParser):
     ''' 
     This acts like a normal DscParser, but outputs recipes 
     Returns none if a file has not been parsed yet
@@ -23,13 +23,43 @@ class RecipeParser(DscParser):
     def __init__(self):
         super().__init__()
         self.EmitWarnings = False
+        self.Modules = set()
+        self.Libs = set() # this is the a library class container
+        self.Pcds = set()
+        self.Skus = set()
+
+    ## Augmented parsing
+
+    
+    def GetMods(self):
+        # TODO create compatibility layer
+        return None
+        #return self.ThreeMods + self.SixMods
+
+    def GetModsEnhanced(self):
+        return self.Modules
+    
+    def GetLibs(self):
+        # TODO create compatibility layer
+        return None
+
+    def GetLibsEnhanced(self):
+        return self.Libs
+
+    def GetSkus(self):
+        return self.Skus
+
+    def GetPcds(self):
+        return self.Pcds
+
+    ## DSC <=> Recipe translation methods
     
     @classmethod
-    def GetDscFromRecipe(cls, recipe) -> str:
+    def GetDscFromRecipe(cls, rec) -> str:
         ''' Gets the DSC string for a recipe  '''
-        if type(recipe) is not recipe:
-            raise ValueError(f"{recipe} is not a recipe object")
-        strings = GetDscFromObj(recipe)
+        if type(rec) is not recipe:
+            raise ValueError(f"{rec} is not a recipe object")
+        strings = cls.GetDscLinesFromObj(rec)
         return "\n".join(strings)
     
     @classmethod
@@ -38,14 +68,14 @@ class RecipeParser(DscParser):
         lines = []
         if type(obj) is recipe:
             lines.append("[Defines]")
-            lines.append(f"OUTPUT_DIRECTORY = {self.output_dir}")
+            lines.append(f"OUTPUT_DIRECTORY = {obj.output_dir}")
 
             # Second do the Skus
             lines.append("[SkuIds]")
-            lines += [cls.GetDscLinesFromObj(x) for x in self.skus]
+            #lines += [cls.GetDscLinesFromObj(x) for x in self.skus]
 
             # Next do the components
-            lines += [x.to_dsc(include_header=True) for x in self.components]
+            #lines += [x.to_dsc(include_header=True) for x in self.components]
 
 
         return lines
