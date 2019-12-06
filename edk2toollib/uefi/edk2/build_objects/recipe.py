@@ -15,27 +15,29 @@ class recipe:
         self.output_dir = ""  # an EDK2 relative path to the output directory
         self.flash_map = None  # the map of the flash layout
     
-    def get_all_comp_arch(self) -> list:
-        arches = set
-        for comp in self.components:
-            arches.add(comp.architecture)
-        return arches
-    
+    ## this should move to a different class
     def to_dsc(self) -> str:
         ''' outputs the current data to string DSC format'''
         lines = []
         # First create the defines
         lines.append("[Defines]")
+        lines.append(f"OUTPUT_DIRECTORY = {self.output_dir}")
 
         # Second do the Skus
         lines.append("[SkuIds]")
         lines += [x.to_dsc() for x in self.skus]
+
+        # Next do the components
+        lines += [x.to_dsc(include_header=True) for x in self.components]
+
         return "\n".join(lines)
     
     def __eq__(self, other):
         if type(other) is not recipe:
             return False
         if not self.skus == other.skus:
+            return False
+        if not self.components == other.components:
             return False
         return True
 
@@ -63,9 +65,12 @@ class sku_id:
     def __repr__(self):
         return f"{self.id}|{self.name}|{self.parent}"
     
-    def to_dsc(self) -> str:
+    def to_dsc(self, include_header = False) -> str:
         ''' outputs the current data to string DSC format'''
-        return self.__repr__()
+        if include_header:
+            return f"[SkuIds]\n {self.__repr__()}"
+        else:
+            return self.__repr__()
 
 
 class component:
@@ -104,9 +109,13 @@ class component:
         phases = str(self.phases) if len(self.phases) > 0 else ""
         return f"{self.inf} {phases} {source}"
     
-    def to_dsc(self) -> str:
+    def to_dsc(self, include_header = False) -> str:
         ''' outputs the current data to string DSC format'''
-        return ""
+        lines = []
+        if include_header:
+            lines.append("[Component]")
+        lines.append(self.inf)
+        return "\n".join(lines)
 
 
 class library:
@@ -134,7 +143,7 @@ class library:
     def __repr__(self):
         return f"{self.libraryclass}|{self.inf}"
     
-    def to_dsc(self) -> str:
+    def to_dsc(self, include_header = False) -> str:
         ''' outputs the current data to string DSC format'''
         return self.__repr__()
 

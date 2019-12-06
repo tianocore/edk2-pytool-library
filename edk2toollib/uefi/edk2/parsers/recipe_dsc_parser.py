@@ -23,18 +23,47 @@ class RecipeParser(DscParser):
     def __init__(self):
         super().__init__()
         self.EmitWarnings = False
+    
+    @classmethod
+    def GetDscFromRecipe(cls, recipe) -> str:
+        ''' Gets the DSC string for a recipe  '''
+        if type(recipe) is not recipe:
+            raise ValueError(f"{recipe} is not a recipe object")
+        strings = GetDscFromObj(recipe)
+        return "\n".join(strings)
+    
+    @classmethod
+    def GetDscLinesFromObj(cls, obj) -> list:
+        ''' gets the DSC strings for an data model objects '''
+        lines = []
+        if type(obj) is recipe:
+            lines.append("[Defines]")
+            lines.append(f"OUTPUT_DIRECTORY = {self.output_dir}")
+
+            # Second do the Skus
+            lines.append("[SkuIds]")
+            lines += [cls.GetDscLinesFromObj(x) for x in self.skus]
+
+            # Next do the components
+            lines += [x.to_dsc(include_header=True) for x in self.components]
+
+
+        return lines
+
 
     def GetRecipe(self):
         if not self.Parsed:
             return None
         rec = recipe()
 
+        # Get output directory
+        if "OUTPUT_DIRECTORY" in self.LocalVars:
+            rec.output_dir = self.LocalVars["OUTPUT_DIRECTORY"]
+
         # process libraries
         libraries = self.GetLibsEnhanced()
         for library in libraries:
             pass
-            # print(library)
-            # raise ValueError()
 
         # process Skus
         skus = self.GetSkus()

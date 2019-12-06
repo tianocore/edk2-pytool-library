@@ -502,7 +502,7 @@ class TestRecipeParser(unittest.TestCase):
         # test to make sure the two are the same?
         self.assertIsNotNone(full_rec2)
         self.assertEqual(len(full_rec.skus), len(full_rec2.skus))
-        #self.assertEqual(len(full_rec.components), len(full_rec2.components))
+        self.assertEqual(len(full_rec.components), len(full_rec2.components))
         self.assertEqual(full_rec, full_rec2)
         pass
 
