@@ -24,7 +24,7 @@ class DscParser(HashFileParser):
         self.LibraryClassToInstanceDict = {}
         self.Pcds = []
 
-    def __ParseLine(self, Line, file_name=None, lineno=None):
+    def _ProcessLine(self, Line, file_name=None, lineno=None):
         line_stripped = self.StripComment(Line).strip()
         if(len(line_stripped) < 1):
             return ("", [], None)
@@ -232,13 +232,13 @@ class DscParser(HashFileParser):
     def ParseInfPathMod(self, line):
         return line.strip().split()[0].rstrip("{")
 
-    def __ProcessMore(self, lines, file_name=None):
+    def _ProcessMore(self, lines, file_name=None):
         if(len(lines) > 0):
             for index in range(0, len(lines)):
-                (line, add, new_file) = self.__ParseLine(lines[index], file_name=file_name, lineno=index + 1)
+                (line, add, new_file) = self._ProcessLine(lines[index], file_name=file_name, lineno=index + 1)
                 if(len(line) > 0):
                     self.Lines.append(line)
-                self.__ProcessMore(add, file_name=new_file)
+                self._ProcessMore(add, file_name=new_file)
 
     def __ProcessDefines(self, lines):
         if(len(lines) > 0):
@@ -262,7 +262,7 @@ class DscParser(HashFileParser):
         self.__ProcessDefines(file_lines)
         # reset the parser state before processing more
         self.ResetParserState()
-        self.__ProcessMore(file_lines, file_name=os.path.join(filepath))
+        self._ProcessMore(file_lines, file_name=os.path.join(filepath))
         f.close()
         self.Parsed = True
 

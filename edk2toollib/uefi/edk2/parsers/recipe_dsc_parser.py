@@ -23,13 +23,24 @@ class RecipeBasedDscParser(DscParser):
     def __init__(self):
         super().__init__()
         self.EmitWarnings = False
-        self.Modules = set()
-        self.Libs = set() # this is the a library class container
-        self.Pcds = set()
-        self.Skus = set()
+        self._Modules = set()
+        self._Libs = set() # this is the a library class container
+        self._Pcds = set()
+        self._Skus = set()
 
     ## Augmented parsing
-
+    def _ProcessLine(self, line, file_name=None, lineno=None):
+        results = super()._ProcessLine(line, file_name, lineno)
+        raise RuntimeError(results)
+        return results
+    
+    def _ProcessMore(self, lines, file_name=None):
+        for index in range(0, len(lines)):
+            raise RuntimeError("Test")
+            (line, add, new_file) = self._ProcessLine(lines[index], file_name=file_name, lineno=index + 1)
+            if(len(line) > 0):
+                self.Lines.append(line)
+            self._ProcessMore(add, file_name=new_file)
     
     def GetMods(self):
         # TODO create compatibility layer
@@ -37,20 +48,21 @@ class RecipeBasedDscParser(DscParser):
         #return self.ThreeMods + self.SixMods
 
     def GetModsEnhanced(self):
-        return self.Modules
+        return self._Modules
     
     def GetLibs(self):
         # TODO create compatibility layer
         return None
 
     def GetLibsEnhanced(self):
-        return self.Libs
+        return self._Libs
 
     def GetSkus(self):
-        return self.Skus
+        # Todo 
+        return self._Skus
 
     def GetPcds(self):
-        return self.Pcds
+        return self._Pcds
 
     ## DSC <=> Recipe translation methods
     
@@ -96,9 +108,7 @@ class RecipeBasedDscParser(DscParser):
             pass
 
         # process Skus
-        skus = self.GetSkus()
-        for s in skus:
-            rec.skus.add(sku_id(s["id"], s["name"], s["parent"]))
+        rec.skus = rec.skus.union(self._Skus)
 
         # process PCD's
         pcds = self.GetPcds()
