@@ -478,8 +478,8 @@ class TestRecipeParser(unittest.TestCase):
         old_parser.ParseFile(file_path)
         # since the old parser used all the libs it found, so we can't compare apples to apples
         # self.assertEqual(len(old_parser.GetLibs()), len(parser._Libs))
-        self.assertEqual(len(parser.GetSkusEnhanced()), 3)  # hardcoded for now- update this is you update the PCD
-        self.assertEqual(len(parser.GetModsEnhanced()), len(old_parser.GetModsEnhanced()))
+        self.assertEqual(len(parser.GetRecipeSkus()), 3)  # hardcoded for now- update this is you update the PCD
+        self.assertEqual(len(parser.GetRecipeMods()), len(old_parser.GetModsEnhanced()))
         pass
     
     def test_read_output_read(self):
@@ -502,11 +502,16 @@ class TestRecipeParser(unittest.TestCase):
         full_rec2 = parser2.GetRecipe()
         # test to make sure the two are the same?
         self.assertIsNotNone(full_rec2)
-        print(full_rec.skus)
-        print(full_rec2.skus)
+        # check the parsers
+        self.assertEqual(len(parser.GetRecipeMods()), len(parser2.GetRecipeMods()))
+        self.assertEqual(len(parser.GetRecipeSkus()), len(parser2.GetRecipeSkus()))
+        self.assertEqual(len(parser.GetRecipePcds()), len(parser2.GetRecipePcds()))
+        self.assertEqual(len(parser.GetRecipeLibs()), len(parser2.GetRecipeLibs()))
+        # next check the recipes
         self.assertEqual(len(full_rec.skus), len(full_rec2.skus))
         self.assertEqual(len(full_rec.components), len(full_rec2.components))
         self.assertEqual(full_rec, full_rec2)
+        self.fail()
         pass
 
         

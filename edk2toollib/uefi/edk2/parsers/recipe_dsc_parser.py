@@ -216,17 +216,17 @@ class RecipeBasedDscParser(DscParser):
         file_path, lineno = self.Sources[self._LineIter]
         return source_info(file_path, lineno)
     
-    def GetModsEnhanced(self):
+    def GetRecipeMods(self):
         return self._Modules
     
-    def GetLibsEnhanced(self):
+    def GetRecipeLibs(self):
         return self._Libs
 
-    def GetSkusEnhanced(self):
+    def GetRecipeSkus(self):
         # Todo 
         return self._Skus
 
-    def GetPcdsEnhanced(self):
+    def GetRecipePcds(self):
         return self._Pcds
 
     ## DSC <=> Recipe translation methods
@@ -273,7 +273,7 @@ class RecipeBasedDscParser(DscParser):
             rec.output_dir = self.LocalVars["OUTPUT_DIRECTORY"]
 
         # process libraries
-        # TODO use enhanced methods or internal variables
+        # TODO use  methods or internal variables
         for library in self._Libs:
             pass
 
