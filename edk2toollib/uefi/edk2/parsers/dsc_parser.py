@@ -19,12 +19,14 @@ class DscParser(HashFileParser):
         self.ThreeModsEnhanced = []
         self.OtherMods = []
         self.Libs = []
+        self.Sources = []
         self.LibsEnhanced = []
         self.ParsingInBuildOption = 0
         self.LibraryClassToInstanceDict = {}
         self.Pcds = []
+        self._LastFileParsed = None
 
-    def _ProcessLine(self, Line, file_name=None, lineno=None):
+    def __ParseLine(self, Line, file_name=None, lineno=None):
         line_stripped = self.StripComment(Line).strip()
         if(len(line_stripped) < 1):
             return ("", [], None)
@@ -232,13 +234,15 @@ class DscParser(HashFileParser):
     def ParseInfPathMod(self, line):
         return line.strip().split()[0].rstrip("{")
 
-    def _ProcessMore(self, lines, file_name=None):
+    def __ProcessMore(self, lines, file_name=None):
         if(len(lines) > 0):
             for index in range(0, len(lines)):
-                (line, add, new_file) = self._ProcessLine(lines[index], file_name=file_name, lineno=index + 1)
+                lineno = index + 1
+                (line, add, new_file) = self.__ParseLine(lines[index], file_name=file_name, lineno=lineno)
                 if(len(line) > 0):
+                    self.Sources.append((file_name, lineno))
                     self.Lines.append(line)
-                self._ProcessMore(add, file_name=new_file)
+                self.__ProcessMore(add, file_name=new_file)
 
     def __ProcessDefines(self, lines):
         if(len(lines) > 0):
@@ -262,7 +266,7 @@ class DscParser(HashFileParser):
         self.__ProcessDefines(file_lines)
         # reset the parser state before processing more
         self.ResetParserState()
-        self._ProcessMore(file_lines, file_name=os.path.join(filepath))
+        self.__ProcessMore(file_lines, file_name=os.path.join(filepath))
         f.close()
         self.Parsed = True
 

@@ -13,6 +13,37 @@ from edk2toollib.uefi.edk2.build_objects.recipe import sku_id
 from edk2toollib.uefi.edk2.build_objects.recipe import pcd
 import os
 
+class SectionProcessor():
+    def __init__(self, PreviewLineFunc, ConsumeLineFunc):
+        self.Preview = PreviewLineFunc
+        self.Consume = ConsumeLineFunc
+    
+    def _GetSectionHeaderLowercase(cls) -> str:
+        ''' [Defines] -> defines '''
+        line = self.PreviewLineFunc()
+        return line.strip().replace("[", "").lower()
+
+    def AttemptToProcessSection(self, line: str) -> bool:
+        ''' Attempts to processor section '''
+        return False
+    
+
+class DefinesProcessor(SectionProcessor):
+    def AttemptToProcessSection(self, line: str) -> bool:
+        line = self._GetSectionHeaderLowercase()
+        if not line.startswith("defines"):
+            return False
+        line, source = self.Consume()
+        return True
+
+class PcdProcessor(SectionProcessor):
+    def AttemptToProcessSection(self, line: str) -> bool:
+        line = SectionProcessor._GetSectionHeaderLowercase(self.PreviewLineFunc())
+        if not line.startswith("pcd"):
+            return False
+        line, source = self.Consume()
+        return True
+
 
 class RecipeBasedDscParser(DscParser):
     ''' 
@@ -29,18 +60,48 @@ class RecipeBasedDscParser(DscParser):
         self._Skus = set()
 
     ## Augmented parsing
-    def _ProcessLine(self, line, file_name=None, lineno=None):
-        results = super()._ProcessLine(line, file_name, lineno)
-        raise RuntimeError(results)
-        return results
+
+    def ParseFile(self, filepath):
+        if self.Parsed != False:  # make sure we haven't already parsed the file
+            return
+        super().ParseFile(filepath)
+        self._LineIter = 0
+        # just go through and process as many sections as we can find
+        processors = [
+            PcdProcessor(self._PreviewNextLine, self._ProcessSection),
+            DefinesProcessor(self._PreviewNextLine, self._ProcessSection)
+        ]
+        while not self._IsAtEndOfLines:
+            for proc in processors:
+                if proc.CheckForSectionHeader():
+                    break
+                line, _ = self._ConsumeNextLine()
+                self.Logger.warning(f"Unknown line {line}")
+
+        self.Parsed = True
+
+    def _PreviewNextLine(self):
+        ''' Previews the next line without consuming it '''
+        if self._IsAtEndOfLines:
+            return None
+        return self.Lines[self._LineIter]
+
+    @property
+    def _IsAtEndOfLines(self):
+        return self._LineIter == len(self.Lines) - 1
+
+    def _ConsumeNextLine(self):
+        ''' Get the next line for processing '''
+        line = self._PreviewNextLine()
+        self._LineIter += 1
+        # figure out where this line came from
+        source = self._GetCurrentSource()
+        return (line, source)
     
-    def _ProcessMore(self, lines, file_name=None):
-        for index in range(0, len(lines)):
-            raise RuntimeError("Test")
-            (line, add, new_file) = self._ProcessLine(lines[index], file_name=file_name, lineno=index + 1)
-            if(len(line) > 0):
-                self.Lines.append(line)
-            self._ProcessMore(add, file_name=new_file)
+    def _GetCurrentSource(self):
+        ''' Currently pretty inefficent '''
+        file_path, lineno = self.Sources[self._LineIter]
+        return source_info(file_path, lineno)
     
     def GetMods(self):
         # TODO create compatibility layer
@@ -95,7 +156,7 @@ class RecipeBasedDscParser(DscParser):
 
     def GetRecipe(self):
         if not self.Parsed:
-            return None
+            raise RuntimeError("You cannot get a recipe for a DSC you haven't parsed")
         rec = recipe()
 
         # Get output directory
