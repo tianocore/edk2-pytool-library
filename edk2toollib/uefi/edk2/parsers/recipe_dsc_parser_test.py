@@ -12,6 +12,7 @@ import os
 import tempfile
 from edk2toollib.uefi.edk2.build_objects.recipe import recipe
 from edk2toollib.uefi.edk2.parsers.recipe_dsc_parser import RecipeBasedDscParser
+from edk2toollib.uefi.edk2.parsers.dsc_parser import DscParser
 
 
 class TestRecipeParser(unittest.TestCase):
@@ -68,6 +69,8 @@ class TestRecipeParser(unittest.TestCase):
 ########################################################################
 [SkuIds]
   0|DEFAULT # The entry: 0|DEFAULT is reserved and always required.
+  3|JOEY|DEFAULT
+  5|SONOFJOEY|JOEY
 
 ########################################################################
 #
@@ -310,11 +313,9 @@ class TestRecipeParser(unittest.TestCase):
     <LibraryClasses>
       PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
   }
-  MdeModulePkg/Universal/ReportStatusCodeRouter/Pei/
-  ReportStatusCodeRouterPei.inf
+  MdeModulePkg/Universal/ReportStatusCodeRouter/Pei/ReportStatusCodeRouterPei.inf
   MdeModulePkg/Universal/StatusCodeHandler/Pei/StatusCodeHandlerPei.inf
-  Nt32Pkg/WinNtOemHookStatusCodeHandlerPei/
-  WinNtOemHookStatusCodeHandlerPei.inf
+  Nt32Pkg/WinNtOemHookStatusCodeHandlerPei/WinNtOemHookStatusCodeHandlerPei.inf
   Nt32Pkg/BootModePei/BootModePei.inf
   Nt32Pkg/StallPei/StallPei.inf
   Nt32Pkg/WinNtFlashMapPei/WinNtFlashMapPei.inf
@@ -334,8 +335,7 @@ class TestRecipeParser(unittest.TestCase):
   ##
   MdeModulePkg/Core/Dxe/DxeMain.inf {
     <LibraryClasses>
-      NULL| MdeModulePkg/Library/DxeCrc32GuidedSectionExtractLib/
-      DxeCrc32GuidedSectionExtractLib.inf
+      NULL| MdeModulePkg/Library/DxeCrc32GuidedSectionExtractLib/DxeCrc32GuidedSectionExtractLib.inf
     <BuildOptions>
       *_*_IA32_CC_FLAGS =
   }
@@ -352,8 +352,7 @@ class TestRecipeParser(unittest.TestCase):
   MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf {
     <LibraryClasses>
       !if $(SECURE_BOOT_ENABLE) == TRUE
-        NULL|SecurityPkg/Library/DxeImageVerificationLib /
-        DxeImageVerificationLib.inf
+        NULL|SecurityPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.inf
       !endif
   }
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
@@ -381,8 +380,7 @@ class TestRecipeParser(unittest.TestCase):
     <LibraryClasses>
       PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   }
-  MdeModulePkg/Universal/Console/GraphicsConsoleDxe /
-  GraphicsConsoleDxe.inf {
+  MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf {
     <LibraryClasses>
       PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   }
@@ -473,11 +471,15 @@ class TestRecipeParser(unittest.TestCase):
         file_path = os.path.join(temp_dir, "test.dsc")
         print(file_path)
         self.write_file(file_path, self.test_dsc)
+        # use the new parser and get the recipe
         parser.ParseFile(file_path)
-        full_rec = parser.GetRecipe()
-        self.assertEqual(len(full_rec.skus), len(parser.GetSkus()))
-        self.assertEqual(len(full_rec.components), len(parser.GetModsEnhanced()))
-
+        # use the old parser
+        old_parser = DscParser()
+        old_parser.ParseFile(file_path)
+        # since the old parser used all the libs it found, so we can't compare apples to apples
+        # self.assertEqual(len(old_parser.GetLibs()), len(parser._Libs))
+        self.assertEqual(len(parser.GetSkusEnhanced()), 3)  # hardcoded for now- update this is you update the PCD
+        self.assertEqual(len(parser.GetModsEnhanced()), len(old_parser.GetModsEnhanced()))
         pass
     
     def test_read_output_read(self):
@@ -497,16 +499,14 @@ class TestRecipeParser(unittest.TestCase):
         # read the created dsc back into the recipe
         parser2 = RecipeBasedDscParser()
         parser2.ParseFile(file_path2)
-        full_rec2 = parser.GetRecipe()
-        print(full_rec2)
+        full_rec2 = parser2.GetRecipe()
         # test to make sure the two are the same?
         self.assertIsNotNone(full_rec2)
+        print(full_rec.skus)
+        print(full_rec2.skus)
         self.assertEqual(len(full_rec.skus), len(full_rec2.skus))
         self.assertEqual(len(full_rec.components), len(full_rec2.components))
         self.assertEqual(full_rec, full_rec2)
-        print(full_rec.components)
-        print(full_rec2.components)
-        # self.fail()
         pass
 
         

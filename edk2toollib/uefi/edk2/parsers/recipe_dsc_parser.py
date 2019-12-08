@@ -9,41 +9,144 @@ from edk2toollib.uefi.edk2.parsers.dsc_parser import DscParser
 from edk2toollib.uefi.edk2.build_objects.recipe import recipe
 from edk2toollib.uefi.edk2.build_objects.recipe import source_info
 from edk2toollib.uefi.edk2.build_objects.recipe import component
+from edk2toollib.uefi.edk2.build_objects.recipe import library
 from edk2toollib.uefi.edk2.build_objects.recipe import sku_id
 from edk2toollib.uefi.edk2.build_objects.recipe import pcd
 import os
 
 class SectionProcessor():
-    def __init__(self, PreviewLineFunc, ConsumeLineFunc):
+    def __init__(self, PreviewLineFunc, ConsumeLineFunc, ObjectSet = set()):
         self.Preview = PreviewLineFunc
         self.Consume = ConsumeLineFunc
+        self.Storage = ObjectSet
     
-    def _GetSectionHeaderLowercase(cls) -> str:
+    def _GetSectionHeaderLowercase(self) -> str:
         ''' [Defines] -> defines '''
-        line = self.PreviewLineFunc()
+        line = self.Preview()
         return line.strip().replace("[", "").lower()
 
-    def AttemptToProcessSection(self, line: str) -> bool:
-        ''' Attempts to processor section '''
-        return False
+    def AttemptToProcessSection(self) -> bool:
+        ''' Attempts to process the section, returning true if successful '''
+        if not self._GetSectionHeaderLowercase().startswith(self.SECTION_TAG):
+            return False
+        else:
+            line, source = self.Consume()
+            section_data = self.GetSectionData(line, source)
+        objects = self.ExtractObjects(section_data)
+        self.HandleObjectExtraction(objects)
+
+        return True
+    
+    def HandleObjectExtraction(self, objects):
+        for obj in objects:
+            self.Storage.add(obj)
+
+    def GetSectionData(self, line, source):
+        ''' returns the data in whatever format you want '''
+        return None
+    
+    def ExtractObjects(self, current_mode = None) -> list:
+        ''' extracts the data model objects from the current state '''
+        objects = []
+        while True:
+            line = str(self.Preview())
+            if line == None:
+                break
+            obj = self.ExtractObjectFromLine(line, current_mode)
+            if obj is None:
+                break
+            objects.append(obj)
+        return objects
+    
+    def ExtractObjectFromLine(self, line, current_mode = None) -> object:
+        ''' see if you can extract an object from a line- make sure to consume it. Return None if you can't '''
+        raise NotImplementedError()
     
 
 class DefinesProcessor(SectionProcessor):
-    def AttemptToProcessSection(self, line: str) -> bool:
-        line = self._GetSectionHeaderLowercase()
-        if not line.startswith("defines"):
-            return False
+    SECTION_TAG = "defines"
+    
+    def ExtractObjectFromLine(self, line, current_mode = None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line.count("=") != 1 and not line.strip().lower().startswith("define "): # if we don't know what to do with it, don't worry about it
+            return None
         line, source = self.Consume()
-        return True
+        
+        return "TEST"
+    
+class PcdProcessor(SectionProcessor):    
+    SECTION_TAG = "pcd"
 
-class PcdProcessor(SectionProcessor):
-    def AttemptToProcessSection(self, line: str) -> bool:
-        line = SectionProcessor._GetSectionHeaderLowercase(self.PreviewLineFunc())
-        if not line.startswith("pcd"):
-            return False
+    def ExtractObjectFromLine(self, line, current_mode = None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line.count("|") == 0:
+            return None
         line, source = self.Consume()
-        return True
+        
+        return "TEST"
 
+class SkuIdProcessor(SectionProcessor):    
+    SECTION_TAG = "skuids"
+
+    def ExtractObjectFromLine(self, line, current_mode = None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line.count("|") < 1:
+            return None
+        line, source = self.Consume()
+        parts = line.split("|")
+        id_num = parts[0]
+        name = parts[1]
+        if len(parts) == 2:
+            return sku_id(id_num, name)
+        elif len(parts) == 3:
+            return sku_id(id_num, name, parts[2])        
+    
+class LibraryClassProcessor(SectionProcessor):    
+    SECTION_TAG = "libraryclasses"
+
+    def ExtractObjectFromLine(self, line, current_mode = None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line.count("|") != 1:
+            return None
+        line, source = self.Consume()
+        library_class, inf = line.split("|")
+        return library(library_class, inf, source)
+
+class BuildOptionsProcessor(SectionProcessor):    
+    SECTION_TAG = "BuildOptions"
+
+    def ExtractObjectFromLine(self, line, current_mode = None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line.count("=") != 1:
+            return None
+        line, source = self.Consume()
+        # TODO: consume build option
+        return None
+
+class ComponentsProcessor(SectionProcessor):    
+    SECTION_TAG = "components"
+
+    def ExtractObjectFromLine(self, line, current_mode = None) -> object:
+        ''' extracts the data model objects from the current state '''
+        multi_section = False
+        if line.endswith("{"):
+            multi_section = True
+            line = line.replace("{", "").strip()
+        if not line.endswith(".inf"):
+            return None
+        inf = line
+        _, source_info = self.Consume()
+        comp = component(inf, source_info=source_info)
+
+        if multi_section: # continue to parse
+            self.ExtractSubSection(comp)
+        return comp
+    
+    def ExtractSubSection(self, comp):
+        while True:
+            line, _ = self.Consume()
+            if line == "}":
+                return False
 
 class RecipeBasedDscParser(DscParser):
     ''' 
@@ -67,17 +170,25 @@ class RecipeBasedDscParser(DscParser):
         super().ParseFile(filepath)
         self._LineIter = 0
         # just go through and process as many sections as we can find
+        defines = set()
+        build_options = set()
         processors = [
-            PcdProcessor(self._PreviewNextLine, self._ProcessSection),
-            DefinesProcessor(self._PreviewNextLine, self._ProcessSection)
+            PcdProcessor(self._PreviewNextLine, self._ConsumeNextLine, self._Pcds),
+            DefinesProcessor(self._PreviewNextLine, self._ConsumeNextLine, defines),  # TODO figure out where defines go
+            LibraryClassProcessor(self._PreviewNextLine, self._ConsumeNextLine, self._Libs),
+            SkuIdProcessor(self._PreviewNextLine, self._ConsumeNextLine, self._Skus),
+            ComponentsProcessor(self._PreviewNextLine, self._ConsumeNextLine, self._Modules),
+            BuildOptionsProcessor(self._PreviewNextLine, self._ConsumeNextLine, build_options),
         ]
         while not self._IsAtEndOfLines:
+            success = False
             for proc in processors:
-                if proc.CheckForSectionHeader():
+                if proc.AttemptToProcessSection():
+                    success = True
                     break
+            if not success and not self._IsAtEndOfLines:
                 line, _ = self._ConsumeNextLine()
                 self.Logger.warning(f"Unknown line {line}")
-
         self.Parsed = True
 
     def _PreviewNextLine(self):
@@ -88,7 +199,7 @@ class RecipeBasedDscParser(DscParser):
 
     @property
     def _IsAtEndOfLines(self):
-        return self._LineIter == len(self.Lines) - 1
+        return self._LineIter == len(self.Lines)
 
     def _ConsumeNextLine(self):
         ''' Get the next line for processing '''
@@ -100,29 +211,22 @@ class RecipeBasedDscParser(DscParser):
     
     def _GetCurrentSource(self):
         ''' Currently pretty inefficent '''
+        if self._IsAtEndOfLines:
+            return None
         file_path, lineno = self.Sources[self._LineIter]
         return source_info(file_path, lineno)
     
-    def GetMods(self):
-        # TODO create compatibility layer
-        return None
-        #return self.ThreeMods + self.SixMods
-
     def GetModsEnhanced(self):
         return self._Modules
     
-    def GetLibs(self):
-        # TODO create compatibility layer
-        return None
-
     def GetLibsEnhanced(self):
         return self._Libs
 
-    def GetSkus(self):
+    def GetSkusEnhanced(self):
         # Todo 
         return self._Skus
 
-    def GetPcds(self):
+    def GetPcdsEnhanced(self):
         return self._Pcds
 
     ## DSC <=> Recipe translation methods
@@ -145,14 +249,19 @@ class RecipeBasedDscParser(DscParser):
 
             # Second do the Skus
             lines.append("[SkuIds]")
-            #lines += [cls.GetDscLinesFromObj(x) for x in self.skus]
+            for x in obj.skus:
+                lines += cls.GetDscLinesFromObj(x)
 
             # Next do the components
-            #lines += [x.to_dsc(include_header=True) for x in self.components]
-
+            for x in obj.components:
+                lines += cls.GetDscLinesFromObj(x)
+        
+        elif type(obj) is sku_id:
+            lines.append(f"{obj.id}|{obj.name}|{obj.parent}")
+            pass
 
         return lines
-
+    
 
     def GetRecipe(self):
         if not self.Parsed:
@@ -164,31 +273,22 @@ class RecipeBasedDscParser(DscParser):
             rec.output_dir = self.LocalVars["OUTPUT_DIRECTORY"]
 
         # process libraries
-        libraries = self.GetLibsEnhanced()
-        for library in libraries:
+        # TODO use enhanced methods or internal variables
+        for library in self._Libs:
             pass
 
         # process Skus
         rec.skus = rec.skus.union(self._Skus)
 
         # process PCD's
-        pcds = self.GetPcds()
-        pcd_store = set()
-        for p in pcds:
-            namespace, name = p.split(".")
-            new_pcd = pcd(namespace, name)
-            pcd_store.add(new_pcd)
-            # TODO extend PCD in base parser
-
-        #print(pcd_store)
+        for p in self._Pcds:
+            # TODO figure out what to do for the modules I need
+            pass
 
         # process components
-        modules = self.GetModsEnhanced()
-        for module in modules:
+        for module in self._Modules:
             pass
-            source = source_info(module['file'], module['lineno'])
-            comp = component(module['data'], [], source)
-            rec.components.add(comp)
+            # TODO: assign the correct library classes that I need
             # TODO - we should have parsed all the libraries
             # TODO- we should have parsed the skus
 

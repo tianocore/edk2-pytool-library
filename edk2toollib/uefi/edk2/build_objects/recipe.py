@@ -53,7 +53,6 @@ class sku_id:
     def __eq__(self, other):
         if type(other) is not sku_id:
             return False
-        print(self, other)
         return self.id == other.id or self.name == other.name
 
     def __hash__(self):
