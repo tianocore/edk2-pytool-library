@@ -383,6 +383,46 @@ def import_module_by_file_name(module_file_path):
 
     return ImportedModule
 
+def locate_classes_in_mro(Class, DesiredClass, start_point=None):
+    '''
+    Locates the classes in the MRO of a given classes that are a subclass of desired class
+    They will be returned in the order they are found in the MRO.
+    It will start at the start point and willnot include it in the classes
+    '''
+    MRO = Class.__mro__
+    start_index = 0
+    # if we have a start point, figure out where it is
+    if start_point is not None:
+        for item in MRO:
+            start_index += 1
+            if item == start_point:
+                break
+    classes = []
+    for index in range(start_index, len(MRO)):
+        if issubclass(MRO[index], DesiredClass):
+            classes.append(MRO[index])
+
+    return list(classes)
+
+def call_classes_in_mro(Class, DesiredClass, start_point, obj_self, method, arguments=[], raise_exception_on_mismatch=True):
+    '''
+    Locates classes in the MRO of Class that are a subclass of desired class
+    The method provided will be called if it is found
+    Will throw an attribute error if none of the classes found have the method requested if raise_exception_on_mismatch is true
+    '''
+    executed = not raise_exception_on_mismatch
+    classes = locate_classes_in_mro(Class, DesiredClass, start_point)
+    for found_class in classes:
+        try:
+            method_found = found_class.__getattribute__(found_class, method)
+            method_found(obj_self, *arguments)
+            executed = True
+        except AttributeError:
+            # we do fail, ignore it since we might have
+            #print(f"{found_class.__name__} didn't have {method}")
+            pass
+    if not executed:
+        raise AttributeError(f"{method} was not found on any of the MRO in {Class.__name__}")
 
 def locate_class_in_module(Module, DesiredClass):
     '''
