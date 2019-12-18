@@ -5,279 +5,303 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
+from edk2toollib.uefi.edk2.parsers.limited_dsc_parser import LimitedDscParser
+from edk2toollib.uefi.edk2.build_objects.dsc import dsc
+from edk2toollib.uefi.edk2.build_objects.dsc import source_info
+from edk2toollib.uefi.edk2.build_objects.dsc import component
+from edk2toollib.uefi.edk2.build_objects.dsc import library
+from edk2toollib.uefi.edk2.build_objects.dsc import build_option
+from edk2toollib.uefi.edk2.build_objects.dsc import sku_id
+from edk2toollib.uefi.edk2.build_objects.dsc import pcd
 import os
 
+class SectionProcessor():
+    def __init__(self, PreviewLineFunc, ConsumeLineFunc, ObjectSet = set()):
+        self.Preview = PreviewLineFunc
+        self.Consume = ConsumeLineFunc
+        self.Storage = ObjectSet
 
-class DscParser(HashFileParser):
+    def _GetSectionHeaderLowercase(self) -> str:
+        ''' [Defines] -> defines '''
+        line = self.Preview()
+        return line.strip().replace("[", "").lower()
+
+    def AttemptToProcessSection(self) -> bool:
+        ''' Attempts to process the section, returning true if successful '''
+        if not self._GetSectionHeaderLowercase().startswith(self.SECTION_TAG):
+            return False
+        else:
+            line, source = self.Consume()
+            section_data = self.GetSectionData(line, source)
+        objects = self.ExtractObjects(section_data)
+        self.HandleObjectExtraction(objects)
+
+        return True
+
+    def HandleObjectExtraction(self, objects):
+        for obj in objects:
+            self.Storage.add(obj)
+
+    def GetSectionData(self, line, source):
+        ''' returns the data in whatever format you want '''
+        return None
+
+    def ExtractObjects(self, current_mode = None) -> list:
+        ''' extracts the data model objects from the current state '''
+        objects = []
+        while True:
+            line = str(self.Preview())
+            if line == None:
+                break
+            obj = self.ExtractObjectFromLine(line, current_mode)
+            if obj is None:
+                break
+            objects.append(obj)
+        return objects
+
+    def ExtractObjectFromLine(self, line, current_mode = None) -> object:
+        ''' see if you can extract an object from a line- make sure to consume it. Return None if you can't '''
+        raise NotImplementedError()
+
+
+class DefinesProcessor(SectionProcessor):
+    SECTION_TAG = "defines"
+
+    def ExtractObjectFromLine(self, line, current_mode = None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line.count("=") != 1 and not line.strip().lower().startswith("define "): # if we don't know what to do with it, don't worry about it
+            return None
+        line, source = self.Consume()
+
+        return "TEST"
+
+class PcdProcessor(SectionProcessor):
+    SECTION_TAG = "pcd"
+
+    def ExtractObjectFromLine(self, line, current_mode = None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line.count("|") == 0:
+            return None
+        line, source = self.Consume()
+
+        return "TEST"
+
+class SkuIdProcessor(SectionProcessor):
+    SECTION_TAG = "skuids"
+
+    def ExtractObjectFromLine(self, line, current_mode = None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line.count("|") < 1:
+            return None
+        line, source = self.Consume()
+        parts = line.split("|")
+        id_num = parts[0]
+        name = parts[1]
+        if len(parts) == 2:
+            return sku_id(id_num, name)
+        elif len(parts) == 3:
+            return sku_id(id_num, name, parts[2])
+
+class LibraryClassProcessor(SectionProcessor):
+    SECTION_TAG = "libraryclasses"
+
+    def ExtractObjectFromLine(self, line, current_mode = None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line.count("|") != 1:
+            return None
+        line, source = self.Consume()
+        library_class, inf = line.split("|")
+        return library(library_class, inf, source)
+
+class BuildOptionsProcessor(SectionProcessor):
+    SECTION_TAG = "buildoptions"
+
+    def ExtractObjectFromLine(self, line, current_mode = None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line.count("=") < 1:
+            return None
+        line, source = self.Consume()
+        tag, data = line.split("=", 1)
+        print(tag)
+        print(data)
+        return build_option(library_class, inf, source)
+
+class ComponentsProcessor(SectionProcessor):
+    SECTION_TAG = "components"
+
+    def ExtractObjectFromLine(self, line, current_mode = None) -> object:
+        ''' extracts the data model objects from the current state '''
+        multi_section = False
+        if line.endswith("{"):
+            multi_section = True
+            line = line.replace("{", "").strip()
+        if not line.endswith(".inf"):
+            return None
+        inf = line
+        _, source_info = self.Consume()
+        comp = component(inf, source_info=source_info)
+
+        if multi_section: # continue to parse
+            self.ExtractSubSection(comp)
+        return comp
+
+    def ExtractSubSection(self, comp):
+        while True:
+            line, _ = self.Consume()
+            if line == "}":
+                return False
+
+class DscParser(LimitedDscParser):
+    '''
+    This acts like a normal DscParser, but outputs recipes
+    Returns none if a file has not been parsed yet
+    '''
 
     def __init__(self):
-        super(DscParser, self).__init__('DscParser')
-        self.SixMods = []
-        self.SixModsEnhanced = []
-        self.ThreeMods = []
-        self.ThreeModsEnhanced = []
-        self.OtherMods = []
-        self.Libs = []
-        self.Sources = []
-        self.LibsEnhanced = []
-        self.ParsingInBuildOption = 0
-        self.LibraryClassToInstanceDict = {}
-        self.Pcds = []
-        self._LastFileParsed = None
+        super().__init__()
+        self.EmitWarnings = False
+        self._Modules = set()
+        self._Libs = set() # this is the a library class container
+        self._Pcds = set()
+        self._Skus = set()
 
-    def __ParseLine(self, Line, file_name=None, lineno=None):
-        line_stripped = self.StripComment(Line).strip()
-        if(len(line_stripped) < 1):
-            return ("", [], None)
-
-        line_resolved = self.ReplaceVariables(line_stripped)
-        if(self.ProcessConditional(line_resolved)):
-            # was a conditional
-            # Other parser returns line_resolved, [].  Need to figure out which is right
-            return ("", [], None)
-
-        # not conditional keep procesing
-
-        # check if conditional is active
-        if(not self.InActiveCode()):
-            return ("", [], None)
-
-        # check for include file and import lines from file
-        if(line_resolved.strip().lower().startswith("!include")):
-            # include line.
-            tokens = line_resolved.split()
-            self.Logger.debug("Opening Include File %s" % os.path.join(self.RootPath, tokens[1]))
-            sp = self.FindPath(tokens[1])
-            lf = open(sp, "r")
-            loc = lf.readlines()
-            lf.close()
-            return ("", loc, sp)
-
-        # check for new section
-        (IsNew, Section) = self.ParseNewSection(line_resolved)
-        if(IsNew):
-            self.CurrentSection = Section.upper()
-            self.Logger.debug("New Section: %s" % self.CurrentSection)
-            self.Logger.debug("FullSection: %s" % self.CurrentFullSection)
-            return (line_resolved, [], None)
-
-        # process line in x64 components
-        if(self.CurrentFullSection.upper() == "COMPONENTS.X64"):
-            if(self.ParsingInBuildOption > 0):
-                if(".inf" in line_resolved.lower()):
-                    p = self.ParseInfPathLib(line_resolved)
-                    self.Libs.append(p)
-                    self.Logger.debug("Found Library in a 64bit BuildOptions Section: %s" % p)
-                elif "tokenspaceguid" in line_resolved.lower() and \
-                        line_resolved.count('|') > 0 and line_resolved.count('.') > 0:
-                    # should be a pcd statement
-                    p = line_resolved.partition('|')
-                    self.Pcds.append(p[0].strip())
-                    self.Logger.debug("Found a Pcd in a 64bit Module Override section: %s" % p[0].strip())
-            else:
-                if(".inf" in line_resolved.lower()):
-                    p = self.ParseInfPathMod(line_resolved)
-                    self.SixMods.append(p)
-                    if file_name is not None and lineno is not None:
-                        self.SixModsEnhanced.append({'file': os.path.normpath(file_name), 'lineno': lineno, 'data': p})
-                    self.Logger.debug("Found 64bit Module: %s" % p)
-
-            self.ParsingInBuildOption = self.ParsingInBuildOption + line_resolved.count("{")
-            self.ParsingInBuildOption = self.ParsingInBuildOption - line_resolved.count("}")
-            return (line_resolved, [], None)
-
-        # process line in ia32 components
-        elif(self.CurrentFullSection.upper() == "COMPONENTS.IA32"):
-            if(self.ParsingInBuildOption > 0):
-                if(".inf" in line_resolved.lower()):
-                    p = self.ParseInfPathLib(line_resolved)
-                    self.Libs.append(p)
-                    if file_name is not None and lineno is not None:
-                        self.LibsEnhanced.append({'file': os.path.normpath(file_name), 'lineno': lineno, 'data': p})
-                    self.Logger.debug("Found Library in a 32bit BuildOptions Section: %s" % p)
-                elif "tokenspaceguid" in line_resolved.lower() and \
-                        line_resolved.count('|') > 0 and line_resolved.count('.') > 0:
-                    # should be a pcd statement
-                    p = line_resolved.partition('|')
-                    self.Pcds.append(p[0].strip())
-                    self.Logger.debug("Found a Pcd in a 32bit Module Override section: %s" % p[0].strip())
-
-            else:
-                if(".inf" in line_resolved.lower()):
-                    p = self.ParseInfPathMod(line_resolved)
-                    self.ThreeMods.append(p)
-                    if file_name is not None and lineno is not None:
-                        self.ThreeModsEnhanced.append({'file': os.path.normpath(file_name),
-                                                       'lineno': lineno, 'data': p})
-                    self.Logger.debug("Found 32bit Module: %s" % p)
-
-            self.ParsingInBuildOption = self.ParsingInBuildOption + line_resolved.count("{")
-            self.ParsingInBuildOption = self.ParsingInBuildOption - line_resolved.count("}")
-            return (line_resolved, [], None)
-
-        # process line in other components
-        elif("COMPONENTS" in self.CurrentFullSection.upper()):
-            if(self.ParsingInBuildOption > 0):
-                if(".inf" in line_resolved.lower()):
-                    p = self.ParseInfPathLib(line_resolved)
-                    self.Libs.append(p)
-                    self.Logger.debug("Found Library in a BuildOptions Section: %s" % p)
-                elif "tokenspaceguid" in line_resolved.lower() and \
-                        line_resolved.count('|') > 0 and line_resolved.count('.') > 0:
-                    # should be a pcd statement
-                    p = line_resolved.partition('|')
-                    self.Pcds.append(p[0].strip())
-                    self.Logger.debug("Found a Pcd in a Module Override section: %s" % p[0].strip())
-
-            else:
-                if(".inf" in line_resolved.lower()):
-                    p = self.ParseInfPathMod(line_resolved)
-                    self.OtherMods.append(p)
-                    self.Logger.debug("Found Module: %s" % p)
-
-            self.ParsingInBuildOption = self.ParsingInBuildOption + line_resolved.count("{")
-            self.ParsingInBuildOption = self.ParsingInBuildOption - line_resolved.count("}")
-            return (line_resolved, [], None)
-
-        # process line in library class section (don't use full name)
-        elif(self.CurrentSection.upper() == "LIBRARYCLASSES"):
-            if(".inf" in line_resolved.lower()):
-                p = self.ParseInfPathLib(line_resolved)
-                self.Libs.append(p)
-                self.Logger.debug("Found Library in Library Class Section: %s" % p)
-            return (line_resolved, [], None)
-        # process line in PCD section
-        elif(self.CurrentSection.upper().startswith("PCDS")):
-            if "tokenspaceguid" in line_resolved.lower() and \
-                    line_resolved.count('|') > 0 and line_resolved.count('.') > 0:
-                # should be a pcd statement
-                p = line_resolved.partition('|')
-                self.Pcds.append(p[0].strip())
-                self.Logger.debug("Found a Pcd in a PCD section: %s" % p[0].strip())
-            return (line_resolved, [], None)
-        else:
-            return (line_resolved, [], None)
-
-    def __ParseDefineLine(self, Line):
-        line_stripped = self.StripComment(Line).strip()
-        if(len(line_stripped) < 1):
-            return ("", [])
-
-        # this line needs to be here to resolve any symbols inside the !include lines, if any
-        line_resolved = self.ReplaceVariables(line_stripped)
-        if(self.ProcessConditional(line_resolved)):
-            # was a conditional
-            # Other parser returns line_resolved, [].  Need to figure out which is right
-            return ("", [])
-
-        # not conditional keep procesing
-
-        # check if conditional is active
-        if(not self.InActiveCode()):
-            return ("", [])
-
-        # check for include file and import lines from file
-        if(line_resolved.strip().lower().startswith("!include")):
-            # include line.
-            tokens = line_resolved.split()
-            self.Logger.debug("Opening Include File %s" % os.path.join(self.RootPath, tokens[1]))
-            sp = self.FindPath(tokens[1])
-            lf = open(sp, "r")
-            loc = lf.readlines()
-            lf.close()
-            return ("", loc)
-
-        # check for new section
-        (IsNew, Section) = self.ParseNewSection(line_resolved)
-        if(IsNew):
-            self.CurrentSection = Section.upper()
-            self.Logger.debug("New Section: %s" % self.CurrentSection)
-            self.Logger.debug("FullSection: %s" % self.CurrentFullSection)
-            return (line_resolved, [])
-
-        # process line based on section we are in
-        if(self.CurrentSection == "DEFINES") or (self.CurrentSection == "BUILDOPTIONS"):
-            if line_resolved.count("=") >= 1:
-                tokens = line_resolved.split("=", 1)
-                leftside = tokens[0].split()
-                if(len(leftside) == 2):
-                    left = leftside[1]
-                else:
-                    left = leftside[0]
-                right = tokens[1].strip()
-
-                self.LocalVars[left] = right
-                self.Logger.debug("Key,values found:  %s = %s" % (left, right))
-
-                # iterate through the existed LocalVars and try to resolve the symbols
-                for var in self.LocalVars:
-                    self.LocalVars[var] = self.ReplaceVariables(self.LocalVars[var])
-                return (line_resolved, [])
-        else:
-            return (line_resolved, [])
-
-    def ParseInfPathLib(self, line):
-        if(line.count("|") > 0):
-            line_parts = []
-            c = line.split("|")[0].strip()
-            i = line.split("|")[1].strip()
-            if(c in self.LibraryClassToInstanceDict):
-                line_parts = self.LibraryClassToInstanceDict.get(c)
-            sp = self.FindPath(i)
-            line_parts.append(sp)
-            self.LibraryClassToInstanceDict[c] = line_parts
-            return line.split("|")[1].strip()
-        else:
-            return line.strip().split()[0]
-
-    def ParseInfPathMod(self, line):
-        return line.strip().split()[0].rstrip("{")
-
-    def __ProcessMore(self, lines, file_name=None):
-        if(len(lines) > 0):
-            for index in range(0, len(lines)):
-                lineno = index + 1
-                (line, add, new_file) = self.__ParseLine(lines[index], file_name=file_name, lineno=lineno)
-                if(len(line) > 0):
-                    self.Sources.append((file_name, lineno))
-                    self.Lines.append(line)
-                self.__ProcessMore(add, file_name=new_file)
-
-    def __ProcessDefines(self, lines):
-        if(len(lines) > 0):
-            for l in lines:
-                (line, add) = self.__ParseDefineLine(l)
-                self.__ProcessDefines(add)
-
-    def ResetParserState(self):
-        #
-        # add more DSC parser based state reset here, if necessary
-        #
-        super(DscParser, self).ResetParserState()
+    ## Augmented parsing
 
     def ParseFile(self, filepath):
-        self.Logger.debug("Parsing file: %s" % filepath)
-        self.TargetFile = os.path.abspath(filepath)
-        self.TargetFilePath = os.path.dirname(self.TargetFile)
-        f = open(os.path.join(filepath), "r")
-        # expand all the lines and include other files
-        file_lines = f.readlines()
-        self.__ProcessDefines(file_lines)
-        # reset the parser state before processing more
-        self.ResetParserState()
-        self.__ProcessMore(file_lines, file_name=os.path.join(filepath))
-        f.close()
+        if self.Parsed != False:  # make sure we haven't already parsed the file
+            return
+        super().ParseFile(filepath)
+        self._LineIter = 0
+        # just go through and process as many sections as we can find
+        defines = set()
+        build_options = set()
+        self.dsc = dsc(filepath)
+        processors = [
+            PcdProcessor(self._PreviewNextLine, self._ConsumeNextLine, self._Pcds),
+            DefinesProcessor(self._PreviewNextLine, self._ConsumeNextLine, defines),  # TODO figure out where defines go
+            LibraryClassProcessor(self._PreviewNextLine, self._ConsumeNextLine, self._Libs),
+            SkuIdProcessor(self._PreviewNextLine, self._ConsumeNextLine, self._Skus),
+            ComponentsProcessor(self._PreviewNextLine, self._ConsumeNextLine, self._Modules),
+            BuildOptionsProcessor(self._PreviewNextLine, self._ConsumeNextLine, build_options),
+        ]
+        while not self._IsAtEndOfLines:
+            success = False
+            for proc in processors:
+                if proc.AttemptToProcessSection():
+                    success = True
+                    break
+            if not success and not self._IsAtEndOfLines:
+                line, _ = self._ConsumeNextLine()
+                self.Logger.warning(f"Unknown line {line}")
         self.Parsed = True
+        self.__PopulateDsc()
+        return self.dsc
 
-    def GetMods(self):
-        return self.ThreeMods + self.SixMods
+    def __PopulateDsc(self):
+        ''' puts all the information we've collected into the DSC '''
+        self.dsc.skus = self._Skus
+        pass
 
-    def GetModsEnhanced(self):
-        return self.ThreeModsEnhanced + self.SixModsEnhanced
+    def _PreviewNextLine(self):
+        ''' Previews the next line without consuming it '''
+        if self._IsAtEndOfLines:
+            return None
+        return self.Lines[self._LineIter]
 
-    def GetLibs(self):
-        return self.Libs
+    @property
+    def _IsAtEndOfLines(self):
+        return self._LineIter == len(self.Lines)
 
-    def GetLibsEnhanced(self):
-        return self.LibsEnhanced
+    def _ConsumeNextLine(self):
+        ''' Get the next line for processing '''
+        line = self._PreviewNextLine()
+        self._LineIter += 1
+        # figure out where this line came from
+        source = self._GetCurrentSource()
+        return (line, source)
+
+    def _GetCurrentSource(self):
+        ''' Currently pretty inefficent '''
+        if self._IsAtEndOfLines:
+            return None
+        file_path, lineno = self.Sources[self._LineIter]
+        return source_info(file_path, lineno)
+
+    def GetRecipeMods(self):
+        return self._Modules
+
+    def GetRecipeLibs(self):
+        return self._Libs
+
+    def GetRecipeSkus(self):
+        # Todo
+        return self._Skus
+
+    def GetRecipePcds(self):
+        return self._Pcds
+
+    ## DSC <=> Recipe translation methods
+
+    @classmethod
+    def GetDscFromRecipe(cls, rec) -> str:
+        ''' Gets the DSC string for a recipe  '''
+        if type(rec) is not recipe:
+            raise ValueError(f"{rec} is not a recipe object")
+        strings = cls.GetDscLinesFromObj(rec)
+        return "\n".join(strings)
+
+    @classmethod
+    def GetDscLinesFromObj(cls, obj) -> list:
+        ''' gets the DSC strings for an data model objects '''
+        lines = []
+        if type(obj) is recipe:
+            lines.append("[Defines]")
+            lines.append(f"OUTPUT_DIRECTORY = {obj.output_dir}")
+
+            # Second do the Skus
+            lines.append("[SkuIds]")
+            for x in obj.skus:
+                lines += cls.GetDscLinesFromObj(x)
+
+            # Next do the components
+            for x in obj.components:
+                lines += cls.GetDscLinesFromObj(x)
+
+        elif type(obj) is sku_id:
+            lines.append(f"{obj.id}|{obj.name}|{obj.parent}")
+            pass
+
+        return lines
+
+
+    def GetRecipe(self):
+        if not self.Parsed:
+            raise RuntimeError("You cannot get a recipe for a DSC you haven't parsed")
+        rec = recipe()
+
+        # Get output directory
+        if "OUTPUT_DIRECTORY" in self.LocalVars:
+            rec.output_dir = self.LocalVars["OUTPUT_DIRECTORY"]
+
+        # process libraries
+        # TODO use  methods or internal variables
+        for library in self._Libs:
+            pass
+
+        # process Skus
+        rec.skus = rec.skus.union(self._Skus)
+
+        # process PCD's
+        for p in self._Pcds:
+            # TODO figure out what to do for the modules I need
+            pass
+
+        # process components
+        for module in self._Modules:
+            pass
+            # TODO: assign the correct library classes that I need
+            # TODO - we should have parsed all the libraries
+            # TODO- we should have parsed the skus
+
+            #raise ValueError()
+        return rec

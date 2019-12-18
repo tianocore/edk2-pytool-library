@@ -10,8 +10,7 @@
 import unittest
 import os
 import tempfile
-from edk2toollib.uefi.edk2.build_objects.recipe import recipe
-from edk2toollib.uefi.edk2.parsers.recipe_dsc_parser import RecipeBasedDscParser
+from edk2toollib.uefi.edk2.parsers.limited_dsc_parser import LimitedDscParser
 from edk2toollib.uefi.edk2.parsers.dsc_parser import DscParser
 
 
@@ -447,9 +446,9 @@ class TestRecipeParser(unittest.TestCase):
 #
 ########################################################################
 [BuildOptions]
-  DEBUG_*_IA32_DLINK_FLAGS = /BASE:0x10000 /ALIGN:4096 /FILEALIGN:4096 \
-                             /EXPORT:InitializeDriver=$(IMAGE_ENTRY_POINT) \
-                             /SUBSYSTEM:CONSOLE
+  DEBUG_*_IA32_DLINK_FLAGS = /BASE:0x10000 /ALIGN:4096 /FILEALIGN:4096 \\\
+                             /EXPORT:InitializeDriver=$(IMAGE_ENTRY_POINT) \\\
+                             /SUBSYSTEM:CONSOLE \
   RELEASE_*_IA32_DLINK_FLAGS = /ALIGN:4096 /FILEALIGN:4096
   *_*_IA32_CC_FLAGS = /D EFI_SPECIFICATION_VERSION = 0x0002000A \
                       /D TIANO_RELEASE_VERSION=0x00080006
@@ -462,56 +461,38 @@ class TestRecipeParser(unittest.TestCase):
         f.close()
 
     def test_null_creation(self):
-        rec = recipe()
-        self.assertIsNotNone(rec)
+        parser = DscParser()
+        self.assertIsNotNone(parser)
 
-    def test_simple_dsc(self):
-        parser = RecipeBasedDscParser()
+    def test_same_as_old_parser(self):
+        parser = DscParser()
+        old_parser = LimitedDscParser()
+
         temp_dir = tempfile.mkdtemp()
         file_path = os.path.join(temp_dir, "test.dsc")
         print(file_path)
         self.write_file(file_path, self.test_dsc)
-        # use the new parser and get the recipe
+        # use the new parser
         parser.ParseFile(file_path)
         # use the old parser
-        old_parser = DscParser()
         old_parser.ParseFile(file_path)
         # since the old parser used all the libs it found, so we can't compare apples to apples
-        # self.assertEqual(len(old_parser.GetLibs()), len(parser._Libs))
-        self.assertEqual(len(parser.GetRecipeSkus()), 3)  # hardcoded for now- update this is you update the PCD
-        self.assertEqual(len(parser.GetRecipeMods()), len(old_parser.GetModsEnhanced()))
+        self.assertEqual(len(old_parser.GetLibs()), len(parser.GetLibs()))
+        self.assertEqual(len(parser.GetModsEnhanced()), len(old_parser.GetModsEnhanced()))
         pass
-    
-    def test_read_output_read(self):
-        parser = RecipeBasedDscParser()
+
+    def test_read_dsc(self):
+        parser = DscParser()
         temp_dir = tempfile.mkdtemp()
         file_path = os.path.join(temp_dir, "test.dsc")
         print(file_path)
         self.write_file(file_path, self.test_dsc)
-        parser.ParseFile(file_path)
-        full_rec = parser.GetRecipe()
-        self.assertIsNotNone(full_rec)
-        # convert the recipe into a dsc
-        rec_dsc = RecipeBasedDscParser.GetDscFromRecipe(full_rec)
-        file_path2 = os.path.join(temp_dir, "test2.dsc")
-        self.write_file(file_path2, rec_dsc)
-        print(file_path2)
-        # read the created dsc back into the recipe
-        parser2 = RecipeBasedDscParser()
-        parser2.ParseFile(file_path2)
-        full_rec2 = parser2.GetRecipe()
-        # test to make sure the two are the same?
-        self.assertIsNotNone(full_rec2)
-        # check the parsers
-        self.assertEqual(len(parser.GetRecipeMods()), len(parser2.GetRecipeMods()))
-        self.assertEqual(len(parser.GetRecipeSkus()), len(parser2.GetRecipeSkus()))
-        self.assertEqual(len(parser.GetRecipePcds()), len(parser2.GetRecipePcds()))
-        self.assertEqual(len(parser.GetRecipeLibs()), len(parser2.GetRecipeLibs()))
-        # next check the recipes
-        self.assertEqual(len(full_rec.skus), len(full_rec2.skus))
-        self.assertEqual(len(full_rec.components), len(full_rec2.components))
-        self.assertEqual(full_rec, full_rec2)
-        self.fail()
+        # use the new parser
+        dsc_obj = parser.ParseFile(file_path)
+        # since the old parser used all the libs it found, so we can't compare apples to apples
+        self.assertEqual(len(dsc_obj.skus), 3)
+        self.assertEqual(len(dsc_obj.components), 60)
+        self.assertEqual(len(dsc_obj.pcds), 60)
+        self.assertEqual(len(dsc_obj.build_options), 3)
+        self.assertEqual(len(dsc_obj.libraries), 40)
         pass
-
-        
