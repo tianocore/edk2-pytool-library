@@ -58,7 +58,9 @@ class TestRecipeParser(unittest.TestCase):
   # line.
   # -D FLAG=VALUE
   #
+!ifndef SECURE_BOOT_ENABLE
   DEFINE SECURE_BOOT_ENABLE = FALSE
+!endif
 
 ########################################################################
 #
@@ -448,7 +450,7 @@ class TestRecipeParser(unittest.TestCase):
 [BuildOptions]
   DEBUG_*_IA32_DLINK_FLAGS = /BASE:0x10000 /ALIGN:4096 /FILEALIGN:4096 \\
                              /EXPORT:InitializeDriver=$(IMAGE_ENTRY_POINT) \\
-                             /SUBSYSTEM:CONSOLE \\
+                             /SUBSYSTEM:CONSOLE
   RELEASE_*_IA32_DLINK_FLAGS = /ALIGN:4096 /FILEALIGN:4096
   *_*_IA32_CC_FLAGS = /D EFI_SPECIFICATION_VERSION = 0x0002000A \\
                       /D TIANO_RELEASE_VERSION=0x00080006
@@ -491,8 +493,27 @@ class TestRecipeParser(unittest.TestCase):
         dsc_obj = parser.ParseFile(file_path)
         # since the old parser used all the libs it found, so we can't compare apples to apples
         self.assertEqual(len(dsc_obj.skus), 3)
-        self.assertEqual(len(dsc_obj.components), 60)
-        self.assertEqual(len(dsc_obj.pcds), 60)
+        self.assertEqual(len(dsc_obj.components), 75)
+        self.assertEqual(len(dsc_obj.pcds), 28)
         self.assertEqual(len(dsc_obj.build_options), 3)
-        self.assertEqual(len(dsc_obj.libraries), 40)
+        self.assertEqual(len(dsc_obj.libraries), 55)
+        pass
+    
+    def test_read_dsc_with_variables(self):
+        parser = DscParser()
+        parser.SetInputVars({
+          "SECURE_BOOT_ENABLE": "TRUE"
+        })
+        temp_dir = tempfile.mkdtemp()
+        file_path = os.path.join(temp_dir, "test.dsc")
+        print(file_path)
+        self.write_file(file_path, self.test_dsc)
+        # use the new parser
+        dsc_obj = parser.ParseFile(file_path)
+        # since the old parser used all the libs it found, so we can't compare apples to apples
+        self.assertEqual(len(dsc_obj.skus), 3, dsc_obj.skus)
+        self.assertEqual(len(dsc_obj.components), 76)
+        self.assertEqual(len(dsc_obj.pcds), 32)
+        self.assertEqual(len(dsc_obj.build_options), 3, dsc_obj.build_options)
+        self.assertEqual(len(dsc_obj.libraries), 59)
         pass

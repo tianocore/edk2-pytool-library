@@ -82,9 +82,17 @@ class PcdProcessor(SectionProcessor):
         ''' extracts the data model objects from the current state '''
         if line.count("|") == 0:
             return None
-        line, source = self.Consume()
+        if line.count(".") == 0:
+            return None
 
-        return "TEST"
+        components = line.split("|")
+        name_data = components[0]
+        if name_data.count(".") != 1:
+            return None
+        namespace, name = name_data.split(".")
+        _, source = self.Consume()
+        value = components[1] # TODO: further split this        
+        return pcd(namespace, name, value, source)
 
 class SkuIdProcessor(SectionProcessor):
     SECTION_TAG = "skuids"
@@ -185,6 +193,8 @@ class DscParser(LimitedDscParser):
         self._Libs = set() # this is the a library class container
         self._Pcds = set()
         self._Skus = set()
+        self._BuildOptions = set()
+        self._Defines = set()
 
     ## Augmented parsing
 
@@ -194,16 +204,14 @@ class DscParser(LimitedDscParser):
         super().ParseFile(filepath)
         self._LineIter = 0
         # just go through and process as many sections as we can find
-        defines = set()
-        build_options = set()
         self.dsc = dsc(filepath)
         processors = [
-            PcdProcessor(self._PreviewNextLine, self._ConsumeNextLine, self._Pcds),
-            DefinesProcessor(self._PreviewNextLine, self._ConsumeNextLine, defines),  # TODO figure out where defines go
-            LibraryClassProcessor(self._PreviewNextLine, self._ConsumeNextLine, self._Libs),
-            SkuIdProcessor(self._PreviewNextLine, self._ConsumeNextLine, self._Skus),
-            ComponentsProcessor(self._PreviewNextLine, self._ConsumeNextLine, self._Modules),
-            BuildOptionsProcessor(self._PreviewNextLine, self._ConsumeNextLine, build_options),
+            PcdProcessor(self._PreviewNextLine, self._ConsumeNextLine, self.dsc.pcds),
+            DefinesProcessor(self._PreviewNextLine, self._ConsumeNextLine, self.dsc.defines),
+            LibraryClassProcessor(self._PreviewNextLine, self._ConsumeNextLine, self.dsc.libraries),
+            SkuIdProcessor(self._PreviewNextLine, self._ConsumeNextLine, self.dsc.skus),
+            ComponentsProcessor(self._PreviewNextLine, self._ConsumeNextLine, self.dsc.components),
+            BuildOptionsProcessor(self._PreviewNextLine, self._ConsumeNextLine, self.dsc.build_options),
         ]
         while not self._IsAtEndOfLines:
             success = False
@@ -220,7 +228,6 @@ class DscParser(LimitedDscParser):
 
     def __PopulateDsc(self):
         ''' puts all the information we've collected into the DSC '''
-        self.dsc.skus = self._Skus
         pass
 
     def _PreviewNextLine(self):
@@ -248,19 +255,6 @@ class DscParser(LimitedDscParser):
             return None
         file_path, lineno = self.Sources[self._LineIter]
         return source_info(file_path, lineno)
-
-    def GetRecipeMods(self):
-        return self._Modules
-
-    def GetRecipeLibs(self):
-        return self._Libs
-
-    def GetRecipeSkus(self):
-        # Todo
-        return self._Skus
-
-    def GetRecipePcds(self):
-        return self._Pcds
 
     ## DSC <=> Recipe translation methods
 

@@ -16,15 +16,16 @@ class dsc:
       self.libraries = set()
       self.build_options = set()
       self.pcds = set()
-
+      self.defines = set()
 
 class sku_id:
     ''' contains the data for a sku '''
 
-    def __init__(self, id=0, name="DEFAULT", parent="DEFAULT"):
+    def __init__(self, id=0, name="DEFAULT", parent="DEFAULT", source_info=None):
         self.id = id
         self.name = name
         self.parent = parent # the default parent is default
+        self.source_info = source_info
 
     def __eq__(self, other):
         if type(other) is not sku_id:
@@ -110,10 +111,11 @@ class library:
 class pcd:
     ''' Contains the data for a specific pcd '''
 
-    def __init__(self, namespace, name, value=None):
+    def __init__(self, namespace, name, value=None, source_info=None):
         self.namespace = namespace
         self.name = name
         self.value = value
+        self.source_info = source_info
 
     def __eq__(self, other):
         if (type(other) is not pcd):
@@ -150,6 +152,7 @@ class build_option:
         self.attribute = attribute
         self.replace = replace
         self.data = data
+        self.source_info = source_info
 
     def __eq__(self, other):
         if (type(other) is not build_option):

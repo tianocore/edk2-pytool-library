@@ -242,7 +242,6 @@ class BaseParser(object):
 
         elif(v is None):
             return None
-
         if (type(v) is bool):
             v = "true" if v else "false"
 
@@ -295,7 +294,6 @@ class BaseParser(object):
 
             index = end + 1
             rep = rep - 1
-
         return result
 
     #
