@@ -236,9 +236,18 @@ class LimitedDscParser(HashFileParser):
 
     def __ProcessMore(self, lines, file_name=None):
         if(len(lines) > 0):
+            multi_line = ""
             for index in range(0, len(lines)):
                 lineno = index + 1
-                (line, add, new_file) = self.__ParseLine(lines[index], file_name=file_name, lineno=lineno)
+                line = lines[index]
+                if line.strip().endswith("\\"):
+                    line, _, _ = line.rpartition("\\")
+                    multi_line += " " + line
+                    continue
+                elif len(multi_line) > 0:
+                    line = multi_line
+                    multi_line = ""
+                (line, add, new_file) = self.__ParseLine(line, file_name=file_name, lineno=lineno)
                 if(len(line) > 0):
                     self.Sources.append((file_name, lineno))
                     self.Lines.append(line)
@@ -246,8 +255,16 @@ class LimitedDscParser(HashFileParser):
 
     def __ProcessDefines(self, lines):
         if(len(lines) > 0):
+            multi_line = ""
             for l in lines:
-                (line, add) = self.__ParseDefineLine(l)
+                if l.strip().endswith("\\"):
+                    l, _, _ = l.rpartition("\\")
+                    multi_line += " " + l.strip()
+                    continue
+                elif len(multi_line) > 0:
+                    l = multi_line
+                    multi_line = ""
+                _, add = self.__ParseDefineLine(l)
                 self.__ProcessDefines(add)
 
     def ResetParserState(self):

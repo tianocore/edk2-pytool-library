@@ -446,11 +446,11 @@ class TestRecipeParser(unittest.TestCase):
 #
 ########################################################################
 [BuildOptions]
-  DEBUG_*_IA32_DLINK_FLAGS = /BASE:0x10000 /ALIGN:4096 /FILEALIGN:4096 \\\
-                             /EXPORT:InitializeDriver=$(IMAGE_ENTRY_POINT) \\\
-                             /SUBSYSTEM:CONSOLE \
+  DEBUG_*_IA32_DLINK_FLAGS = /BASE:0x10000 /ALIGN:4096 /FILEALIGN:4096 \\
+                             /EXPORT:InitializeDriver=$(IMAGE_ENTRY_POINT) \\
+                             /SUBSYSTEM:CONSOLE \\
   RELEASE_*_IA32_DLINK_FLAGS = /ALIGN:4096 /FILEALIGN:4096
-  *_*_IA32_CC_FLAGS = /D EFI_SPECIFICATION_VERSION = 0x0002000A \
+  *_*_IA32_CC_FLAGS = /D EFI_SPECIFICATION_VERSION = 0x0002000A \\
                       /D TIANO_RELEASE_VERSION=0x00080006
 
 """

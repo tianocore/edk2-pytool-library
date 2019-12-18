@@ -128,8 +128,10 @@ class pcd:
 
 class build_option:
     ''' Contains the data for a build option '''
+    ''' EX: MSFT:*_*_*_CC_FLAGS = /D MDEPKG_NDEBUG '''
+    # {FAMILY}:{TARGET}_{TAGNAME}_{ARCH}_{TOOLCODE}_{ATTRIBUTE}
 
-    def __init__(self, tool_code, attribute, data, target="*", tagname="*", arch="*", family=None, replace=False):
+    def __init__(self, tool_code, attribute, data, target="*", tagname="*", arch="*", family=None, replace=False, source_info=None):
         """
         tool_code - The tool code must be one of the defined tool codes in the Conf/tools_def.txt file. The flags defined in this section are appended to flags defined in the tools_def.txt file for individual tools.
         attribute - for example flags, dpath, path
@@ -140,10 +142,10 @@ class build_option:
         family - Conf/tools_def.txt defines FAMILY as one of MSFT, INTEL or GCC. Typically, this field is used to help the build tools determine whether the line is used for Microsoft style Makefiles or the GNU style Makefile
         replace - whether or not this replaces the default from tools_def, if this is false, we append
         """
-        self.family = namespace
-        self.target = name
-        self.tagname = value
-        self.arch = value
+        self.family = family
+        self.target = target
+        self.tagname = tagname
+        self.arch = arch
         self.tool_code = tool_code
         self.attribute = attribute
         self.replace = replace
@@ -152,13 +154,29 @@ class build_option:
     def __eq__(self, other):
         if (type(other) is not build_option):
             return False
-        return self.family == other.namespace and self.name == other.name
+        if self.family != other.family:
+            return False
+        if self.target != other.target:
+            return False
+        if self.tagname != other.tagname:
+            return False
+        if self.arch != other.arch:
+            return False
+        if self.tool_code != other.tool_code:
+            return False
+        if self.attribute != other.attribute:
+            return False
+        return True
 
     def __hash__(self):
-        return hash(f"{self.namespace}.{self.name}")
+        return hash(self.__repr__(False))
 
-    def __repr__(self):
-        return f"{self.namespace}.{self.name} = {self.value}"
+    def __repr__(self, include_data=True):
+        rep = "" if self.family is None else f"{self.family}:"
+        rep += "_".join((self.target, self.tagname, self.arch, self.tool_code, self.attribute))
+        if include_data:
+            rep += f"= {self.data}"
+        return rep
 
 class source_info:
     def __init__(self, file: str, lineno: int = None):

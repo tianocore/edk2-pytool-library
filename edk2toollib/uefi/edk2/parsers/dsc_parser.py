@@ -114,17 +114,38 @@ class LibraryClassProcessor(SectionProcessor):
         return library(library_class, inf, source)
 
 class BuildOptionsProcessor(SectionProcessor):
+    """ Parses build option information """
+    # EX: MSFT:*_*_*_CC_FLAGS = /D MDEPKG_NDEBU
+    # {FAMILY}:{TARGET}_{TAGNAME}_{ARCH}_{TOOLCODE}_{ATTRIBUTE}
     SECTION_TAG = "buildoptions"
 
     def ExtractObjectFromLine(self, line, current_mode = None) -> object:
         ''' extracts the data model objects from the current state '''
-        if line.count("=") < 1:
+        if line.count("=") < 1: # if we don't have an equals sign
             return None
-        line, source = self.Consume()
-        tag, data = line.split("=", 1)
-        print(tag)
-        print(data)
-        return build_option(library_class, inf, source)
+        tag, _, data = line.partition("=")
+        if tag.count(":") > 1:
+            return None
+        if tag.count("_") != 4:
+            return None
+
+        _, source = self.Consume()
+        data = data.strip()
+        
+        replace = False
+        if data.startswith("="):
+            replace = True
+            data = data[1:]
+        
+        tag_parts = tag.split(":", 1)
+        family = None
+        if len(tag_parts) > 1:
+            family = tag_parts[0]
+            tag_parts[0] = tag_parts[1]
+        else:
+            tag_parts = tag_parts[0]
+        target, tagname, arch, tool, attribute = tag_parts.split("_")
+        return build_option(tool, attribute, data, target, tagname, arch, family, replace, source_info=source)
 
 class ComponentsProcessor(SectionProcessor):
     SECTION_TAG = "components"
@@ -207,6 +228,7 @@ class DscParser(LimitedDscParser):
         if self._IsAtEndOfLines:
             return None
         return self.Lines[self._LineIter]
+    
 
     @property
     def _IsAtEndOfLines(self):
@@ -273,35 +295,3 @@ class DscParser(LimitedDscParser):
 
         return lines
 
-
-    def GetRecipe(self):
-        if not self.Parsed:
-            raise RuntimeError("You cannot get a recipe for a DSC you haven't parsed")
-        rec = recipe()
-
-        # Get output directory
-        if "OUTPUT_DIRECTORY" in self.LocalVars:
-            rec.output_dir = self.LocalVars["OUTPUT_DIRECTORY"]
-
-        # process libraries
-        # TODO use  methods or internal variables
-        for library in self._Libs:
-            pass
-
-        # process Skus
-        rec.skus = rec.skus.union(self._Skus)
-
-        # process PCD's
-        for p in self._Pcds:
-            # TODO figure out what to do for the modules I need
-            pass
-
-        # process components
-        for module in self._Modules:
-            pass
-            # TODO: assign the correct library classes that I need
-            # TODO - we should have parsed all the libraries
-            # TODO- we should have parsed the skus
-
-            #raise ValueError()
-        return rec
