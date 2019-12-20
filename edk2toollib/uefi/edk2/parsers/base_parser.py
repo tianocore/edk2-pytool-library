@@ -153,6 +153,10 @@ class BaseParser(object):
             # not equal
             return (ivalue != ivalue2) and (value != value2)
 
+        elif (cond == "in"):
+            # contains
+            return value in value2
+
         # check to make sure we only have digits from here on out
         if not str.isdigit(value):
             self.Logger.error(f"{self.__class__}: Unknown value: {value} {ivalue.__class__}")
