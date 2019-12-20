@@ -149,7 +149,7 @@ class BuildOptionsProcessor(SectionProcessor):
         family = None
         if len(tag_parts) > 1:
             family = tag_parts[0]
-            tag_parts[0] = tag_parts[1]
+            tag_parts = tag_parts[1]
         else:
             tag_parts = tag_parts[0]
         target, tagname, arch, tool, attribute = tag_parts.split("_")
