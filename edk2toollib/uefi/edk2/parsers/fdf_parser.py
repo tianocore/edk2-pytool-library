@@ -140,7 +140,7 @@ class FdfParser(HashFileParser):
                                     self.FVs[section]["Files"][currentName][sectionType] = []
                                 self.FVs[section]["Files"][currentName][sectionType].append(sectionValue)
                             else:
-                                self.Logger.info("Unknown line: {}".format(sline))
+                                self.Logger.info("FDF Unknown line: {}".format(sline))
 
                 continue
 

@@ -188,7 +188,7 @@ class RecipeBasedDscParser(DscParser):
                     break
             if not success and not self._IsAtEndOfLines:
                 line, _ = self._ConsumeNextLine()
-                self.Logger.warning(f"Unknown line {line}")
+                self.Logger.warning(f"ADSC Unknown line {line}")
         self.Parsed = True
 
     def _PreviewNextLine(self):

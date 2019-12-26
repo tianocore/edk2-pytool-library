@@ -18,6 +18,10 @@ class dsc:
       self.pcds = set()
       self.defines = set()
 
+class section_type:
+    def __init__(self, arch="common"):
+        self.arch = arch
+
 class sku_id:
     ''' contains the data for a sku '''
 
