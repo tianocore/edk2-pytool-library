@@ -282,6 +282,7 @@ class TestRecipeParser(unittest.TestCase):
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdSetupConOutRow|L"SetupConsoleConfig"|gEfiGlobalVariableGuid|0x4|25
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdPlatformBootTimeOut|L"Timeout"|gEfiGlobalVariableGuid|0x0|10
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdHardwareErrorRecordLevel|L"HwErrRecSupport"|gEfiGlobalVariableGuid|0x0|1
+  gEfiMdeModulePkgTokenSpaceGuid.PcdValidRange|L"PcdValidRange"|gEfiGlobalVariableGuid|0x07|0|BS,RT,NV
 
 ########################################################################
 #
@@ -517,7 +518,9 @@ class TestRecipeParser(unittest.TestCase):
         dsc_obj = parser.ParseFile(file_path)
         # since the old parser used all the libs it found, so we can't compare apples to apples
         self.assertEqual(len(dsc_obj.skus), 3, dsc_obj.skus)
+        print(dsc_obj.libraries)
         self.assertEqual(len(dsc_obj.components), 76)
+        
         self.assertEqual(len(dsc_obj.pcds), 32)
         self.assertEqual(len(dsc_obj.build_options), 3, dsc_obj.build_options)
         self.assertEqual(len(dsc_obj.libraries), 59)

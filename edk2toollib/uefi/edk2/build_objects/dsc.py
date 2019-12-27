@@ -16,10 +16,11 @@ class dsc:
         self.file_path = file_path  # The EDK2 path to this particular DSC
         self.skus = set()
         self.components = set()
-        self.libraries = set()
+        self.libraries = {}
         self.build_options = set()
         self.pcds = {}
         self.defines = set()
+
 
 
 dsc_module_types = ["COMMON", "BASE", "SEC", "PEI_CORE", "PEIM", "DXE_CORE", "DXE_DRIVER",
@@ -79,7 +80,7 @@ class dsc_pcd_section_type():
 
     def __hash__(self):
         return hash((self.arch, self.pcd_type))
-    
+
     def __repr__(self):
         return f"Pcds{self.pcd_type}.{self.arch}.{self.sku}"
 
@@ -226,16 +227,41 @@ class pcd:
     def __repr__(self):
         return f"{self.namespace}.{self.name} = {self.value} @ {self.source_info}"
 
+
 class pcd_typed(pcd):
     ''' PcdTokenSpaceGuidCName.PcdCName|Value[|DatumType[|MaximumDatumSize]] '''
+
     def __init__(self, namespace, name, value, datum_type, max_size=0, source_info=None):
         super().__init__(namespace, name, value, source_info)
         self.datum_type = datum_type
         self.max_size = max_size
-    
+
     def __repr__(self):
         return f"{self.namespace}.{self.name} = {self.value} |{self.datum_type}|{self.max_size} @ {self.source_info}"
 
+
+pcd_variable_attributes = ["NV", "BS", "RT", "RO"]
+
+
+class pcd_variable(pcd):
+    ''' PcdTokenSpaceGuidCName.PcdCName|VariableName|VariableGuid|VariableOffset[|HiiDefaultValue[|HiiAttrubte]] '''
+
+    def __init__(self, namespace, name, var_name, var_guid, var_offset, default=None, attributes=[], source_info=None):
+        super().__init__(namespace, name, "", source_info)
+        self.var_name = var_name
+        self.var_guid = var_guid
+        self.var_offset = var_offset
+        self.default = default
+
+        if type(attributes) is str:
+            attributes = attributes.split(",")
+        attributes = [str(x).upper() for x in attributes]
+        if any([x not in pcd_variable_attributes for x in attributes]):
+            raise ValueError(f"Invalid PcdHiiAttribute values: {attributes}")
+        self.attributes = attributes
+    
+    def __repr__(self):
+        return f"{self.namespace}.{self.name} = {self.var_name} |{self.var_guid}|{self.var_offset}|{self.default}|{self.attributes} @ {self.source_info}"
 
 
 class build_option:
