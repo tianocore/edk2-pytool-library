@@ -19,7 +19,7 @@ class LimitedDscParser(HashFileParser):
         self.ThreeModsEnhanced = []
         self.OtherMods = []
         self.Libs = []
-        self.Sources = []
+        self.SourcedLines = []
         self.LibsEnhanced = []
         self.ParsingInBuildOption = 0
         self.LibraryClassToInstanceDict = {}
@@ -249,7 +249,7 @@ class LimitedDscParser(HashFileParser):
                     multi_line = ""
                 (line, add, new_file) = self.__ParseLine(line, file_name=file_name, lineno=lineno)
                 if(len(line) > 0):
-                    self.Sources.append((file_name, lineno))
+                    self.SourcedLines.append((line, file_name, lineno))
                     self.Lines.append(line)
                 self.__ProcessMore(add, file_name=new_file)
 

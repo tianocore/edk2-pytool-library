@@ -61,6 +61,7 @@ class TestRecipeParser(unittest.TestCase):
 !ifndef SECURE_BOOT_ENABLE
   DEFINE SECURE_BOOT_ENABLE = FALSE
 !endif
+  DEFINE SECRET_VAR = FALSE
 
 ########################################################################
 #
@@ -80,6 +81,7 @@ class TestRecipeParser(unittest.TestCase):
 #
 ########################################################################
 [LibraryClasses]
+  DEFINE SECRET_VAR = TRUE
   #
   # Entry point
   #
@@ -253,6 +255,9 @@ class TestRecipeParser(unittest.TestCase):
   gEfiSecurityPkgTokenSpaceGuid.PcdFixedMediaImageVerificationPolicy|0x05
   gEfiSecurityPkgTokenSpaceGuid.PcdRemovableMediaImageVerificationPolicy|0x05
 !endif
+
+[PcdsPatchableInModule]
+  gEfiNt32PkgTokenSpaceGuid.PcdWinNtGop|L"UGA Window 1!UGA Window 2"|VOID*|52
 
 ########################################################################
 #
