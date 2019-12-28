@@ -38,7 +38,7 @@ class SectionProcessor():
     def ValidSectionHeader(self, line):
         # TODO: check to make sure there's nothing that comes after it?
         return self._GetSectionHeaderLowercase(line).startswith(self.SECTION_TAG)
-            
+
     def HandleObjectExtraction(self, objects, section_data):
         for obj in objects:
             self.Storage(obj, section_data)
@@ -92,7 +92,7 @@ class SectionProcessor():
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
         ''' see if you can extract an object from a line- make sure to consume it. Return None if you can't '''
         raise NotImplementedError()
-    
+
     def GetStandardSectionData(self, line, source):
         data = SectionProcessor.GetSectionData(self, line, source)
         if type(data) == list:
@@ -167,9 +167,11 @@ class PcdProcessor(SectionProcessor):
         else:
             return dsc_pcd_section_type(pcd_type, arch)
 
+
 class PcdFeatureFlagProcessor(PcdProcessor):
     SECTION_TAG = "pcdsfeatureflag"
     ''' FeatureFlags are only allowed to be 0, 1, TRUE, FALSE '''
+
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
         namespace, name, values = super().ExtractObjectFromLine(line, current_section)
         if len(values) != 1:
@@ -184,6 +186,7 @@ class PcdFeatureFlagProcessor(PcdProcessor):
 class PcdFixedAtBuildProcessor(PcdProcessor):
     SECTION_TAG = "pcdsfixedatbuild"
     ''' FixedAtBuild can be typed or not '''
+
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
         namespace, name, values = super().ExtractObjectFromLine(line, current_section)
         if len(values) > 3:
@@ -199,13 +202,15 @@ class PcdFixedAtBuildProcessor(PcdProcessor):
         _, source = self.Consume()
         if len(values) == 2:
             return pcd_typed(namespace, name, value, data_type, source_info=source)
-        
+
         max_size = int(values[2])
         return pcd_typed(namespace, name, value, data_type, max_size, source_info=source)
+
 
 class PcdPatchableProcessor(PcdProcessor):
     SECTION_TAG = "pcdspatchableinmodule"
     ''' PcdTokenSpaceGuidCName.PcdCName|Value[|DatumType[|MaximumDatumSize]] '''
+
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
         namespace, name, values = super().ExtractObjectFromLine(line, current_section)
         if len(values) > 3 or len(values) < 2:
@@ -217,9 +222,10 @@ class PcdPatchableProcessor(PcdProcessor):
         _, source = self.Consume()
         if len(values) == 2:
             return pcd_typed(namespace, name, value, data_type, source_info=source)
-        
+
         max_size = int(values[2])
         return pcd_typed(namespace, name, value, data_type, max_size, source_info=source)
+
 
 class PcdDynamicProcessor(PcdFixedAtBuildProcessor):
     SECTION_TAG = "pcdsdynamic"
@@ -229,6 +235,7 @@ class PcdDynamicProcessor(PcdFixedAtBuildProcessor):
     PcdTokenSpaceGuidCName.PcdCName|Value[|DatumType[|MaximumDatumSize]] '''
     pass
 
+
 class PcdDynamicExProcessor(PcdDynamicProcessor):
     SECTION_TAG = "pcdsdynamicex"
     ''' 
@@ -236,6 +243,7 @@ class PcdDynamicExProcessor(PcdDynamicProcessor):
     PcdTokenSpaceGuidCName.PcdCName|Value
     PcdTokenSpaceGuidCName.PcdCName|Value[|DatumType[|MaximumDatumSize]] '''
     pass
+
 
 class PcdDynamicDefaultProcessor(PcdDynamicProcessor):
     SECTION_TAG = "pcdsdynamicdefault"
@@ -245,12 +253,14 @@ class PcdDynamicDefaultProcessor(PcdDynamicProcessor):
     PcdTokenSpaceGuidCName.PcdCName|Value[|DatumType[|MaximumDatumSize]] '''
     pass
 
+
 class PcdDynamicHiiProcessor(PcdProcessor):
     SECTION_TAG = "pcdsdynamichii"
     ''' 
     PcdTokenSpaceGuidCName.PcdCName|VariableName|VariableGuid|VariableOffset[|HiiDefaultValue[|HiiAttrubte]]
     The VariableName field in the HII format PCD entry must not be an empty string.
     '''
+
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
         namespace, name, values = super().ExtractObjectFromLine(line, current_section)
         if len(values) < 3 or len(values) > 5:
@@ -264,12 +274,12 @@ class PcdDynamicHiiProcessor(PcdProcessor):
         if len(values) == 3:
             return pcd_variable(namespace, name, var_name, var_guid, var_offset, source_info=source)
         default = values[3].strip()
-        if len(values) == 4:            
+        if len(values) == 4:
             return pcd_variable(namespace, name, var_name, var_guid, var_offset, default, source_info=source)
         attribs = values[4].strip().split(",")
-        if len(values) == 5:            
+        if len(values) == 5:
             return pcd_variable(namespace, name, var_name, var_guid, var_offset, default, attribs, source_info=source)
-        
+
 
 class SkuIdProcessor(SectionProcessor):
     SECTION_TAG = "skuids"
@@ -295,7 +305,7 @@ class LibraryClassProcessor(SectionProcessor):
     SECTION_TAG = "libraryclasses"
 
     def GetSectionData(self, line, source):
-       return self.GetStandardSectionData(line, source)
+        return self.GetStandardSectionData(line, source)
 
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
         ''' extracts the data model objects from the current state '''
@@ -368,7 +378,7 @@ class ComponentsProcessor(SectionProcessor):
             line, _ = self.Consume()
             if line == "}":
                 return False
-    
+
     def GetSectionData(self, line, source):
         return self.GetStandardSectionData(line, source)
 
@@ -401,13 +411,13 @@ class DscParser(LimitedDscParser):
         callbacks = (self._PreviewNextLine, self._ConsumeNextLine)
         processors = [
             PcdFeatureFlagProcessor(*callbacks, self._AddPcdItem),
-            PcdFixedAtBuildProcessor(*callbacks,self._AddPcdItem),
-            PcdPatchableProcessor(*callbacks,self._AddPcdItem),
+            PcdFixedAtBuildProcessor(*callbacks, self._AddPcdItem),
+            PcdPatchableProcessor(*callbacks, self._AddPcdItem),
             # the dynamic + suffix ones have to be first, otherwise dynamic matches them
-            PcdDynamicDefaultProcessor(*callbacks,self._AddPcdItem),
-            PcdDynamicHiiProcessor(*callbacks,self._AddPcdItem),
-            PcdDynamicExProcessor(*callbacks,self._AddPcdItem),
-            PcdDynamicProcessor(*callbacks,self._AddPcdItem),
+            PcdDynamicDefaultProcessor(*callbacks, self._AddPcdItem),
+            PcdDynamicHiiProcessor(*callbacks, self._AddPcdItem),
+            PcdDynamicExProcessor(*callbacks, self._AddPcdItem),
+            PcdDynamicProcessor(*callbacks, self._AddPcdItem),
             DefinesProcessor(*callbacks, self._AddDefineItem),
             LibraryClassProcessor(*callbacks, self._AddLibraryClassItem),
             SkuIdProcessor(*callbacks, self._AddSkuItem),
@@ -438,7 +448,7 @@ class DscParser(LimitedDscParser):
         self.dsc.build_options.add(item)
         pass
 
-    def _AddSectionedItem(self, item, section, obj, allowed_type = None):
+    def _AddSectionedItem(self, item, section, obj, allowed_type=None):
         if type(section) is list:
             for subsection in section:
                 self._AddSectionedItem(item, subsection, obj)
@@ -457,7 +467,7 @@ class DscParser(LimitedDscParser):
         self._AddSectionedItem(item, section, self.dsc.components, component)
 
     def _AddPcdItem(self, item, section):
-       self._AddSectionedItem(item, section, self.dsc.pcds)
+        self._AddSectionedItem(item, section, self.dsc.pcds)
 
     def _PreviewNextLine(self):
         ''' Previews the next line without consuming it '''

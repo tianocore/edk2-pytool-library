@@ -22,7 +22,6 @@ class dsc:
         self.defines = set()
 
 
-
 dsc_module_types = ["COMMON", "BASE", "SEC", "PEI_CORE", "PEIM", "DXE_CORE", "DXE_DRIVER",
                     "DXE_RUNTIME_DRIVER", "DXE_SAL_DRIVER", "DXE_SMM_DRIVER", "SMM_CORE", "UEFI_DRIVER", "UEFI_APPLICATION", "USER_DEFINED"]
 
@@ -259,7 +258,7 @@ class pcd_variable(pcd):
         if any([x not in pcd_variable_attributes for x in attributes]):
             raise ValueError(f"Invalid PcdHiiAttribute values: {attributes}")
         self.attributes = attributes
-    
+
     def __repr__(self):
         return f"{self.namespace}.{self.name} = {self.var_name} |{self.var_guid}|{self.var_offset}|{self.default}|{self.attributes} @ {self.source_info}"
 
