@@ -337,6 +337,7 @@ class TestRecipeParser(unittest.TestCase):
   Nt32Pkg/WinNtThunkPPIToProtocolPei/WinNtThunkPPIToProtocolPei.inf
   MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 
+[Components.X64]
   ##
   # DXE Phase modules
   ##
@@ -499,10 +500,10 @@ class TestRecipeParser(unittest.TestCase):
         dsc_obj = parser.ParseFile(file_path)
         # since the old parser used all the libs it found, so we can't compare apples to apples
         self.assertEqual(len(dsc_obj.skus), 3)
-        self.assertEqual(len(dsc_obj.components), 75)
-        self.assertEqual(len(dsc_obj.pcds), 28)
+        self.assertEqual(len(dsc_obj.components), 2)
+        self.assertEqual(len(dsc_obj.pcds), 5)
         self.assertEqual(len(dsc_obj.build_options), 3)
-        self.assertEqual(len(dsc_obj.libraries), 55)
+        self.assertEqual(len(dsc_obj.libraries), 7)
         pass
     
     def test_read_dsc_with_variables(self):
@@ -517,11 +518,29 @@ class TestRecipeParser(unittest.TestCase):
         # use the new parser
         dsc_obj = parser.ParseFile(file_path)
         # since the old parser used all the libs it found, so we can't compare apples to apples
-        self.assertEqual(len(dsc_obj.skus), 3, dsc_obj.skus)
-        print(dsc_obj.libraries)
-        self.assertEqual(len(dsc_obj.components), 76)
+        self.assertEqual(len(dsc_obj.skus), 3, dsc_obj.skus)        
         
-        self.assertEqual(len(dsc_obj.pcds), 32)
+        # PCDS
+        pcd_counts = sum([len(dsc_obj.pcds[x]) for x in dsc_obj.pcds])
+        self.assertEqual(len(dsc_obj.pcds), 5)  # there are 5 times of PCDs
+        self.assertEqual(pcd_counts, 34)  # there are 34 pcds total
+
+        # LIBRARYCLASSES
+        self.assertEqual(len(dsc_obj.libraries), 8)
+        lib_counts = sum([len(x) for _, x in dsc_obj.libraries.items()])
+        unique_libs = set()
+        for _, items in dsc_obj.libraries.items():
+          for item in items:
+            unique_libs.add(item)
+        self.assertEqual(lib_counts, 96)
+        self.assertEqual(len(unique_libs), 60)
+
+        # BUILD OPTIONS
         self.assertEqual(len(dsc_obj.build_options), 3, dsc_obj.build_options)
-        self.assertEqual(len(dsc_obj.libraries), 59)
+
+        # COMPONENTS
+        print(dsc_obj.components)
+        self.assertEqual(len(dsc_obj.components), 2)
+        comp_counts = sum([len(x) for _, x in dsc_obj.components.items()])
+        self.assertEqual(comp_counts, 76)
         pass

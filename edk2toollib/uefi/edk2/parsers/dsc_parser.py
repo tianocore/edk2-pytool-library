@@ -81,7 +81,6 @@ class SectionProcessor():
         if line.count("=") < 1:
             return None
         parts = line[6:].split("=", 1)
-        print(parts)
         name = str(parts[0]).strip()
         if name.count(" ") > 0:
             return None
@@ -93,6 +92,20 @@ class SectionProcessor():
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
         ''' see if you can extract an object from a line- make sure to consume it. Return None if you can't '''
         raise NotImplementedError()
+    
+    def GetStandardSectionData(self, line, source):
+        data = SectionProcessor.GetSectionData(self, line, source)
+        if type(data) == list:
+            return data
+        if data == "":
+            return dsc_section_type()
+        data = data.strip(".")  # strip any trailing .'s
+        parts = data.split(".")
+        arch = parts[0]
+        module_type = parts[1] if len(parts) > 1 else DEFAULT_SECTION_TYPE
+        if len(parts) > 2:
+            raise ValueError(f"Invalid section header {line} {source}")
+        return dsc_section_type(arch, module_type)
 
 
 class DefinesProcessor(SectionProcessor):
@@ -282,26 +295,15 @@ class LibraryClassProcessor(SectionProcessor):
     SECTION_TAG = "libraryclasses"
 
     def GetSectionData(self, line, source):
-        data = super().GetSectionData(line, source)
-        if type(data) == list:
-            return data
-        if data == "":
-            return dsc_section_type()
-        data = data.strip(".")  # strip any trailing .'s
-        parts = data.split(".")
-        arch = parts[0]
-        module_type = parts[1] if len(parts) > 1 else DEFAULT_SECTION_TYPE
-        if len(parts) > 2:
-            raise ValueError(f"Invalid section header {line} {source}")
-        return dsc_section_type(arch, module_type)
+       return self.GetStandardSectionData(line, source)
 
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
         ''' extracts the data model objects from the current state '''
         if line.count("|") != 1:
             return None
         line, source = self.Consume()
-        library_class, inf = line.split("|")
-        return library(library_class, inf, source)
+        library_class_name, inf = line.split("|")
+        return library_class(library_class_name, inf, source)
 
 
 class BuildOptionsProcessor(SectionProcessor):
@@ -339,18 +341,7 @@ class BuildOptionsProcessor(SectionProcessor):
         return build_option(tool, attribute, data, target, tagname, arch, family, replace, source_info=source)
 
     def GetSectionData(self, line, source):
-        data = super().GetSectionData(line, source)
-        if type(data) == list:
-            return data
-        if data == "":
-            return dsc_section_type()
-        data = data.strip(".")  # strip any trailing .'s
-        parts = data.split(".")
-        arch = parts[0]
-        module_type = parts[1] if len(parts) > 1 else DEFAULT_SECTION_TYPE
-        if len(parts) > 2:
-            raise ValueError(f"Invalid section header {line} {source}")
-        return dsc_section_type(arch, module_type)
+        return self.GetStandardSectionData(line, source)
 
 
 class ComponentsProcessor(SectionProcessor):
@@ -377,6 +368,9 @@ class ComponentsProcessor(SectionProcessor):
             line, _ = self.Consume()
             if line == "}":
                 return False
+    
+    def GetSectionData(self, line, source):
+        return self.GetStandardSectionData(line, source)
 
 
 class DscParser(LimitedDscParser):
@@ -441,24 +435,26 @@ class DscParser(LimitedDscParser):
         self.dsc.skus.add(item)
 
     def _AddBuildItem(self, item, section):
-        # figure out where this goes
+        self.dsc.build_options.add(item)
         pass
 
-    def _AddSectionedItem(self, item, section, obj):
+    def _AddSectionedItem(self, item, section, obj, allowed_type = None):
         if type(section) is list:
             for subsection in section:
                 self._AddSectionedItem(item, subsection, obj)
         else:
+            # if we have a specific type and it isn't a subclass of the allowed type and it is not a definition
+            if allowed_type is not None and not issubclass(item.__class__, allowed_type) and type(item) is not definition:
+                raise ValueError(f"Invalid item in this section: {subsection} {item}")
             if section not in obj:
                 obj[section] = set()
             obj[section].add(item)
 
     def _AddLibraryClassItem(self, item, section):
-        self._AddSectionedItem(item, section, self.dsc.libraries)
+        self._AddSectionedItem(item, section, self.dsc.libraries, library_class)
 
     def _AddCompItem(self, item, section):
-        # figure out where this goes
-        pass
+        self._AddSectionedItem(item, section, self.dsc.components, component)
 
     def _AddPcdItem(self, item, section):
        self._AddSectionedItem(item, section, self.dsc.pcds)

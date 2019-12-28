@@ -15,7 +15,7 @@ class dsc:
     def __init__(self, file_path):
         self.file_path = file_path  # The EDK2 path to this particular DSC
         self.skus = set()
-        self.components = set()
+        self.components = {}
         self.libraries = {}
         self.build_options = set()
         self.pcds = {}
@@ -181,7 +181,7 @@ class definition:
         return other.name == self.name
 
 
-class library:
+class library_class:
     ''' Contains the data for a specific library '''
 
     def __init__(self, libraryclass: str, inf: str, source_info=None):
@@ -190,7 +190,7 @@ class library:
         self.source_info = source_info
 
     def __eq__(self, other):
-        if (type(other) is not library):
+        if (type(other) is not library_class):
             return False
         if (self.libraryclass.lower() == "null"):
             return self.inf == other.inf
