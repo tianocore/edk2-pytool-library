@@ -37,6 +37,8 @@ class SectionProcessor():
 
     def ValidSectionHeader(self, line):
         # TODO: check to make sure there's nothing that comes after it?
+        if line is None:
+            return False
         return self._GetSectionHeaderLowercase(line).startswith(self.SECTION_TAG)
 
     def HandleObjectExtraction(self, objects, section_data):
@@ -60,8 +62,11 @@ class SectionProcessor():
         ''' extracts the data model objects from the current state '''
         objects = []
         while True:
-            line = str(self.Preview()).strip()
-            if line == None:
+            raw_line = self.Preview()
+            if raw_line is None:
+                break
+            line = str(raw_line).strip()
+            if len(line) == 0:
                 break
             if line.startswith("[") and line.endswith("]"):
                 ''' this is a section header '''
@@ -173,7 +178,10 @@ class PcdFeatureFlagProcessor(PcdProcessor):
     ''' FeatureFlags are only allowed to be 0, 1, TRUE, FALSE '''
 
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
-        namespace, name, values = super().ExtractObjectFromLine(line, current_section)
+        data = super().ExtractObjectFromLine(line, current_section)
+        if data is None:
+            return None
+        namespace, name, values = data
         if len(values) != 1:
             return None
         value = values[0].strip().upper()
@@ -188,7 +196,10 @@ class PcdFixedAtBuildProcessor(PcdProcessor):
     ''' FixedAtBuild can be typed or not '''
 
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
-        namespace, name, values = super().ExtractObjectFromLine(line, current_section)
+        data = super().ExtractObjectFromLine(line, current_section)
+        if data is None:
+            return None
+        namespace, name, values = data
         if len(values) > 3:
             return None
         value = values[0].strip()
@@ -212,7 +223,10 @@ class PcdPatchableProcessor(PcdProcessor):
     ''' PcdTokenSpaceGuidCName.PcdCName|Value[|DatumType[|MaximumDatumSize]] '''
 
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
-        namespace, name, values = super().ExtractObjectFromLine(line, current_section)
+        data = super().ExtractObjectFromLine(line, current_section)
+        if data is None:
+            return None
+        namespace, name, values = data
         if len(values) > 3 or len(values) < 2:
             return None
         value = values[0].strip()
@@ -262,7 +276,10 @@ class PcdDynamicHiiProcessor(PcdProcessor):
     '''
 
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
-        namespace, name, values = super().ExtractObjectFromLine(line, current_section)
+        data = super().ExtractObjectFromLine(line, current_section)
+        if data is None:
+            return None
+        namespace, name, values = data
         if len(values) < 3 or len(values) > 5:
             return None
         var_name = values[0].strip()
@@ -444,10 +461,6 @@ class DscParser(LimitedDscParser):
         # figure out where this goes
         self.dsc.skus.add(item)
 
-    def _AddBuildItem(self, item, section):
-        self.dsc.build_options.add(item)
-        pass
-
     def _AddSectionedItem(self, item, section, obj, allowed_type=None):
         if type(section) is list:
             for subsection in section:
@@ -461,7 +474,7 @@ class DscParser(LimitedDscParser):
             obj[section].add(item)
 
     def _AddLibraryClassItem(self, item, section):
-        self._AddSectionedItem(item, section, self.dsc.libraries, library_class)
+        self._AddSectionedItem(item, section, self.dsc.library_classes, library_class)
 
     def _AddCompItem(self, item, section):
         self._AddSectionedItem(item, section, self.dsc.components, component)
@@ -469,6 +482,9 @@ class DscParser(LimitedDscParser):
     def _AddPcdItem(self, item, section):
         self._AddSectionedItem(item, section, self.dsc.pcds)
 
+    def _AddBuildItem(self, item, section):
+        self._AddSectionedItem(item, section, self.dsc.build_options, build_option)
+    
     def _PreviewNextLine(self):
         ''' Previews the next line without consuming it '''
         if self._IsAtEndOfLines:

@@ -240,18 +240,28 @@ class LimitedDscParser(HashFileParser):
             for index in range(0, len(lines)):
                 lineno = index + 1
                 line = lines[index]
-                if line.strip().endswith("\\"):
+                if line.rstrip().endswith("\\"):
                     line, _, _ = line.rpartition("\\")
-                    multi_line += " " + line
+                    multi_line += " " + line.lstrip()
                     continue
                 elif len(multi_line) > 0:
                     line = multi_line
+                    index -= 1  # we need to back up one so we redo this line
+                    
                     multi_line = ""
                 (line, add, new_file) = self.__ParseLine(line, file_name=file_name, lineno=lineno)
                 if(len(line) > 0):
                     self.SourcedLines.append((line, file_name, lineno))
                     self.Lines.append(line)
                 self.__ProcessMore(add, file_name=new_file)
+            if len(multi_line) > 0:
+                print(multi_line)
+                (line, add, new_file) = self.__ParseLine(multi_line, file_name=file_name, lineno=lineno)
+                if(len(line) > 0):
+                    self.SourcedLines.append((line, file_name, lineno))
+                    self.Lines.append(line)
+                self.__ProcessMore(add, file_name=new_file)
+
 
     def __ProcessDefines(self, lines):
         if(len(lines) > 0):

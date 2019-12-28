@@ -10,14 +10,14 @@
 
 DEFAULT_SECTION_TYPE = "COMMON"
 
-
 class dsc:
     def __init__(self, file_path):
         self.file_path = file_path  # The EDK2 path to this particular DSC
         self.skus = set()
         self.components = {}
         self.libraries = {}
-        self.build_options = set()
+        self.library_classes = {}
+        self.build_options = {}
         self.pcds = {}
         self.defines = set()
 
@@ -208,6 +208,7 @@ class library_class:
 
 class pcd:
     ''' Contains the data for a specific pcd '''
+    ''' PcdTokenSpaceGuidCName.PcdCName|Value '''
 
     def __init__(self, namespace, name, value, source_info=None):
         self.namespace = namespace
@@ -233,7 +234,7 @@ class pcd_typed(pcd):
     def __init__(self, namespace, name, value, datum_type, max_size=0, source_info=None):
         super().__init__(namespace, name, value, source_info)
         self.datum_type = datum_type
-        self.max_size = max_size
+        self.max_size = int(max_size)
 
     def __repr__(self):
         return f"{self.namespace}.{self.name} = {self.value} |{self.datum_type}|{self.max_size} @ {self.source_info}"
@@ -254,7 +255,7 @@ class pcd_variable(pcd):
 
         if type(attributes) is str:
             attributes = attributes.split(",")
-        attributes = [str(x).upper() for x in attributes]
+        attributes = [str(x).upper().strip() for x in attributes]
         if any([x not in pcd_variable_attributes for x in attributes]):
             raise ValueError(f"Invalid PcdHiiAttribute values: {attributes}")
         self.attributes = attributes

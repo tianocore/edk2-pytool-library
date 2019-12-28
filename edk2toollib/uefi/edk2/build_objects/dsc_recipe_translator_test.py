@@ -1,21 +1,14 @@
-# @file recipe_parser_test.py
-# Contains unit test routines for the dsc => recipe functionality.
-#
-#
-# Copyright (c) Microsoft Corporation
-#
-# SPDX-License-Identifier: BSD-2-Clause-Patent
-##
-
 import unittest
 import os
 import tempfile
-from edk2toollib.uefi.edk2.parsers.limited_dsc_parser import LimitedDscParser
 from edk2toollib.uefi.edk2.parsers.dsc_parser import DscParser
+from edk2toollib.uefi.edk2.build_objects.dsc import dsc
+from edk2toollib.uefi.edk2.build_objects.recipe import recipe
+from edk2toollib.uefi.edk2.build_objects.dsc_recipe_translator import DscRecipeTranslator
+import tempfile
 
 
-class TestDscParser(unittest.TestCase):
-    # Taken from https://edk2-docs.gitbooks.io/edk-ii-dsc-specification/content/v/release/1.28/appendix_b_sample_edk_ii_dsc_file.html
+class TestRecipeParser(unittest.TestCase):
     test_dsc = """
 ## @file
 # EFI/Framework Emulation Platform with UEFI HII interface supported.
@@ -465,82 +458,38 @@ class TestDscParser(unittest.TestCase):
 """
 
     def write_file(self, file_path, contents):
+        temp_dir = tempfile.mkdtemp()
+        file_path = os.path.join(temp_dir, file_path)
         f = open(file_path, "w")
         f.write(contents)
         f.close()
+        return file_path
 
-    def test_null_creation(self):
+    def test_dsc_to_recipe(self):
+        dsc = None
+        DscRecipeTranslator.dsc_to_recipe(dsc)
+
+    def test_recipe_to_dsc(self):
+        rec = None
+        DscRecipeTranslator.recipe_to_dsc(rec)
+
+    def test_dsc_to_file_and_back_again(self):
+        filepath = self.write_file("test.dsc", self.test_dsc)
+        print(filepath)
+        # parse the origional DSC
         parser = DscParser()
-        self.assertIsNotNone(parser)
-
-    def test_same_as_old_parser(self):
-        parser = DscParser()
-        old_parser = LimitedDscParser()
-
-        temp_dir = tempfile.mkdtemp()
-        file_path = os.path.join(temp_dir, "test.dsc")
-        print(file_path)
-        self.write_file(file_path, self.test_dsc)
-        # use the new parser
-        parser.ParseFile(file_path)
-        # use the old parser
-        old_parser.ParseFile(file_path)
-        # since the old parser used all the libs it found, so we can't compare apples to apples
-        self.assertEqual(len(old_parser.GetLibs()), len(parser.GetLibs()))
-        self.assertEqual(len(parser.GetModsEnhanced()), len(old_parser.GetModsEnhanced()))
-        pass
-
-    def test_read_dsc(self):
-        parser = DscParser()
-        temp_dir = tempfile.mkdtemp()
-        file_path = os.path.join(temp_dir, "test.dsc")
-        print(file_path)
-        self.write_file(file_path, self.test_dsc)
-        # use the new parser
-        dsc_obj = parser.ParseFile(file_path)
-        # since the old parser used all the libs it found, so we can't compare apples to apples
-        self.assertEqual(len(dsc_obj.skus), 3)
-        self.assertEqual(len(dsc_obj.components), 2)
-        self.assertEqual(len(dsc_obj.pcds), 5)
-        self.assertEqual(len(dsc_obj.build_options), 3)
-        self.assertEqual(len(dsc_obj.libraries), 7)
-        pass
-    
-    def test_read_dsc_with_variables(self):
-        parser = DscParser()
-        parser.SetInputVars({
-          "SECURE_BOOT_ENABLE": "TRUE"
-        })
-        temp_dir = tempfile.mkdtemp()
-        file_path = os.path.join(temp_dir, "test.dsc")
-        print(file_path)
-        self.write_file(file_path, self.test_dsc)
-        # use the new parser
-        dsc_obj = parser.ParseFile(file_path)
-        # since the old parser used all the libs it found, so we can't compare apples to apples
-        self.assertEqual(len(dsc_obj.skus), 3, dsc_obj.skus)        
-        
-        # PCDS
-        pcd_counts = sum([len(dsc_obj.pcds[x]) for x in dsc_obj.pcds])
-        self.assertEqual(len(dsc_obj.pcds), 5)  # there are 5 times of PCDs
-        self.assertEqual(pcd_counts, 34)  # there are 34 pcds total
-
-        # LIBRARYCLASSES
-        self.assertEqual(len(dsc_obj.libraries), 8)
-        lib_counts = sum([len(x) for _, x in dsc_obj.libraries.items()])
-        unique_libs = set()
-        for _, items in dsc_obj.libraries.items():
-          for item in items:
-            unique_libs.add(item)
-        self.assertEqual(lib_counts, 96)
-        self.assertEqual(len(unique_libs), 60)
-
-        # BUILD OPTIONS
-        self.assertEqual(len(dsc_obj.build_options), 3, dsc_obj.build_options)
-
-        # COMPONENTS
-        print(dsc_obj.components)
-        self.assertEqual(len(dsc_obj.components), 2)
-        comp_counts = sum([len(x) for _, x in dsc_obj.components.items()])
-        self.assertEqual(comp_counts, 76)
-        pass
+        dsc_obj = parser.ParseFile(filepath)
+        # Write out to disk
+        test_path = os.path.join(os.path.dirname(filepath), "test2.dsc")
+        DscRecipeTranslator.dsc_to_file(dsc_obj, test_path)
+        # parse in the outputted DSC
+        parser2 = DscParser()
+        print(test_path)
+        dsc_obj2 = parser2.ParseFile(test_path)
+        self.assertEqual(len(dsc_obj.defines), len(dsc_obj2.defines))
+        self.assertEqual(len(dsc_obj.library_classes), len(dsc_obj2.library_classes))
+        self.assertEqual(len(dsc_obj.components), len(dsc_obj2.components))
+        self.assertEqual(len(dsc_obj.build_options), len(dsc_obj2.build_options))
+        self.assertEqual(len(dsc_obj.pcds), len(dsc_obj2.pcds))
+        self.assertEqual(dsc_obj, dsc_obj2)        
+        self.fail()
