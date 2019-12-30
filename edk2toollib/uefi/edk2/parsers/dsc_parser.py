@@ -47,6 +47,9 @@ class SectionProcessor():
 
     def GetSectionData(self, line, source):
         ''' returns the data in whatever format you want '''
+        if type(line) != str:
+            return None
+        line = str(line).strip()
         if line.startswith("[") and line.endswith("]"):
             line = line[1:-1]  # remove the first and section place
         if line.count(",") > 0:
@@ -162,12 +165,18 @@ class PcdProcessor(SectionProcessor):
         data = super().GetSectionData(line, source)
         if type(data) == list:
             return data
-        data = data.strip(".")  # strip any trailing .'s
-        parts = data.split(".")
-        pcd_type = parts[0] if len(self.SECTION_TAG) <= 4 else self.SECTION_TAG[4:].upper()
-        arch = DEFAULT_SECTION_TYPE if len(parts) < 2 else parts[1]
-        if len(parts) == 3:
-            sku = parts[2]
+        if data == None:
+            raise ValueError(f"We shouldn't get none from {line} @ {source}")
+        pcd_type = None if len(self.SECTION_TAG) <= 4 else self.SECTION_TAG[4:].upper()
+        if data == "":
+            return dsc_pcd_section_type(pcd_type)
+        parts = data.strip(".").split(".")  # strip any trailing .'s
+        print(data)
+        print(parts)
+        
+        arch = DEFAULT_SECTION_TYPE if len(parts) < 1 else parts[0]
+        if len(parts) == 2:
+            sku = parts[1]
             return dsc_pcd_section_type(pcd_type, arch, sku)
         else:
             return dsc_pcd_section_type(pcd_type, arch)
@@ -484,7 +493,7 @@ class DscParser(LimitedDscParser):
 
     def _AddBuildItem(self, item, section):
         self._AddSectionedItem(item, section, self.dsc.build_options, build_option)
-    
+
     def _PreviewNextLine(self):
         ''' Previews the next line without consuming it '''
         if self._IsAtEndOfLines:

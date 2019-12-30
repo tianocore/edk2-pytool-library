@@ -249,7 +249,7 @@ class TestRecipeParser(unittest.TestCase):
   gEfiSecurityPkgTokenSpaceGuid.PcdRemovableMediaImageVerificationPolicy|0x05
 !endif
 
-[PcdsPatchableInModule]
+[PcdsPatchableInModule.IA32, PcdsPatchableInModule.X64]
   gEfiNt32PkgTokenSpaceGuid.PcdWinNtGop|L"UGA Window 1!UGA Window 2"|VOID*|52
 
 ########################################################################
@@ -491,5 +491,4 @@ class TestRecipeParser(unittest.TestCase):
         self.assertEqual(len(dsc_obj.components), len(dsc_obj2.components))
         self.assertEqual(len(dsc_obj.build_options), len(dsc_obj2.build_options))
         self.assertEqual(len(dsc_obj.pcds), len(dsc_obj2.pcds))
-        self.assertEqual(dsc_obj, dsc_obj2)        
-        self.fail()
+        self.assertEqual(dsc_obj, dsc_obj2)

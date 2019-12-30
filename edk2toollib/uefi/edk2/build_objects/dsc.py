@@ -7,7 +7,7 @@
 ##
 
 # There will be some overlap between the objects for DSC's and Recipes
-
+import logging
 DEFAULT_SECTION_TYPE = "COMMON"
 
 class dsc:
@@ -20,7 +20,25 @@ class dsc:
         self.build_options = {}
         self.pcds = {}
         self.defines = set()
-
+    
+    def __eq__(self, other):
+        ''' This doesn't check for a perfect copy of everything '''
+        ''' this is mainly focused on does it define the same things '''
+        if type(other) is not dsc:
+            return False
+        if other.skus != self.skus:
+            return False
+        if other.components != self.components:
+            return False
+        if other.library_classes != self.library_classes:
+            return False
+        if other.build_options != self.build_options:
+            return False        
+        if other.pcds != self.pcds:
+            return False        
+        if other.defines != self.defines:
+            return False
+        return True
 
 dsc_module_types = ["COMMON", "BASE", "SEC", "PEI_CORE", "PEIM", "DXE_CORE", "DXE_DRIVER",
                     "DXE_RUNTIME_DRIVER", "DXE_SAL_DRIVER", "DXE_SMM_DRIVER", "SMM_CORE", "UEFI_DRIVER", "UEFI_APPLICATION", "USER_DEFINED"]
@@ -34,12 +52,15 @@ class dsc_section_type:
             raise ValueError(f"{module_type} is not a proper module type")
 
     def __hash__(self):
-        return hash((self.arch, self.module_type))
+        arch = "*" if (self.arch == "COMMON" or self.arch == "DEFAULT") else self.arch
+        return hash((arch, self.module_type))
 
     def __eq__(self, other):
         if type(other) is not dsc_section_type:
             return False
-        return self.module_type == other.module_type or self.arch == other.arch
+        arch = "*" if (self.arch == "COMMON" or self.arch == "DEFAULT") else self.arch
+        arch2 = "*" if (other.arch == "COMMON" or other.arch == "DEFAULT") else other.arch
+        return self.module_type == other.module_type or arch == arch2
 
     def __repr__(self):
         attributes = f".{self.arch}.{self.module_type}"
@@ -113,45 +134,28 @@ class sku_id:
     def __repr__(self):
         return f"{self.id}|{self.name}|{self.parent}"
 
-    def to_dsc(self, include_header=False) -> str:
-        ''' outputs the current data to string DSC format'''
-        if include_header:
-            return f"[SkuIds]\n {self.__repr__()}"
-        else:
-            return self.__repr__()
-
 
 class component:
     ''' Contains the data for a component for the EDK build system to build '''
 
-    def __init__(self, inf, phases: list = [], architecture="ALL", source_info=None):
+    def __init__(self, inf, phases: list = [], source_info=None):
 
         self.libraries = set()  # a list of libraries that this component uses
-        # TODO: should there only be one phase allowed for a component
-        self.phases = set(phases)  # a set of phases that this component is in (PEIM, DXE_RUNTIME, ...)
         self.pcds = set()  # a set of PCD's that
-        self.architecture = architecture
         self.inf = inf  # the EDK2 relative path to the source INF
         self.source_info = source_info
 
     def __eq__(self, other):
         if (type(other) is not component):
             return False
-        if len(self.phases) > 0 and len(other.phases) > 0:
-            if len(self.phases.intersection(other.phases)) == 0:
-                return False  # if we don't overlap in phases?
-        arch_overlap = self.architecture == other.architecture or self.architecture == "ALL" or other.architecture == "ALL"
-        return self.inf == other.inf and self.architecture == other.architecture  # TODO: should this be case insensitive?
+        return self.inf == other.inf # TODO: should this be case insensitive?
 
     def __hash__(self):
-        hashes = [hash(x) for x in self.phases]
-        phase_hash = sum(hashes)
-        return hash(self.inf) ^ phase_hash
+        return hash(self.inf)
 
     def __repr__(self):
         source = str(self.source_info) if source_info is not None else ""
-        phases = str(self.phases) if len(self.phases) > 0 else ""
-        return f"{self.inf} {phases} @ {source}"
+        return f"{self.inf} @ {source}"
 
 
 class definition:
@@ -217,7 +221,7 @@ class pcd:
         self.source_info = source_info
 
     def __eq__(self, other):
-        if not issubclass(other, pcd):
+        if not issubclass(other.__class__, pcd):
             return False
         return self.namespace == other.namespace and self.name == other.name
 
