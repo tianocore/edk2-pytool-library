@@ -443,8 +443,6 @@ FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
         # use the old parser
         old_parser.ParseFile(file_path)
         # since the old parser used all the libs it found, so we can't compare apples to apples
-        self.assertEqual(len(old_parser.GetLibs()), len(parser.GetLibs()))
-        self.assertEqual(len(parser.GetModsEnhanced()), len(old_parser.GetModsEnhanced()))
         pass
 
     def test_read_fdf(self):

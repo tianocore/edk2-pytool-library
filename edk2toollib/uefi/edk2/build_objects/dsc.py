@@ -183,9 +183,25 @@ class definition:
             return False
         return other.name == self.name
 
+class library:
+    ''' Contains the data for a specific EDK library'''
+    def __init__(self, inf: str, source_info=None):
+        self.inf = inf
+        self.source_info = source_info
+    
+    def __eq__(self, other):
+        if type(other) is not library:
+            return False
+        return self.inf == other.inf
+    
+    def __hash__(self):
+        return hash(self.inf) #TODO how to figure out if they hash to the same spot?
+    
+    def __repr__(self):
+        return f"{self.inf} @ {self.source_info}"
 
 class library_class:
-    ''' Contains the data for a specific library '''
+    ''' Contains the data for a specific EDK2 library class'''
 
     def __init__(self, libraryclass: str, inf: str, source_info=None):
         self.libraryclass = libraryclass
