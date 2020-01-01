@@ -7,13 +7,37 @@
 ##
 from edk2toollib.uefi.edk2.parsers.limited_fdf_parser import LimitedFdfParser
 from edk2toollib.uefi.edk2.build_objects.fdf import *
+from edk2toollib.uefi.edk2.build_objects.dsc import definition
+from edk2toollib.uefi.edk2.parsers.dsc_parser import SectionProcessor
+from edk2toollib.uefi.edk2.parsers.dsc_parser import AccurateParser
 import os
 
-class FdfParser(LimitedFdfParser):
+
+class FdfParser(LimitedFdfParser, AccurateParser):
 
     def __init__(self):
-        super().__init__()
+        LimitedFdfParser.__init__(self)
+        self.SourcedLines = []
 
     def ParseFile(self, filepath):
-        self.fdf = fdf()
+        if self.Parsed != False:  # make sure we haven't already parsed the file
+            return
+        super().ParseFile(filepath)
+        self.fdf = fdf(filepath)
+        self.ResetLineIterator()
+        callbacks = self.GetCallbacks()
+        print(self.Lines)
+        processors = []
+        while not self._IsAtEndOfLines:
+            success = False
+            for proc in processors:
+                if proc.AttemptToProcessSection():
+                    success = True
+                    break
+            if not success and not self._IsAtEndOfLines:
+                line, source = self._ConsumeNextLine()
+                self.Logger.warning(f"FDF Unknown line {line} @{source}")
+
+        self.Parsed = True
+
         return self.fdf

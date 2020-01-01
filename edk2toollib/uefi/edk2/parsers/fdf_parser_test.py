@@ -457,17 +457,18 @@ FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
         self.assertNotEqual(fdf_obj, None)
         pass
     
-    def test_read_fdf_with_variables(self):
+    def test_read_fdf_include(self):
         parser = FdfParser()
-        parser.SetInputVars({
-          "SECURE_BOOT_ENABLE": "TRUE"
-        })
         temp_dir = tempfile.mkdtemp()
         file_path = os.path.join(temp_dir, "test.fdf")
+        file_path2 = os.path.join(temp_dir, "test2.fdf")
         print(file_path)
+        print(file_path2)
         self.write_file(file_path, self.test_fdf)
+        self.write_file(file_path2, f"!include {file_path}")
         # use the new parser
-        fdf_obj = parser.ParseFile(file_path)
+        fdf_obj = parser.ParseFile(file_path2)
         # since the old parser used all the libs it found, so we can't compare apples to apples
         self.assertNotEqual(fdf_obj, None)
         pass
+  

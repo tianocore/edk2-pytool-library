@@ -20,13 +20,39 @@ class LimitedFdfParser(HashFileParser):
         self.FDs = {}
         self.CurrentSection = []
         self.Path = ""
+        self.SourcedLines = []
+        self._CurrentLines = []
+    
+    def LoadFile(self, filepath):
+        fp = filepath
+        if(not os.path.isabs(filepath)):
+            fp = self.FindPath(filepath)
+        self._Sources.insert(0, fp)
+        self._f = open(fp, "r")
+        lines = list(self._f.readlines())
+        lines.reverse()
+        self.Lines.insert(0, lines)
+        self._CurrentLines.insert(0, 0)
+        self._f.close()
 
     def GetNextLine(self):
         if len(self.Lines) == 0:
             return None
 
-        line = self.Lines.pop()
-        self.CurrentLine += 1
+        while len(self.Lines) > 0 and (self.Lines[0] == None or len(self.Lines[0]) == 0):
+            # we have finished this file so pop it off
+            self.Lines.pop()            
+            self._Sources.pop()
+            self._CurrentLines.pop()
+            self.CurrentLine = 0
+        
+        if len(self.Lines) == 0:
+            return None
+
+        line = self.Lines[0].pop()
+        file_name = self._Sources[0]
+        self._CurrentLines[0] += 1
+        self.CurrentLine = self._CurrentLines[0]
         sline = self.StripComment(line)
 
         if(sline is None or len(sline) < 1):
@@ -38,9 +64,17 @@ class LimitedFdfParser(HashFileParser):
             return self.GetNextLine()
         if not self.InActiveCode():
             return self.GetNextLine()
+        
+        if sline.startswith("!include "):
+            ## Load a new file
+            _, _, fp = sline.partition(" ")
+            self.LoadFile(fp)
+            return self.GetNextLine()
 
         self._BracketCount += sline.count("{")
         self._BracketCount -= sline.count("}")
+
+        self.SourcedLines.append((sline, file_name, self.CurrentLine))
 
         return sline
 
@@ -52,10 +86,11 @@ class LimitedFdfParser(HashFileParser):
             fp = filepath
         self.Path = fp
         self.CurrentLine = 0
-        self._f = open(fp, "r")
-        self.Lines = self._f.readlines()
-        self.Lines.reverse()
-        self._f.close()
+                
+        self.Lines = []
+        self._Sources = []
+        self.LoadFile(fp)
+        
         self._BracketCount = 0
         InDefinesSection = False
         InFdSection = False

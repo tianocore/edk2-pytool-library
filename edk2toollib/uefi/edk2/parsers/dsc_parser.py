@@ -523,7 +523,46 @@ class DefaultStoresProcessor(SectionProcessor):
         return None
 
 
-class DscParser(LimitedDscParser):
+class AccurateParser():
+    ''' This is the accurate parser- it depends on sourcedLines '''
+    def __init__(self):
+        self.SourcedLines = []
+        self._LineIter = 0
+
+    def GetCallbacks(self):
+        ''' Creates the callbacks for section processors '''
+        return (self._PreviewNextLine, self._ConsumeNextLine)
+
+    def ResetLineIterator(self):
+        self._LineIter = 0
+    
+    def _PreviewNextLine(self):
+        ''' Previews the next line without consuming it '''
+        if self._IsAtEndOfLines:
+            return None
+        return self.SourcedLines[self._LineIter][0]
+
+    @property
+    def _IsAtEndOfLines(self):
+        return self._LineIter == len(self.SourcedLines)
+
+    def _ConsumeNextLine(self):
+        ''' Get the next line for processing '''
+        line = self._PreviewNextLine()
+        # figure out where this line came from
+        source = self._GetCurrentSource()
+        self._LineIter += 1
+        return (line, source)
+
+    def _GetCurrentSource(self):
+        ''' Currently pretty inefficent '''
+        if self._IsAtEndOfLines:
+            return None
+        _, file_path, lineno = self.SourcedLines[self._LineIter]
+        return source_info(file_path, lineno)
+
+
+class DscParser(LimitedDscParser, AccurateParser):
     '''
     This acts like a normal DscParser, but outputs recipes
     Returns none if a file has not been parsed yet
@@ -548,7 +587,8 @@ class DscParser(LimitedDscParser):
         self._LineIter = 0
         # just go through and process as many sections as we can find
         self.dsc = dsc(filepath)
-        callbacks = (self._PreviewNextLine, self._ConsumeNextLine)
+        callbacks = self.GetCallbacks()
+        self.ResetLineIterator()
         processors = PcdSuperProcessor.CreateAllPcdProcessors(*callbacks, self._AddPcdItem)
         processors += [
             DefinesProcessor(*callbacks, self._AddDefineItem),
@@ -607,28 +647,3 @@ class DscParser(LimitedDscParser):
 
     def _AddBuildItem(self, item, section):
         self._AddSectionedItem(item, section, self.dsc.build_options, build_option)
-
-    def _PreviewNextLine(self):
-        ''' Previews the next line without consuming it '''
-        if self._IsAtEndOfLines:
-            return None
-        return self.SourcedLines[self._LineIter][0]
-
-    @property
-    def _IsAtEndOfLines(self):
-        return self._LineIter == len(self.Lines)
-
-    def _ConsumeNextLine(self):
-        ''' Get the next line for processing '''
-        line = self._PreviewNextLine()
-        # figure out where this line came from
-        source = self._GetCurrentSource()
-        self._LineIter += 1
-        return (line, source)
-
-    def _GetCurrentSource(self):
-        ''' Currently pretty inefficent '''
-        if self._IsAtEndOfLines:
-            return None
-        _, file_path, lineno = self.SourcedLines[self._LineIter]
-        return source_info(file_path, lineno)
