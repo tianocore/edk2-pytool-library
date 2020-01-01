@@ -134,6 +134,8 @@ class TestDscParser(unittest.TestCase):
   TimerLib|MdePkg/Library/BaseTimerLibNullTemplate/BaseTimerLibNullTemplate.inf
   SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
+  NULL|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
+  NULL|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
   #
   # Platform
   #
@@ -259,6 +261,9 @@ class TestDscParser(unittest.TestCase):
 [PcdsPatchableInModule]
   gEfiNt32PkgTokenSpaceGuid.PcdWinNtGop|L"UGA Window 1!UGA Window 2"|VOID*|52
 
+[Libraries.IPF]
+  $(EDK_SOURCE)/Path/to/LibraryName.inf
+
 ########################################################################
 #
 # Pcd Dynamic Section - list of all EDK II PCD Entries defined by this Platform
@@ -319,6 +324,9 @@ class TestDscParser(unittest.TestCase):
   MdeModulePkg/Universal/PCD/Pei/Pcd.inf {
     <LibraryClasses>
       PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
+    <BuildOptions>
+    <PcdsFeatureFlag>
+      gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|TRUE
   }
   MdeModulePkg/Universal/ReportStatusCodeRouter/Pei/ReportStatusCodeRouterPei.inf
   MdeModulePkg/Universal/StatusCodeHandler/Pei/StatusCodeHandlerPei.inf
@@ -462,6 +470,9 @@ class TestDscParser(unittest.TestCase):
   *_*_IA32_CC_FLAGS = /D EFI_SPECIFICATION_VERSION = 0x0002000A \\
                       /D TIANO_RELEASE_VERSION=0x00080006
 
+[DefaultStores]
+  0 | Standard        # UEFI Standard default
+
 """
 
     def write_file(self, file_path, contents):
@@ -503,8 +514,10 @@ class TestDscParser(unittest.TestCase):
         self.assertEqual(len(dsc_obj.components), 2)
         self.assertEqual(len(dsc_obj.pcds), 5)
         self.assertEqual(len(dsc_obj.build_options), 1)
+        for _, options in dsc_obj.build_options.items():
+          self.assertEqual(len(options), 3)
         self.assertEqual(len(dsc_obj.library_classes), 7)
-        pass
+        self.assertEqual(len(dsc_obj.libraries), 1)
     
     def test_read_dsc_with_variables(self):
         parser = DscParser()
@@ -532,8 +545,8 @@ class TestDscParser(unittest.TestCase):
         for _, items in dsc_obj.library_classes.items():
           for item in items:
             unique_libs.add(item)
-        self.assertEqual(lib_counts, 96)
-        self.assertEqual(len(unique_libs), 60)
+        self.assertEqual(lib_counts, 98)
+        self.assertEqual(len(unique_libs), 62)
 
         # BUILD OPTIONS
         self.assertEqual(len(dsc_obj.build_options), 1, dsc_obj.build_options) # only one type

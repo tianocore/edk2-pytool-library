@@ -20,6 +20,10 @@ class dsc:
         self.build_options = {}
         self.pcds = {}
         self.defines = set()
+        self.default_stores = set()
+
+        # TODO: should we populate the default information into the DSC object?
+        # FOR EXAMPLE: default_stores and skus
     
     def __eq__(self, other):
         ''' This doesn't check for a perfect copy of everything '''
@@ -109,7 +113,22 @@ class dsc_pcd_section_type():
             return False
         return self.pcd_type == other.pcd_type and self.arch == other.arch
 
-
+class dsc_pcd_component_type(dsc_pcd_section_type):
+    ''' This class is uses to define the PCD type inside a component '''
+    def __init__(self, pcdtype):
+        super().__init__(pcdtype)
+    
+    def __repr__(self):
+        return f"Pcds{self.pcd_type}"
+    
+    def __hash__(self):
+        return hash(self.pcd_type)
+    
+    def __eq__(self, other):
+        if type(other) is not dsc_pcd_component_type:
+            return False
+        return self.pcd_type == other.pcd_type
+    
 class sku_id:
     ''' contains the data for a sku '''
 
@@ -140,8 +159,10 @@ class component:
 
     def __init__(self, inf, phases: list = [], source_info=None):
 
-        self.libraries = set()  # a list of libraries that this component uses
-        self.pcds = set()  # a set of PCD's that
+        self.library_classes = set()  # a list of libraries that this component uses
+        self.pcds = {}  # a dictionary of PCD's that are keyed by dsc_pcd_component_type, they are sets
+        self.defines = set()  # a set of defines
+        self.build_options = set()  # a set of build options for this component
         self.inf = inf  # the EDK2 relative path to the source INF
         self.source_info = source_info
 
@@ -211,7 +232,7 @@ class library_class:
     def __eq__(self, other):
         if (type(other) is not library_class):
             return False
-        if (self.libraryclass.lower() == "null"):
+        if self.libraryclass.lower() == "null" and other.libraryclass.lower() == "null":
             return self.inf == other.inf
         return self.libraryclass.lower() == other.libraryclass.lower()
 
@@ -337,6 +358,26 @@ class build_option:
             rep += f"= {self.data}"
         return rep
 
+class default_store:
+    ''' contains the information on a default store. '''
+    ''' 0 | Standard        # UEFI Standard default '''
+
+    def __init__(self, index=0, value="Standard", source_info=None):
+        ''' Local means DEFINE is in front and is localized to that particular section'''
+        self.index = int(index)
+        self.value = value
+        self.source_info = source_info
+
+    def __repr__(self):
+        return f"{self.index} | {self.value}"
+
+    def __hash__(self):
+        return hash(self.index)
+
+    def __eq__(self, other):
+        if (type(other) is not default_store):
+            return False
+        return other.index == self.index
 
 class source_info:
     def __init__(self, file: str, lineno: int = None):

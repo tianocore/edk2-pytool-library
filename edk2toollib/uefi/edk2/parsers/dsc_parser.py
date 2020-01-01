@@ -39,6 +39,8 @@ class SectionProcessor():
         # TODO: check to make sure there's nothing that comes after it?
         if line is None:
             return False
+        if not line.startswith("[") or not line.endswith("]"):
+            return False
         return self._GetSectionHeaderLowercase(line).startswith(self.SECTION_TAG)
 
     def HandleObjectExtraction(self, objects, section_data):
@@ -107,6 +109,8 @@ class SectionProcessor():
             return data
         if data == "":
             return dsc_section_type()
+        if data == None:
+            return None
         data = data.strip(".")  # strip any trailing .'s
         parts = data.split(".")
         arch = parts[0]
@@ -171,7 +175,7 @@ class PcdProcessor(SectionProcessor):
         if data == "":
             return dsc_pcd_section_type(pcd_type)
         parts = data.strip(".").split(".")  # strip any trailing .'s
-        
+
         arch = DEFAULT_SECTION_TYPE if len(parts) < 1 else parts[0]
         if len(parts) == 2:
             sku = parts[1]
@@ -190,9 +194,11 @@ class PcdFeatureFlagProcessor(PcdProcessor):
             return None
         namespace, name, values = data
         if len(values) != 1:
+            logging.debug(f"{self} {values}. Not enough data")
             return None
         value = values[0].strip().upper()
         if value not in ["0", "1", "TRUE", "FALSE"]:
+            logging.debug(f"{self} {value} not acceptable")
             return None
         _, source = self.Consume()
         return pcd(namespace, name, value, source)
@@ -305,6 +311,24 @@ class PcdDynamicHiiProcessor(PcdProcessor):
             return pcd_variable(namespace, name, var_name, var_guid, var_offset, default, attribs, source_info=source)
 
 
+class PcdSuperProcessor():
+    ''' This is a super class that will handle all the PCD processors '''
+    # TODO: create some sort of super class that iterates through each one. How to keep mode consistent?
+    @classmethod
+    def CreateAllPcdProcessors(cls, PrevFunc, ConsumeFunc, ObjectSet) -> list:
+        callbacks = (PrevFunc, ConsumeFunc, ObjectSet)
+        return [
+            PcdFeatureFlagProcessor(*callbacks),
+            PcdFixedAtBuildProcessor(*callbacks),
+            PcdPatchableProcessor(*callbacks),
+            # the dynamic + suffix ones have to be first, otherwise dynamic matches them
+            PcdDynamicDefaultProcessor(*callbacks),
+            PcdDynamicHiiProcessor(*callbacks),
+            PcdDynamicExProcessor(*callbacks),
+            PcdDynamicProcessor(*callbacks)
+        ]
+
+
 class SkuIdProcessor(SectionProcessor):
     SECTION_TAG = "skuids"
 
@@ -335,9 +359,14 @@ class LibraryClassProcessor(SectionProcessor):
         ''' extracts the data model objects from the current state '''
         if line.count("|") != 1:
             return None
-        line, source = self.Consume()
+        if current_section is None:
+            return None
         library_class_name, inf = line.split("|")
+        if library_class_name.count(" ") > 0:
+            return None
+        line, source = self.Consume()
         return library_class(library_class_name, inf, source)
+
 
 class LibraryProcessor(SectionProcessor):
     SECTION_TAG = "libraries"
@@ -363,6 +392,8 @@ class BuildOptionsProcessor(SectionProcessor):
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
         ''' extracts the data model objects from the current state '''
         if line.count("=") < 1:  # if we don't have an equals sign
+            return None
+        if current_section is None:
             return None
         tag, _, data = line.partition("=")
         if tag.count(":") > 1:
@@ -395,9 +426,19 @@ class BuildOptionsProcessor(SectionProcessor):
 class ComponentsProcessor(SectionProcessor):
     SECTION_TAG = "components"
 
+    def __init__(self, PreviewLineFunc, ConsumeLineFunc, ObjectSet=None):
+        super().__init__(PreviewLineFunc, ConsumeLineFunc, ObjectSet)
+        options = (PreviewLineFunc, ConsumeLineFunc)
+        pcd_options = (PreviewLineFunc, ConsumeLineFunc, self._AddPcdOptions)
+        self.processors = [LibraryClassProcessor(*options, self._AddLibraryClass), DefinesProcessor(
+            *options, self._AddDefines), BuildOptionsProcessor(*options, self._AddBuildOptions)]
+        self.processors += PcdSuperProcessor.CreateAllPcdProcessors(*pcd_options)
+
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
         ''' extracts the data model objects from the current state '''
         multi_section = False
+        if current_section is None:
+            return None
         if line.endswith("{"):
             multi_section = True
             line = line.replace("{", "").strip()
@@ -413,12 +454,73 @@ class ComponentsProcessor(SectionProcessor):
 
     def ExtractSubSection(self, comp):
         while True:
-            line, _ = self.Consume()
+            line = self.Preview()
+            if line is None:
+                return False
+            line, source = self.Consume()
             if line == "}":
                 return False
+            if not self._ProcessSubSectionHeader(line, comp):
+                logging.info(f"UNKNOWN LINE: {line} @ {source}")
+                # TODO: should we raise an exception
+
+    def _ProcessSubSectionHeader(self, line, comp):
+        if line.startswith("<") and line.endswith(">"):
+            for processor in self.processors:
+                header = line.strip("<").strip(">").strip().lower()
+                if header == processor.SECTION_TAG:
+                    section = processor.GetSectionData(header, None)
+                    if processor.Storage == self._AddPcdOptions:
+                        section = dsc_pcd_component_type(section.pcd_type)
+                    items = processor.ExtractObjects(section)
+                    processor.Storage(comp, items, section)
+                    return True
+
+        return False
+
+    def _AddBuildOptions(self, comp: component, items, section):
+        for item in items:
+            comp.build_options.add(item)
+
+    def _AddDefines(self, comp: component, items, section):
+        for item in items:
+            comp.build_options.add(item)
+
+    def _AddLibraryClass(self, comp: component, items, section):
+        for item in items:
+            comp.library_classes.add(item)
+
+    def _AddPcdOptions(self, comp: component, items, section):
+        if section not in comp.pcds:
+            comp.pcds[section] = set()
+        for item in items:
+            comp.pcds[section].add(item)
 
     def GetSectionData(self, line, source):
         return self.GetStandardSectionData(line, source)
+
+
+class DefaultStoresProcessor(SectionProcessor):
+    SECTION_TAG = "defaultstores"
+
+    def ExtractObjectFromLine(self, line, current_section=None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line.count("|") != 1:  # if we don't know what to do with it, don't worry about it
+            return None
+
+        parts = line.split("|", 1)
+        index = int(str(parts[0]).strip())
+        if len(parts) == 1:
+            return None
+        name = parts[1].strip()
+        if name.count(" ") > 0:
+            return None  # we don't know what to do with this
+
+        line, source = self.Consume()
+        return default_store(index, name, source_info=source)
+
+    def GetSectionData(self, line, source):
+        return None
 
 
 class DscParser(LimitedDscParser):
@@ -447,21 +549,15 @@ class DscParser(LimitedDscParser):
         # just go through and process as many sections as we can find
         self.dsc = dsc(filepath)
         callbacks = (self._PreviewNextLine, self._ConsumeNextLine)
-        processors = [
-            PcdFeatureFlagProcessor(*callbacks, self._AddPcdItem),
-            PcdFixedAtBuildProcessor(*callbacks, self._AddPcdItem),
-            PcdPatchableProcessor(*callbacks, self._AddPcdItem),
-            # the dynamic + suffix ones have to be first, otherwise dynamic matches them
-            PcdDynamicDefaultProcessor(*callbacks, self._AddPcdItem),
-            PcdDynamicHiiProcessor(*callbacks, self._AddPcdItem),
-            PcdDynamicExProcessor(*callbacks, self._AddPcdItem),
-            PcdDynamicProcessor(*callbacks, self._AddPcdItem),
+        processors = PcdSuperProcessor.CreateAllPcdProcessors(*callbacks, self._AddPcdItem)
+        processors += [
             DefinesProcessor(*callbacks, self._AddDefineItem),
             LibraryProcessor(*callbacks, self._AddLibraryItem),
             LibraryClassProcessor(*callbacks, self._AddLibraryClassItem),
             SkuIdProcessor(*callbacks, self._AddSkuItem),
             ComponentsProcessor(*callbacks, self._AddCompItem),
             BuildOptionsProcessor(*callbacks, self._AddBuildItem),
+            DefaultStoresProcessor(*callbacks, self._AddDefaultStoreItem),
         ]
         while not self._IsAtEndOfLines:
             success = False
@@ -480,8 +576,10 @@ class DscParser(LimitedDscParser):
         self.dsc.defines.add(item)
 
     def _AddSkuItem(self, item, section):
-        # figure out where this goes
         self.dsc.skus.add(item)
+
+    def _AddDefaultStoreItem(self, item, section):
+        self.dsc.default_stores.add(item)
 
     def _AddSectionedItem(self, item, section, obj, allowed_type=None):
         if type(section) is list:
@@ -497,7 +595,7 @@ class DscParser(LimitedDscParser):
 
     def _AddLibraryClassItem(self, item, section):
         self._AddSectionedItem(item, section, self.dsc.library_classes, library_class)
-    
+
     def _AddLibraryItem(self, item, section):
         self._AddSectionedItem(item, section, self.dsc.libraries, library)
 

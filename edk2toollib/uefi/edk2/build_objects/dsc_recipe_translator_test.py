@@ -206,7 +206,8 @@ class TestRecipeParser(unittest.TestCase):
 [LibraryClasses.common.UEFI_DRIVER]
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
 
-[LibraryClasses.common.UEFI_APPLICATION] PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
+[LibraryClasses.common.UEFI_APPLICATION] 
+  PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
   PrintLib|MdeModulePkg/Library/DxePrintLibPrint2Protocol/DxePrintLibPrint2Protocol.inf
 
 [LibraryClasses.common.DXE_RUNTIME_DRIVER]
@@ -432,7 +433,9 @@ class TestRecipeParser(unittest.TestCase):
   MdeModulePkg/Universal/PrintDxe/PrintDxe.inf
   MdeModulePkg/Universal/DriverSampleDxe/DriverSampleDxe.inf {
     <LibraryClasses>
-    PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
+      PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
+    <PcdsFeatureFlag>
+      gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|TRUE
   }
   MdeModulePkg/Application/VariableInfo/VariableInfo.inf
   MdeModulePkg/Universal/PlatformDriOverrideDxe/PlatformDriOverrideDxe.inf
