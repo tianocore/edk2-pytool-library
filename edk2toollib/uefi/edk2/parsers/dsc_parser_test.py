@@ -545,8 +545,8 @@ class TestDscParser(unittest.TestCase):
         for _, items in dsc_obj.library_classes.items():
           for item in items:
             unique_libs.add(item)
-        self.assertEqual(lib_counts, 98)
-        self.assertEqual(len(unique_libs), 62)
+        self.assertEqual(lib_counts, 96)
+        self.assertEqual(len(unique_libs), 61)
 
         # BUILD OPTIONS
         self.assertEqual(len(dsc_obj.build_options), 1, dsc_obj.build_options) # only one type

@@ -232,6 +232,7 @@ class library_class:
     def __eq__(self, other):
         if (type(other) is not library_class):
             return False
+        # if they're both null
         if self.libraryclass.lower() == "null" and other.libraryclass.lower() == "null":
             return self.inf == other.inf
         return self.libraryclass.lower() == other.libraryclass.lower()
