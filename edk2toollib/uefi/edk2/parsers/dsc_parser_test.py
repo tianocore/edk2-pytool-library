@@ -502,8 +502,8 @@ class TestDscParser(unittest.TestCase):
         self.assertEqual(len(dsc_obj.skus), 3)
         self.assertEqual(len(dsc_obj.components), 2)
         self.assertEqual(len(dsc_obj.pcds), 5)
-        self.assertEqual(len(dsc_obj.build_options), 3)
-        self.assertEqual(len(dsc_obj.libraries), 7)
+        self.assertEqual(len(dsc_obj.build_options), 1)
+        self.assertEqual(len(dsc_obj.library_classes), 7)
         pass
     
     def test_read_dsc_with_variables(self):
@@ -526,20 +526,19 @@ class TestDscParser(unittest.TestCase):
         self.assertEqual(pcd_counts, 34)  # there are 34 pcds total
 
         # LIBRARYCLASSES
-        self.assertEqual(len(dsc_obj.libraries), 8)
-        lib_counts = sum([len(x) for _, x in dsc_obj.libraries.items()])
+        self.assertEqual(len(dsc_obj.library_classes), 8)
+        lib_counts = sum([len(x) for _, x in dsc_obj.library_classes.items()])
         unique_libs = set()
-        for _, items in dsc_obj.libraries.items():
+        for _, items in dsc_obj.library_classes.items():
           for item in items:
             unique_libs.add(item)
         self.assertEqual(lib_counts, 96)
         self.assertEqual(len(unique_libs), 60)
 
         # BUILD OPTIONS
-        self.assertEqual(len(dsc_obj.build_options), 3, dsc_obj.build_options)
+        self.assertEqual(len(dsc_obj.build_options), 1, dsc_obj.build_options) # only one type
 
         # COMPONENTS
-        print(dsc_obj.components)
         self.assertEqual(len(dsc_obj.components), 2)
         comp_counts = sum([len(x) for _, x in dsc_obj.components.items()])
         self.assertEqual(comp_counts, 76)

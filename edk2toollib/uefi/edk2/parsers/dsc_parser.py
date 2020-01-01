@@ -171,8 +171,6 @@ class PcdProcessor(SectionProcessor):
         if data == "":
             return dsc_pcd_section_type(pcd_type)
         parts = data.strip(".").split(".")  # strip any trailing .'s
-        print(data)
-        print(parts)
         
         arch = DEFAULT_SECTION_TYPE if len(parts) < 1 else parts[0]
         if len(parts) == 2:
@@ -341,6 +339,20 @@ class LibraryClassProcessor(SectionProcessor):
         library_class_name, inf = line.split("|")
         return library_class(library_class_name, inf, source)
 
+class LibraryProcessor(SectionProcessor):
+    SECTION_TAG = "libraries"
+
+    def GetSectionData(self, line, source):
+        return self.GetStandardSectionData(line, source)
+
+    def ExtractObjectFromLine(self, line, current_section=None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if not line.endswith(".inf"):
+            return None
+        inf = line.strip()
+        _, source = self.Consume()
+        return library(inf, source)
+
 
 class BuildOptionsProcessor(SectionProcessor):
     """ Parses build option information """
@@ -445,6 +457,7 @@ class DscParser(LimitedDscParser):
             PcdDynamicExProcessor(*callbacks, self._AddPcdItem),
             PcdDynamicProcessor(*callbacks, self._AddPcdItem),
             DefinesProcessor(*callbacks, self._AddDefineItem),
+            LibraryProcessor(*callbacks, self._AddLibraryItem),
             LibraryClassProcessor(*callbacks, self._AddLibraryClassItem),
             SkuIdProcessor(*callbacks, self._AddSkuItem),
             ComponentsProcessor(*callbacks, self._AddCompItem),
@@ -484,6 +497,9 @@ class DscParser(LimitedDscParser):
 
     def _AddLibraryClassItem(self, item, section):
         self._AddSectionedItem(item, section, self.dsc.library_classes, library_class)
+    
+    def _AddLibraryItem(self, item, section):
+        self._AddSectionedItem(item, section, self.dsc.libraries, library)
 
     def _AddCompItem(self, item, section):
         self._AddSectionedItem(item, section, self.dsc.components, component)
