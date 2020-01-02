@@ -45,6 +45,10 @@ class FdProcessor(SectionProcessor):
             raw_line = self.Preview()
             if self.CheckForEnd(raw_line):
                 break
+            define = self.ProcessDefine(raw_line, current_section)
+            if define is not None:
+                fd.defines.add(token)
+                continue
             token = self.ExtractTokenFromLine(raw_line, current_section)
             if token is None:
                 break
@@ -235,14 +239,14 @@ class FdfParser(LimitedFdfParser, AccurateParser):
                     break
             if not success and not self._IsAtEndOfLines:
                 line, source = self._ConsumeNextLine()
-                self.Logger.warning(f"FDF Unknown line {line} @{source}")
+                self.Logger.info(f"FDF Unknown line {line} @{source}")
 
         self.Parsed = True
 
         return self.fdf
-    
+
     def _PreviewNextLine(self, until_balanced=False):
-        if not until_balanced: 
+        if not until_balanced:
             return super()._PreviewNextLine()
         balance = 0
         line = self._PreviewNextLine()
@@ -260,8 +264,8 @@ class FdfParser(LimitedFdfParser, AccurateParser):
         return " ".join(lines)
 
     def _ConsumeNextLine(self, until_balanced=False):
-        if not until_balanced: 
-            return super()._ConsumeNextLine()        
+        if not until_balanced:
+            return super()._ConsumeNextLine()
         raise RuntimeError()
 
     def _AddRuleItem(self, item, section):

@@ -116,7 +116,7 @@ class SectionProcessor():
             return None
         data = data.strip(".")  # strip any trailing .'s
         parts = data.split(".")
-        arch = parts[0]
+        arch = parts[0].strip()
         module_type = parts[1] if len(parts) > 1 else DEFAULT_SECTION_TYPE
         if len(parts) > 2:
             raise ValueError(f"Invalid section header {line} {source}")
@@ -135,7 +135,7 @@ class DefinesProcessor(SectionProcessor):
         name = str(parts[0]).strip()
         if name.count(" ") > 0:
             return None  # we don't know what to do with this
-        value = parts[1]
+        value = parts[1].strip()
 
         line, source = self.Consume()
         return definition(name, value, local=False, source_info=source)
@@ -158,10 +158,12 @@ class PcdProcessor(SectionProcessor):
         if current_section is None:
             return None
         components = line.split("|", 1)
-        name_data = components[0]
+        name_data = components[0].strip()
         if name_data.count(".") != 1:
             return None
         namespace, name = name_data.split(".")
+        namespace = namespace.strip()
+        name = name.strip()
         if len(components) == 1:
             return None
         parts = components[1].strip().split("|")
@@ -209,7 +211,10 @@ class PcdFeatureFlagProcessor(PcdProcessor):
 
 class PcdFixedAtBuildProcessor(PcdProcessor):
     SECTION_TAG = "pcdsfixedatbuild"
-    ''' FixedAtBuild can be typed or not '''
+    ''' FixedAtBuild can be typed or not
+    PcdTokenSpaceGuidCName.PcdCName|Value
+    PcdTokenSpaceGuidCName.PcdCName|Value[|DatumType[|MaximumDatumSize]]
+     '''
 
     def ExtractObjectFromLine(self, line, current_section=None) -> object:
         data = super().ExtractObjectFromLine(line, current_section)
@@ -234,32 +239,14 @@ class PcdFixedAtBuildProcessor(PcdProcessor):
         return pcd_typed(namespace, name, value, data_type, max_size, source_info=source)
 
 
-class PcdPatchableProcessor(PcdProcessor):
+class PcdPatchableProcessor(PcdFixedAtBuildProcessor):
     SECTION_TAG = "pcdspatchableinmodule"
     ''' PcdTokenSpaceGuidCName.PcdCName|Value[|DatumType[|MaximumDatumSize]] '''
-
-    def ExtractObjectFromLine(self, line, current_section=None) -> object:
-        data = super().ExtractObjectFromLine(line, current_section)
-        if data is None:
-            return None
-        namespace, name, values = data
-        if len(values) > 3 or len(values) < 2:
-            return None
-        value = values[0].strip()
-        data_type = values[1].strip().upper()
-        if data_type == "VOID*" and len(values) == 2:
-            return None
-        _, source = self.Consume()
-        if len(values) == 2:
-            return pcd_typed(namespace, name, value, data_type, source_info=source)
-
-        max_size = int(values[2])
-        return pcd_typed(namespace, name, value, data_type, max_size, source_info=source)
 
 
 class PcdDynamicProcessor(PcdFixedAtBuildProcessor):
     SECTION_TAG = "pcdsdynamic"
-    ''' 
+    '''
     The same as FixedAtBuild
     PcdTokenSpaceGuidCName.PcdCName|Value
     PcdTokenSpaceGuidCName.PcdCName|Value[|DatumType[|MaximumDatumSize]] '''
@@ -268,7 +255,7 @@ class PcdDynamicProcessor(PcdFixedAtBuildProcessor):
 
 class PcdDynamicExProcessor(PcdDynamicProcessor):
     SECTION_TAG = "pcdsdynamicex"
-    ''' 
+    '''
     The same as Patchable
     PcdTokenSpaceGuidCName.PcdCName|Value
     PcdTokenSpaceGuidCName.PcdCName|Value[|DatumType[|MaximumDatumSize]] '''
@@ -277,7 +264,7 @@ class PcdDynamicExProcessor(PcdDynamicProcessor):
 
 class PcdDynamicDefaultProcessor(PcdDynamicProcessor):
     SECTION_TAG = "pcdsdynamicdefault"
-    ''' 
+    '''
     The same as Patchable
     PcdTokenSpaceGuidCName.PcdCName|Value
     PcdTokenSpaceGuidCName.PcdCName|Value[|DatumType[|MaximumDatumSize]] '''
@@ -286,7 +273,7 @@ class PcdDynamicDefaultProcessor(PcdDynamicProcessor):
 
 class PcdDynamicHiiProcessor(PcdProcessor):
     SECTION_TAG = "pcdsdynamichii"
-    ''' 
+    '''
     PcdTokenSpaceGuidCName.PcdCName|VariableName|VariableGuid|VariableOffset[|HiiDefaultValue[|HiiAttrubte]]
     The VariableName field in the HII format PCD entry must not be an empty string.
     '''
@@ -341,8 +328,8 @@ class SkuIdProcessor(SectionProcessor):
             return None
         line, source = self.Consume()
         parts = line.split("|")
-        id_num = parts[0]
-        name = parts[1]
+        id_num = parts[0].strip()
+        name = parts[1].strip()
         if len(parts) == 2:
             return sku_id(id_num, name)
         elif len(parts) == 3:
@@ -365,6 +352,8 @@ class LibraryClassProcessor(SectionProcessor):
         if current_section is None:
             return None
         library_class_name, inf = line.split("|")
+        library_class_name = library_class_name.strip()
+        inf = inf.strip()
         if library_class_name.count(" ") > 0:
             return None
         line, source = self.Consume()
@@ -410,20 +399,45 @@ class BuildOptionsProcessor(SectionProcessor):
         replace = False
         if data.startswith("="):
             replace = True
-            data = data[1:]
+            data = data[1:].strip()
 
         tag_parts = tag.split(":", 1)
         family = None
         if len(tag_parts) > 1:
-            family = tag_parts[0]
-            tag_parts = tag_parts[1]
+            family = tag_parts[0].strip()
+            tag_parts = tag_parts[1].strip()
         else:
-            tag_parts = tag_parts[0]
+            tag_parts = tag_parts[0].strip()
         target, tagname, arch, tool, attribute = tag_parts.split("_")
         return build_option(tool, attribute, data, target, tagname, arch, family, replace, source_info=source)
 
     def GetSectionData(self, line, source):
-        return self.GetStandardSectionData(line, source)
+        data = SectionProcessor.GetSectionData(self, line, source)
+        if type(data) == list:
+            return data
+        if data == "":
+            return dsc_buildoption_section_type()
+        if data == None:
+            return None
+        data = data.strip(".")  # strip any trailing .'s
+        parts = data.split(".")
+        arch = parts[0]
+        try:  # if we fail to generate the section type
+            if len(parts) == 1:
+                return dsc_buildoption_section_type(arch)
+            codebase = parts[1]
+            if len(parts) == 2:
+                return dsc_buildoption_section_type(arch, codebase)
+            if len(parts) > 3:
+                raise ValueError(f"Invalid section header {line} {source}")
+            module_type = parts[2]
+
+            return dsc_buildoption_section_type(arch, codebase, module_type)
+        except ValueError:
+            logging.error(f"Invalid BuildOptions Header: {source}")
+            raise
+
+
 
 
 class ComponentsProcessor(SectionProcessor):
@@ -538,7 +552,7 @@ class AccurateParser():
 
     def ResetLineIterator(self):
         self._LineIter = 0
-    
+
     def _PreviewNextLine(self):
         ''' Previews the next line without consuming it '''
         if self._IsAtEndOfLines:

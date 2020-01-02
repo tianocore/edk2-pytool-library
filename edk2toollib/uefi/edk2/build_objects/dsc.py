@@ -24,7 +24,7 @@ class dsc:
 
         # TODO: should we populate the default information into the DSC object?
         # FOR EXAMPLE: default_stores and skus
-    
+
     def __eq__(self, other):
         ''' This doesn't check for a perfect copy of everything '''
         ''' this is mainly focused on does it define the same things '''
@@ -37,9 +37,9 @@ class dsc:
         if other.library_classes != self.library_classes:
             return False
         if other.build_options != self.build_options:
-            return False        
+            return False
         if other.pcds != self.pcds:
-            return False        
+            return False
         if other.defines != self.defines:
             return False
         return True
@@ -50,8 +50,8 @@ dsc_module_types = ["COMMON", "BASE", "SEC", "PEI_CORE", "PEIM", "DXE_CORE", "DX
 
 class dsc_section_type:
     def __init__(self, arch="common", module_type="common"):
-        self.arch = arch.upper()
-        self.module_type = module_type.upper()
+        self.arch = arch.upper().strip()
+        self.module_type = module_type.upper().strip()
         if self.module_type not in dsc_module_types:
             raise ValueError(f"{module_type} is not a proper module type for dsc section")
 
@@ -72,11 +72,23 @@ class dsc_section_type:
 
 
 class dsc_buildoption_section_type(dsc_section_type):
+    '''
+    [BuildOptions.$(arch).CodeBase.Edk2ModuleType]
+    [BuildOptions.$(arch).CodeBase]
+    [BuildOptions.common.CodeBase]
+    [BuildOptions.$(arch)]
+    [BuildOptions.common]
+    [BuildOptions]
+    '''
     def __init__(self, arch="common", codebase="common", module_type="common"):
         super().__init__(arch, module_type)
-        self.codebase = codebase.upper()
-        if codebase not in ["COMMON", "EDK", "EDKII"]:
+        self.codebase = codebase.upper().strip()
+        if not self.IsValidCodeBase(self.codebase):
             raise ValueError(f"{codebase} is not a valid codebase type")
+
+    @classmethod
+    def IsValidCodeBase(cls, codebase):
+        return codebase in ["COMMON", "EDK", "EDKII"]
 
     def __hash__(self):
         return hash((super().__hash__(), self.codebase))
@@ -96,8 +108,8 @@ dsc_pcd_types = ["FEATUREFLAG", "PATCHABLEINMODULE", "FIXEDATBUILD", "DYNAMIC", 
 
 class dsc_pcd_section_type():
     def __init__(self, pcdtype, arch="common", sku="DEFAULT"):
-        self.arch = arch.upper()
-        self.pcd_type = pcdtype.upper()
+        self.arch = arch.upper().strip()
+        self.pcd_type = pcdtype.upper().strip()
         if self.pcd_type not in dsc_pcd_types:
             raise ValueError(f"{pcdtype} is not a proper PCD type")
         self.sku = sku.upper()
@@ -117,18 +129,18 @@ class dsc_pcd_component_type(dsc_pcd_section_type):
     ''' This class is uses to define the PCD type inside a component '''
     def __init__(self, pcdtype):
         super().__init__(pcdtype)
-    
+
     def __repr__(self):
         return f"Pcds{self.pcd_type}"
-    
+
     def __hash__(self):
         return hash(self.pcd_type)
-    
+
     def __eq__(self, other):
         if type(other) is not dsc_pcd_component_type:
             return False
         return self.pcd_type == other.pcd_type
-    
+
 class sku_id:
     ''' contains the data for a sku '''
 
@@ -209,15 +221,15 @@ class library:
     def __init__(self, inf: str, source_info=None):
         self.inf = inf
         self.source_info = source_info
-    
+
     def __eq__(self, other):
         if type(other) is not library:
             return False
         return self.inf == other.inf
-    
+
     def __hash__(self):
         return hash(self.inf) #TODO how to figure out if they hash to the same spot?
-    
+
     def __repr__(self):
         return f"{self.inf} @ {self.source_info}"
 

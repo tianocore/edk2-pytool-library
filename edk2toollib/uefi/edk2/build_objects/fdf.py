@@ -9,6 +9,7 @@ class fdf_fd():
         self.tokens = set()
         self.pcds = set()
         self.regions = set()
+        self.defines = set()
 
 class fdf_fd_token():
     valid_token_names = ["BASEADDRESS", "SIZE", "ERASEPOLARITY", "BLOCKSIZE", "NUMBLOCKS"]
@@ -19,24 +20,24 @@ class fdf_fd_token():
         self.source_info = source_info
 
         if not fdf_fd_token.IsValidTokenName(self.name):
-            raise ValueError(f"Invalid FD named token: {name} {source_info}")  
+            raise ValueError(f"Invalid FD named token: {name} {source_info}")
 
     @classmethod
     def IsValidTokenName(cls, name):
         return name.upper() in cls.valid_token_names
-    
+
     def __eq__(self, other):
         if type(other) is not fdf_fd_token:
             return False
         return other.name.upper() == self.name.upper()
-    
+
     def __hash__(self):
         return hash(self.name.upper())
 
 class fdf_fd_region():
     valid_region_types = ["DATA", "FV", "FILE", "INF", "CAPSULE", "NONE"]
     def __init__(self, offset, size, reg_type=None, source_info=None):
-        if type(offset) is str and offset.startswith("0x"):            
+        if type(offset) is str and offset.startswith("0x"):
             offset = int(offset[2:], 16)
         self.offset = offset
         self.source_info = source_info
@@ -47,20 +48,20 @@ class fdf_fd_region():
         self.pcds = []
 
         if not fdf_fd_region.IsRegionType(self.type):
-            raise ValueError(f"Invalid FD region type: {self.type} {source_info}")  
+            raise ValueError(f"Invalid FD region type: {self.type} {source_info}")
 
     @classmethod
     def IsRegionType(cls, name):
         return name.upper() in cls.valid_region_types
-    
+
     def __eq__(self, other):
         if type(other) is not fdf_fd_region:
             return False
         return other.offset == self.offset
-    
+
     def __hash__(self):
         return hash(self.offset)
-    
+
 class fdf_fv():
     def __init__(self, source_info):
         self.source_info = source_info
@@ -94,4 +95,3 @@ class fdf_rule_section():
 class fdf_rule():
     def __init__(self, source_info):
         self.source_info = source_info
-
