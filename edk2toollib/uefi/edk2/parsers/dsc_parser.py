@@ -44,8 +44,11 @@ class SectionProcessor():
         return self._GetSectionHeaderLowercase(line).startswith(self.SECTION_TAG)
 
     def HandleObjectExtraction(self, objects, section_data):
-        for obj in objects:
-            self.Storage(obj, section_data)
+        if type(objects) is not list and type(objects) is not set:
+            self.Storage(objects, section_data)
+        else:
+            for obj in objects:
+                self.Storage(obj, section_data)
 
     def GetSectionData(self, line, source):
         ''' returns the data in whatever format you want '''

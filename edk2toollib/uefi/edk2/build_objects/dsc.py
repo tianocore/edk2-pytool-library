@@ -53,7 +53,7 @@ class dsc_section_type:
         self.arch = arch.upper()
         self.module_type = module_type.upper()
         if self.module_type not in dsc_module_types:
-            raise ValueError(f"{module_type} is not a proper module type")
+            raise ValueError(f"{module_type} is not a proper module type for dsc section")
 
     def __hash__(self):
         arch = "*" if (self.arch == "COMMON" or self.arch == "DEFAULT") else self.arch

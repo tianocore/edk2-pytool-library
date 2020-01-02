@@ -1,21 +1,14 @@
-# @file recipe_parser_test.py
-# Contains unit test routines for the fdf => recipe functionality.
-#
-#
-# Copyright (c) Microsoft Corporation
-#
-# SPDX-License-Identifier: BSD-2-Clause-Patent
-##
-
 import unittest
 import os
 import tempfile
-from edk2toollib.uefi.edk2.parsers.limited_fdf_parser import LimitedFdfParser
 from edk2toollib.uefi.edk2.parsers.fdf_parser import FdfParser
+from edk2toollib.uefi.edk2.build_objects.fdf import fdf
+from edk2toollib.uefi.edk2.build_objects.fdf_translator import FdfTranslator
+import tempfile
 
 
-class TestFdfParser(unittest.TestCase):
-    # Taken from https://edk2-docs.gitbooks.io/edk-ii-fdf-specification/content/v/release/1.28/appendix_b_sample_edk_ii_fdf_file.html
+class TestRecipeParser(unittest.TestCase):
+        # Taken from https://edk2-docs.gitbooks.io/edk-ii-fdf-specification/content/v/release/1.28/appendix_b_sample_edk_ii_fdf_file.html
     test_fdf = """
 ## @file
 # This is NT32 FDF file with UEFI HII features enabled
@@ -423,54 +416,24 @@ FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
 """
 
     def write_file(self, file_path, contents):
+        temp_dir = tempfile.mkdtemp()
+        file_path = os.path.join(temp_dir, file_path)
         f = open(file_path, "w")
         f.write(contents)
         f.close()
+        return file_path
 
-    def test_null_creation(self):
+    def test_fdf_to_file_and_back_again(self):
+        filepath = self.write_file("test.fdf", self.test_fdf)
+        print(filepath)
+        # parse the origional FDF
         parser = FdfParser()
-        self.assertIsNotNone(parser)
-
-    def test_same_as_old_parser(self):
-        parser = FdfParser()
-        old_parser = LimitedFdfParser()
-
-        temp_dir = tempfile.mkdtemp()
-        file_path = os.path.join(temp_dir, "test.fdf")
-        print(file_path)
-        self.write_file(file_path, self.test_fdf)
-        # use the new parser
-        parser.ParseFile(file_path)
-        # use the old parser
-        old_parser.ParseFile(file_path)
-        # since the old parser used all the libs it found, so we can't compare apples to apples
-        pass
-
-    def test_read_fdf(self):
-        parser = FdfParser()
-        temp_dir = tempfile.mkdtemp()
-        file_path = os.path.join(temp_dir, "test.fdf")
-        print(file_path)
-        self.write_file(file_path, self.test_fdf)
-        # use the new parser
-        fdf_obj = parser.ParseFile(file_path)
-        # since the old parser used all the libs it found, so we can't compare apples to apples
-        self.assertNotEqual(fdf_obj, None)
-        pass
-    
-    def test_read_fdf_include(self):
-        parser = FdfParser()
-        temp_dir = tempfile.mkdtemp()
-        file_path = os.path.join(temp_dir, "test.inc.fdf")
-        file_path2 = os.path.join(temp_dir, "test.fdf")
-        print(file_path)
-        print(file_path2)
-        self.write_file(file_path, self.test_fdf)
-        self.write_file(file_path2, f"!include {file_path}")
-        # use the new parser
-        fdf_obj = parser.ParseFile(file_path2)
-        # since the old parser used all the libs it found, so we can't compare apples to apples
-        self.assertNotEqual(fdf_obj, None)
-        self.fail()
-        pass
-  
+        fdf_obj = parser.ParseFile(filepath)
+        # Write out to disk
+        test_path = os.path.join(os.path.dirname(filepath), "test2.fdf")
+        FdfTranslator.fdf_to_file(fdf_obj, test_path)
+        # parse in the outputted FDF
+        parser2 = FdfParser()
+        print(test_path)
+        fdf_obj2 = parser2.ParseFile(test_path)
+        self.assertEqual(fdf_obj, fdf_obj2)

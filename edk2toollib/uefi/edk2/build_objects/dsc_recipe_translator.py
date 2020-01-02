@@ -5,6 +5,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 import os
+import logging
 from edk2toollib.uefi.edk2.build_objects.dsc import *
 from edk2toollib.uefi.edk2.build_objects.recipe import recipe
 
