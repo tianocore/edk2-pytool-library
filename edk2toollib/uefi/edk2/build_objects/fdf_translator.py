@@ -48,7 +48,10 @@ class FdfTranslator():
         elif type(obj) is fdf_fd:
             lines += cls._GetFdfLinesFromFdfObj(obj.tokens, depth)
             lines += cls._GetFdfLinesFromFdfObj(obj.defines, depth)
-            lines += cls._GetFdfLinesFromFdfObj(obj.regions, depth)
+            # TODO: regions must be defined in ascending order, so I'll work on this
+            regions = list(obj.regions)
+            regions.sort()
+            lines += cls._GetFdfLinesFromFdfObj(regions, depth)
 
         elif type(obj) is fdf_fd_token:
             tok_str = f"{depth_pad}{obj.name} =\t{obj.value}"

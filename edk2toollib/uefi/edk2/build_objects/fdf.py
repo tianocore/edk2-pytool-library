@@ -79,6 +79,11 @@ class fdf_fd_region():
     def __hash__(self):
         return hash(self.offset)
 
+    def __gt__(self, other):
+        if type(other) is not fdf_fd_region:
+            return False
+        return self.offset > other.offset
+
 class fdf_fd_region_pcd():
     ''' EX: SET gFlashDevicePkgTokenSpaceGuid.PcdEfiMemoryMapped = TRUE '''
     def __init__(self, token_space, name, value, source_info=None):
