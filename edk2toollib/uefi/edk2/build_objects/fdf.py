@@ -33,9 +33,12 @@ class fdf_fd():
 
     def __add__(self, other):
         if type(other) != fdf_fd:
-            super().__add__(other)
-
-        return "BOB"
+            return super().__add__(other)
+        fd = fdf_fd()
+        fd.tokens = self.tokens + other.tokens
+        fd.regions = self.regions + other.tokens
+        fd.defines = self.defines + other.defines
+        return fd
 
 
 class fdf_fd_token():
@@ -130,16 +133,51 @@ class fdf_fd_region_data():
 class fdf_fv():
     def __init__(self):
         self.defines = set()
-        pass
+        self.tokens = set()
+        self.pcds = set()
+
     def __add__(self, other):
         if type(other) != fdf_fv:
-            return False
+            return super().__add__(other)
         print("FV_ADD")
         new_fv = fdf_fv()
         new_fw.defines = self.defines + other.defines
+        new_fw.tokens = self.tokens + other.tokens
+        new_fw.pcds = self.pcds + other.pcds
         print(other)
         print(self)
         return new_fw
+
+    def __eq__(self, other):
+        if type(other) != fdf_fv:
+            return False
+        return self.defines == other.defines and other.tokens == self.tokens and self.pcds == other.pcds
+
+class fdf_fv_token():
+
+    valid_fv_token_names = ["FVBASEADDRESS", "FVALIGNMENT", "FVNAMEGUID", "BLOCKSIZE", "ERASE_POLARITY", "MEMORY_MAPPED", "STICKY_WRITE", "LOCK_CAP", "LOCK_STATUS", "WRITE_DISABLED_CAP", "WRITE_ENABLED_CAP","WRITE_STATUS", "WRITE_LOCK_CAP","WRITE_LOCK_STATUS","READ_DISABLED_CAP","READ_ENABLED_CAP","READ_STATUS","READ_LOCK_CAP","READ_LOCK_STATUS"]
+    def __init__(self, name, value, source_info=None):
+        self.name = name
+        self.value = value
+        self.source_info = source_info
+
+        if not fdf_fv_token.IsValidTokenName(self.name):
+            raise ValueError(f"Invalid FD named token: {name} {source_info}")
+
+    @classmethod
+    def IsValidTokenName(cls, name):
+        return name in cls.valid_fv_token_names
+
+    def __eq__(self, other):
+        if type(other) is not fdf_fv_token:
+            return False
+        return other.name.upper() == self.name.upper()
+
+    def __hash__(self):
+        return hash(self.name.upper())
+
+    def __repr__(self):
+        return f"FDF_FV_TOKEN: {self.name} = {self.value} @ {self.source_info}"
 
 class fdf_capsule():
     def __init__(self, source_info):

@@ -44,6 +44,7 @@ class FdfTranslator():
             # FV
             for header, x in obj.fvs.items():
                 lines.append(f"{depth_pad}[Fv{header}]")
+                lines += cls._GetFdfLinesFromFdfObj(x, depth)
 
         elif type(obj) is fdf_fd:
             lines += cls._GetFdfLinesFromFdfObj(obj.tokens, depth)
@@ -77,6 +78,13 @@ class FdfTranslator():
                 def_str = "DEFINE " + def_str
             lines.append(depth_pad + def_str)
 
+        elif type(obj) is fdf_fv:
+            lines += cls._GetFdfLinesFromFdfObj(obj.defines, depth)
+            lines += cls._GetFdfLinesFromFdfObj(obj.tokens, depth)
+            lines += cls._GetFdfLinesFromFdfObj(obj.pcds, depth)
+
+        elif type(obj) is fdf_fv_token:
+            lines.append(f"{depth_pad}{obj.name} =\t{obj.value}")
         else:
             logging.warning(f"UNKNOWN OBJECT {obj}")
 

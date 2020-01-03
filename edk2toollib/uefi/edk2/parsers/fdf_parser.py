@@ -13,8 +13,8 @@ from edk2toollib.uefi.edk2.parsers.dsc_parser import SectionProcessor
 from edk2toollib.uefi.edk2.parsers.dsc_parser import AccurateParser
 import os
 
-def split_strip(data, delimit=" "):
-    return [str(x).strip() for x in data.split(delimit)]
+def split_strip(data, delimit=" ", limit=-1):
+    return [str(x).strip() for x in data.split(delimit, limit)]
 
 
 class DefinesProcessor(SectionProcessor):
@@ -25,7 +25,7 @@ class DefinesProcessor(SectionProcessor):
         if line.count("=") < 1:  # if we don't know what to do with it, don't worry about it
             return None
 
-        parts = line.split("=", 1)
+        parts = split_strip(line, "=", 1)
         name = str(parts[0]).strip()
         if name.count(" ") > 0:
             return None  # we don't know what to do with this
@@ -194,9 +194,52 @@ class FvProcessor(SectionProcessor, WholeSectionProcessor):
             if define is not None:
                 fv.defines.add(token)
                 continue
+            token = self.ExtractTokenFromLine(raw_line, current_section)
+            if token is not None:
+                fv.tokens.add(token)
+                continue
+            apriori = self.ExtractApriori(raw_line, current_section)
+            if apriori is not None:
+                continue
+            inf = self.ExtractFvInfFromLine(raw_line, current_section)
+            if inf is not None:
+                continue
+            print(f"Unable to extract token {raw_line}")
             break
         return fv
 
+    def ExtractTokenFromLine(self, line, current_section):
+        if line.count("=") != 1:
+            return None
+        name, value = split_strip(line, "=", 1)
+        name = name.upper()
+        if name.count(" ") > 0:
+            return None
+        if not fdf_fv_token.IsValidTokenName(name):
+            print("Invalid token name "+name)
+            return None
+        _, source = self.Consume()
+        return fdf_fv_token(name, value, source_info=source)
+
+    def ExtractApriori(self, line, current_section):
+        if not line.startswith("APRIORI "):
+            return None
+        parts = split_strip(line, " ")
+        name = parts[1].upper()
+        whole_line, source = self.Consume(until_balanced=True)
+        print(whole_line)
+
+        return name
+
+    def ExtractFvInfFromLine(self, line, current_section):
+        if not line.startswith("INF "):
+            return None
+        parts = split_strip(line, " ")
+        inf = parts[-1]
+        print(inf)
+        _, source = self.Consume()
+
+        return inf
 
 class CapsuleProcessor(SectionProcessor):
     SECTION_TAG = "capsule"
@@ -283,7 +326,7 @@ class FdfParser(LimitedFdfParser, AccurateParser):
                     break
             if not success and not self._IsAtEndOfLines:
                 line, source = self._ConsumeNextLine()
-                self.Logger.info(f"FDF Unknown line {line} @{source}")
+                self.Logger.warning(f"FDF Unknown line {line} @{source}")
 
         self.Parsed = True
 
@@ -343,7 +386,6 @@ class FdfParser(LimitedFdfParser, AccurateParser):
     def _AddFvItem(self, item, section):
         if section in self.fdf.fvs:
             # TODO merge the two sections together
-            print(type(item))
             item += self.fdf.fvs[section]
         self.fdf.fvs[section] = item
         pass
