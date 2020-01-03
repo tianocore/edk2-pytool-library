@@ -2,14 +2,34 @@ class fdf():
     def __init__(self, file_path):
         self.file_path = file_path  # The EDK2 path to this particular DSC
         self.defines = set()
-        self.fds = {}
+        self.fds = {} # should this be a set not a dictionary?
+        self.fvs = {}
+
+    def __eq__(self, other):
+        if type(other) != fdf:
+            return False
+        if self.defines != other.defines:
+            return False
+        if self.fds != other.fds:
+            return False
+        if self.fvs != other.fvs:
+            return False
+        return True
 
 class fdf_fd():
     def __init__(self):
         self.tokens = set()
-        self.pcds = set()
         self.regions = set()
         self.defines = set()
+
+    def __eq__(self, other):
+        if type(other) != fdf_fd:
+            return False
+        if self.tokens != other.tokens:
+            return False
+        if self.regions != other.regions:
+            return False
+        return True
 
 class fdf_fd_token():
     valid_token_names = ["BASEADDRESS", "SIZE", "ERASEPOLARITY", "BLOCKSIZE", "NUMBLOCKS"]
@@ -34,25 +54,22 @@ class fdf_fd_token():
     def __hash__(self):
         return hash(self.name.upper())
 
+    def __repr__(self):
+        return f"FDF_FD_TOKEN: {self.name} = {self.value} | {self.pcd_name}"
+
 class fdf_fd_region():
-    valid_region_types = ["DATA", "FV", "FILE", "INF", "CAPSULE", "NONE"]
-    def __init__(self, offset, size, reg_type=None, source_info=None):
-        if type(offset) is str and offset.startswith("0x"):
+
+    def __init__(self, offset, size, data=None, pcds=[], source_info=None):
+        if type(offset) is str and offset.startswith("0X"):
             offset = int(offset[2:], 16)
+        if type(size) is str and size.startswith("0X"):
+            size = int(size[2:], 16)
         self.offset = offset
         self.source_info = source_info
         self.size = size
-        self.data = None
-        self.type = str(reg_type).upper()
+        self.data = data
         self.source_info = source_info
-        self.pcds = []
-
-        if not fdf_fd_region.IsRegionType(self.type):
-            raise ValueError(f"Invalid FD region type: {self.type} {source_info}")
-
-    @classmethod
-    def IsRegionType(cls, name):
-        return name.upper() in cls.valid_region_types
+        self.pcds = set(pcds)
 
     def __eq__(self, other):
         if type(other) is not fdf_fd_region:
@@ -61,6 +78,42 @@ class fdf_fd_region():
 
     def __hash__(self):
         return hash(self.offset)
+
+class fdf_fd_region_pcd():
+    ''' EX: SET gFlashDevicePkgTokenSpaceGuid.PcdEfiMemoryMapped = TRUE '''
+    def __init__(self, token_space, name, value, source_info=None):
+        self.source_info = source_info
+        self.token_space = token_space
+        self.name = name
+        self.value = value
+
+    def __eq__(self, other):
+        if type(other) is not fdf_fd_region_pcd:
+            return False
+        # TODO: case insensitive compare?
+        return other.token_space == self.token_space and self.name == other.name
+
+    def __hash__(self):
+        return hash(f"{self.token_space}.{self.name}".upper())
+
+class fdf_fd_region_data():
+    ''' Stores the data for a regions '''
+    valid_region_types = ["DATA", "FV", "FILE", "INF", "CAPSULE"]
+
+    def __init__(self, type, data, source_info=None):
+        self.type = type.upper().strip()
+        self.data = data
+        if not fdf_fd_region_data.IsRegionType(self.type):
+            raise ValueError(f"Invalid FD region type: {self.type} {source_info}")
+
+    def __eq__(self, other):
+        if type(other) != fdf_fd_region_data:
+            return False
+        return other.data == self.data and self.type == other.type
+
+    @classmethod
+    def IsRegionType(cls, name):
+        return name.upper() in cls.valid_region_types
 
 class fdf_fv():
     def __init__(self, source_info):

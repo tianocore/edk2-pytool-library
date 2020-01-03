@@ -44,15 +44,14 @@ class dsc:
             return False
         return True
 
-dsc_module_types = ["COMMON", "BASE", "SEC", "PEI_CORE", "PEIM", "DXE_CORE", "DXE_DRIVER",
-                    "DXE_RUNTIME_DRIVER", "DXE_SAL_DRIVER", "DXE_SMM_DRIVER", "SMM_CORE", "UEFI_DRIVER", "UEFI_APPLICATION", "USER_DEFINED"]
-
 
 class dsc_section_type:
+    dsc_module_types = ["COMMON", "BASE", "SEC", "PEI_CORE", "PEIM", "DXE_CORE", "DXE_DRIVER",
+                    "DXE_RUNTIME_DRIVER", "DXE_SAL_DRIVER", "DXE_SMM_DRIVER", "SMM_CORE", "UEFI_DRIVER", "UEFI_APPLICATION", "USER_DEFINED"]
     def __init__(self, arch="common", module_type="common"):
         self.arch = arch.upper().strip()
         self.module_type = module_type.upper().strip()
-        if self.module_type not in dsc_module_types:
+        if not dsc_section_type.IsValidModuleType(self.module_type):
             raise ValueError(f"{module_type} is not a proper module type for dsc section")
 
     def __hash__(self):
@@ -69,6 +68,10 @@ class dsc_section_type:
     def __repr__(self):
         attributes = f".{self.arch}.{self.module_type}"
         return attributes
+
+    @classmethod
+    def IsValidModuleType(cls, name):
+        return name in cls.dsc_module_types
 
 
 class dsc_buildoption_section_type(dsc_section_type):

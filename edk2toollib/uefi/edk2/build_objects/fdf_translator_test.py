@@ -44,7 +44,7 @@ class TestRecipeParser(unittest.TestCase):
   # The base address of the FLASH Device.
   BaseAddress = 0x0|gEfiNt32PkgTokenSpaceGuid.PcdWinNtFdBaseAddress
   # The size in bytes of the FLASH Device
-  Size      = 0x002a0000 
+  Size      = 0x002a0000
   ErasePolarity = 1
   BlockSize = 0x10000
   NumBlocks = 0x2a
@@ -431,9 +431,14 @@ FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
         fdf_obj = parser.ParseFile(filepath)
         # Write out to disk
         test_path = os.path.join(os.path.dirname(filepath), "test2.fdf")
+        third_path = os.path.join(os.path.dirname(filepath), "test3.fdf")
         FdfTranslator.fdf_to_file(fdf_obj, test_path)
         # parse in the outputted FDF
         parser2 = FdfParser()
         print(test_path)
         fdf_obj2 = parser2.ParseFile(test_path)
+
+        FdfTranslator.fdf_to_file(fdf_obj2, third_path)
+        print(third_path)
         self.assertEqual(fdf_obj, fdf_obj2)
+        self.fail()

@@ -8,9 +8,13 @@
 from edk2toollib.uefi.edk2.parsers.limited_fdf_parser import LimitedFdfParser
 from edk2toollib.uefi.edk2.build_objects.fdf import *
 from edk2toollib.uefi.edk2.build_objects.dsc import definition
+from edk2toollib.uefi.edk2.build_objects.dsc import source_info
 from edk2toollib.uefi.edk2.parsers.dsc_parser import SectionProcessor
 from edk2toollib.uefi.edk2.parsers.dsc_parser import AccurateParser
 import os
+
+def split_strip(data, delimit=" "):
+    return [str(x).strip() for x in data.split(delimit)]
 
 
 class DefinesProcessor(SectionProcessor):
@@ -52,7 +56,11 @@ class FdProcessor(SectionProcessor):
             token = self.ExtractTokenFromLine(raw_line, current_section)
             if token is None:
                 break
+            if token in fd.tokens:
+                raise ValueError(f"Unable to add {token} to the [FD{current_section}] {token.source_info}")
             fd.tokens.add(token)
+
+        # Extract all the regions we can
         while True:
             raw_line = self.Preview()
             if self.CheckForEnd(raw_line):
@@ -75,11 +83,11 @@ class FdProcessor(SectionProcessor):
         if line.count("|") != 1:
             return None
         parts = line.split("|")
-        offset = parts[0].strip().lower()
-        if not offset.startswith("0x"):
+        offset = parts[0].strip().upper()
+        if not offset.startswith("0X"):
             return None
-        size = parts[1].strip().lower()
-        if not size.startswith("0x"):
+        size = parts[1].strip().upper()
+        if not size.startswith("0X"):
             return None
         if size.count(" ") > 0:
             return None
@@ -89,34 +97,60 @@ class FdProcessor(SectionProcessor):
 
         # PcdOffsetCName|PcdSizeCName
         line = self.Preview()
-        if line.count("|") == 1:
+        if line is None:
+            return fdf_fd_region(offset, size, source_info=source)
+        if line.count("|") == 1 and line.count(".") == 2:
             # Process ruby
             if line.lower().startswith("0x"):
-                return fdf_fd_region(offset, size, source_info=source)
+                return self.ExtractRegion(current_section)
             # process PCD's
             line, source = self.Consume()
-            pcd1, pcd2 = line.split("|")
-            pcd1 = pcd1.strip()
-            pcd2 = pcd2.strip()
-            # TODO: convert them into SET PCDS
+            pcd1_text, pcd2_text = split_strip(line, "|")
+            # TODO should this be broken out into a separate func?
+            if pcd1_text.count(".") == 1:
+                token, name = split_strip(pcd1_text, ".")
+                pcds.append(fdf_fd_region_pcd(token, name, offset))
+            if pcd1_text.count(".") == 1:
+                token, name = split_strip(pcd2_text, ".")
+                pcds.append(fdf_fd_region_pcd(token, name, size))
 
         # process PCDS
         # TODO look for SET PCDS = VALUE
-
+        while True:
+            pcd = self.ExtractSetPcdFromLine(self.Preview(), current_section)
+            if pcd is None:
+                break
+            pcds.append(pcd)
         # Process RegionType <FV, DATA, or FILE>
-        line = self.Preview(until_balanced=True)
-        fd = fdf_fd_region(offset, size, source_info=source)
-        if line == None:
-            return fd
-        region = fdf_fd_region(offset, size, source_info=source)
-        if line.count("=") == 1:
-            parts = line.split("=", 1)
-            reg_type = parts[0].strip()
-            if fdf_fd_region.IsRegionType(reg_type):
-                # if it's a valid region type
-                fd = fdf_fd_region(offset, size, reg_type=reg_type, source_info=source)
-                self.Consume()
-        return fd
+        data = self.ExtractRegionData(current_section)
+        return fdf_fd_region(offset, size, data, pcds, source_info=source)
+
+    def ExtractRegionData(self, current_section=None) -> object:
+        line = self.Preview()
+        if line is None or line.count("=") == 0:
+            return None
+        parts = line.split("=", 1)
+        reg_type = parts[0].strip().upper()
+        if not fdf_fd_region_data.IsRegionType(reg_type):
+            return None
+        line, source = self.Consume(until_balanced=True)
+        _, data = line.split("=", 1)
+        data = data.strip()
+        # TODO: figure out how to parse the data in a better format
+        return fdf_fd_region_data(reg_type, data, source)
+
+    def ExtractSetPcdFromLine(self, line, current_section=None) -> object:
+        if line is None or not line.upper().startswith("SET "):
+            return None
+        line = line[3:]
+        if line.count("=") != 1:
+            return None
+        namespace, value = split_strip(line, "=")
+        if namespace.count(".") != 1:
+            return None
+        token_space, name = split_strip(namespace, ".")
+        _, source = self.Consume()
+        return fdf_fd_region_pcd(token_space, name, value, source)
 
     def ExtractTokenFromLine(self, line, current_section=None) -> object:
         ''' see if you can extract an object from a line- make sure to consume it. Return None if you can't '''
@@ -128,9 +162,14 @@ class FdProcessor(SectionProcessor):
         if not fdf_fd_token.IsValidTokenName(name):
             print(f"INVALID TOKEN: {name}")
             return None
-        value = parts[1]
+        value = parts[1].strip()
         _, source = self.Consume()
-        return fdf_fd_token(name, value, source_info=source)
+        if value.count("|") == 0:
+            return fdf_fd_token(name, value, source_info=source)
+        value, pcd = value.split("|")
+        value = value.strip()
+        pcd = pcd.strip()
+        return fdf_fd_token(name, value, pcd, source_info=source)
 
     def GetSectionData(self, line, source):
         data = super().GetSectionData(line, source)
@@ -246,14 +285,15 @@ class FdfParser(LimitedFdfParser, AccurateParser):
         return self.fdf
 
     def _PreviewNextLine(self, until_balanced=False):
+        line = super()._PreviewNextLine()
         if not until_balanced:
-            return super()._PreviewNextLine()
-        balance = 0
-        line = self._PreviewNextLine()
+            return line
         balance = None
         line_count = 0
         lines = []
         while balance == None or balance > 0:
+            if self._LineIter+line_count == len(self.SourcedLines):
+                break
             line = self.SourcedLines[self._LineIter+line_count][0]
             if balance is None:
                 balance = 0
@@ -263,10 +303,25 @@ class FdfParser(LimitedFdfParser, AccurateParser):
             lines.append(line)
         return " ".join(lines)
 
-    def _ConsumeNextLine(self, until_balanced=False):
+    def _ConsumeNextLine(self, until_balanced=False) -> (list, source_info):
         if not until_balanced:
             return super()._ConsumeNextLine()
-        raise RuntimeError()
+        balance = None
+        lines = []
+        source = None
+        while balance == None or balance > 0:
+            line, new_source = super()._ConsumeNextLine()
+            lines.append(line)
+            if source is None:
+                source = new_source
+            if line is None:
+                break
+            if balance is None:
+                balance = 0
+            balance += line.count("{")
+            balance -= line.count("}")
+        lines = " ".join(lines)
+        return (lines, source)
 
     def _AddRuleItem(self, item, section):
         pass

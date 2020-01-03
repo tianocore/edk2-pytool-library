@@ -425,19 +425,21 @@ class BuildOptionsProcessor(SectionProcessor):
         try:  # if we fail to generate the section type
             if len(parts) == 1:
                 return dsc_buildoption_section_type(arch)
-            codebase = parts[1]
+            codebase = parts[1].strip().upper()
             if len(parts) == 2:
-                return dsc_buildoption_section_type(arch, codebase)
+                if dsc_section_type.IsValidModuleType(codebase):
+                    # apparently the you don't have to specify the codebase
+                    return dsc_buildoption_section_type(arch, module_type=codebase)
+                else:
+                    return dsc_buildoption_section_type(arch, codebase)
             if len(parts) > 3:
-                raise ValueError(f"Invalid section header {line} {source}")
+                raise ValueError(f"Too many things in {line}")
             module_type = parts[2]
 
             return dsc_buildoption_section_type(arch, codebase, module_type)
-        except ValueError:
-            logging.error(f"Invalid BuildOptions Header: {source}")
+        except ValueError as e:
+            logging.error(f"Invalid BuildOptions Header: {e}")
             raise
-
-
 
 
 class ComponentsProcessor(SectionProcessor):
@@ -563,7 +565,7 @@ class AccurateParser():
     def _IsAtEndOfLines(self):
         return self._LineIter == len(self.SourcedLines)
 
-    def _ConsumeNextLine(self):
+    def _ConsumeNextLine(self) -> (list, source_info):
         ''' Get the next line for processing '''
         line = self._PreviewNextLine()
         # figure out where this line came from
@@ -571,7 +573,7 @@ class AccurateParser():
         self._LineIter += 1
         return (line, source)
 
-    def _GetCurrentSource(self):
+    def _GetCurrentSource(self) -> source_info:
         ''' Currently pretty inefficent '''
         if self._IsAtEndOfLines:
             return None
@@ -616,11 +618,19 @@ class DscParser(LimitedDscParser, AccurateParser):
             BuildOptionsProcessor(*callbacks, self._AddBuildItem),
             DefaultStoresProcessor(*callbacks, self._AddDefaultStoreItem),
         ]
+        error_count = 0
         while not self._IsAtEndOfLines:
             success = False
-            for proc in processors:
-                if proc.AttemptToProcessSection():
-                    success = True
+            try:
+                for proc in processors:
+                    if proc.AttemptToProcessSection():
+                        success = True
+                        break
+            except ValueError:
+                self.Logger.warning(f"DSC Error#{error_count} around line {self._PreviewNextLine()}")
+                error_count += 1
+                if error_count > 5:
+                    self.Logger.warning("Aborting DSC parsing due to errors")
                     break
             if not success and not self._IsAtEndOfLines:
                 line, source = self._ConsumeNextLine()
