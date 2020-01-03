@@ -37,8 +37,11 @@ class DefinesProcessor(SectionProcessor):
     def GetSectionData(self, line, source):
         return None
 
+class WholeSectionProcessor():
+   def CheckForEnd(self, raw_line):
+        return raw_line is None or (raw_line.startswith("[") and raw_line.endswith("]"))
 
-class FdProcessor(SectionProcessor):
+class FdProcessor(SectionProcessor, WholeSectionProcessor):
     SECTION_TAG = "fd"
 
     def ExtractObjects(self, current_section=None) -> object:
@@ -70,9 +73,6 @@ class FdProcessor(SectionProcessor):
                 break
             fd.regions.add(region)
         return fd
-
-    def CheckForEnd(self, raw_line):
-        return raw_line is None or (raw_line.startswith("[") and raw_line.endswith("]"))
 
     def ExtractRegion(self, current_section=None) -> (object, list):
         line = self.Preview()
@@ -179,18 +179,23 @@ class FdProcessor(SectionProcessor):
             return data  # TODO: create a FD section type?
         return ""
 
-
-class FvProcessor(SectionProcessor):
+class FvProcessor(SectionProcessor, WholeSectionProcessor):
     SECTION_TAG = "fv"
 
-    def ExtractObjectFromLine(self, line, current_section=None) -> object:
+    def ExtractObjects(self, current_section=None) -> object:
         ''' extracts the data model objects from the current state '''
-        if line == None or line.startswith("["):
-            return None
-
-        line, source = self.Consume()
-        # print(f"Fv: {line}")
-        return fdf_fv(source_info=source)
+        fv = fdf_fv()
+        # the sections in a FD are the tokens
+        while True:
+            raw_line = self.Preview()
+            if self.CheckForEnd(raw_line):
+                break
+            define = self.ProcessDefine(raw_line, current_section)
+            if define is not None:
+                fv.defines.add(token)
+                continue
+            break
+        return fv
 
 
 class CapsuleProcessor(SectionProcessor):
@@ -331,12 +336,16 @@ class FdfParser(LimitedFdfParser, AccurateParser):
 
     def _AddFdItem(self, item, section):
         if section in self.fdf.fds:
-            # TODO merge the two sections together
-            pass
+            # merge the two sections together
+            item += self.fdf.fds[section]
         self.fdf.fds[section] = item
-        pass
 
     def _AddFvItem(self, item, section):
+        if section in self.fdf.fvs:
+            # TODO merge the two sections together
+            print(type(item))
+            item += self.fdf.fvs[section]
+        self.fdf.fvs[section] = item
         pass
 
     def _AddCapsuleItem(self, item, section):

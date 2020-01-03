@@ -3,7 +3,7 @@ class fdf():
         self.file_path = file_path  # The EDK2 path to this particular DSC
         self.defines = set()
         self.fds = {} # should this be a set not a dictionary?
-        self.fvs = {}
+        self.fvs = {} # should this be a set not a dictionary?
 
     def __eq__(self, other):
         if type(other) != fdf:
@@ -30,6 +30,13 @@ class fdf_fd():
         if self.regions != other.regions:
             return False
         return True
+
+    def __add__(self, other):
+        if type(other) != fdf_fd:
+            super().__add__(other)
+
+        return "BOB"
+
 
 class fdf_fd_token():
     valid_token_names = ["BASEADDRESS", "SIZE", "ERASEPOLARITY", "BLOCKSIZE", "NUMBLOCKS"]
@@ -121,8 +128,18 @@ class fdf_fd_region_data():
         return name.upper() in cls.valid_region_types
 
 class fdf_fv():
-    def __init__(self, source_info):
-        self.source_info = source_info
+    def __init__(self):
+        self.defines = set()
+        pass
+    def __add__(self, other):
+        if type(other) != fdf_fv:
+            return False
+        print("FV_ADD")
+        new_fv = fdf_fv()
+        new_fw.defines = self.defines + other.defines
+        print(other)
+        print(self)
+        return new_fw
 
 class fdf_capsule():
     def __init__(self, source_info):
