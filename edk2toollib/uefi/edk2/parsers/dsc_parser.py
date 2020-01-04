@@ -602,7 +602,11 @@ class DscParser(LimitedDscParser, AccurateParser):
     def ParseFile(self, filepath):
         if self.Parsed != False:  # make sure we haven't already parsed the file
             return
-        super().ParseFile(filepath)
+        try:
+            super().ParseFile(filepath)
+        except ValueError as e:
+            self.Logger.error(str(e))
+            return None
         self._LineIter = 0
         # just go through and process as many sections as we can find
         self.dsc = dsc(filepath)
