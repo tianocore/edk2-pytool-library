@@ -79,13 +79,26 @@ class FdfTranslator():
             lines.append(depth_pad + def_str)
 
         elif type(obj) is fdf_fv:
-            lines += cls._GetFdfLinesFromFdfObj(obj.defines, depth)
-            lines += cls._GetFdfLinesFromFdfObj(obj.tokens, depth)
-            lines += cls._GetFdfLinesFromFdfObj(obj.pcds, depth)
+            try:
+                lines += cls._GetFdfLinesFromFdfObj(obj.defines, depth)
+                lines += cls._GetFdfLinesFromFdfObj(obj.tokens, depth)
+                lines += cls._GetFdfLinesFromFdfObj(obj.pcds, depth)
+                lines += cls._GetFdfLinesFromFdfObj(obj.members, depth)
+            except ValueError:
+                print("CAUGHT")
+                print(lines)
+                raise
 
         elif type(obj) is fdf_fv_token:
             lines.append(f"{depth_pad}{obj.name} =\t{obj.value}")
+
+        elif type(obj) is fdf_fv_inf:
+            attr = " ".join([str(x) for x in obj.options])
+            lines.append(f"{depth_pad}INF {attr} {obj.inf}")
+        elif obj is None:
+            raise ValueError(obj)
         else:
-            logging.warning(f"UNKNOWN OBJECT {obj}")
+            logging.warning(f"UNKNOWN OBJECT {obj} {type(obj)}")
+
 
         return lines

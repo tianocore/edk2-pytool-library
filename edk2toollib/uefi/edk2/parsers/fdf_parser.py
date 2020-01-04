@@ -13,7 +13,7 @@ from edk2toollib.uefi.edk2.parsers.dsc_parser import SectionProcessor
 from edk2toollib.uefi.edk2.parsers.dsc_parser import AccurateParser
 import os
 
-def split_strip(data, delimit=" ", limit=-1):
+def split_strip(data, delimit=None, limit=-1):
     return [str(x).strip() for x in data.split(delimit, limit)]
 
 
@@ -192,7 +192,7 @@ class FvProcessor(SectionProcessor, WholeSectionProcessor):
                 break
             define = self.ProcessDefine(raw_line, current_section)
             if define is not None:
-                fv.defines.add(token)
+                fv.defines.add(define)
                 continue
             token = self.ExtractTokenFromLine(raw_line, current_section)
             if token is not None:
@@ -200,9 +200,15 @@ class FvProcessor(SectionProcessor, WholeSectionProcessor):
                 continue
             apriori = self.ExtractApriori(raw_line, current_section)
             if apriori is not None:
+                fv.members.add(apriori)
                 continue
             inf = self.ExtractFvInfFromLine(raw_line, current_section)
             if inf is not None:
+                fv.members.add(inf)
+                continue
+            fv_file = self.ExtractFileFromLine(raw_line, current_section)
+            if fv_file is not None:
+                fv.members.add(fv_file)
                 continue
             print(f"Unable to extract token {raw_line}")
             break
@@ -222,7 +228,17 @@ class FvProcessor(SectionProcessor, WholeSectionProcessor):
         return fdf_fv_token(name, value, source_info=source)
 
     def ExtractApriori(self, line, current_section):
-        if not line.startswith("APRIORI "):
+        if not line.upper().startswith("APRIORI "):
+            return None
+        parts = split_strip(line, " ")
+        name = parts[1].upper()
+        whole_line, source = self.Consume(until_balanced=True)
+        print(whole_line)
+
+        return name
+
+    def ExtractFileFromLine(self, line, current_section):
+        if not line.upper().startswith("FILE "):
             return None
         parts = split_strip(line, " ")
         name = parts[1].upper()
@@ -234,11 +250,27 @@ class FvProcessor(SectionProcessor, WholeSectionProcessor):
     def ExtractFvInfFromLine(self, line, current_section):
         if not line.startswith("INF "):
             return None
-        parts = split_strip(line, " ")
+        parts = split_strip(line)
         inf = parts[-1]
-        print(inf)
+        if not inf.lower().endswith(".inf"):
+            return None
+        if len(parts) == 2:
+            _, source = self.Consume()
+            return fdf_fv_inf(inf, source)
+        attr_parts = parts[1:-1]
+        if len(attr_parts) % 3 != 0:
+            return None
+        options = []
+        while len(attr_parts) > 0:
+            name = attr_parts.pop(0)
+            equal = attr_parts.pop(0)
+            value = attr_parts.pop(0)
+            if equal.strip() != "=":
+                return None
+            options.append(fdf_fv_inf_option(name, value))
         _, source = self.Consume()
-
+        inf = fdf_fv_inf(inf, source)
+        inf.options.extend(options)
         return inf
 
 class CapsuleProcessor(SectionProcessor):

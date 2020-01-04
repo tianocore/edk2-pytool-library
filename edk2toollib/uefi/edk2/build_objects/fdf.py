@@ -135,6 +135,7 @@ class fdf_fv():
         self.defines = set()
         self.tokens = set()
         self.pcds = set()
+        self.members = set() # this can be inf's, files, etc
 
     def __add__(self, other):
         if type(other) != fdf_fv:
@@ -144,6 +145,7 @@ class fdf_fv():
         new_fw.defines = self.defines + other.defines
         new_fw.tokens = self.tokens + other.tokens
         new_fw.pcds = self.pcds + other.pcds
+        new_fw.members = self.members + other.members
         print(other)
         print(self)
         return new_fw
@@ -151,7 +153,7 @@ class fdf_fv():
     def __eq__(self, other):
         if type(other) != fdf_fv:
             return False
-        return self.defines == other.defines and other.tokens == self.tokens and self.pcds == other.pcds
+        return self.defines == other.defines and other.tokens == self.tokens and self.pcds == other.pcds and self.members == other.members
 
 class fdf_fv_token():
 
@@ -178,6 +180,37 @@ class fdf_fv_token():
 
     def __repr__(self):
         return f"FDF_FV_TOKEN: {self.name} = {self.value} @ {self.source_info}"
+
+class fdf_fv_inf():
+
+    valid_fv_inf_options = ["RULEOVERRIDE ", "USE", "VERSION", "UI"]
+    def __init__(self, inf, source_info=None):
+        self.inf = inf
+        self.source_info = source_info
+        self.options = []
+
+    @classmethod
+    def IsValidTokenName(cls, name):
+        return name in cls.valid_fv_token_names
+
+    def __eq__(self, other):
+        if type(other) is not fdf_fv_inf:
+            return False
+        return other.inf.upper() == self.inf.upper()
+
+    def __hash__(self):
+        return hash(self.inf.upper())
+
+    def __repr__(self):
+        return f"FDF_FV_INF: {self.inf} @ {self.source_info}"
+
+class fdf_fv_inf_option():
+    def __init__(self, option_name, value):
+        self.option_name = option_name.upper().strip()
+        self.value = value.strip()
+
+    def __repr__(self):
+        return f"{self.option_name} = {self.value}"
 
 class fdf_capsule():
     def __init__(self, source_info):
