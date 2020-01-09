@@ -98,7 +98,6 @@ def GetHostInfo():
     host_info = platform.uname()
     os = host_info.system
     processor_info = host_info.machine
-    logging.debug("Getting host info for host: {0}".format(str(host_info)))
 
     arch = None
     bit = None
