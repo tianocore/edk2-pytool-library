@@ -38,7 +38,7 @@ class DscRecipeTranslator():
         org_depth = depth
         depth += 2
 
-        if type(obj) is list or type(obj) is set:
+        if type(obj) is list or type(obj) is set or type(obj) is dsc_set:
             for item in obj:
                 lines += cls._GetDscLinesFromDscObj(item, org_depth)
         elif type(obj) is dsc:
@@ -66,6 +66,7 @@ class DscRecipeTranslator():
                 lines += cls._GetDscLinesFromDscObj(x, depth)
 
             # Then Build Options
+            print(obj.build_options.items())
             for header, x in obj.build_options.items():
                 lines.append(f"{depth_pad}[BuildOptions{header}]")
                 lines += cls._GetDscLinesFromDscObj(x, depth)

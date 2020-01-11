@@ -8,19 +8,49 @@
 
 # There will be some overlap between the objects for DSC's and Recipes
 import logging
+import collections
 DEFAULT_SECTION_TYPE = "COMMON"
+
+class dsc_set(set):
+
+    def __init__(self, allowed_classes = []):
+        self._allowed_classes = set(allowed_classes)
+    def add(self, item):
+        if len(self._allowed_classes) > 0 and type(item) not in self._allowed_classes:
+            raise ValueError(f"Cannot add {type(item)} to restricted set: {self._allowed_classes}")
+        super().add(item)
+
+class dsc_dict(collections.OrderedDict):
+    ''' A dictionary that allows specific classes as headers and sections '''
+    def __init__(self, allowed_header_classes = [], allowed_section_classes = []):
+        self._allowed_header_classes = set(allowed_header_classes)
+        self._allowed_section_classes = set(allowed_section_classes)
+
+    def __setitem__(self, key, val):
+        if len(self._allowed_header_classes) > 0 and type(key) not in self._allowed_header_classes:
+            raise ValueError(f"Cannot add {type(key)} to restricted set: {self._allowed_header_classes}")
+
+        if len(self._allowed_section_classes) > 0:
+            if type(val) == set and len(val) == 0: # if it's an empty set, convert it to a dsc_set
+                val = dsc_set(allowed_classes=self._allowed_section_classes)
+            if type(val) == dsc_set:
+                if val._allowed_classes != self._allowed_section_classes:
+                    raise ValueError(f"Cannot add set:{val._allowed_classes} to restricted dict: {self._allowed_section_classes}")
+            elif type(val) not in self._allowed_section_classes:
+                raise ValueError(f"Cannot add {type(val)} to restricted dict: {self._allowed_section_classes}")
+        dict.__setitem__(self, key, val)
 
 class dsc:
     def __init__(self, file_path):
         self.file_path = file_path  # The EDK2 path to this particular DSC
-        self.skus = set()
-        self.components = {}
-        self.libraries = {}
+        self.skus = dsc_set(allowed_classes=[definition,sku_id])  # this is a set of SKU's
+        self.components = {}  # this is a set of components
+        self.libraries = {} # this is
         self.library_classes = {}
-        self.build_options = {}
-        self.pcds = {}
-        self.defines = set()
-        self.default_stores = set()
+        self.build_options = dsc_dict([dsc_buildoption_section_type,], [build_option, definition])
+        self.pcds = dsc_dict([dsc_pcd_section_type,], [pcd, pcd_typed, pcd_variable])
+        self.defines = dsc_set(allowed_classes=[definition,])
+        self.default_stores = dsc_set(allowed_classes=[definition,default_store])
 
         # TODO: should we populate the default information into the DSC object?
         # FOR EXAMPLE: default_stores and skus

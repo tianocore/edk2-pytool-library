@@ -596,6 +596,7 @@ class DscParser(LimitedDscParser, AccurateParser):
         self._Skus = dict()
         self._BuildOptions = dict()
         self._Defines = dict()
+        self._ErrorLimit = 5
 
     # Augmented parsing
 
@@ -630,12 +631,12 @@ class DscParser(LimitedDscParser, AccurateParser):
                     if proc.AttemptToProcessSection():
                         success = True
                         break
-            except ValueError:
-                self.Logger.warning(f"DSC Error#{error_count} around line {self._PreviewNextLine()}")
+            except ValueError as e:
+                self.Logger.warning(f"DSC Error#{error_count} around line {self._PreviewNextLine()}: {str(e)}")
                 error_count += 1
-                if error_count > 5:
+                if error_count > self._ErrorLimit:
                     self.Logger.warning("Aborting DSC parsing due to errors")
-                    break
+                    return None
             if not success and not self._IsAtEndOfLines:
                 line, source = self._ConsumeNextLine()
                 self.Logger.warning(f"DSC Unknown line {line} @{source}")

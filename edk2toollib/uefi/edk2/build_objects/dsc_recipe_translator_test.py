@@ -206,7 +206,7 @@ class TestRecipeParser(unittest.TestCase):
 [LibraryClasses.common.UEFI_DRIVER]
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
 
-[LibraryClasses.common.UEFI_APPLICATION] 
+[LibraryClasses.common.UEFI_APPLICATION]
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
   PrintLib|MdeModulePkg/Library/DxePrintLibPrint2Protocol/DxePrintLibPrint2Protocol.inf
 
@@ -481,14 +481,18 @@ class TestRecipeParser(unittest.TestCase):
         print(filepath)
         # parse the origional DSC
         parser = DscParser()
+        parser._ErrorLimit = 0
         dsc_obj = parser.ParseFile(filepath)
         # Write out to disk
         test_path = os.path.join(os.path.dirname(filepath), "test2.dsc")
         DscRecipeTranslator.dsc_to_file(dsc_obj, test_path)
         # parse in the outputted DSC
         parser2 = DscParser()
+        parser2._ErrorLimit = 0
         print(test_path)
         dsc_obj2 = parser2.ParseFile(test_path)
+        self.assertNotEqual(dsc_obj, None)
+        self.assertNotEqual(dsc_obj2, None)
         self.assertEqual(len(dsc_obj.defines), len(dsc_obj2.defines))
         self.assertEqual(len(dsc_obj.library_classes), len(dsc_obj2.library_classes))
         self.assertEqual(len(dsc_obj.components), len(dsc_obj2.components))
