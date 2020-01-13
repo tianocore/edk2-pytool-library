@@ -259,12 +259,16 @@ class DscParser(HashFileParser):
         f = open(os.path.join(filepath), "r")
         # expand all the lines and include other files
         file_lines = f.readlines()
-        self.__ProcessDefines(file_lines)
-        # reset the parser state before processing more
-        self.ResetParserState()
-        self.__ProcessMore(file_lines, file_name=os.path.join(filepath))
-        f.close()
-        self.Parsed = True
+        try:
+            self.__ProcessDefines(file_lines)
+            # reset the parser state before processing more
+            self.ResetParserState()
+            self.__ProcessMore(file_lines, file_name=os.path.join(filepath))
+            f.close()
+            self.Parsed = True
+        except Exception as e:
+            self.Logger.warning(f"{__name__} failed to parse: {filepath}")
+            self.Logger.info(e)
 
     def GetMods(self):
         return self.ThreeMods + self.SixMods

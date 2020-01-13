@@ -120,7 +120,7 @@ class PcdDeclarationEntry():
         op = sp[2].split("|")
 
         if(len(op) != 4):
-            raise Exception("Too many parts")
+            raise Exception("Too many parts " + rawtext)
 
         self.name = op[0].strip()
         self.default_value = op[1].strip()
@@ -153,6 +153,7 @@ class DecParser(HashFileParser):
         InGuidsSection = False
         InPPISection = False
         InPcdSection = False
+        InExtendedPcd = False
         InIncludesSection = False
 
         for line in self.Lines:
@@ -199,6 +200,17 @@ class DecParser(HashFileParser):
             elif InPcdSection:
                 if sline.strip()[0] == '[':
                     InPcdSection = False
+                elif sline.strip().endswith("{"):
+                    t = PcdDeclarationEntry(self.PackageName, sline)
+                    InExtendedPcd = True
+                    continue
+                elif sline.strip().endswith("}"):
+                    InExtendedPcd = False
+                    self.Pcds.append(t)
+                    continue
+                elif InExtendedPcd:
+                    # TODO do something with the extended values we get
+                    continue
                 else:
                     t = PcdDeclarationEntry(self.PackageName, sline)
                     self.Pcds.append(t)
