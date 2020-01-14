@@ -10,12 +10,11 @@
 import unittest
 import os
 import tempfile
-from edk2toollib.uefi.edk2.build_objects.recipe import recipe
-from edk2toollib.uefi.edk2.parsers.recipe_dsc_parser import RecipeBasedDscParser
+from edk2toollib.uefi.edk2.parsers.limited_dsc_parser import LimitedDscParser
 from edk2toollib.uefi.edk2.parsers.dsc_parser import DscParser
 
 
-class TestRecipeParser(unittest.TestCase):
+class TestDscParser(unittest.TestCase):
     # Taken from https://edk2-docs.gitbooks.io/edk-ii-dsc-specification/content/v/release/1.28/appendix_b_sample_edk_ii_dsc_file.html
     test_dsc = """
 ## @file
@@ -59,7 +58,10 @@ class TestRecipeParser(unittest.TestCase):
   # line.
   # -D FLAG=VALUE
   #
+!ifndef SECURE_BOOT_ENABLE
   DEFINE SECURE_BOOT_ENABLE = FALSE
+!endif
+  DEFINE SECRET_VAR = FALSE
 
 ########################################################################
 #
@@ -79,6 +81,7 @@ class TestRecipeParser(unittest.TestCase):
 #
 ########################################################################
 [LibraryClasses]
+  DEFINE SECRET_VAR = TRUE
   #
   # Entry point
   #
@@ -131,6 +134,8 @@ class TestRecipeParser(unittest.TestCase):
   TimerLib|MdePkg/Library/BaseTimerLibNullTemplate/BaseTimerLibNullTemplate.inf
   SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
+  NULL|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
+  NULL|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
   #
   # Platform
   #
@@ -253,6 +258,12 @@ class TestRecipeParser(unittest.TestCase):
   gEfiSecurityPkgTokenSpaceGuid.PcdRemovableMediaImageVerificationPolicy|0x05
 !endif
 
+[PcdsPatchableInModule]
+  gEfiNt32PkgTokenSpaceGuid.PcdWinNtGop|L"UGA Window 1!UGA Window 2"|VOID*|52
+
+[Libraries.IPF]
+  $(EDK_SOURCE)/Path/to/LibraryName.inf
+
 ########################################################################
 #
 # Pcd Dynamic Section - list of all EDK II PCD Entries defined by this Platform
@@ -276,6 +287,7 @@ class TestRecipeParser(unittest.TestCase):
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdSetupConOutRow|L"SetupConsoleConfig"|gEfiGlobalVariableGuid|0x4|25
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdPlatformBootTimeOut|L"Timeout"|gEfiGlobalVariableGuid|0x0|10
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdHardwareErrorRecordLevel|L"HwErrRecSupport"|gEfiGlobalVariableGuid|0x0|1
+  gEfiMdeModulePkgTokenSpaceGuid.PcdValidRange|L"PcdValidRange"|gEfiGlobalVariableGuid|0x07|0|BS,RT,NV
 
 ########################################################################
 #
@@ -312,6 +324,9 @@ class TestRecipeParser(unittest.TestCase):
   MdeModulePkg/Universal/PCD/Pei/Pcd.inf {
     <LibraryClasses>
       PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
+    <BuildOptions>
+    <PcdsFeatureFlag>
+      gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|TRUE
   }
   MdeModulePkg/Universal/ReportStatusCodeRouter/Pei/ReportStatusCodeRouterPei.inf
   MdeModulePkg/Universal/StatusCodeHandler/Pei/StatusCodeHandlerPei.inf
@@ -330,6 +345,7 @@ class TestRecipeParser(unittest.TestCase):
   Nt32Pkg/WinNtThunkPPIToProtocolPei/WinNtThunkPPIToProtocolPei.inf
   MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 
+[Components.X64]
   ##
   # DXE Phase modules
   ##
@@ -447,12 +463,15 @@ class TestRecipeParser(unittest.TestCase):
 #
 ########################################################################
 [BuildOptions]
-  DEBUG_*_IA32_DLINK_FLAGS = /BASE:0x10000 /ALIGN:4096 /FILEALIGN:4096 \
-                             /EXPORT:InitializeDriver=$(IMAGE_ENTRY_POINT) \
+  DEBUG_*_IA32_DLINK_FLAGS = /BASE:0x10000 /ALIGN:4096 /FILEALIGN:4096 \\
+                             /EXPORT:InitializeDriver=$(IMAGE_ENTRY_POINT) \\
                              /SUBSYSTEM:CONSOLE
   RELEASE_*_IA32_DLINK_FLAGS = /ALIGN:4096 /FILEALIGN:4096
-  *_*_IA32_CC_FLAGS = /D EFI_SPECIFICATION_VERSION = 0x0002000A \
+  *_*_IA32_CC_FLAGS = /D EFI_SPECIFICATION_VERSION = 0x0002000A \\
                       /D TIANO_RELEASE_VERSION=0x00080006
+
+[DefaultStores]
+  0 | Standard        # UEFI Standard default
 
 """
 
@@ -462,55 +481,78 @@ class TestRecipeParser(unittest.TestCase):
         f.close()
 
     def test_null_creation(self):
-        rec = recipe()
-        self.assertIsNotNone(rec)
+        parser = DscParser()
+        self.assertIsNotNone(parser)
 
-    def test_simple_dsc(self):
-        parser = RecipeBasedDscParser()
+    def test_same_as_old_parser(self):
+        parser = DscParser()
+        old_parser = LimitedDscParser()
+
         temp_dir = tempfile.mkdtemp()
         file_path = os.path.join(temp_dir, "test.dsc")
         print(file_path)
         self.write_file(file_path, self.test_dsc)
-        # use the new parser and get the recipe
+        # use the new parser
         parser.ParseFile(file_path)
         # use the old parser
-        old_parser = DscParser()
         old_parser.ParseFile(file_path)
         # since the old parser used all the libs it found, so we can't compare apples to apples
-        # self.assertEqual(len(old_parser.GetLibs()), len(parser._Libs))
-        self.assertEqual(len(parser.GetRecipeSkus()), 3)  # hardcoded for now- update this is you update the PCD
-        self.assertEqual(len(parser.GetRecipeMods()), len(old_parser.GetModsEnhanced()))
+        self.assertEqual(len(old_parser.GetLibs()), len(parser.GetLibs()))
+        self.assertEqual(len(parser.GetModsEnhanced()), len(old_parser.GetModsEnhanced()))
         pass
-    
-    def test_read_output_read(self):
-        parser = RecipeBasedDscParser()
+
+    def test_read_dsc(self):
+        parser = DscParser()
         temp_dir = tempfile.mkdtemp()
         file_path = os.path.join(temp_dir, "test.dsc")
         print(file_path)
         self.write_file(file_path, self.test_dsc)
-        parser.ParseFile(file_path)
-        full_rec = parser.GetRecipe()
-        self.assertIsNotNone(full_rec)
-        # convert the recipe into a dsc
-        rec_dsc = RecipeBasedDscParser.GetDscFromRecipe(full_rec)
-        file_path2 = os.path.join(temp_dir, "test2.dsc")
-        self.write_file(file_path2, rec_dsc)
-        print(file_path2)
-        # read the created dsc back into the recipe
-        parser2 = RecipeBasedDscParser()
-        parser2.ParseFile(file_path2)
-        full_rec2 = parser2.GetRecipe()
-        # test to make sure the two are the same?
-        self.assertIsNotNone(full_rec2)
-        # check the parsers
-        self.assertEqual(len(parser.GetRecipeMods()), len(parser2.GetRecipeMods()))
-        self.assertEqual(len(parser.GetRecipeSkus()), len(parser2.GetRecipeSkus()))
-        self.assertEqual(len(parser.GetRecipePcds()), len(parser2.GetRecipePcds()))
-        self.assertEqual(len(parser.GetRecipeLibs()), len(parser2.GetRecipeLibs()))
-        # next check the recipes
-        self.assertEqual(len(full_rec.skus), len(full_rec2.skus))
-        self.assertEqual(len(full_rec.components), len(full_rec2.components))
-        self.assertEqual(full_rec, full_rec2)
-        pass
-
+        # use the new parser
+        dsc_obj = parser.ParseFile(file_path)
+        # since the old parser used all the libs it found, so we can't compare apples to apples
+        self.assertEqual(len(dsc_obj.skus), 3)
+        self.assertEqual(len(dsc_obj.components), 2)
+        self.assertEqual(len(dsc_obj.pcds), 5)
+        self.assertEqual(len(dsc_obj.build_options), 1)
+        for _, options in dsc_obj.build_options.items():
+          self.assertEqual(len(options), 3)
+        self.assertEqual(len(dsc_obj.library_classes), 7)
+        self.assertEqual(len(dsc_obj.libraries), 1)
+    
+    def test_read_dsc_with_variables(self):
+        parser = DscParser()
+        parser.SetInputVars({
+          "SECURE_BOOT_ENABLE": "TRUE"
+        })
+        temp_dir = tempfile.mkdtemp()
+        file_path = os.path.join(temp_dir, "test.dsc")
+        print(file_path)
+        self.write_file(file_path, self.test_dsc)
+        # use the new parser
+        dsc_obj = parser.ParseFile(file_path)
+        # since the old parser used all the libs it found, so we can't compare apples to apples
+        self.assertEqual(len(dsc_obj.skus), 3, dsc_obj.skus)        
         
+        # PCDS
+        pcd_counts = sum([len(dsc_obj.pcds[x]) for x in dsc_obj.pcds])
+        self.assertEqual(len(dsc_obj.pcds), 5)  # there are 5 times of PCDs
+        self.assertEqual(pcd_counts, 34)  # there are 34 pcds total
+
+        # LIBRARYCLASSES
+        self.assertEqual(len(dsc_obj.library_classes), 8)
+        lib_counts = sum([len(x) for _, x in dsc_obj.library_classes.items()])
+        unique_libs = set()
+        for _, items in dsc_obj.library_classes.items():
+          for item in items:
+            unique_libs.add(item)
+        self.assertEqual(lib_counts, 96)
+        self.assertEqual(len(unique_libs), 61)
+
+        # BUILD OPTIONS
+        self.assertEqual(len(dsc_obj.build_options), 1, dsc_obj.build_options) # only one type
+
+        # COMPONENTS
+        self.assertEqual(len(dsc_obj.components), 2)
+        comp_counts = sum([len(x) for _, x in dsc_obj.components.items()])
+        self.assertEqual(comp_counts, 76)
+        pass

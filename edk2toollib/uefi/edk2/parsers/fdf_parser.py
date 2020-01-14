@@ -5,174 +5,428 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
+from edk2toollib.uefi.edk2.parsers.limited_fdf_parser import LimitedFdfParser
+from edk2toollib.uefi.edk2.build_objects.fdf import *
+from edk2toollib.uefi.edk2.build_objects.dsc import definition
+from edk2toollib.uefi.edk2.build_objects.dsc import source_info
+from edk2toollib.uefi.edk2.parsers.dsc_parser import SectionProcessor
+from edk2toollib.uefi.edk2.parsers.dsc_parser import AccurateParser
 import os
 
+def split_strip(data, delimit=None, limit=-1):
+    return [str(x).strip() for x in data.split(delimit, limit)]
 
-class FdfParser(HashFileParser):
 
-    def __init__(self):
-        HashFileParser.__init__(self, 'ModuleFdfParser')
-        self.Lines = []
-        self.Parsed = False
-        self.Dict = {}  # defines dictionary
-        self.FVs = {}
-        self.FDs = {}
-        self.CurrentSection = []
-        self.Path = ""
+class DefinesProcessor(SectionProcessor):
+    SECTION_TAG = "defines"
 
-    def GetNextLine(self):
-        if len(self.Lines) == 0:
+    def ExtractObjectFromLine(self, line, current_section=None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line.count("=") < 1:  # if we don't know what to do with it, don't worry about it
             return None
 
-        line = self.Lines.pop()
-        self.CurrentLine += 1
-        sline = self.StripComment(line)
+        parts = split_strip(line, "=", 1)
+        name = str(parts[0]).strip()
+        if name.count(" ") > 0:
+            return None  # we don't know what to do with this
+        value = parts[1]
 
-        if(sline is None or len(sline) < 1):
-            return self.GetNextLine()
+        line, source = self.Consume()
+        return definition(name, value, local=False, source_info=source)
 
-        sline = self.ReplaceVariables(sline)
-        if self.ProcessConditional(sline):
-            # was a conditional so skip
-            return self.GetNextLine()
-        if not self.InActiveCode():
-            return self.GetNextLine()
+    def GetSectionData(self, line, source):
+        return None
 
-        self._BracketCount += sline.count("{")
-        self._BracketCount -= sline.count("}")
+class WholeSectionProcessor():
+   def CheckForEnd(self, raw_line):
+        return raw_line is None or (raw_line.startswith("[") and raw_line.endswith("]"))
 
-        return sline
+class FdProcessor(SectionProcessor, WholeSectionProcessor):
+    SECTION_TAG = "fd"
+
+    def ExtractObjects(self, current_section=None) -> object:
+        ''' extracts the data model objects from the current state '''
+        fd = fdf_fd()
+        # the sections in a FD are the tokens
+        while True:
+            raw_line = self.Preview()
+            if self.CheckForEnd(raw_line):
+                break
+            define = self.ProcessDefine(raw_line, current_section)
+            if define is not None:
+                fd.defines.add(token)
+                continue
+            token = self.ExtractTokenFromLine(raw_line, current_section)
+            if token is None:
+                break
+            if token in fd.tokens:
+                raise ValueError(f"Unable to add {token} to the [FD{current_section}] {token.source_info}")
+            fd.tokens.add(token)
+
+        # Extract all the regions we can
+        while True:
+            raw_line = self.Preview()
+            if self.CheckForEnd(raw_line):
+                break
+            region = self.ExtractRegion(current_section)
+            if region is None:
+                break
+            fd.regions.add(region)
+        return fd
+
+    def ExtractRegion(self, current_section=None) -> (object, list):
+        line = self.Preview()
+        # A Layout Region start with a eight digit hex offset (leading "0x"
+        # required) followed by the pipe "|" character, followed by the size of
+        # the region, also in hex with the leading "0x" characters. Like:
+        # Offset|Size
+        if line.count("|") != 1:
+            return None
+        parts = line.split("|")
+        offset = parts[0].strip().upper()
+        if not offset.startswith("0X"):
+            return None
+        size = parts[1].strip().upper()
+        if not size.startswith("0X"):
+            return None
+        if size.count(" ") > 0:
+            return None
+        _, source = self.Consume()
+
+        pcds = []
+
+        # PcdOffsetCName|PcdSizeCName
+        line = self.Preview()
+        if line is None:
+            return fdf_fd_region(offset, size, source_info=source)
+        if line.count("|") == 1 and line.count(".") == 2:
+            # Process ruby
+            if line.lower().startswith("0x"):
+                return self.ExtractRegion(current_section)
+            # process PCD's
+            line, source = self.Consume()
+            pcd1_text, pcd2_text = split_strip(line, "|")
+            # TODO should this be broken out into a separate func?
+            if pcd1_text.count(".") == 1:
+                token, name = split_strip(pcd1_text, ".")
+                pcds.append(fdf_fd_region_pcd(token, name, offset))
+            if pcd1_text.count(".") == 1:
+                token, name = split_strip(pcd2_text, ".")
+                pcds.append(fdf_fd_region_pcd(token, name, size))
+
+        # process PCDS
+        # TODO look for SET PCDS = VALUE
+        while True:
+            pcd = self.ExtractSetPcdFromLine(self.Preview(), current_section)
+            if pcd is None:
+                break
+            pcds.append(pcd)
+        # Process RegionType <FV, DATA, or FILE>
+        data = self.ExtractRegionData(current_section)
+        return fdf_fd_region(offset, size, data, pcds, source_info=source)
+
+    def ExtractRegionData(self, current_section=None) -> object:
+        line = self.Preview()
+        if line is None or line.count("=") == 0:
+            return None
+        parts = line.split("=", 1)
+        reg_type = parts[0].strip().upper()
+        if not fdf_fd_region_data.IsRegionType(reg_type):
+            return None
+        line, source = self.Consume(until_balanced=True)
+        _, data = line.split("=", 1)
+        data = data.strip()
+        # TODO: figure out how to parse the data in a better format
+        return fdf_fd_region_data(reg_type, data, source)
+
+    def ExtractSetPcdFromLine(self, line, current_section=None) -> object:
+        if line is None or not line.upper().startswith("SET "):
+            return None
+        line = line[3:]
+        if line.count("=") != 1:
+            return None
+        namespace, value = split_strip(line, "=")
+        if namespace.count(".") != 1:
+            return None
+        token_space, name = split_strip(namespace, ".")
+        _, source = self.Consume()
+        return fdf_fd_region_pcd(token_space, name, value, source)
+
+    def ExtractTokenFromLine(self, line, current_section=None) -> object:
+        ''' see if you can extract an object from a line- make sure to consume it. Return None if you can't '''
+        if line.count("=") != 1:
+            return None
+
+        parts = line.split("=")
+        name = parts[0].strip()
+        if not fdf_fd_token.IsValidTokenName(name):
+            print(f"INVALID TOKEN: {name}")
+            return None
+        value = parts[1].strip()
+        _, source = self.Consume()
+        if value.count("|") == 0:
+            return fdf_fd_token(name, value, source_info=source)
+        value, pcd = value.split("|")
+        value = value.strip()
+        pcd = pcd.strip()
+        return fdf_fd_token(name, value, pcd, source_info=source)
+
+    def GetSectionData(self, line, source):
+        data = super().GetSectionData(line, source)
+        if data is None:
+            return None
+        if data.startswith("."):
+            return data  # TODO: create a FD section type?
+        return ""
+
+class FvProcessor(SectionProcessor, WholeSectionProcessor):
+    SECTION_TAG = "fv"
+
+    def ExtractObjects(self, current_section=None) -> object:
+        ''' extracts the data model objects from the current state '''
+        fv = fdf_fv()
+        # the sections in a FD are the tokens
+        while True:
+            raw_line = self.Preview()
+            if self.CheckForEnd(raw_line):
+                break
+            define = self.ProcessDefine(raw_line, current_section)
+            if define is not None:
+                fv.defines.add(define)
+                continue
+            token = self.ExtractTokenFromLine(raw_line, current_section)
+            if token is not None:
+                fv.tokens.add(token)
+                continue
+            apriori = self.ExtractApriori(raw_line, current_section)
+            if apriori is not None:
+                fv.members.add(apriori)
+                continue
+            inf = self.ExtractFvInfFromLine(raw_line, current_section)
+            if inf is not None:
+                fv.members.add(inf)
+                continue
+            fv_file = self.ExtractFileFromLine(raw_line, current_section)
+            if fv_file is not None:
+                fv.members.add(fv_file)
+                continue
+            print(f"Unable to extract token {raw_line}")
+            break
+        return fv
+
+    def ExtractTokenFromLine(self, line, current_section):
+        if line.count("=") != 1:
+            return None
+        name, value = split_strip(line, "=", 1)
+        name = name.upper()
+        if name.count(" ") > 0:
+            return None
+        if not fdf_fv_token.IsValidTokenName(name):
+            print("Invalid token name "+name)
+            return None
+        _, source = self.Consume()
+        return fdf_fv_token(name, value, source_info=source)
+
+    def ExtractApriori(self, line, current_section):
+        if not line.upper().startswith("APRIORI "):
+            return None
+        parts = split_strip(line, " ")
+        name = parts[1].upper()
+        whole_line, source = self.Consume(until_balanced=True)
+        print(whole_line)
+
+        return name
+
+    def ExtractFileFromLine(self, line, current_section):
+        if not line.upper().startswith("FILE "):
+            return None
+        parts = split_strip(line, " ")
+        name = parts[1].upper()
+        whole_line, source = self.Consume(until_balanced=True)
+        print(whole_line)
+
+        return name
+
+    def ExtractFvInfFromLine(self, line, current_section):
+        if not line.startswith("INF "):
+            return None
+        parts = split_strip(line)
+        inf = parts[-1]
+        if not inf.lower().endswith(".inf"):
+            return None
+        if len(parts) == 2:
+            _, source = self.Consume()
+            return fdf_fv_inf(inf, source)
+        attr_parts = parts[1:-1]
+        if len(attr_parts) % 3 != 0:
+            return None
+        options = []
+        while len(attr_parts) > 0:
+            name = attr_parts.pop(0)
+            equal = attr_parts.pop(0)
+            value = attr_parts.pop(0)
+            if equal.strip() != "=":
+                return None
+            options.append(fdf_fv_inf_option(name, value))
+        _, source = self.Consume()
+        inf = fdf_fv_inf(inf, source)
+        inf.options.extend(options)
+        return inf
+
+class CapsuleProcessor(SectionProcessor):
+    SECTION_TAG = "capsule"
+
+    def ExtractObjectFromLine(self, line, current_section=None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line == None or line.startswith("["):
+            return None
+
+        line, source = self.Consume()
+        #print(f"CAPSULE: {line}")
+        return fdf_capsule(source_info=source)
+
+
+class VtfProcessor(SectionProcessor):
+    SECTION_TAG = "vtf"
+
+    def ExtractObjectFromLine(self, line, current_section=None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line == None or line.startswith("["):
+            return None
+
+        line, source = self.Consume()
+        #print(f"VTF: {line}")
+        return fdf_vtf(source_info=source)
+
+
+class OptionRomProcessor(SectionProcessor):
+    SECTION_TAG = "optionrom"
+
+    def ExtractObjectFromLine(self, line, current_section=None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line == None or line.startswith("["):
+            return None
+
+        line, source = self.Consume()
+        #print(f"OptionRom: {line}")
+        return fdf_vtf(source_info=source)
+
+
+class RuleProcessor(SectionProcessor):
+    SECTION_TAG = "rule"
+
+    def ExtractObjectFromLine(self, line, current_section=None) -> object:
+        ''' extracts the data model objects from the current state '''
+        if line == None or line.startswith("["):
+            return None
+
+        line, source = self.Consume()
+        #print(f"RULE: {line}")
+        return fdf_rule(source_info=source)
+
+    def GetSectionData(self, line, source):
+        return None
+
+
+class FdfParser(LimitedFdfParser, AccurateParser):
+
+    def __init__(self):
+        LimitedFdfParser.__init__(self)
+        self.SourcedLines = []
 
     def ParseFile(self, filepath):
-        self.Logger.debug("Parsing file: %s" % filepath)
-        if(not os.path.isabs(filepath)):
-            fp = self.FindPath(filepath)
-        else:
-            fp = filepath
-        self.Path = fp
-        self.CurrentLine = 0
-        self._f = open(fp, "r")
-        self.Lines = self._f.readlines()
-        self.Lines.reverse()
-        self._f.close()
-        self._BracketCount = 0
-        InDefinesSection = False
-        InFdSection = False
-        InFvSection = False
-        InCapsuleSection = False
-        InFmpPayloadSection = False
-        InRuleSection = False
-
-        sline = ""
-        while sline is not None:
-            sline = self.GetNextLine()
-
-            if sline is None:
-                break
-
-            if sline.strip().startswith("[") and sline.strip().endswith("]"):  # if we're starting a new section
-                # this basically gets what's after the . or if it doesn't have a period
-                # the whole thing for every comma seperated item in sline
-                self.CurrentSection = [
-                    x.split(".", 1)[1] if "." in x else x for x in sline.strip("[] ").strip().split(",")]
-                InDefinesSection = False
-                InFdSection = False
-                InFvSection = False
-                InCapsuleSection = False
-                InFmpPayloadSection = False
-                InRuleSection = False
-                self.LocalVars = {}
-                self.LocalVars.update(self.Dict)
-
-            if InDefinesSection:
-                if sline.count("=") == 1:
-                    tokens = sline.replace("DEFINE", "").split('=', 1)
-                    self.Dict[tokens[0].strip()] = tokens[1].strip()
-                    self.Logger.info("Key,values found:  %s = %s" % (tokens[0].strip(), tokens[1].strip()))
-                    continue
-
-            elif InFdSection:
-                for section in self.CurrentSection:
-                    if section not in self.FVs:
-                        self.FDs[section] = {"Dict": {}}
-                        # TODO finish the FD section
-                continue
-
-            elif InFvSection:
-                for section in self.CurrentSection:
-                    if section not in self.FVs:
-                        self.FVs[section] = {"Dict": {}, "Infs": [], "Files": {}}
-                    # ex: INF  MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
-                    if sline.upper().startswith("INF "):
-                        InfValue = sline[3:].strip()
-                        self.FVs[section]["Infs"].append(InfValue)
-                    # ex: FILE FREEFORM = 7E175642-F3AD-490A-9F8A-2E9FC6933DDD {
-                    elif sline.upper().startswith("FILE"):
-                        sline = sline.strip("}").strip("{").strip()  # make sure we take off the { and }
-                        file_def = sline[4:].strip().split("=", 1)  # split by =
-                        if len(file_def) != 2:  # check to make sure we can parse this file
-                            raise RuntimeError("Unable to properly parse " + sline)
-
-                        currentType = file_def[0].strip()  # get the type FILE
-                        currentName = file_def[1].strip()  # get the name (guid or otherwise)
-                        if currentType not in self.FVs[section]:
-                            self.FVs[section]["Files"][currentName] = {}
-                        self.FVs[section]["Files"][currentName]["type"] = currentType
-
-                        while self._BracketCount > 0:  # go until we get our bracket back
-                            sline = self.GetNextLine().strip("}{ ")
-                            # SECTION GUIDED EE4E5898-3914-4259-9D6E-DC7BD79403CF PROCESSING_REQUIRED = TRUE
-                            if sline.upper().startswith("SECTION GUIDED"):  # get the guided section
-                                section_def = sline[14:].strip().split("=", 1)
-                                sectionType = section_def[0].strip()  # UI in this example
-                                sectionValue = section_def[1].strip()
-                                if sectionType not in self.FVs[section]["Files"][currentName]:
-                                    self.FVs[section]["Files"][currentName][sectionType] = {}
-                                # TODO support guided sections
-                            # ex: SECTION UI = "GenericGopDriver"
-                            elif sline.upper().startswith("SECTION"):  # get the section
-                                section_def = sline[7:].strip().split("=", 1)
-                                sectionType = section_def[0].strip()  # UI in this example
-                                sectionValue = section_def[1].strip()
-
-                                if sectionType not in self.FVs[section]["Files"][currentName]:
-                                    self.FVs[section]["Files"][currentName][sectionType] = []
-                                self.FVs[section]["Files"][currentName][sectionType].append(sectionValue)
-                            else:
-                                self.Logger.info("Unknown line: {}".format(sline))
-
-                continue
-
-            elif InCapsuleSection:
-                # TODO: finish capsule section
-                continue
-
-            elif InFmpPayloadSection:
-                # TODO finish FMP payload section
-                continue
-
-            elif InRuleSection:
-                # TODO finish rule section
-                continue
-
-            # check for different sections
-            if sline.strip().lower().startswith('[defines'):
-                InDefinesSection = True
-
-            elif sline.strip().lower().startswith('[fd.'):
-                InFdSection = True
-
-            elif sline.strip().lower().startswith('[fv.'):
-                InFvSection = True
-
-            elif sline.strip().lower().startswith('[capsule.'):
-                InCapsuleSection = True
-
-            elif sline.strip().lower().startswith('[fmpPayload.'):
-                InFmpPayloadSection = True
-
-            elif sline.strip().lower().startswith('[rule.'):
-                InRuleSection = True
+        if self.Parsed != False:  # make sure we haven't already parsed the file
+            return
+        super().ParseFile(filepath)
+        self.fdf = fdf(filepath)
+        self.ResetLineIterator()
+        callbacks = self.GetCallbacks()
+        processors = [
+            RuleProcessor(*callbacks, self._AddRuleItem),
+            DefinesProcessor(*callbacks, self._AddDefineItem),
+            FdProcessor(*callbacks, self._AddFdItem),
+            FvProcessor(*callbacks, self._AddFvItem),
+            CapsuleProcessor(*callbacks, self._AddCapsuleItem),
+            VtfProcessor(*callbacks, self._AddVtfItem),
+            OptionRomProcessor(*callbacks, self._AddOptionRomItem)
+        ]
+        while not self._IsAtEndOfLines:
+            success = False
+            for proc in processors:
+                if proc.AttemptToProcessSection():
+                    success = True
+                    break
+            if not success and not self._IsAtEndOfLines:
+                line, source = self._ConsumeNextLine()
+                self.Logger.warning(f"FDF Unknown line {line} @{source}")
 
         self.Parsed = True
+
+        return self.fdf
+
+    def _PreviewNextLine(self, until_balanced=False):
+        line = super()._PreviewNextLine()
+        if not until_balanced:
+            return line
+        balance = None
+        line_count = 0
+        lines = []
+        while balance == None or balance > 0:
+            if self._LineIter+line_count == len(self.SourcedLines):
+                break
+            line = self.SourcedLines[self._LineIter+line_count][0]
+            if balance is None:
+                balance = 0
+            balance += line.count("{")
+            balance -= line.count("}")
+            line_count += 1
+            lines.append(line)
+        return " ".join(lines)
+
+    def _ConsumeNextLine(self, until_balanced=False) -> (list, source_info):
+        if not until_balanced:
+            return super()._ConsumeNextLine()
+        balance = None
+        lines = []
+        source = None
+        while balance == None or balance > 0:
+            line, new_source = super()._ConsumeNextLine()
+            lines.append(line)
+            if source is None:
+                source = new_source
+            if line is None:
+                break
+            if balance is None:
+                balance = 0
+            balance += line.count("{")
+            balance -= line.count("}")
+        lines = " ".join(lines)
+        return (lines, source)
+
+    def _AddRuleItem(self, item, section):
+        pass
+
+    def _AddDefineItem(self, item, section):
+        self.fdf.defines.add(item)
+
+    def _AddFdItem(self, item, section):
+        if section in self.fdf.fds:
+            # merge the two sections together
+            item += self.fdf.fds[section]
+        self.fdf.fds[section] = item
+
+    def _AddFvItem(self, item, section):
+        if section in self.fdf.fvs:
+            # TODO merge the two sections together
+            item += self.fdf.fvs[section]
+        self.fdf.fvs[section] = item
+        pass
+
+    def _AddCapsuleItem(self, item, section):
+        pass
+
+    def _AddVtfItem(self, item, section):
+        pass
+
+    def _AddOptionRomItem(self, item, section):
+        pass
