@@ -151,18 +151,23 @@ dsc_pcd_types = ["FEATUREFLAG", "PATCHABLEINMODULE", "FIXEDATBUILD", "DYNAMIC", 
 
 
 class dsc_pcd_section_type():
-    def __init__(self, pcdtype, arch="common", sku="DEFAULT"):
+    def __init__(self, pcdtype, arch="common", sku="DEFAULT", store=None):
+        # if store is none, then we don't have anything done
         self.arch = arch.upper().strip()
         self.pcd_type = pcdtype.upper().strip()
+        self.default_store = None if store is None else store.strip()
         if self.pcd_type not in dsc_pcd_types:
             raise ValueError(f"{pcdtype} is not a proper PCD type")
+        if not self.pcd_type.endswith("HII") and self.store is not None:
+            raise ValueError(f"{pcdtype} does not allow for a store to be specified")
         self.sku = sku.upper()
 
     def __hash__(self):
         return hash((self.arch, self.pcd_type))
 
     def __repr__(self):
-        return f"Pcds{self.pcd_type}.{self.arch}.{self.sku}"
+        store = "" if self.store is None else f".{self.store}"
+        return f"Pcds{self.pcd_type}.{self.arch}.{self.sku}{store}"
 
     def __eq__(self, other):
         if type(other) is not dsc_pcd_section_type:
