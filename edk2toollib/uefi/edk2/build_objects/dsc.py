@@ -11,18 +11,25 @@ import logging
 import collections
 DEFAULT_SECTION_TYPE = "COMMON"
 
+
 class dsc_set(set):
 
-    def __init__(self, allowed_classes = []):
+    def __init__(self, allowed_classes=[]):
         self._allowed_classes = set(allowed_classes)
+
     def add(self, item):
         if len(self._allowed_classes) > 0 and type(item) not in self._allowed_classes:
             raise ValueError(f"Cannot add {type(item)} to restricted set: {self._allowed_classes}")
+        if item in self:
+            super().discard(item)
+            # TODO: get add the old_item to item
         super().add(item)
+
 
 class dsc_dict(collections.OrderedDict):
     ''' A dictionary that allows specific classes as headers and sections '''
-    def __init__(self, allowed_header_classes = [], allowed_section_classes = []):
+
+    def __init__(self, allowed_header_classes=[], allowed_section_classes=[]):
         self._allowed_header_classes = set(allowed_header_classes)
         self._allowed_section_classes = set(allowed_section_classes)
 
@@ -31,26 +38,28 @@ class dsc_dict(collections.OrderedDict):
             raise ValueError(f"Cannot add {type(key)} to restricted set: {self._allowed_header_classes}")
 
         if len(self._allowed_section_classes) > 0:
-            if type(val) == set and len(val) == 0: # if it's an empty set, convert it to a dsc_set
+            if type(val) == set and len(val) == 0:  # if it's an empty set, convert it to a dsc_set
                 val = dsc_set(allowed_classes=self._allowed_section_classes)
             if type(val) == dsc_set:
                 if val._allowed_classes != self._allowed_section_classes:
-                    raise ValueError(f"Cannot add set:{val._allowed_classes} to restricted dict: {self._allowed_section_classes}")
+                    raise ValueError(
+                        f"Cannot add set:{val._allowed_classes} to restricted dict: {self._allowed_section_classes}")
             elif type(val) not in self._allowed_section_classes:
                 raise ValueError(f"Cannot add {type(val)} to restricted dict: {self._allowed_section_classes}")
         dict.__setitem__(self, key, val)
 
+
 class dsc:
-    def __init__(self, file_path):
-        self.file_path = file_path  # The EDK2 path to this particular DSC
-        self.skus = dsc_set(allowed_classes=[definition,sku_id])  # this is a set of SKU's
+    def __init__(self, file_path=None):
+        self.file_path = file_path  # The EDK2 path to this particular DSC, if is is None it means it was created from a stream and has no file
+        self.skus = dsc_set(allowed_classes=[definition, sku_id])  # this is a set of SKU's
         self.components = {}  # this is a set of components
-        self.libraries = {} # this is
+        self.libraries = {}  # this is
         self.library_classes = {}
-        self.build_options = dsc_dict([dsc_buildoption_section_type,], [build_option, definition])
-        self.pcds = dsc_dict([dsc_pcd_section_type,], [pcd, pcd_typed, pcd_variable])
-        self.defines = dsc_set(allowed_classes=[definition,])
-        self.default_stores = dsc_set(allowed_classes=[definition,default_store])
+        self.build_options = dsc_dict([dsc_buildoption_section_type, ], [build_option, definition])
+        self.pcds = dsc_dict([dsc_pcd_section_type, ], [pcd, pcd_typed, pcd_variable])
+        self.defines = dsc_set(allowed_classes=[definition, ])
+        self.default_stores = dsc_set(allowed_classes=[definition, default_store])
 
         # TODO: should we populate the default information into the DSC object?
         # FOR EXAMPLE: default_stores and skus
@@ -77,7 +86,8 @@ class dsc:
 
 class dsc_section_type:
     dsc_module_types = ["COMMON", "BASE", "SEC", "PEI_CORE", "PEIM", "DXE_CORE", "DXE_DRIVER",
-                    "DXE_RUNTIME_DRIVER", "DXE_SAL_DRIVER", "DXE_SMM_DRIVER", "SMM_CORE", "UEFI_DRIVER", "UEFI_APPLICATION", "USER_DEFINED"]
+                        "DXE_RUNTIME_DRIVER", "DXE_SAL_DRIVER", "DXE_SMM_DRIVER", "SMM_CORE", "UEFI_DRIVER", "UEFI_APPLICATION", "USER_DEFINED"]
+
     def __init__(self, arch="common", module_type="common"):
         self.arch = arch.upper().strip()
         self.module_type = module_type.upper().strip()
@@ -113,6 +123,7 @@ class dsc_buildoption_section_type(dsc_section_type):
     [BuildOptions.common]
     [BuildOptions]
     '''
+
     def __init__(self, arch="common", codebase="common", module_type="common"):
         super().__init__(arch, module_type)
         self.codebase = codebase.upper().strip()
@@ -158,8 +169,10 @@ class dsc_pcd_section_type():
             return False
         return self.pcd_type == other.pcd_type and self.arch == other.arch
 
+
 class dsc_pcd_component_type(dsc_pcd_section_type):
     ''' This class is uses to define the PCD type inside a component '''
+
     def __init__(self, pcdtype):
         super().__init__(pcdtype)
 
@@ -173,6 +186,7 @@ class dsc_pcd_component_type(dsc_pcd_section_type):
         if type(other) is not dsc_pcd_component_type:
             return False
         return self.pcd_type == other.pcd_type
+
 
 class sku_id:
     ''' contains the data for a sku '''
@@ -214,7 +228,7 @@ class component:
     def __eq__(self, other):
         if (type(other) is not component):
             return False
-        return self.inf == other.inf # TODO: should this be case insensitive?
+        return self.inf == other.inf  # TODO: should this be case insensitive?
 
     def __hash__(self):
         return hash(self.inf)
@@ -249,8 +263,10 @@ class definition:
             return False
         return other.name == self.name
 
+
 class library:
     ''' Contains the data for a specific EDK library'''
+
     def __init__(self, inf: str, source_info=None):
         self.inf = inf
         self.source_info = source_info
@@ -261,10 +277,11 @@ class library:
         return self.inf == other.inf
 
     def __hash__(self):
-        return hash(self.inf) #TODO how to figure out if they hash to the same spot?
+        return hash(self.inf)  # TODO how to figure out if they hash to the same spot?
 
     def __repr__(self):
         return f"{self.inf} @ {self.source_info}"
+
 
 class library_class:
     ''' Contains the data for a specific EDK2 library class'''
@@ -404,6 +421,7 @@ class build_option:
             rep += f"= {self.data}"
         return rep
 
+
 class default_store:
     ''' contains the information on a default store. '''
     ''' 0 | Standard        # UEFI Standard default '''
@@ -424,6 +442,7 @@ class default_store:
         if (type(other) is not default_store):
             return False
         return other.index == self.index
+
 
 class source_info:
     def __init__(self, file: str, lineno: int = None):
