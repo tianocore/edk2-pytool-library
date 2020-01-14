@@ -39,6 +39,16 @@ class TestBaseParser(unittest.TestCase):
         })
         line = "Hello $(name)!"
         self.assertEqual(parser.ReplaceVariables(line), "Hello sean!")
+    
+    def test_replace_macro_using_dollarsign_spaces(self):
+        parser = BaseParser("")
+        parser.SetInputVars({
+            "name": "sean"
+        })
+        line = "Hello $ (name)!"
+        self.assertEqual(parser.ReplaceVariables(line), "Hello sean!")
+        line = "Hello $( name )!"
+        self.assertEqual(parser.ReplaceVariables(line), "Hello sean!")
 
     def test_replace_macro_local_var_priority(self):
         parser = BaseParser("")

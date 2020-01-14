@@ -7,7 +7,7 @@
 ##
 import os
 import logging
-
+import re
 
 class BaseParser(object):
     """ """
@@ -282,11 +282,16 @@ class BaseParser(object):
         # use line to avoid change by handling above
         rep = line.count("$")
         index = 0
+        macro_re = re.compile(r"\$\s?\(")
         while(rep > 0):
-            start = line.find("$(", index)
+            start_match = macro_re.search(line, index)
+            if start_match is None:
+                self.Logger.warning(f"We didn't find the $ but we thought there should be one {line}")
+                break
+            start = start_match.start()
             end = line.find(")", start)
-
-            token = line[start + 2:end]
+            start_end = start_match.end()
+            token = line[start_end:end].strip()
             replacement_token = line[start:end + 1]
             self.Logger.debug("Token is %s" % token)
             v = self._FindReplacementForToken(token, replace)
