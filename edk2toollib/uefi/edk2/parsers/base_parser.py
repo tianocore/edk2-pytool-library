@@ -273,10 +273,11 @@ class BaseParser(object):
         tokens = result.split()
         replace = len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef", "!if", "!elseif"]
         if len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef"]:
+            tokens[1] = "".join(tokens[1:])  # stick the remaining tokens together
             if not tokens[1].startswith("$("):
                 v = self._FindReplacementForToken(tokens[1], replace)
                 if v is not None:
-                    result = result.replace(tokens[1], v, 1)
+                    result = " ".join([tokens[0], v])
 
         # use line to avoid change by handling above
         rep = line.count("$")
