@@ -9,7 +9,6 @@
 
 import unittest
 import logging
-import os
 from edk2toollib.log.string_handler import StringStreamHandler
 
 
