@@ -140,7 +140,10 @@ class BaseParser(object):
         except ValueError:
             pass
         try:
-            ivalue2 = self.ConvertToInt(ivalue2)
+            if(cond.lower() == "in"):
+                ivalue2 = set(ivalue2.split())
+            else:
+                ivalue2 = self.ConvertToInt(ivalue2)
         except ValueError:
             pass
 
@@ -153,7 +156,7 @@ class BaseParser(object):
             # not equal
             return (ivalue != ivalue2) and (value != value2)
 
-        elif (cond == "in"):
+        elif (cond.lower() == "in"):
             # contains
             return value in value2
 
@@ -317,7 +320,11 @@ class BaseParser(object):
         Returns:
 
         """
-        tokens = text.split()
+        if '"' in text:
+            tokens = text.split('"')
+            tokens = tokens[0].split() + [tokens[1]] + tokens[2].split()
+        else:
+            tokens = text.split()
         if(tokens[0].lower() == "!if"):
             # need to add support for OR/AND
             if (len(tokens) == 2):
