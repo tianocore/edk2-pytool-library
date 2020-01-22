@@ -34,8 +34,10 @@ class dsc_dict(collections.OrderedDict):
         self._allowed_value_classes = set(allowed_value_classes)
 
     def __missing__(self, key):
-        self[key] = dsc_set(self._allowed_value_classes)
-        return self[key]
+        if len(self._allowed_value_classes) > 0:  # if we have specified allowed value classes, make a new dsc_set
+            self[key] = dsc_set(self._allowed_value_classes)
+            return self[key]
+        raise KeyError(key)
 
     def __setitem__(self, key, val):
         if len(self._allowed_key_classes) > 0 and type(key) not in self._allowed_key_classes:
@@ -171,7 +173,7 @@ class dsc_pcd_section_type():
         self.default_store = None if store is None else store.strip()
         if self.pcd_type not in dsc_pcd_types:
             raise ValueError(f"{pcdtype} is not a proper PCD type")
-        if not self.pcd_type.endswith("HII") and self.store is not None:
+        if not self.pcd_type.endswith("HII") and self.default_store is not None:
             raise ValueError(f"{pcdtype} does not allow for a store to be specified")
         self.sku = sku.upper()
 
@@ -179,7 +181,7 @@ class dsc_pcd_section_type():
         return hash((self.arch, self.pcd_type))
 
     def __repr__(self):
-        store = "" if self.store is None else f".{self.store}"
+        store = "" if self.default_store is None else f".{self.default_store}"
         return f"Pcds{self.pcd_type}.{self.arch}.{self.sku}{store}"
 
     def __eq__(self, other):

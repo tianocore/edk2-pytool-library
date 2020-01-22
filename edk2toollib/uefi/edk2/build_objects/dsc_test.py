@@ -34,6 +34,28 @@ class TestDscObject(unittest.TestCase):
             if defin.name == "PLATFORM_NAME":  # check to make sure it matches
                 self.assertEqual(defin.value, "TEST2")
 
+    def test_dsc_multple_library_classes(self):
+        d = dsc()
+        # When we add an object, it should overwrite the previous one
+        common_section = dsc_section_type()
+        d.library_classes[common_section].add(library_class("TEST", "BOB.inf"))
+        self.assertEqual(len(d.library_classes[common_section]), 1)
+        # we should override the previous one
+        d.library_classes[common_section].add(library_class("TEST", "BOB2.inf"))
+        self.assertEqual(len(d.library_classes[common_section]), 1)
+        for lib in d.library_classes[common_section]:
+            self.assertEqual(lib.inf, "BOB2.inf")  # make sure we overrode it
+        self.assertEqual(len(d.library_classes[common_section]), 1)
+
+        # make sure we can add a library to a different section and that
+        IA32_section = dsc_section_type(arch="IA32")
+        self.assertEqual(len(d.library_classes[IA32_section]), 0)
+        d.library_classes[IA32_section].add(library_class("NULL", "BOB1.inf"))
+        self.assertEqual(len(d.library_classes[IA32_section]), 1)
+        d.library_classes[IA32_section].add(library_class("NULL", "BOB2.inf"))
+        self.assertEqual(len(d.library_classes[IA32_section]), 2)
+
+
     def test_get_library_classes(self):
         ''' This serves more as an example of how to walk the DSC to get a library class for a componenet '''
         pass
@@ -106,5 +128,5 @@ class TestDscObject(unittest.TestCase):
         default_section = dsc_section_type()
         d.library_classes[default_section].add(library_class("NULL", "BOB.inf"))
 
-        # Next add a
+        # Next add a component
         return d
