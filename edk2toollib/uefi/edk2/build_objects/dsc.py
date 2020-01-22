@@ -50,18 +50,27 @@ class dsc_dict(collections.OrderedDict):
                         f"Cannot add set:{val._allowed_classes} to restricted dict: {self._allowed_value_classes}")
             elif type(val) not in self._allowed_value_classes:
                 raise ValueError(f"Cannot add {type(val)} to restricted dict: {self._allowed_value_classes}")
+        if key in self:
+            # TODO merge these together?
+            raise ValueError(f"Cannot add section {key} since it already exists")
         dict.__setitem__(self, key, val)
 
 
 class dsc:
     def __init__(self, file_path=None):
         self.file_path = file_path  # The EDK2 path to this particular DSC, if is is None it means it was created from a stream and has no file
+        # parameters added for clarity
         self.skus = dsc_set(allowed_classes=[definition, sku_id])  # this is a set of SKU's
-        self.components = {}  # this is a set of components
-        self.libraries = {}  # this is
-        self.library_classes = dsc_dict([dsc_section_type, ], [build_option, library_class])
-        self.build_options = dsc_dict([dsc_buildoption_section_type, ], [build_option, definition])
-        self.pcds = dsc_dict([dsc_pcd_section_type, ], [pcd, pcd_typed, pcd_variable])
+        self.components = dsc_dict(allowed_key_classes=[dsc_section_type, ],
+                                   allowed_value_classes=[component, definition])
+        self.libraries = dsc_dict(allowed_key_classes=[dsc_section_type, ],
+                                  allowed_value_classes=[library, definition])
+        self.library_classes = dsc_dict(allowed_key_classes=[dsc_section_type, ],
+                                        allowed_value_classes=[library_class, definition])
+        self.build_options = dsc_dict(allowed_key_classes=[dsc_buildoption_section_type, ],
+                                      allowed_value_classes=[build_option, definition])
+        self.pcds = dsc_dict(allowed_key_classes=[dsc_pcd_section_type, ],
+                             allowed_value_classes=[pcd, pcd_typed, pcd_variable])
         self.defines = dsc_set(allowed_classes=[definition, ])
         self.default_stores = dsc_set(allowed_classes=[definition, default_store])
 
@@ -225,7 +234,7 @@ class sku_id:
 class component:
     ''' Contains the data for a component for the EDK build system to build '''
 
-    def __init__(self, inf, phases: list = [], source_info=None):
+    def __init__(self, inf, source_info=None):
 
         self.library_classes = set()  # a list of libraries that this component uses
         self.pcds = {}  # a dictionary of PCD's that are keyed by dsc_pcd_component_type, they are sets
