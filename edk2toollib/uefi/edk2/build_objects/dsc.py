@@ -6,8 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-# There will be some overlap between the objects for DSC's and FDF's
-import logging
+# There will be some overlap between the objects for DSC files and FDF files
 import collections
 DEFAULT_SECTION_TYPE = "COMMON"
 
@@ -60,9 +59,10 @@ class dsc_dict(collections.OrderedDict):
 
 class dsc:
     def __init__(self, file_path=None):
-        self.file_path = file_path  # The EDK2 path to this particular DSC, if is is None it means it was created from a stream and has no file
+        # The EDK2 path to this particular DSC, if is is None it means it was created from a stream and has no file
+        self.file_path = file_path
         # parameters added for clarity
-        self.skus = dsc_set(allowed_classes=[definition, sku_id])  # this is a set of SKU's
+        self.skus = dsc_set(allowed_classes=[definition, sku_id])  # this is a set of SKUs
         self.components = dsc_dict(allowed_key_classes=[dsc_section_type, ],
                                    allowed_value_classes=[component, definition])
         self.libraries = dsc_dict(allowed_key_classes=[dsc_section_type, ],
@@ -100,8 +100,10 @@ class dsc:
 
 
 class dsc_section_type:
-    dsc_module_types = ["COMMON", "BASE", "SEC", "PEI_CORE", "PEIM", "DXE_CORE", "DXE_DRIVER",
-                        "DXE_RUNTIME_DRIVER", "DXE_SAL_DRIVER", "DXE_SMM_DRIVER", "SMM_CORE", "UEFI_DRIVER", "UEFI_APPLICATION", "USER_DEFINED"]
+    dsc_module_types = ["COMMON", "BASE", "SEC", "PEI_CORE", "PEIM", "DXE_CORE",
+                        "DXE_DRIVER", "DXE_RUNTIME_DRIVER", "DXE_SAL_DRIVER",
+                        "DXE_SMM_DRIVER", "SMM_CORE", "UEFI_DRIVER",
+                        "UEFI_APPLICATION", "USER_DEFINED"]
 
     def __init__(self, arch="common", module_type="common"):
         self.arch = arch.upper().strip()
@@ -155,7 +157,9 @@ class dsc_buildoption_section_type(dsc_section_type):
     def __eq__(self, other):
         if type(other) is not dsc_buildoption_section_type:
             return False
-        return other.module_type == self.module_type and other.codebase == self.codebase and other.module_type == self.module_type
+        if not (other.module_type == self.module_type and other.codebase == self.codebase):
+            return False
+        return other.module_type == self.module_type
 
     def __repr__(self):
         return f"{self.arch}.{self.codebase}.{self.module_type}"
@@ -368,9 +372,10 @@ pcd_variable_attributes = ["NV", "BS", "RT", "RO"]
 
 
 class pcd_variable(pcd):
-    ''' PcdTokenSpaceGuidCName.PcdCName|VariableName|VariableGuid|VariableOffset[|HiiDefaultValue[|HiiAttrubte]] '''
+    ''' PcdTokenSpaceGuidCName.PcdCName|VariableName|VariableGuid|VariableOffset[|HiiDefaultValue[|HiiAttribute]] '''
 
-    def __init__(self, namespace, name, var_name, var_guid, var_offset, default=None, attributes=[], source_info=None):
+    def __init__(self, namespace, name, var_name, var_guid, var_offset,
+                 default=None, attributes=None, source_info=None):
         super().__init__(namespace, name, "", source_info)
         self.var_name = var_name
         self.var_guid = var_guid
@@ -385,7 +390,8 @@ class pcd_variable(pcd):
         self.attributes = attributes
 
     def __repr__(self):
-        return f"{self.namespace}.{self.name} = {self.var_name} |{self.var_guid}|{self.var_offset}|{self.default}|{self.attributes} @ {self.source_info}"
+        pcd_data = f"{self.var_guid}|{self.var_offset}|{self.default}|{self.attributes}"
+        return f"{self.namespace}.{self.name} = {self.var_name} |{pcd_data} @ {self.source_info}"
 
 
 class build_option:
@@ -393,16 +399,22 @@ class build_option:
     ''' EX: MSFT:*_*_*_CC_FLAGS = /D MDEPKG_NDEBUG '''
     # {FAMILY}:{TARGET}_{TAGNAME}_{ARCH}_{TOOLCODE}_{ATTRIBUTE}
 
-    def __init__(self, tool_code, attribute, data, target="*", tagname="*", arch="*", family=None, replace=False, source_info=None):
+    def __init__(self, tool_code, attribute, data, target="*", tagname="*",
+                 arch="*", family=None, replace=False, source_info=None):
         """
-        tool_code - The tool code must be one of the defined tool codes in the Conf/tools_def.txt file. The flags defined in this section are appended to flags defined in the tools_def.txt file for individual tools.
-        attribute - for example flags, dpath, path
+        tool_code - The tool code must be one of the defined tool codes in the Conf/tools_def.txt file.
+         The flags defined in this section are appended to flags defined in the tools_def.txt file
+         for individual tools.
+        attribute - for example flags, d_path, path
         data - the actual flags or path you want to set
         target - DEBUG, RELEASE, or other
         tagname - the tool chain tag
         arch - ARM, AARCH64, IA32, X64, etc
-        family - Conf/tools_def.txt defines FAMILY as one of MSFT, INTEL or GCC. Typically, this field is used to help the build tools determine whether the line is used for Microsoft style Makefiles or the GNU style Makefile
-        replace - whether or not this replaces the default from tools_def, if this is false, we append
+        family - Conf/tools_def.txt defines FAMILY as one of MSFT, INTEL or GCC.
+         Typically, this field is used to help the build tools determine whether the line
+         is used for Microsoft style Makefiles or the GNU style Makefile
+        replace - whether or not this replaces the default from tools_def,
+         if this is false, we append
         """
         self.family = family
         self.target = target

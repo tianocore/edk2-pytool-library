@@ -5,10 +5,20 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 import os
 import logging
-from edk2toollib.uefi.edk2.build_objects.dsc import *
+from edk2toollib.uefi.edk2.build_objects.dsc import dsc
+from edk2toollib.uefi.edk2.build_objects.dsc import sku_id
+from edk2toollib.uefi.edk2.build_objects.dsc import dsc_set
+from edk2toollib.uefi.edk2.build_objects.dsc import library_class
+from edk2toollib.uefi.edk2.build_objects.dsc import definition
+from edk2toollib.uefi.edk2.build_objects.dsc import component
+from edk2toollib.uefi.edk2.build_objects.dsc import pcd
+from edk2toollib.uefi.edk2.build_objects.dsc import pcd_typed
+from edk2toollib.uefi.edk2.build_objects.dsc import pcd_variable
+from edk2toollib.uefi.edk2.build_objects.dsc import build_option
 
 
 class DscTranslator():
+
     @classmethod
     def dsc_to_file(cls, dsc_obj, filepath):
         file_path = os.path.abspath(filepath)
@@ -76,21 +86,22 @@ class DscTranslator():
             lines.append(f"{depth_pad}{obj.namespace}.{obj.name}|{obj.value}")
 
         elif type(obj) is pcd_typed:
-            if obj.max_size == 0:
-                lines.append(f"{depth_pad}{obj.namespace}.{obj.name}|{obj.value}|{obj.datum_type}")
-            else:
-                lines.append(f"{depth_pad}{obj.namespace}.{obj.name}|{obj.value}|{obj.datum_type}|{obj.max_size}")
+            pcd_str = f"{depth_pad}{obj.namespace}.{obj.name}|{obj.value}|{obj.datum_type}"
+            if obj.max_size > 0:
+                pcd_str += f"|{obj.max_size}"
+            lines.append(pcd_str)
 
         elif type(obj) is pcd_variable:
+            pcd_name = f"{depth_pad}{obj.namespace}.{obj.name}|{obj.var_name}"
             if obj.default is None:
-                lines.append(f"{depth_pad}{obj.namespace}.{obj.name}|{obj.var_name}|{obj.var_guid}|{obj.var_offset}")
+                lines.append(f"{pcd_name}|{obj.var_guid}|{obj.var_offset}")
             elif len(obj.attributes) == 0:
                 lines.append(
-                    f"{depth_pad}{obj.namespace}.{obj.name}|{obj.var_name}|{obj.var_guid}|{obj.var_offset}|{obj.default}")
+                    f"{pcd_name}|{obj.var_guid}|{obj.var_offset}|{obj.default}")
             else:
                 attr = ", ".join(obj.attributes)
                 lines.append(
-                    f"{depth_pad}{obj.namespace}.{obj.name}|{obj.var_name}|{obj.var_guid}|{obj.var_offset}|{obj.default}|{attr}")
+                    f"{pcd_name}|{obj.var_guid}|{obj.var_offset}|{obj.default}|{attr}")
 
         elif type(obj) is build_option:
             rep = depth_pad if obj.family is None else f"{depth_pad}{obj.family}:"

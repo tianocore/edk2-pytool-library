@@ -76,6 +76,15 @@
         "hexlify",
         "ctypes",
         "ioapic",
-        "OEMID"
+        "OEMID",
+        "SKUID",
+        "pcdtype",
+        "PATCHABLEINMODULE",
+        "DYNAMICHII",
+        "DYNAMICVPD",
+        "DYNAMICEXHII",
+        "DYNAMICEXVPD",
+        "PCD's",
+        "MDEPKG"
     ]
 }

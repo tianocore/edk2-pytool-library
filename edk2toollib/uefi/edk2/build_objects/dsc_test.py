@@ -6,8 +6,6 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 import unittest
-import os
-import tempfile
 from edk2toollib.uefi.edk2.build_objects.dsc import dsc
 from edk2toollib.uefi.edk2.build_objects.dsc import library_class
 from edk2toollib.uefi.edk2.build_objects.dsc import component
@@ -15,9 +13,6 @@ from edk2toollib.uefi.edk2.build_objects.dsc import definition
 from edk2toollib.uefi.edk2.build_objects.dsc import dsc_buildoption_section_type
 from edk2toollib.uefi.edk2.build_objects.dsc import dsc_pcd_section_type
 from edk2toollib.uefi.edk2.build_objects.dsc import dsc_section_type
-from edk2toollib.uefi.edk2.build_objects.dsc import pcd
-from edk2toollib.uefi.edk2.build_objects.dsc import pcd_typed
-from edk2toollib.uefi.edk2.build_objects.dsc import pcd_variable
 
 
 class TestDscObject(unittest.TestCase):
@@ -30,9 +25,9 @@ class TestDscObject(unittest.TestCase):
         # When we add an object, it should overwrite the previous one
         d = TestDscObject.create_dsc_object()
         d.defines.add(definition("PLATFORM_NAME", "TEST2"))
-        for defin in d.defines:
-            if defin.name == "PLATFORM_NAME":  # check to make sure it matches
-                self.assertEqual(defin.value, "TEST2")
+        for define in d.defines:
+            if define.name == "PLATFORM_NAME":  # check to make sure it matches
+                self.assertEqual(define.value, "TEST2")
 
     def test_dsc_multple_library_classes(self):
         d = dsc()
@@ -54,7 +49,6 @@ class TestDscObject(unittest.TestCase):
         self.assertEqual(len(d.library_classes[IA32_section]), 1)
         d.library_classes[IA32_section].add(library_class("NULL", "BOB2.inf"))
         self.assertEqual(len(d.library_classes[IA32_section]), 2)
-
 
     def test_get_library_classes(self):
         ''' This serves more as an example of how to walk the DSC to get a library class for a componenet '''
@@ -105,7 +99,7 @@ class TestDscObject(unittest.TestCase):
         with self.assertRaises(ValueError):  # TODO: once the adding logic is implemented, this will be need to redone
             d.library_classes[common_section] = set()
 
-         # now to check the components
+        # now to check the components
         d.components[common_section] = set()
         with self.assertRaises(ValueError):
             d.components[build_opt_section] = set()

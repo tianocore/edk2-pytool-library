@@ -73,7 +73,7 @@ class FdfParser(HashFileParser):
 
             if sline.strip().startswith("[") and sline.strip().endswith("]"):  # if we're starting a new section
                 # this basically gets what's after the . or if it doesn't have a period
-                # the whole thing for every comma seperated item in sline
+                # the whole thing for every comma separated item in sline
                 self.CurrentSection = [
                     x.split(".", 1)[1] if "." in x else x for x in sline.strip("[] ").strip().split(",")]
                 InDefinesSection = False

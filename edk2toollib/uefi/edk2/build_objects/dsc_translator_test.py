@@ -1,3 +1,10 @@
+# @file dsc_translator_test.py
+# Tests for the translator for the EDK II DSC data model object
+#
+# Copyright (c) Microsoft Corporation
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
 import unittest
 import os
 import tempfile
@@ -63,7 +70,7 @@ class TestDscTranslator(unittest.TestCase):
 [SkuIds]
   0|DEFAULT # The entry: 0|DEFAULT is reserved and always required.
   3|JOEY|DEFAULT
-  5|SONOFJOEY|JOEY
+  5|JOEY2|JOEY
 
 ########################################################################
 #
@@ -469,7 +476,7 @@ class TestDscTranslator(unittest.TestCase):
     def test_dsc_to_file_and_back_again(self):
         filepath = self.write_file("test.dsc", self.test_dsc)
         print(filepath)
-        # parse the origional DSC
+        # parse the original DSC
         parser = DscParser()
         parser._ErrorLimit = 0
         # TODO: actually parse the file
