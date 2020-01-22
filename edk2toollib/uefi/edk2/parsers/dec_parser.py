@@ -119,7 +119,11 @@ class PcdDeclarationEntry():
         self.token_space_name = sp[0].strip()
         op = sp[2].split("|")
 
-        if(len(op) != 4):
+        if(len(op) < 4):
+            raise Exception("Too few parts")
+        if(len(op) > 5):
+            raise Exception("Too many parts")
+        if(len(op) == 5 and op[4].strip() != '{'):
             raise Exception("Too many parts")
 
         self.name = op[0].strip()
@@ -153,6 +157,7 @@ class DecParser(HashFileParser):
         InGuidsSection = False
         InPPISection = False
         InPcdSection = False
+        InStructuredPcdDeclaration = False
         InIncludesSection = False
 
         for line in self.Lines:
@@ -199,9 +204,15 @@ class DecParser(HashFileParser):
             elif InPcdSection:
                 if sline.strip()[0] == '[':
                     InPcdSection = False
+                elif sline.strip()[0] == '}':
+                    InStructuredPcdDeclaration = False
                 else:
+                    if InStructuredPcdDeclaration:
+                        continue
                     t = PcdDeclarationEntry(self.PackageName, sline)
                     self.Pcds.append(t)
+                    if sline.rstrip()[-1] == '{':
+                        InStructuredPcdDeclaration = True
                     continue
 
             elif InIncludesSection:
