@@ -2,7 +2,7 @@ import unittest
 import os
 import tempfile
 from edk2toollib.uefi.edk2.parsers.dsc_parser import DscParser
-from edk2toollib.uefi.edk2.build_objects.dsc import dsc
+# from edk2toollib.uefi.edk2.build_objects.dsc import dsc
 from edk2toollib.uefi.edk2.build_objects.dsc_translator import DscTranslator
 
 

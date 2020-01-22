@@ -29,23 +29,27 @@ class dsc_set(set):
 class dsc_dict(collections.OrderedDict):
     ''' A dictionary that allows specific classes as headers and sections '''
 
-    def __init__(self, allowed_header_classes=[], allowed_section_classes=[]):
-        self._allowed_header_classes = set(allowed_header_classes)
-        self._allowed_section_classes = set(allowed_section_classes)
+    def __init__(self, allowed_key_classes=[], allowed_value_classes=[]):
+        self._allowed_key_classes = set(allowed_key_classes)
+        self._allowed_value_classes = set(allowed_value_classes)
+
+    def __missing__(self, key):
+        self[key] = dsc_set(self._allowed_value_classes)
+        return self[key]
 
     def __setitem__(self, key, val):
-        if len(self._allowed_header_classes) > 0 and type(key) not in self._allowed_header_classes:
-            raise ValueError(f"Cannot add {type(key)} to restricted set: {self._allowed_header_classes}")
+        if len(self._allowed_key_classes) > 0 and type(key) not in self._allowed_key_classes:
+            raise ValueError(f"Cannot add {type(key)} to restricted set: {self._allowed_key_classes}")
 
-        if len(self._allowed_section_classes) > 0:
+        if len(self._allowed_value_classes) > 0:
             if type(val) == set and len(val) == 0:  # if it's an empty set, convert it to a dsc_set
-                val = dsc_set(allowed_classes=self._allowed_section_classes)
+                val = dsc_set(allowed_classes=self._allowed_value_classes)
             if type(val) == dsc_set:
-                if val._allowed_classes != self._allowed_section_classes:
+                if val._allowed_classes != self._allowed_value_classes:
                     raise ValueError(
-                        f"Cannot add set:{val._allowed_classes} to restricted dict: {self._allowed_section_classes}")
-            elif type(val) not in self._allowed_section_classes:
-                raise ValueError(f"Cannot add {type(val)} to restricted dict: {self._allowed_section_classes}")
+                        f"Cannot add set:{val._allowed_classes} to restricted dict: {self._allowed_value_classes}")
+            elif type(val) not in self._allowed_value_classes:
+                raise ValueError(f"Cannot add {type(val)} to restricted dict: {self._allowed_value_classes}")
         dict.__setitem__(self, key, val)
 
 
@@ -55,7 +59,7 @@ class dsc:
         self.skus = dsc_set(allowed_classes=[definition, sku_id])  # this is a set of SKU's
         self.components = {}  # this is a set of components
         self.libraries = {}  # this is
-        self.library_classes = {}
+        self.library_classes = dsc_dict([dsc_section_type, ], [build_option, library_class])
         self.build_options = dsc_dict([dsc_buildoption_section_type, ], [build_option, definition])
         self.pcds = dsc_dict([dsc_pcd_section_type, ], [pcd, pcd_typed, pcd_variable])
         self.defines = dsc_set(allowed_classes=[definition, ])

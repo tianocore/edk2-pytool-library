@@ -12,13 +12,14 @@ from edk2toollib.uefi.edk2.build_objects.dsc import dsc
 from edk2toollib.uefi.edk2.build_objects.dsc import library_class
 from edk2toollib.uefi.edk2.build_objects.dsc import component
 from edk2toollib.uefi.edk2.build_objects.dsc import definition
+from edk2toollib.uefi.edk2.build_objects.dsc import dsc_section_type
 
 class TestDscObject(unittest.TestCase):
 
     def test_null_creation(self):
         d = dsc()
         self.assertNotEqual(d, None)
-    
+
     def test_dsc_multple_defines(self):
         # When we add an object, it should overwrite the previous one
         d = TestDscObject.create_dsc_object()
@@ -43,6 +44,8 @@ class TestDscObject(unittest.TestCase):
         d.defines.add(definition("SUPPORTED_ARCHITECTURES", "IA32 X64 AARCH64"))
 
         # Next add some library classes
+        default_section = dsc_section_type()
+        d.library_classes[default_section].add(library_class("NULL", "BOB.inf"))
 
+        # Next add a
         return d
-        
