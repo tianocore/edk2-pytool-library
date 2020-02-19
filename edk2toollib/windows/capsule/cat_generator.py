@@ -71,7 +71,7 @@ class CatGenerator(object):
 
         OutputFolder = os.path.dirname(OutputCatFile)
         # Make Cat file
-        cmd = "/driver:. /os:" + self.OperatingSystem + "_" + self.Arch + " /verbose"
+        cmd = "/driver:. /os:" + self.OperatingSystem + "_" + self.Arch + " /verbose /uselocaltime"
         ret = RunCmd(PathToInf2CatTool, cmd, workingdir=OutputFolder)
         if(ret != 0):
             raise Exception("Creating Cat file Failed with errorcode %d" % ret)
