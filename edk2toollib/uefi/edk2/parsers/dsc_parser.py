@@ -23,6 +23,7 @@ class DscParser(HashFileParser):
         self.ParsingInBuildOption = 0
         self.LibraryClassToInstanceDict = {}
         self.Pcds = []
+        self._dsc_file_paths = set()  # This includes the full paths for every DSC that makes up the file
 
     def __ParseLine(self, Line, file_name=None, lineno=None):
         line_stripped = self.StripComment(Line).strip()
@@ -47,6 +48,7 @@ class DscParser(HashFileParser):
             tokens = line_resolved.split()
             self.Logger.debug("Opening Include File %s" % os.path.join(self.RootPath, tokens[1]))
             sp = self.FindPath(tokens[1])
+            self._dsc_file_paths.add(sp)
             lf = open(sp, "r")
             loc = lf.readlines()
             lf.close()
@@ -256,13 +258,15 @@ class DscParser(HashFileParser):
         self.Logger.debug("Parsing file: %s" % filepath)
         self.TargetFile = os.path.abspath(filepath)
         self.TargetFilePath = os.path.dirname(self.TargetFile)
-        f = open(os.path.join(filepath), "r")
+        sp = os.path.join(filepath)
+        self._dsc_file_paths.add(sp)
+        f = open(sp, "r")
         # expand all the lines and include other files
         file_lines = f.readlines()
         self.__ProcessDefines(file_lines)
         # reset the parser state before processing more
         self.ResetParserState()
-        self.__ProcessMore(file_lines, file_name=os.path.join(filepath))
+        self.__ProcessMore(file_lines, file_name=sp)
         f.close()
         self.Parsed = True
 
@@ -277,3 +281,8 @@ class DscParser(HashFileParser):
 
     def GetLibsEnhanced(self):
         return self.LibsEnhanced
+
+    def GetAllDscPaths(self):
+        ''' returns an iterable with all the paths that this DSC uses (the base file and any includes).
+            They are not all guaranteed to be DSC's '''
+        return self._dsc_file_paths
