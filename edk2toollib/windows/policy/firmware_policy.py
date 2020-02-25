@@ -96,10 +96,8 @@ class Rule(object):
              cls.StructFormat, fs.read(cls.StructSize))
 
         orig_offset = fs.tell()
-        SubKeyName = PolicyString(
-            fs=fs, offset=vtoffset + OffsetToSubKeyName)
-        ValueName = PolicyString(
-            fs=fs, offset=vtoffset + OffsetToValueName)
+        SubKeyName = PolicyString(fs=fs, offset=vtoffset + OffsetToSubKeyName)
+        ValueName = PolicyString(fs=fs, offset=vtoffset + OffsetToValueName)
         Value = PolicyValue.FromFileStream(fs=fs, offset=vtoffset + OffsetToValue)
         fs.seek(orig_offset)
         return cls(RootKey=RootKey, OffsetToSubKeyName=OffsetToSubKeyName,
