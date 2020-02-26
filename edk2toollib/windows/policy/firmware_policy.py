@@ -5,53 +5,56 @@
 # Copyright (c), Microsoft Corporation
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 
+"""
+Summary:
+A firmware policy is conceptually a set of key value pair "rules".
+Rules can be 1-time actions, states persistent while the policy is in effect,
+or targeting information describing the machine where the policy is applicable
+
+Each key is composed of a UINT32 RootKey followed by String SubKeyName & ValueName
+For example:
+  RootKey = 0xEF100000
+  SubKeyName = "PolicyGroupFoo"
+  ValueName = "TpmClear"
+  MyExampleKey = EF100000_PolicyGroupFoo_TpmClear
+
+Each value has a type that can be primitive or a variable-length structure.
+
 ##
-# A firmware policy is conceptually a set of key value pair "rules".
-# Rules can be 1-time actions, states persistent while the policy is in effect,
-# or targeting information describing the machine where the policy is applicable
-#
-# Each key is composed of a UINT32 RootKey followed by String SubKeyName & ValueName
-# For example:
-#   RootKey = 0xEF100000
-#   SubKeyName = "PolicyGroupFoo"
-#   ValueName = "TpmClear"
-#   MyExampleKey = EF100000\PolicyGroupFoo\TpmClear
-#
-# Each value has a type that can be primitive or a variable-length structure.
-#
+The firmware policy binary, pack(1), little endian, is as follows:
+
+UINT16   FormatVersion
+UINT32   PolicyVersion
+GUID     PolicyPublisher
+UINT16   Reserved1Count  # 0
+         Reserved1[Reserved1Count]   # not present, not supported by this library
+UINT32   OptionFlags     # 0
+UINT16   Reserved2Count  # 0
+UINT16   RulesCount
+         Reserved2[Reserved2Count]   # not present for FW policies, partial support by this library
+RULE     Rules[RulesCount]  # inline, not a pointer, see class Rule below
+BYTE     ValueTable[]  #inline, not a pointer
 ##
-# The policy binary, pack(1), little endian
+
 ##
-# UINT16   FormatVersion
-# UINT32   PolicyVersion
-# GUID     PolicyPublisher
-# UINT16   Reserved1Count  # 0
-#          Reserved1[Reserved1Count]   # not present
-# UINT32   OptionFlags     # 0
-# UINT16   Reserved2Count  # 0
-# UINT16   RulesCount
-#          Reserved2[Reserved2Count]   # not present
-# RULE     Rules[RulesCount]  # inline, not a pointer, see class Rule below
-# BYTE     ValueTable[]  #inline, not a pointer
-#
+A RULE structure is as follows
+
+UINT32 RootKey
+UINT32 OffsetToSubKeyName  # ValueTable offset
+UINT32 OffsetToValueName   # ValueTable offset
+UINT32 OffsetToValue       # ValueTable offset to a PolicyValueType + PolicyValue
 ##
-# The RULE structure is as follows
+
 ##
-# UINT32 RootKey
-# UINT32 OffsetToSubKeyName  # ValueTable offset
-# UINT32 OffsetToValueName   # ValueTable offset
-# UINT32 OffsetToValue       # ValueTable offset to a PolicyValueType + PolicyValue
-#
+Each Rule corresponds to 3 entries in the ValueTable
+Rules may, however, re-use identical ValueTable entries to save space
+For example, multiple Rules with the same SubKeyName may report the same SubKeyNameOffset
+
+PolicyString SubKeyName  # may or may not be NULL terminated, usually not
+PolicyString Valuename   # may or may not be NULL terminated, usually not
+PolicyValue              # Begins with a UINT16 PolicyValueType, followed by the actual value, may be NULL terminated
 ##
-# Each Rule corresponds to 3 entries in the ValueTable
-# Rules may, however, re-use identical ValueTable entries to save space
-# For example, multiple Rules with the same SubKeyName may report the same SubKeyNameOffset
-##
-# PolicyString SubKeyName  # may or may not be NULL terminated, usually not
-# PolicyString Valuename   # may or may not be NULL terminated, usually not
-# PolicyValue              # Begins with a UINT16 PolicyValueType, followed by the actual value, may be NULL terminated
-#
-##
+"""
 
 import io
 import struct
@@ -60,11 +63,17 @@ import uuid
 STRICT = False
 
 
-# Class for storing, serializing, deserializing, & printing RULE elements
 class Rule(object):
+    """ Class for storing, serializing, deserializing, & printing RULE elements """
     StructFormat = '<IIII'
     StructSize = struct.calcsize(StructFormat)
 
+    """ __init__ constructors are for creating new objects from desired values
+    When the number of parameters is small, __init__ may also take a stream parameter
+    which will be deserialized to initialize the object in lieu of the other parameters.
+    When the number of parameters is large, initialization from stream is factored out
+    into a separate class method FromFileStream
+    """
     def __init__(self, RootKey, SubKeyName, ValueName, Value,
                  OffsetToSubKeyName=0, OffsetToValueName=0, OffsetToValue=0):
         self.RootKey = RootKey
@@ -76,8 +85,8 @@ class Rule(object):
         self.Value = Value
 
     def __eq__(self, other):
+        """Rule table offsets are not considered for equivalency, only the actual key/value."""
         if (self.RootKey == other.RootKey
-            # Rule table offset are not considered for equivalency
             and self.SubKeyName == other.SubKeyName
             and self.ValueName == other.ValueName
                 and self.Value == other.Value):
@@ -85,8 +94,11 @@ class Rule(object):
         else:
             return False
 
-    # Incoming fs should be pointing to Rule structure
-    # vtoffset is the offset in fs to the ValueTable
+    """
+    Construct a Rule initialized from a deserialized stream fs
+    fs passed in should be pointing to Rule structure
+    vtoffset is the offset in fs to the ValueTable
+    """
     @classmethod
     def FromFileStream(cls, fs, vtoffset):
         if fs is None or vtoffset is None:
@@ -115,6 +127,9 @@ class Rule(object):
         self.Value.Print(prefix=prefix + '  ')
 
     def Serialize(self, ruleOut, valueOut, offsetInVT):
+        """
+        The ruleOut & valueOut parameters take bytearrays, not streams
+        """
         self.OffsetToSubKeyName = offsetInVT
         localArray = bytearray()
         self.SubKeyName.Serialize(valueOut=localArray)
@@ -134,10 +149,8 @@ class Rule(object):
                                self.OffsetToValueName, self.OffsetToValue)
 
 
-##
-# Class for storing, serializing, deserializing, & printing PolicyValue Types
-##
 class PolicyValueType():
+    """ Class for storing, serializing, deserializing, & printing PolicyValue Types"""
     StructFormat = '<H'
     StructSize = struct.calcsize(StructFormat)
 
@@ -166,7 +179,7 @@ class PolicyValueType():
 
         self.vt = Type
 
-    # if offset is not specified, fs is assumed pointing at the PolicyValueType struct
+    """if offset is not specified, stream fs position is at beginning PolicyValueType struct"""
     @classmethod
     def FromFileStream(cls, fs, offset=None):
         if offset:
@@ -180,27 +193,30 @@ class PolicyValueType():
         print('%s%s%s' % (prefix, 'ValueType: ', self.vt))
 
     def Serialize(self, valueOut):
+        """
+        The valueOut parameter take bytearrays, not streams
+        """
         valueOut += struct.pack(self.StructFormat, self.vt)
 
     def Get(self):
         return self.vt
 
 
-##
-# Class for storing, serializing, deserializing, & printing PolicyString Types
-# NOTE: This type is used both in the keys as SubKeyName and ValueName and it
-#       can be a value.  When used as a value, a NULL may follow the string, but
-#       the NULL will not be included in the string size
-##
 class PolicyString():
-    #
-    # 16-bit, little endian, size of the string in _bytes_
-    # followed by a UTF-16LE string, no NULL terminator
-    #
-    # Example of "PlatformID"
-    # \x14\x00P\x00l\x00a\x00t\x00f\x00o\x00r\x00m\x00I\x00D\x00
-    #
-    # The trailing \x00 is not a NULL, it is UTF-16LE encoding of "D"
+    """
+    Class for storing, serializing, deserializing, & printing PolicyString Types
+    NOTE: This type is used both in the keys as SubKeyName and ValueName and it
+        can be a value.  When used as a value, a NULL may follow the string, but
+        the NULL will not be included in the string size
+
+    16-bit, little endian, size of the string in _bytes_
+    followed by a UTF-16LE string, no NULL terminator
+
+    Example of "PlatformID"
+    \x14\x00P\x00l\x00a\x00t\x00f\x00o\x00r\x00m\x00I\x00D\x00
+
+    The trailing \x00 is not a NULL, it is UTF-16LE encoding of "D"
+    """
 
     def __init__(self, fs=None, offset=None, String=None):
         if not fs:
@@ -222,17 +238,20 @@ class PolicyString():
         print('%s%s%s' % (prefix, 'String:  ', self.String))
 
     def Serialize(self, valueOut):
+        """
+        The valueOut parameter take bytearrays, not streams
+        """
         b = str.encode(self.String, encoding='utf_16_le')
         size = struct.pack('<H', len(b))
         valueOut += size + b
 
 
-##
-# Class for storing, serializing, deserializing, & printing policy values
-# Typically handles privitive types iteself, or delegates to other classes
-# for non-primitive structures, e.g. PolicyString
-##
 class PolicyValue():
+    """
+    Class for storing, serializing, deserializing, & printing policy values
+    Typically handles privitive types iteself, or delegates to other classes
+    for non-primitive structures, e.g. PolicyString
+    """
     def __init__(self, valueType, value):
         self.valueType = valueType
         self.value = value
@@ -243,7 +262,7 @@ class PolicyValue():
         else:
             return False
 
-    # if offset is not specified, fs is assumed pointing at the PolicyValue struct
+    """if offset is not specified, stream fs position is at beginning of struct"""
     @classmethod
     def FromFileStream(cls, fs, offset=None):
         if offset:
@@ -277,13 +296,15 @@ class PolicyValue():
             print('%s%s"%s"' % (prefix, 'Value:  ', str(self.value)))
 
     def Serialize(self, valueOut):
-
+        """
+        The valueOut parameter take bytearrays, not streams
+        """
         self.valueType.Serialize(valueOut)
 
         vt = self.valueType.Get()
         if vt is PolicyValueType.POLICY_VALUE_TYPE_STRING:
             self.value.Serialize(valueOut)
-            # NOTE: add a NULL here for consistency with shipped policy code
+            """ NOTE: add a NULL here for consistency with server-side code """
             valueOut += struct.pack('<H', 0x0000)
         elif vt is PolicyValueType.POLICY_VALUE_TYPE_DWORD:
             valueOut += struct.pack('<I', self.value)
@@ -295,19 +316,20 @@ class PolicyValue():
                 raise Exception('Value Type not supported')
 
 
-##
-# Reserved2: For testing non-firmware, legacy policies
-##
 class Reserved2(object):
-    # Not used by UEFI, partial implementation follows
+    """
+    For testing non-firmware, legacy policies
+    Implementation can do basic parsing of rules but not values
+    For test purposes only
+    """
     StructFormat = '<III'
     StructSize = struct.calcsize(StructFormat)
 
-    def __init__(self, vtoffset, fs=None):
+    def __init__(self, vtoffset=0, fs=None):
         if fs is None:
-            self.ObjectType = None
+            self.ObjectType = 0
             self.Element = 0
-            self.OffsetToValue = 0  # offset in value table
+            self.OffsetToValue = vtoffset
         else:
             self.PopulateFromFileStream(fs, vtoffset)
 
@@ -315,11 +337,16 @@ class Reserved2(object):
         if (STRICT is True):
             raise Exception(errorMessage)
 
-    def PopulateFromFileStream(self, fs, vtoffset):
+    def PopulateFromFileStream(self, fs, vtoffset=0):
         if fs is None:
             raise Exception('Invalid File stream')
         (self.ObjectType, self.Element, self.OffsetToValue) = struct.unpack(
             self.StructFormat, fs.read(self.StructSize))
+
+        errorMessage = 'Reserved2 PopulateFromFileStream does not deserialize Reserved2 values'
+        print(errorMessage)
+        if (STRICT is True):
+            raise Exception(errorMessage)
 
     def Print(self, prefix=''):
         print('%sReserved2' % prefix)
@@ -328,24 +355,20 @@ class Reserved2(object):
         print('%s  ValueOffset:  %x' % (prefix, self.OffsetToValue))
 
     def Serialize(self, ruleOut, valueOut=None, offsetInVT=0):
-        ruleOut += struct.pack(self.StructFormat, self.ObjectType,
-                               self.Element, self.OffsetToValue)
-
-        # Reserved2 serialization not supported, need to build ValueTable
-        if (self.ObjectType is not None):
-            errorMessage = 'Reserved2 not fully supported'
-            if (STRICT is True):
-                raise Exception(errorMessage)
-            print(errorMessage)
+        ruleOut += struct.pack(self.StructFormat, self.ObjectType, self.Element, self.OffsetToValue)
+        errorMessage = 'Reserved2 value serialization not supported'
+        print(errorMessage)
+        if (STRICT is True):
+            raise Exception(errorMessage)
 
 
-##
-# Class for storing, serializing, deserializing, & printing Firmware Policy structures
-# Typically handles privitive types iteself, or delegates to other classes
-# for non-primitive structures, e.g. Rule, PolicyValue, PolicyString
-##
 class FirmwarePolicy(object):
-    FixedStructFormat = '<HI16sHIHH'  # omits Reserved1 array
+    """
+    Class for storing, serializing, deserializing, & printing Firmware Policy structures
+    Typically handles privitive types iteself, or delegates to other classes
+    for non-primitive structures, e.g. Rule, PolicyValue, PolicyString
+    """
+    FixedStructFormat = '<HI16sHIHH'  # omits completely unsupported Reserved1 array
     FixedStructSize = struct.calcsize(FixedStructFormat)
 
     POLICY_BLOB_MIN_SIZE = 32  # bytes
@@ -362,11 +385,11 @@ class FirmwarePolicy(object):
     FW_POLICY_VALUE_ACTIONS_MASK = 0x0000FFFF0000FFFF
     FW_POLICY_VALUE_STATES_MASK = 0xFFFF0000FFFF0000
 
-    # Defined Policy Actions
+    """Defined Policy Actions"""
     FW_POLICY_VALUE_ACTION_SECUREBOOT_CLEAR = 0x0000000000000001
     FW_POLICY_VALUE_ACTION_TPM_CLEAR = 0x0000000000000002
 
-    # Defined Policy States
+    """Defined Policy States"""
     FW_POLICY_VALUE_STATE_DISABLE_SPI_LOCK = 0x0000000000010000
 
     def __init__(self, fs=None):
@@ -422,6 +445,11 @@ class FirmwarePolicy(object):
                         ValueName=ValueName, Value=Value)
             self.AddRule(rule)
 
+    def SerializeToStream(self, stream):
+        ba = bytearray()
+        self.Serialize(output=ba)
+        stream.write(ba)
+
     def Serialize(self, output):
         if (self.Reserved1Count > 0):
             ErrorMessage = 'Reserved1 not supported'
@@ -468,7 +496,7 @@ class FirmwarePolicy(object):
         self.ValueTable = valueArray
 
         serial += valueArray
-        output.write(serial)
+        output += serial
 
     def PopulateFromFileStream(self, fs):
         if fs is None:

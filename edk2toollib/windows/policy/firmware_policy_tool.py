@@ -1,6 +1,6 @@
 # @file
-# Generate the test firmware policy blobs for
-# the Firmware Policy Parsing Library Unit Test
+# Basic command-line interface for creating
+# and decoding Windows Firmware Policy blobs
 #
 # Copyright (c) Microsoft Corporation
 #
@@ -31,7 +31,7 @@ def CreatePolicyFromParameters(filename, manf, product, sn, nonce, oem1, oem2):
                       'OEM_02': oem2,
                       'Nonce': nonce}
         policy.SetDeviceTarget(TargetInfo)
-        policy.Serialize(output=f)
+        policy.SerializeToStream(stream=f)
         policy.Print()
 
 
