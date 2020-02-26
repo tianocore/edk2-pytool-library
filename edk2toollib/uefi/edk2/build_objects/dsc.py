@@ -13,7 +13,9 @@ DEFAULT_SECTION_TYPE = "COMMON"
 
 class dsc_set(set):
 
-    def __init__(self, allowed_classes=[]):
+    def __init__(self, allowed_classes=None):
+        if allowed_classes is None:
+            allowed_classes = []
         self._allowed_classes = set(allowed_classes)
 
     def add(self, item):
@@ -28,7 +30,11 @@ class dsc_set(set):
 class dsc_dict(collections.OrderedDict):
     ''' A dictionary that allows specific classes as headers and sections '''
 
-    def __init__(self, allowed_key_classes=[], allowed_value_classes=[]):
+    def __init__(self, allowed_key_classes=None, allowed_value_classes=None):
+        if allowed_key_classes is None:
+            allowed_key_classes = []
+        if allowed_value_classes is None:
+            allowed_value_classes = []
         self._allowed_key_classes = set(allowed_key_classes)
         self._allowed_value_classes = set(allowed_value_classes)
 
@@ -377,6 +383,8 @@ class pcd_variable(pcd):
     def __init__(self, namespace, name, var_name, var_guid, var_offset,
                  default=None, attributes=None, source_info=None):
         super().__init__(namespace, name, "", source_info)
+        if attributes is None:
+            attributes = []
         self.var_name = var_name
         self.var_guid = var_guid
         self.var_offset = var_offset
