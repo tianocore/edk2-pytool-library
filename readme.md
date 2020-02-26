@@ -44,6 +44,16 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
 
 [![PyPI](https://img.shields.io/pypi/v/edk2_pytool_library.svg)](https://pypi.org/project/edk2-pytool-library/)
 
+### Version 0.10.7
+
+* Bugs:
+  * See the bugs in the [milestone](https://github.com/tianocore/edk2-pytool-library/milestone/5?closed=1) for this release
+
+### Version 0.10.6
+
+* Bugs:
+  * See the bugs in the [milestone](https://github.com/tianocore/edk2-pytool-library/milestone/4?closed=1) for this release
+
 ### Version 0.10.5
 
 * Bugs:
