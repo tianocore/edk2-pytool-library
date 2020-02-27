@@ -288,8 +288,8 @@ class FirmwarePolicyTest(unittest.TestCase):
 
         policy = \
             FirmwarePolicy.FW_POLICY_VALUE_ACTION_SECUREBOOT_CLEAR \
-            + FirmwarePolicy.FW_POLICY_VALUE_ACTION_TPM_CLEAR
-        policyManuf.SetDevicePolicy(policy=policy)
+            | FirmwarePolicy.FW_POLICY_VALUE_ACTION_TPM_CLEAR
+        policyManuf.SetDevicePolicy(policy)
 
         first_output = io.BytesIO()
         policyManuf.SerializeToStream(stream=first_output)
