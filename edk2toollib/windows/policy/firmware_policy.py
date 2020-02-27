@@ -2,8 +2,10 @@
 #
 # Library to parse/manage/build unsigned firmware policy blobs
 #
-# Copyright (c), Microsoft Corporation
+# Copyright (c) Microsoft Corporation
+#
 # SPDX-License-Identifier: BSD-2-Clause-Patent
+##
 
 """
 Summary:
@@ -54,11 +56,23 @@ PolicyString SubKeyName  # may or may not be NULL terminated, usually not
 PolicyString Valuename   # may or may not be NULL terminated, usually not
 PolicyValue              # Begins with a UINT16 PolicyValueType, followed by the actual value, may be NULL terminated
 ##
+
+##
+Conventions
+
+    _init__ constructors are to be used when creating new objects from desired values.
+    When the number of parameters is small, __init__ may also take a stream parameter
+    which will be deserialized to initialize the object in lieu of the other parameters.
+    When the number of parameters is large, initialization from stream is factored out
+    into a separate class method FromFileStream().  This overhead did not seem merited
+    when the number of overall parameters was small.
+##
 """
 
 import io
 import struct
 import uuid
+from typing import BinaryIO
 
 STRICT = False
 
@@ -68,23 +82,21 @@ class Rule(object):
     StructFormat = '<IIII'
     StructSize = struct.calcsize(StructFormat)
 
-    """ __init__ constructors are for creating new objects from desired values
-    When the number of parameters is small, __init__ may also take a stream parameter
-    which will be deserialized to initialize the object in lieu of the other parameters.
-    When the number of parameters is large, initialization from stream is factored out
-    into a separate class method FromFileStream
-    """
-    def __init__(self, RootKey, SubKeyName, ValueName, Value,
-                 OffsetToSubKeyName=0, OffsetToValueName=0, OffsetToValue=0):
+    def __init__(self, RootKey: int, SubKeyName: str, ValueName: str,
+                 Value, OffsetToSubKeyName: int = 0, OffsetToValueName: int = 0,
+                 OffsetToValue: int = 0) -> None:
+        """
+        The parameter "Value" should be of type class PolicyValue()
+        """
         self.RootKey = RootKey
         self.OffsetToSubKeyName = OffsetToSubKeyName
         self.OffsetToValueName = OffsetToValueName
         self.OffsetToValue = OffsetToValue
         self.SubKeyName = SubKeyName
         self.ValueName = ValueName
-        self.Value = Value
+        self.Value = PolicyValue(Value.valueType, Value.value)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Rule table offsets are not considered for equivalency, only the actual key/value."""
         if (self.RootKey == other.RootKey
             and self.SubKeyName == other.SubKeyName
@@ -100,7 +112,7 @@ class Rule(object):
     vtoffset is the offset in fs to the ValueTable
     """
     @classmethod
-    def FromFileStream(cls, fs, vtoffset):
+    def FromFileStream(cls, fs: BinaryIO, vtoffset: int):
         if fs is None or vtoffset is None:
             raise Exception('Invalid File stream or Value Table offset')
         (RootKey, OffsetToSubKeyName,
@@ -116,7 +128,7 @@ class Rule(object):
                    OffsetToValueName=OffsetToValueName, OffsetToValue=OffsetToValue,
                    SubKeyName=SubKeyName, ValueName=ValueName, Value=Value)
 
-    def Print(self, prefix=''):
+    def Print(self, prefix: str = ''):
         print('%sRule' % (prefix,))
         print('%s  RootKey:  %x' % (prefix, self.RootKey))
         print('%s  SubKeyNameOffset:  %x' % (prefix, self.OffsetToSubKeyName))
@@ -126,10 +138,7 @@ class Rule(object):
         self.ValueName.Print(prefix=prefix + '  ValueName ')
         self.Value.Print(prefix=prefix + '  ')
 
-    def Serialize(self, ruleOut, valueOut, offsetInVT):
-        """
-        The ruleOut & valueOut parameters take bytearrays, not streams
-        """
+    def Serialize(self, ruleOut: bytearray, valueOut: bytearray, offsetInVT: int):
         self.OffsetToSubKeyName = offsetInVT
         localArray = bytearray()
         self.SubKeyName.Serialize(valueOut=localArray)
@@ -181,7 +190,7 @@ class PolicyValueType():
 
     """if offset is not specified, stream fs position is at beginning PolicyValueType struct"""
     @classmethod
-    def FromFileStream(cls, fs, offset=None):
+    def FromFileStream(cls, fs: BinaryIO, offset=None):
         if offset:
             fs.seek(offset)
         else:
@@ -189,13 +198,10 @@ class PolicyValueType():
         valueType = struct.unpack('<H', fs.read(2))[0]
         return cls(valueType)
 
-    def Print(self, prefix=''):
+    def Print(self, prefix: str = ''):
         print('%s%s%s' % (prefix, 'ValueType: ', self.vt))
 
-    def Serialize(self, valueOut):
-        """
-        The valueOut parameter take bytearrays, not streams
-        """
+    def Serialize(self, valueOut: bytearray):
         valueOut += struct.pack(self.StructFormat, self.vt)
 
     def Get(self):
@@ -218,7 +224,7 @@ class PolicyString():
     The trailing \x00 is not a NULL, it is UTF-16LE encoding of "D"
     """
 
-    def __init__(self, fs=None, offset=None, String=None):
+    def __init__(self, fs: BinaryIO = None, offset: int = None, String: str = None):
         if not fs:
             if String:
                 self.String = String
@@ -234,13 +240,10 @@ class PolicyString():
             if (len(self.String) != (StringLength / 2)):
                 raise Exception('String length mismatch')
 
-    def Print(self, prefix=''):
+    def Print(self, prefix: str = ''):
         print('%s%s%s' % (prefix, 'String:  ', self.String))
 
-    def Serialize(self, valueOut):
-        """
-        The valueOut parameter take bytearrays, not streams
-        """
+    def Serialize(self, valueOut: bytearray):
         b = str.encode(self.String, encoding='utf_16_le')
         size = struct.pack('<H', len(b))
         valueOut += size + b
@@ -256,7 +259,7 @@ class PolicyValue():
         self.valueType = valueType
         self.value = value
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if (self.valueType == other.valueType and self.value == other.value):
             return True
         else:
@@ -264,7 +267,7 @@ class PolicyValue():
 
     """if offset is not specified, stream fs position is at beginning of struct"""
     @classmethod
-    def FromFileStream(cls, fs, offset=None):
+    def FromFileStream(cls, fs: BinaryIO, offset: int = None):
         if offset:
             fs.seek(offset)
         else:
@@ -286,7 +289,7 @@ class PolicyValue():
     def GetValueType(self):
         return self.valueType
 
-    def Print(self, prefix=''):
+    def Print(self, prefix: str = ''):
         self.valueType.Print(prefix=prefix)
         if isinstance(self.value, int):
             print('%s%s0x%x' % (prefix, 'Value:  ', self.value))
@@ -295,10 +298,7 @@ class PolicyValue():
         else:
             print('%s%s"%s"' % (prefix, 'Value:  ', str(self.value)))
 
-    def Serialize(self, valueOut):
-        """
-        The valueOut parameter take bytearrays, not streams
-        """
+    def Serialize(self, valueOut: bytearray):
         self.valueType.Serialize(valueOut)
 
         vt = self.valueType.Get()
@@ -325,7 +325,7 @@ class Reserved2(object):
     StructFormat = '<III'
     StructSize = struct.calcsize(StructFormat)
 
-    def __init__(self, vtoffset=0, fs=None):
+    def __init__(self, fs: BinaryIO = None, vtoffset: int = 0):
         if fs is None:
             self.ObjectType = 0
             self.Element = 0
@@ -337,7 +337,7 @@ class Reserved2(object):
         if (STRICT is True):
             raise Exception(errorMessage)
 
-    def PopulateFromFileStream(self, fs, vtoffset=0):
+    def PopulateFromFileStream(self, fs: BinaryIO, vtoffset: int = 0):
         if fs is None:
             raise Exception('Invalid File stream')
         (self.ObjectType, self.Element, self.OffsetToValue) = struct.unpack(
@@ -348,13 +348,13 @@ class Reserved2(object):
         if (STRICT is True):
             raise Exception(errorMessage)
 
-    def Print(self, prefix=''):
+    def Print(self, prefix: str = ''):
         print('%sReserved2' % prefix)
         print('%s  ObjectType:  %x' % (prefix, self.ObjectType))
         print('%s  Element:  %x' % (prefix, self.Element))
         print('%s  ValueOffset:  %x' % (prefix, self.OffsetToValue))
 
-    def Serialize(self, ruleOut, valueOut=None, offsetInVT=0):
+    def Serialize(self, ruleOut: bytearray, valueOut: bytearray = None, offsetInVT: int = 0):
         ruleOut += struct.pack(self.StructFormat, self.ObjectType, self.Element, self.OffsetToValue)
         errorMessage = 'Reserved2 value serialization not supported'
         print(errorMessage)
@@ -410,9 +410,8 @@ class FirmwarePolicy(object):
         else:
             self.PopulateFromFileStream(fs)
 
-    # AddRule does not update the valuetable, use Serialize to do that
-    def AddRule(self, regRule):
-        # de-dupe
+    def AddRule(self, regRule) -> bool:
+        """ AddRule does not update the valuetable, use Serialize to do that after all rules are added """
         for rule in self.Rules:
             if (rule == regRule):
                 return False
@@ -420,7 +419,11 @@ class FirmwarePolicy(object):
         self.RulesCount += 1
         return True
 
-    def SetDevicePolicy(self, policy):
+    def SetDevicePolicy(self, policy: int):
+        """Adds a Rule for the 64-bit policy value bitfield.
+        The "key" is a well-known constant assigned in the body of this method
+        The "value" of the 64-bit bitfield is passed via the "policy" parameter
+        """
         policyVT = PolicyValueType(Type=PolicyValueType.POLICY_VALUE_TYPE_QWORD)
         SubKeyName = PolicyString(String=self.FW_POLICY_SUB_KEY_NAME)
         ValueName = PolicyString(String=self.FW_POLICY_VALUE_NAME)
@@ -430,8 +433,8 @@ class FirmwarePolicy(object):
                     ValueName=ValueName, Value=Value)
         self.AddRule(rule)
 
-    def SetDeviceTarget(self, target):
-        # target should be a dictionary of ValueName/Value pairs
+    def SetDeviceTarget(self, target: dict):
+        """ target should be a dictionary of ValueName/Value pairs """
         for k, v in target.items():
             ValueName = PolicyString(String=k)
             if k == "Nonce":
@@ -445,12 +448,12 @@ class FirmwarePolicy(object):
                         ValueName=ValueName, Value=Value)
             self.AddRule(rule)
 
-    def SerializeToStream(self, stream):
+    def SerializeToStream(self, stream: BinaryIO):
         ba = bytearray()
         self.Serialize(output=ba)
         stream.write(ba)
 
-    def Serialize(self, output):
+    def Serialize(self, output: bytearray):
         if (self.Reserved1Count > 0):
             ErrorMessage = 'Reserved1 not supported'
             if (STRICT is True):
@@ -498,7 +501,7 @@ class FirmwarePolicy(object):
         serial += valueArray
         output += serial
 
-    def PopulateFromFileStream(self, fs):
+    def PopulateFromFileStream(self, fs: BinaryIO):
         if fs is None:
             raise Exception('Invalid File stream')
 
@@ -567,7 +570,7 @@ class FirmwarePolicy(object):
 
         self.ValueTable = fs.read()
 
-    def Print(self):
+    def Print(self) -> None:
         print('Firmware Policy')
         print('  FormatVersion:    %x' % self.FormatVersion)
         print('  PolicyVersion:    %x' % self.PolicyVersion)
