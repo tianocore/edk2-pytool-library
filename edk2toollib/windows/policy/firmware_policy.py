@@ -112,7 +112,7 @@ class Rule(object):
     vtoffset is the offset in fs to the ValueTable
     """
     @classmethod
-    def FromFileStream(cls, fs: BinaryIO, vtoffset: int):
+    def FromFsAndVtOffset(cls, fs: BinaryIO, vtoffset: int):
         if fs is None or vtoffset is None:
             raise Exception('Invalid File stream or Value Table offset')
         (RootKey, OffsetToSubKeyName,
@@ -120,10 +120,24 @@ class Rule(object):
              cls.StructFormat, fs.read(cls.StructSize))
 
         orig_offset = fs.tell()
-        SubKeyName = PolicyString(fs=fs, offset=vtoffset + OffsetToSubKeyName)
-        ValueName = PolicyString(fs=fs, offset=vtoffset + OffsetToValueName)
-        Value = PolicyValue.FromFileStream(fs=fs, offset=vtoffset + OffsetToValue)
+        SubKeyName = PolicyString.FromFileStream(fs=fs, fsOffset=vtoffset + OffsetToSubKeyName)
+        ValueName = PolicyString.FromFileStream(fs=fs, fsOffset=vtoffset + OffsetToValueName)
+        Value = PolicyValue.FromFileStream(fs=fs, fsOffset=vtoffset + OffsetToValue)
         fs.seek(orig_offset)
+        return cls(RootKey=RootKey, OffsetToSubKeyName=OffsetToSubKeyName,
+                   OffsetToValueName=OffsetToValueName, OffsetToValue=OffsetToValue,
+                   SubKeyName=SubKeyName, ValueName=ValueName, Value=Value)
+
+    @classmethod
+    def FromFsAndVtBytes(cls, fs: BinaryIO, vt: bytes):
+        if fs is None or vt is None:
+            raise Exception('Invalid File stream or Value Table offset')
+        (RootKey, OffsetToSubKeyName,
+         OffsetToValueName, OffsetToValue) = struct.unpack(
+             cls.StructFormat, fs.read(cls.StructSize))
+        SubKeyName = PolicyString.FromBytes(vt, OffsetToSubKeyName)
+        ValueName = PolicyString.FromBytes(vt, OffsetToValueName)
+        Value = PolicyValue.FromBytes(vt, OffsetToValue)
         return cls(RootKey=RootKey, OffsetToSubKeyName=OffsetToSubKeyName,
                    OffsetToValueName=OffsetToValueName, OffsetToValue=OffsetToValue,
                    SubKeyName=SubKeyName, ValueName=ValueName, Value=Value)
@@ -190,12 +204,15 @@ class PolicyValueType():
 
     """if offset is not specified, stream fs position is at beginning PolicyValueType struct"""
     @classmethod
-    def FromFileStream(cls, fs: BinaryIO, offset=None):
-        if offset:
-            fs.seek(offset)
-        else:
-            offset = fs.tell()
+    def FromFileStream(cls, fs: BinaryIO, fsOffset: int = None):
+        if fsOffset:
+            fs.seek(fsOffset)
         valueType = struct.unpack('<H', fs.read(2))[0]
+        return cls(valueType)
+
+    @classmethod
+    def FromBytes(cls, b: bytes, bOffset: int = 0):
+        valueType = struct.unpack_from('<H', b, bOffset)[0]
         return cls(valueType)
 
     def Print(self, prefix: str = ''):
@@ -223,22 +240,35 @@ class PolicyString():
 
     The trailing \x00 is not a NULL, it is UTF-16LE encoding of "D"
     """
+    StringLengthFormat = '<H'
 
-    def __init__(self, fs: BinaryIO = None, offset: int = None, String: str = None):
-        if not fs:
-            if String:
-                self.String = String
-            else:
-                self.String = ''
-            return
+    def __init__(self, String: str = None):
+        if String:
+            self.String = String
         else:
-            if offset:
-                fs.seek(offset)
-            StringLength = struct.unpack('<H', fs.read(2))[0]
-            self.String = bytes.decode(
-                fs.read(StringLength), encoding='utf_16_le')
-            if (len(self.String) != (StringLength / 2)):
-                raise Exception('String length mismatch')
+            self.String = ''
+        return
+
+    @classmethod
+    def FromFileStream(cls, fs: BinaryIO, fsOffset: int = None):
+        if fsOffset:
+            fs.seek(fsOffset)
+        StringLength = struct.unpack('<H', fs.read(2))[0]
+        LocalString = bytes.decode(
+            fs.read(StringLength), encoding='utf_16_le')
+        if (len(LocalString) != (StringLength / 2)):
+            raise Exception('String length mismatch')
+        return cls(String=LocalString)
+
+    @classmethod
+    def FromBytes(cls, b: bytes, bOffset: int = 0):
+        StringLength = struct.unpack_from(cls.StringLengthFormat, b, bOffset)[0]
+        bOffset += struct.calcsize(cls.StringLengthFormat)
+        LocalString = bytes.decode(
+            b[bOffset: bOffset + StringLength], encoding='utf_16_le')
+        if (len(LocalString) != (StringLength / 2)):
+            raise Exception('String length mismatch')
+        return cls(String=LocalString)
 
     def Print(self, prefix: str = ''):
         print('%s%s%s' % (prefix, 'String:  ', self.String))
@@ -259,23 +289,17 @@ class PolicyValue():
         self.valueType = valueType
         self.value = value
 
-    def __eq__(self, other) -> bool:
-        if (self.valueType == other.valueType and self.value == other.value):
-            return True
-        else:
-            return False
-
-    """if offset is not specified, stream fs position is at beginning of struct"""
     @classmethod
-    def FromFileStream(cls, fs: BinaryIO, offset: int = None):
-        if offset:
-            fs.seek(offset)
+    def FromFileStream(cls, fs: BinaryIO, fsOffset: int = None):
+        """if fsOffset is not specified, stream fs position is at beginning of struct"""
+        if fsOffset:
+            fs.seek(fsOffset)
         else:
-            offset = fs.tell()
-        valueType = PolicyValueType.FromFileStream(fs=fs, offset=offset)
+            fsOffset = fs.tell()
+        valueType = PolicyValueType.FromFileStream(fs=fs, fsOffset=fsOffset)
 
         if valueType.Get() is PolicyValueType.POLICY_VALUE_TYPE_STRING:
-            value = PolicyString(fs=fs)
+            value = PolicyString.FromFileStream(fs=fs)
         elif valueType.Get() is PolicyValueType.POLICY_VALUE_TYPE_DWORD:
             value = struct.unpack('<I', fs.read(4))[0]
         elif valueType.Get() is PolicyValueType.POLICY_VALUE_TYPE_QWORD:
@@ -284,6 +308,24 @@ class PolicyValue():
             value = 'Value Type not supported'
             if STRICT:
                 raise Exception(value)
+        return cls(valueType=valueType, value=value)
+
+    @classmethod
+    def FromBytes(cls, b: bytes, bOffset: int = 0):
+        valueType = PolicyValueType.FromBytes(b, bOffset)
+        bOffset += PolicyValueType.StructSize
+
+        if valueType.Get() is PolicyValueType.POLICY_VALUE_TYPE_STRING:
+            value = PolicyString.FromBytes(b, bOffset)
+        elif valueType.Get() is PolicyValueType.POLICY_VALUE_TYPE_DWORD:
+            value = struct.unpack_from('<I', b, bOffset)[0]
+        elif valueType.Get() is PolicyValueType.POLICY_VALUE_TYPE_QWORD:
+            value = struct.unpack_from('<Q', b, bOffset)[0]
+        else:
+            value = 'Value Type not supported'
+            if STRICT:
+                raise Exception(value)
+
         return cls(valueType=valueType, value=value)
 
     def GetValueType(self):
@@ -311,7 +353,7 @@ class PolicyValue():
         elif vt is PolicyValueType.POLICY_VALUE_TYPE_QWORD:
             valueOut += struct.pack('<Q', self.value)
         else:
-            self.value = 'Type not supported'
+            print('Type not supported')
             if STRICT:
                 raise Exception('Value Type not supported')
 
@@ -407,8 +449,10 @@ class FirmwarePolicy(object):
             self.ValueTableSize = 0
             self.ValueTableOffset = 0
             self.ValueTable = []
+            self.ValueTableFromFile = None
+            self.parseValueTableViaBytes = True
         else:
-            self.PopulateFromFileStream(fs)
+            self.FromFileStream(fs)
 
     def AddRule(self, regRule) -> bool:
         """ AddRule does not update the valuetable, use Serialize to do that after all rules are added """
@@ -500,10 +544,13 @@ class FirmwarePolicy(object):
 
         serial += valueArray
         output += serial
+        self.ValueTableFromFile = False
 
-    def PopulateFromFileStream(self, fs: BinaryIO):
+    def FromFileStream(self, fs: BinaryIO, parseByBytes: bool = True):
         if fs is None:
             raise Exception('Invalid File stream')
+
+        self.parseValueTableViaBytes = parseByBytes
 
         begin = fs.tell()
         fs.seek(0, io.SEEK_END)
@@ -554,7 +601,8 @@ class FirmwarePolicy(object):
         self.ValueTableSize = end - self.ValueTableOffset
         saved_fs = fs.tell()
         fs.seek(self.ValueTableOffset)
-        self.ValueTable = bytearray(fs.read(self.ValueTableSize))
+        self.ValueTable = bytes(fs.read(self.ValueTableSize))
+        self.ValueTableFromFile = True
         fs.seek(saved_fs)
 
         # resume parsing the variable length structures using table offset
@@ -565,10 +613,11 @@ class FirmwarePolicy(object):
 
         self.Rules = []
         for i in range(self.RulesCount):
-            RegRule = Rule.FromFileStream(fs=fs, vtoffset=self.ValueTableOffset)
+            if self.parseValueTableViaBytes is True:
+                RegRule = Rule.FromFsAndVtBytes(fs=fs, vt=self.ValueTable)
+            else:
+                RegRule = Rule.FromFsAndVtOffset(fs=fs, vtoffset=self.ValueTableOffset)
             self.Rules.append(RegRule)
-
-        self.ValueTable = fs.read()
 
     def Print(self) -> None:
         print('Firmware Policy')

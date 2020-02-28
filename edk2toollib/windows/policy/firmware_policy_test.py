@@ -316,6 +316,14 @@ class FirmwarePolicyTest(unittest.TestCase):
         self.assertEqual(legacyPolicy.RulesCount, 56)
         self.assertEqual(legacyPolicy.Reserved2Count, 17)
 
+    def test_decode_using_fsparser(self):
+        """ By default the value table parser uses Byte[], but it supports BinaryIO filestreams when specified)"""
+        inp = io.BytesIO(FirmwarePolicyTest.TEST_LEGACY_POLICY)
+        policyManuf = FirmwarePolicy()
+        policyManuf.FromFileStream(inp, False)
+        self.assertFalse(policyManuf.parseValueTableViaBytes)
+        self.assertTrue(policyManuf.ValueTableFromFile)
+
     def test_invalid_policyvaluetype(self):
         invalidPolicy = PolicyValueType(Type=42)
         testArray = bytearray()
