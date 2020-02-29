@@ -76,6 +76,7 @@
         "hexlify",
         "ctypes",
         "ioapic",
+        "SECUREBOOT",
         "OEMID"
     ]
 }

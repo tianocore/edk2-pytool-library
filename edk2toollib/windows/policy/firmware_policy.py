@@ -7,6 +7,8 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
+# spell-checker:ignore QWORD
+
 """
 Summary:
 A firmware policy is conceptually a set of key value pair "rules".
