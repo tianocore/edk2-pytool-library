@@ -328,7 +328,7 @@ class IvrsParserTest(unittest.TestCase):
     def test_ivrs_parser_ivrs_empty(self):
         ivrs_header = bytes([0x49, 0x56, 0x52, 0x53,    # Signature: IVRS
                             0x30, 0x00, 0x00, 0x00,     # Length
-                            0x02,                       # Rivision
+                            0x02,                       # Revision
                             0x9C,                       # Checksum
                             0x41, 0x4D, 0x44, 0x20, 0x20, 0x20,     # OEM ID: 'AMD  '
                             0x41, 0x4D, 0x44, 0x20, 0x49, 0x56, 0x52, 0x53,     # OEM Table ID: 'AMD IVRS'
