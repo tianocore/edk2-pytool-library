@@ -139,7 +139,6 @@ class BaseParser(object):
             ivalue2 = value2.strip("\"")
         # convert it to interpretted value
 
-
         if (cond.upper() == "OR"):
             return value or value2
         if (cond.upper() == "AND"):
@@ -471,17 +470,17 @@ class BaseParser(object):
                 raise RuntimeError(f"We have a stray operand {operand}")
             operator1 = expression[first_operand_index - 2]
             operator2 = expression[first_operand_index - 1]
-            
+
             result = self.ComputeResult(operator1, operand, operator2)
             self.Logger.debug(f"{operator1} {operand} {operator2} = {result} @ {first_operand_index}")
-            new_expression = expression[:first_operand_index-2] if first_operand_index > 2 else []
+            new_expression = expression[:first_operand_index - 2] if first_operand_index > 2 else []
             self.Logger.debug(new_expression)
-            new_expression += [result, ] + expression[first_operand_index+1:]
+            new_expression += [result, ] + expression[first_operand_index + 1:]
             expression = new_expression
-        
+
         final = self.ConvertToInt(expression[0])
         self.Logger.debug(f" FINAL {expression} {final}")
-        
+
         return bool(final)
 
     #
