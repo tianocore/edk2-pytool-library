@@ -109,20 +109,20 @@ class Rule(object):
     """
     Construct a Rule initialized from a deserialized stream fs
     fs passed in should be pointing to Rule structure
-    vtoffset is the offset in fs to the ValueTable
+    vtOffset is the offset in fs to the ValueTable
     """
     @classmethod
-    def FromFsAndVtOffset(cls, fs: BinaryIO, vtoffset: int):
-        if fs is None or vtoffset is None:
+    def FromFsAndVtOffset(cls, fs: BinaryIO, vtOffset: int):
+        if fs is None or vtOffset is None:
             raise Exception('Invalid File stream or Value Table offset')
         (RootKey, OffsetToSubKeyName,
          OffsetToValueName, OffsetToValue) = struct.unpack(
              cls.StructFormat, fs.read(cls.StructSize))
 
         orig_offset = fs.tell()
-        SubKeyName = PolicyString.FromFileStream(fs=fs, fsOffset=vtoffset + OffsetToSubKeyName)
-        ValueName = PolicyString.FromFileStream(fs=fs, fsOffset=vtoffset + OffsetToValueName)
-        Value = PolicyValue.FromFileStream(fs=fs, fsOffset=vtoffset + OffsetToValue)
+        SubKeyName = PolicyString.FromFileStream(fs=fs, fsOffset=vtOffset + OffsetToSubKeyName)
+        ValueName = PolicyString.FromFileStream(fs=fs, fsOffset=vtOffset + OffsetToValueName)
+        Value = PolicyValue.FromFileStream(fs=fs, fsOffset=vtOffset + OffsetToValue)
         fs.seek(orig_offset)
         return cls(RootKey=RootKey, OffsetToSubKeyName=OffsetToSubKeyName,
                    OffsetToValueName=OffsetToValueName, OffsetToValue=OffsetToValue,
@@ -283,7 +283,7 @@ class PolicyString():
 class PolicyValue():
     """
     Class for storing, serializing, deserializing, & printing policy values
-    Typically handles privitive types iteself, or delegates to other classes
+    Typically handles primitive types itself, or delegates to other classes
     for non-primitive structures, e.g. PolicyString
     """
     def __init__(self, valueType, value):
@@ -368,19 +368,19 @@ class Reserved2(object):
     StructFormat = '<III'
     StructSize = struct.calcsize(StructFormat)
 
-    def __init__(self, fs: BinaryIO = None, vtoffset: int = 0):
+    def __init__(self, fs: BinaryIO = None, vtOffset: int = 0):
         if fs is None:
             self.ObjectType = 0
             self.Element = 0
-            self.OffsetToValue = vtoffset
+            self.OffsetToValue = vtOffset
         else:
-            self.PopulateFromFileStream(fs, vtoffset)
+            self.PopulateFromFileStream(fs, vtOffset)
 
         errorMessage = 'Reserved2 not fully supported'
         if (STRICT is True):
             raise Exception(errorMessage)
 
-    def PopulateFromFileStream(self, fs: BinaryIO, vtoffset: int = 0):
+    def PopulateFromFileStream(self, fs: BinaryIO, vtOffset: int = 0):
         if fs is None:
             raise Exception('Invalid File stream')
         (self.ObjectType, self.Element, self.OffsetToValue) = struct.unpack(
@@ -408,7 +408,7 @@ class Reserved2(object):
 class FirmwarePolicy(object):
     """
     Class for storing, serializing, deserializing, & printing Firmware Policy structures
-    Typically handles privitive types iteself, or delegates to other classes
+    Typically handles primitive types itself, or delegates to other classes
     for non-primitive structures, e.g. Rule, PolicyValue, PolicyString
     """
     FixedStructFormat = '<HI16sHIHH'  # omits completely unsupported Reserved1 array
@@ -610,14 +610,14 @@ class FirmwarePolicy(object):
         self.Reserved2 = []
         for i in range(self.Reserved2Count):
             self.Reserved2.append(
-                Reserved2(fs=fs, vtoffset=self.ValueTableOffset))
+                Reserved2(fs=fs, vtOffset=self.ValueTableOffset))
 
         self.Rules = []
         for i in range(self.RulesCount):
             if self.parseValueTableViaBytes is True:
                 RegRule = Rule.FromFsAndVtBytes(fs=fs, vt=self.ValueTable)
             else:
-                RegRule = Rule.FromFsAndVtOffset(fs=fs, vtoffset=self.ValueTableOffset)
+                RegRule = Rule.FromFsAndVtOffset(fs=fs, vtOffset=self.ValueTableOffset)
             self.Rules.append(RegRule)
 
     def Print(self) -> None:

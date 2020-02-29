@@ -17,7 +17,7 @@ class FirmwarePolicyTest(unittest.TestCase):
     #   Key: 81000000_Debug_DeviceID
     #   ValueType: 5
     #   Value:  0xc2e28c3a948caef6
-    TEST_DEVICEID_C2E28 = bytearray.fromhex(
+    TEST_DEVICE_ID_C2E28 = bytearray.fromhex(
         """
         02 00 01 00 00 00 2E D8 DA 0C 39 D8 54 47 89 A1
         84 4A B2 82 31 2B 00 00 10 02 00 00 00 00 01 00
@@ -257,7 +257,7 @@ class FirmwarePolicyTest(unittest.TestCase):
         0E 00 00 00 0F 00 00 00""")
 
     def test_basic_decode(self):
-        inp = io.BytesIO(FirmwarePolicyTest.TEST_DEVICEID_C2E28)
+        inp = io.BytesIO(FirmwarePolicyTest.TEST_DEVICE_ID_C2E28)
         policyManuf = FirmwarePolicy(inp)
         policyManuf.Print()
         self.assertEqual(policyManuf.RulesCount, 1)
@@ -316,7 +316,7 @@ class FirmwarePolicyTest(unittest.TestCase):
         self.assertEqual(legacyPolicy.RulesCount, 56)
         self.assertEqual(legacyPolicy.Reserved2Count, 17)
 
-    def test_decode_using_fsparser(self):
+    def test_decode_using_fs_parser(self):
         """ By default the value table parser uses Byte[], but it supports BinaryIO filestreams when specified)"""
         inp = io.BytesIO(FirmwarePolicyTest.TEST_LEGACY_POLICY)
         policyManuf = FirmwarePolicy()
@@ -342,7 +342,7 @@ class FirmwarePolicyTest(unittest.TestCase):
 
         # constructor from filestream
         zeroObjectStream = io.BytesIO(outArray1)
-        r2 = Reserved2(fs=zeroObjectStream, vtoffset=0)
+        r2 = Reserved2(fs=zeroObjectStream, vtOffset=0)
         outArray2 = bytearray()
         r2.Serialize(ruleOut=outArray2)
         r2.Print()
