@@ -207,12 +207,12 @@ class PolicyValueType():
     def FromFileStream(cls, fs: BinaryIO, fsOffset: int = None):
         if fsOffset:
             fs.seek(fsOffset)
-        valueType = struct.unpack('<H', fs.read(2))[0]
+        valueType = struct.unpack(cls.StructFormat, fs.read(cls.StructSize))[0]
         return cls(valueType)
 
     @classmethod
     def FromBytes(cls, b: bytes, bOffset: int = 0):
-        valueType = struct.unpack_from('<H', b, bOffset)[0]
+        valueType = struct.unpack_from(cls.StructFormat, b, bOffset)[0]
         return cls(valueType)
 
     def Print(self, prefix: str = ''):
@@ -241,6 +241,7 @@ class PolicyString():
     The trailing \x00 is not a NULL, it is UTF-16LE encoding of "D"
     """
     StringLengthFormat = '<H'
+    StringLengthSize = struct.calcsize(StringLengthFormat)
 
     def __init__(self, String: str = None):
         if String:
@@ -253,7 +254,7 @@ class PolicyString():
     def FromFileStream(cls, fs: BinaryIO, fsOffset: int = None):
         if fsOffset:
             fs.seek(fsOffset)
-        StringLength = struct.unpack('<H', fs.read(2))[0]
+        StringLength = struct.unpack(cls.StringLengthFormat, fs.read(cls.StringLengthSize))[0]
         LocalString = bytes.decode(
             fs.read(StringLength), encoding='utf_16_le')
         if (len(LocalString) != (StringLength / 2)):
@@ -275,7 +276,7 @@ class PolicyString():
 
     def Serialize(self, valueOut: bytearray):
         b = str.encode(self.String, encoding='utf_16_le')
-        size = struct.pack('<H', len(b))
+        size = struct.pack(self.StringLengthFormat, len(b))
         valueOut += size + b
 
 
