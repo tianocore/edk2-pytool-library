@@ -4,6 +4,7 @@
 #
 # Python script that converts a raw IVRS table into a struct
 ##
+# spell-checker:ignore IVMD, IOMMUEFR
 
 import unittest
 from edk2toollib.acpi.ivrs_parser import IVRS_TABLE

@@ -12,6 +12,7 @@ import xml.etree.ElementTree as ET
 from enum import IntEnum
 
 IVRSParserVersion = '1.00'
+# spell-checker:ignore IVMD, IOMMUEFR
 
 
 class IVRS_TABLE(object):
@@ -1016,7 +1017,7 @@ class IVRS_TABLE(object):
                 self.UID = None
             elif self.UIDFormat == 1:
                 (self.UID,) = struct.unpack("=Q", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len:
-                                            self.Length])
+                                                                    self.Length])
             elif self.UIDFormat == 2:
                 (self.UID,) =\
                     struct.unpack("=%ss" % self.UIDLength,
