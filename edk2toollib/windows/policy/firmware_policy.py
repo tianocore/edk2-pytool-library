@@ -434,8 +434,17 @@ class FirmwarePolicy(object):
     FW_POLICY_VALUE_ACTION_SECUREBOOT_CLEAR = 0x0000000000000001
     FW_POLICY_VALUE_ACTION_TPM_CLEAR = 0x0000000000000002
 
+    FW_POLICY_VALUE_ACTION_STRINGS = {
+        FW_POLICY_VALUE_ACTION_SECUREBOOT_CLEAR: "Clear UEFI Secure Boot Keys",
+        FW_POLICY_VALUE_ACTION_TPM_CLEAR: "Clear the Trusted Platform Module (TPM)"
+    }
+
     """Defined Policy States"""
-    FW_POLICY_VALUE_STATE_DISABLE_SPI_LOCK = 0x0000000000010000
+    FW_POLICY_VALUE_STATE_TBD = 0x0000000000010000
+
+    FW_POLICY_VALUE_STATE_STRINGS = {
+        FW_POLICY_VALUE_STATE_TBD: "To Be Defined Placeholder"
+    }
 
     def __init__(self, fs=None):
         if fs is None:
@@ -622,7 +631,14 @@ class FirmwarePolicy(object):
                 RegRule = Rule.FromFsAndVtOffset(fs=fs, vtOffset=self.ValueTableOffset)
             self.Rules.append(RegRule)
 
+    def PrintDevicePolicy(self, devicePolicy: int, prefix: str = ''):
+        prefix = prefix + '    '
+        for bit in self.FW_POLICY_VALUE_ACTION_STRINGS.keys():
+            if (devicePolicy & bit) != 0:
+                print(prefix + self.FW_POLICY_VALUE_ACTION_STRINGS[bit])
+
     def Print(self) -> None:
+        prefix = '  '
         print('Firmware Policy')
         print('  FormatVersion:    %x' % self.FormatVersion)
         print('  PolicyVersion:    %x' % self.PolicyVersion)
@@ -636,9 +652,14 @@ class FirmwarePolicy(object):
         print('  ValueTableSize:  %x' % self.ValueTableSize)
         print('  ValueTableOffset:  %x' % self.ValueTableOffset)
         for rule in self.Reserved2:
-            rule.Print(prefix='  ')
+            rule.Print(prefix=prefix)
         for rule in self.Rules:
-            rule.Print(prefix='  ')
+            rule.Print(prefix=prefix)
+            if (rule.RootKey == self.FW_POLICY_ROOT_KEY
+                and rule.SubKeyName.String == self.FW_POLICY_SUB_KEY_NAME
+                    and rule.ValueName.String == self.FW_POLICY_VALUE_NAME):
+                print(prefix + '  Device Policy:')
+                self.PrintDevicePolicy(devicePolicy=rule.Value.value, prefix=prefix)
         print('  Valuetable')
         print(self.ValueTable)
         return
