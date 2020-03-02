@@ -85,6 +85,7 @@
         "DYNAMICEXHII",
         "DYNAMICEXVPD",
         "PCD's",
-        "MDEPKG"
+        "MDEPKG",
+        "iommu"
     ]
 }
