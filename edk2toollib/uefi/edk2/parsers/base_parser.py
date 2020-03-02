@@ -421,7 +421,7 @@ class BaseParser(object):
 
         operators = ["OR", "AND", "IN", "==", "!=", ">", "<", "<=", ">="]
 
-        # then we do the lexer and convert operands as neccessary
+        # then we do the lexer and convert operands as necessary
         for index in range(len(tokens)):
             token = tokens[index]
             token_upper = token.upper()
