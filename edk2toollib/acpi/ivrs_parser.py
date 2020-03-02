@@ -12,6 +12,7 @@ import xml.etree.ElementTree as ET
 from enum import IntEnum
 
 IVRSParserVersion = '1.00'
+# spell-checker:ignore IVMD, IOMMUEFR
 
 
 class IVRS_TABLE(object):
@@ -19,7 +20,7 @@ class IVRS_TABLE(object):
     def __init__(self, data=None):
         self.acpi_header = None
         self.SubStructs = list()
-        self.IVMDlist = list()
+        self.IVMD_list = list()
 
         if data is not None:
             self.Decode(data)
@@ -114,7 +115,7 @@ class IVRS_TABLE(object):
         self.acpi_header.Length += len(ivmd.Encode())
         # IVMD has to follow the corresponding IVHD, thus the list records all entries to maintain order
         self.SubStructs.append(ivmd)
-        self.IVMDlist.append(ivmd)
+        self.IVMD_list.append(ivmd)
         self.updateACPISum()
 
     def IVRSBitEnabled(self):
@@ -210,6 +211,7 @@ class IVRS_TABLE(object):
                                           header_byte_array[:IVRS_TABLE.REMAPPING_STRUCT_HEADER.struct_format_size])
 
     class IVHD_STRUCT(REMAPPING_STRUCT_HEADER):
+        # cspell:disable-next disable the spell checker from thinking this a word
         struct_format = '=BBHHHQHHI'
         struct_format_size = struct.calcsize(struct_format)
         ex_format = "=QQ"
@@ -342,6 +344,7 @@ class IVRS_TABLE(object):
                 item.DumpInfo()
 
     class IVMD_STRUCT(REMAPPING_STRUCT_HEADER):
+        # cspell:disable-next disable spell checker from thinking this is a word
         struct_format = '=BBHHHQQQ'
         struct_format_size = struct.calcsize(struct_format)
 
@@ -1014,7 +1017,7 @@ class IVRS_TABLE(object):
                 self.UID = None
             elif self.UIDFormat == 1:
                 (self.UID,) = struct.unpack("=Q", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len:
-                                            self.Length])
+                                                                    self.Length])
             elif self.UIDFormat == 2:
                 (self.UID,) =\
                     struct.unpack("=%ss" % self.UIDLength,

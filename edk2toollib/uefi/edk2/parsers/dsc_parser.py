@@ -284,5 +284,5 @@ class DscParser(HashFileParser):
 
     def GetAllDscPaths(self):
         ''' returns an iterable with all the paths that this DSC uses (the base file and any includes).
-            They are not all guaranteed to be DSC's '''
+            They are not all guaranteed to be DSC files '''
         return self._dsc_file_paths
