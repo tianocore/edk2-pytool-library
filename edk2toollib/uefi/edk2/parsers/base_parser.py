@@ -427,6 +427,14 @@ class BaseParser(object):
             token_upper = token.upper()
             if token_upper in operators:
                 token = token_upper
+            elif token_upper == "||":
+                token = "OR"
+            elif token_upper == "&&":
+                token = "AND"
+            elif token_upper == "EQ":
+                token = "=="
+            elif token_upper == "NE":
+                token = "!="
             tokens[index] = token
         self.Logger.debug(f"STAGE 4: {tokens}")
 
@@ -464,7 +472,7 @@ class BaseParser(object):
                     first_operand_index = index
                     break
             if first_operand_index == -1:
-                raise RuntimeError(f"We didn't find an operator to execute in {expression}")
+                raise RuntimeError(f"We didn't find an operator to execute in {expression}: {text}")
             operand = expression[first_operand_index]
             if first_operand_index < 2:
                 raise RuntimeError(f"We have a stray operand {operand}")
