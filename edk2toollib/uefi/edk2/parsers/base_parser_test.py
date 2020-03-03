@@ -406,6 +406,49 @@ class TestBaseParserConditionals(unittest.TestCase):
             '!if ("GCC49" in $(TOOL_CHAIN_TAG)) OR ("GCC5" in $(TOOL_CHAIN_TAG))'))
         self.assertFalse(parser.InActiveCode())
 
+    def test_process_or_operation_conditional(self):
+        parser = BaseParser("")
+        self.assertTrue(parser.ProcessConditional('!if TRUE OR FALSE'))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional('!if FALSE OR TRUE'))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional('!if FALSE || TRUE'))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional('!if TRUE OR TRUE'))
+        self.assertTrue(parser.InActiveCode())
+        parser.ResetParserState()
+        self.assertTrue(parser.ProcessConditional('!if FALSE OR FALSE'))
+        self.assertFalse(parser.InActiveCode())
+
+        parser.ResetParserState()
+        self.assertTrue(parser.ProcessConditional('!if FALSE || FALSE'))
+        self.assertFalse(parser.InActiveCode())
+
+    def test_process_and_operation_conditional(self):
+        parser = BaseParser("")
+        self.assertTrue(parser.ProcessConditional('!if TRUE AND FALSE'))
+        self.assertFalse(parser.InActiveCode())
+
+        parser.ResetParserState()
+        self.assertTrue(parser.ProcessConditional('!if FALSE AND TRUE'))
+        self.assertFalse(parser.InActiveCode())
+
+        parser.ResetParserState()
+        self.assertTrue(parser.ProcessConditional('!if TRUE AND TRUE'))
+        self.assertTrue(parser.InActiveCode())
+
+        parser.ResetParserState()
+        self.assertTrue(parser.ProcessConditional('!if TRUE && TRUE'))
+        self.assertTrue(parser.InActiveCode())
+
+        parser.ResetParserState()
+        self.assertTrue(parser.ProcessConditional('!if FALSE AND FALSE'))
+        self.assertFalse(parser.InActiveCode())
+
+        parser.ResetParserState()
+        self.assertTrue(parser.ProcessConditional('!if FALSE && FALSE'))
+        self.assertFalse(parser.InActiveCode())
+
 
 class TestBaseParserGuids(unittest.TestCase):
 

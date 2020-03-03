@@ -137,12 +137,8 @@ class BaseParser(object):
             ivalue = value.strip("\"")
         if isinstance(value2, str):
             ivalue2 = value2.strip("\"")
-        # convert it to interpretted value
 
-        if (cond.upper() == "OR"):
-            return value or value2
-        if (cond.upper() == "AND"):
-            return value and value2
+        # convert it to interpretted value
         if (cond.upper() == "IN"):
             # strip quotes
             self.Logger.debug(f"{ivalue} in {ivalue2}")
@@ -159,6 +155,12 @@ class BaseParser(object):
                 ivalue2 = self.ConvertToInt(ivalue2)
         except ValueError:
             pass
+
+        # First check our boolean operators
+        if (cond.upper() == "OR"):
+            return ivalue or ivalue2
+        if (cond.upper() == "AND"):
+            return ivalue and ivalue2
 
         # check our truthyness
         if(cond == "=="):
