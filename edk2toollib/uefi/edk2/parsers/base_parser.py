@@ -133,7 +133,16 @@ class BaseParser(object):
         """
         ivalue = value
         ivalue2 = value2
+        if isinstance(value, str):
+            ivalue = value.strip("\"")
+        if isinstance(value2, str):
+            ivalue2 = value2.strip("\"")
+
         # convert it to interpretted value
+        if (cond.upper() == "IN"):
+            # strip quotes
+            self.Logger.debug(f"{ivalue} in {ivalue2}")
+            return ivalue in ivalue2
 
         try:
             ivalue = self.ConvertToInt(ivalue)
@@ -147,6 +156,12 @@ class BaseParser(object):
         except ValueError:
             pass
 
+        # First check our boolean operators
+        if (cond.upper() == "OR"):
+            return ivalue or ivalue2
+        if (cond.upper() == "AND"):
+            return ivalue and ivalue2
+
         # check our truthyness
         if(cond == "=="):
             # equal
@@ -156,17 +171,13 @@ class BaseParser(object):
             # not equal
             return (ivalue != ivalue2) and (value != value2)
 
-        elif (cond.lower() == "in"):
-            # contains
-            return value in value2
-
         # check to make sure we only have digits from here on out
-        if not str.isdigit(value):
+        if not isinstance(value, int) and not str.isdigit(value):
             self.Logger.error(f"{self.__class__}: Unknown value: {value} {ivalue.__class__}")
             self.Logger.debug(f"{self.__class__}: Conditional: {value} {cond}{value2}")
             raise ValueError("Unknown value")
 
-        if not str.isdigit(value2):
+        if not isinstance(value2, int) and not str.isdigit(value2):
             self.Logger.error(f"{self.__class__}: Unknown value: {value2} {ivalue2}")
             self.Logger.debug(f"{self.__class__}: Conditional: {value} {cond} {value2}")
             raise ValueError("Unknown value")
@@ -200,6 +211,8 @@ class BaseParser(object):
         Returns:
 
         """
+        if isinstance(value, int):
+            return value
         if isinstance(value, str) and value.upper() == "TRUE":
             return 1
         elif isinstance(value, str) and value.upper() == "FALSE":
@@ -320,17 +333,7 @@ class BaseParser(object):
         else:
             tokens = text.split()
         if(tokens[0].lower() == "!if"):
-            # need to add support for OR/AND
-            if (len(tokens) == 2):
-                value = self.ConvertToInt(tokens[1].strip())
-                self.PushConditional(value == 1)  # if the value is true
-            # we can have tokens in 4, 8, 12 etc
-            elif len(tokens) >= 4 and len(tokens) % 4 == 0:
-                con = self.ComputeResult(tokens[1].strip(), tokens[2].strip(), tokens[3].strip())
-                self.PushConditional(con)
-            else:
-                self.Logger.error("!if conditionals need to be formatted correctly (spaces between each token)")
-                raise RuntimeError("Invalid conditional", text)
+            self.PushConditional(self.EvaluateConditional(text))
             return True
 
         elif(tokens[0].lower() == "!ifdef"):
@@ -365,9 +368,135 @@ class BaseParser(object):
 
         return False
 
+    def EvaluateConditional(self, text):
+        ''' Uses a pushdown resolver '''
+        text = str(text).strip()
+        if not text.lower().startswith("!if "):
+            raise RuntimeError(f"Invalid conditional cannot be validated: {text}")
+        text = text[3:].strip()
+        self.Logger.debug(f"STAGE 1: {text}")
+        text = self.ReplaceVariables(text)
+        self.Logger.debug(f"STAGE 2: {text}")
+
+        # TOKENIZER
+        # first we create tokens
+        TEXT_MODE = 0
+        QUOTE_MODE = 1
+        MACRO_MODE = 2
+        token = ""
+        mode = 0
+        tokens = []
+        for character in text:
+
+            if character == "\"" and len(token) == 0:
+                mode = QUOTE_MODE
+            elif character == "\"" and mode == QUOTE_MODE:
+                if len(token) > 0:
+                    tokens.append(f"\"{token}\"")
+                    token = ""
+                mode = TEXT_MODE
+            elif character == "$" and len(token) == 0:
+                token += character
+                mode = MACRO_MODE
+            elif character == ')' and mode == MACRO_MODE:
+                token += character
+                tokens.append(token)
+                token = ""
+                mode = TEXT_MODE
+            elif mode == TEXT_MODE and (character == "(" or character == ")"):
+                if len(token) > 0:
+                    tokens.append(token)
+                    token = ""
+                tokens.append(character)
+            elif character == " " and (mode == TEXT_MODE or mode == MACRO_MODE):
+                if len(token) > 0:
+                    tokens.append(token)
+                    token = ""
+                    mode = TEXT_MODE
+            else:
+                token += character
+        # make sure to add in the last token just in case
+        if len(token) > 0:
+            tokens.append(token)
+
+        self.Logger.debug(f"STAGE 3: {' '.join(tokens)}")
+
+        operators = ["OR", "AND", "IN", "==", "!=", ">", "<", "<=", ">="]
+
+        # then we do the lexer and convert operands as necessary
+        for index in range(len(tokens)):
+            token = tokens[index]
+            token_upper = token.upper()
+            if token_upper in operators:
+                token = token_upper
+            elif token_upper == "||":
+                token = "OR"
+            elif token_upper == "&&":
+                token = "AND"
+            elif token_upper == "EQ":
+                token = "=="
+            elif token_upper == "NE":
+                token = "!="
+            tokens[index] = token
+        self.Logger.debug(f"STAGE 4: {tokens}")
+
+        # now we convert in fix into post fix?
+        stack = ["("]
+        tokens.append(")")  # add an extra parathesis
+        expression = []
+        for token in tokens:
+            if token == "(":
+                stack.append(token)
+            elif token == ")":
+                while len(stack) > 0 and stack[-1] != '(':
+                    expression.append(stack.pop())
+            elif token in operators:
+                while len(stack) > 0 and stack[-1] != '(':
+                    self.Logger.debug(stack[-1])
+                    expression.append(stack.pop())
+                stack.append(token)
+            else:
+                expression.append(token)
+        while len(stack) > 0:
+            val = stack.pop()
+            if val != '(':
+                expression.append(val)
+
+        self.Logger.debug(f"STAGE 5: {expression}")
+
+        # Now we evaluate the post fix expression
+        if len(expression) == 0:
+            raise RuntimeError(f"Malformed !if conditional expression {text} {expression}")
+        while len(expression) != 1:
+            first_operand_index = -1
+            for index, item in enumerate(expression):
+                if item in operators:
+                    first_operand_index = index
+                    break
+            if first_operand_index == -1:
+                raise RuntimeError(f"We didn't find an operator to execute in {expression}: {text}")
+            operand = expression[first_operand_index]
+            if first_operand_index < 2:
+                raise RuntimeError(f"We have a stray operand {operand}")
+            operator1 = expression[first_operand_index - 2]
+            operator2 = expression[first_operand_index - 1]
+
+            result = self.ComputeResult(operator1, operand, operator2)
+            self.Logger.debug(f"{operator1} {operand} {operator2} = {result} @ {first_operand_index}")
+            new_expression = expression[:first_operand_index - 2] if first_operand_index > 2 else []
+            self.Logger.debug(new_expression)
+            new_expression += [result, ] + expression[first_operand_index + 1:]
+            expression = new_expression
+
+        final = self.ConvertToInt(expression[0])
+        self.Logger.debug(f" FINAL {expression} {final}")
+
+        return bool(final)
+
     #
     # returns true or false depending on what state of conditional you are currently in
     #
+
     def InActiveCode(self):
         """ """
         ret = True

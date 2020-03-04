@@ -49,6 +49,9 @@ class TestBaseParser(unittest.TestCase):
         line = "Hello $(name)!"
         self.assertEqual(parser.ReplaceVariables(line), "Hello fred!")
 
+
+class TestBaseParserConditionals(unittest.TestCase):
+
     def test_replace_macro_without_resolution(self):
         parser = BaseParser("")
         parser.SetInputVars({
@@ -385,6 +388,52 @@ class TestBaseParser(unittest.TestCase):
         self.assertTrue(parser.InActiveCode())
         self.assertEqual(len(parser.ConditionalStack), 0)
 
+    def test_process_in_conditional(self):
+        parser = BaseParser("")
+        parser.SetInputVars({"TOOL_CHAIN_TAG": "GCC5_TEST"})
+        self.assertTrue(parser.ProcessConditional(
+            '!if ("GCC49" in $(TOOL_CHAIN_TAG)) OR ("GCC5" in $(TOOL_CHAIN_TAG))'))
+        self.assertTrue(parser.InActiveCode())
+        parser.ResetParserState()
+        parser.SetInputVars({"TOOL_CHAIN_TAG": "TESTGCC49"})
+        self.assertTrue(parser.ProcessConditional(
+            '!if ("GCC49" in $(TOOL_CHAIN_TAG)) OR ("GCC5" in $(TOOL_CHAIN_TAG))'))
+        self.assertTrue(parser.InActiveCode())
+        parser.ResetParserState()
+        # Don't give it a tool chain tag that isn't in the things we're searching for
+        parser.SetInputVars({"TOOL_CHAIN_TAG": "NOTFOUND"})
+        self.assertTrue(parser.ProcessConditional(
+            '!if ("GCC49" in $(TOOL_CHAIN_TAG)) OR ("GCC5" in $(TOOL_CHAIN_TAG))'))
+        self.assertFalse(parser.InActiveCode())
+
+    def test_process_or_operation_conditional(self):
+        parser = BaseParser("")
+        self.assertTrue(parser.EvaluateConditional('!IF TRUE OR FALSE'))
+        self.assertTrue(parser.EvaluateConditional('!if FALSE OR TRUE'))
+        self.assertTrue(parser.EvaluateConditional('!if FALSE || TRUE'))
+        self.assertTrue(parser.EvaluateConditional('!if TRUE OR TRUE'))
+        self.assertFalse(parser.EvaluateConditional('!if FALSE OR FALSE'))
+        self.assertFalse(parser.EvaluateConditional('!if FALSE || FALSE'))
+
+    def test_process_and_operation_conditional(self):
+        parser = BaseParser("")
+        self.assertFalse(parser.EvaluateConditional('!if TRUE AND FALSE'))
+        self.assertFalse(parser.EvaluateConditional('!if FALSE AND TRUE'))
+        self.assertTrue(parser.EvaluateConditional('!if TRUE AND TRUE'))
+        self.assertTrue(parser.EvaluateConditional('!if TRUE && TRUE'))
+        self.assertFalse(parser.EvaluateConditional('!if FALSE AND FALSE'))
+        self.assertFalse(parser.EvaluateConditional('!if FALSE && FALSE'))
+
+    def test_process_invalid_conditional(self):
+        parser = BaseParser("")
+        with self.assertRaises(RuntimeError):
+            parser.EvaluateConditional('!if TRUE AND FALSE AND')
+        with self.assertRaises(RuntimeError):
+            parser.EvaluateConditional('TRUE AND FALSE AND')
+
+
+class TestBaseParserGuids(unittest.TestCase):
+
     def test_is_guid(self):
         guid1 = "= { 0xD3B36F2C, 0xD551, 0x11D4, {0x9A, 0x46, 0x0, 0x90, 0x27, 0x3F, 0xC1,0xD }}"
         parser = BaseParser("")
@@ -420,6 +469,9 @@ class TestBaseParser(unittest.TestCase):
         guid4_answer = "00000003-0001-0004-0A06-0009020F010D"
         guid4_result = parser.ParseGuid(guid4)
         self.assertEqual(guid4_result, guid4_answer)
+
+
+class TestBaseParserVariables(unittest.TestCase):
 
     def test_replace_input_variables(self):
         parser = BaseParser("")
@@ -476,6 +528,9 @@ class TestBaseParser(unittest.TestCase):
             result = parser.ReplaceVariables(line)
             val = "var " + str(variables[variable_key])
             self.assertEqual(result, val)
+
+
+class TestBaseParserPathAndFile(unittest.TestCase):
 
     # because of how this works we use WriteLines, SetAbsPath, and SetPackagePath
     def test_find_path(self):
