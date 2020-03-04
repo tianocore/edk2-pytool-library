@@ -408,47 +408,28 @@ class TestBaseParserConditionals(unittest.TestCase):
 
     def test_process_or_operation_conditional(self):
         parser = BaseParser("")
-        self.assertTrue(parser.ProcessConditional('!if TRUE OR FALSE'))
-        self.assertTrue(parser.InActiveCode())
-        self.assertTrue(parser.ProcessConditional('!if FALSE OR TRUE'))
-        self.assertTrue(parser.InActiveCode())
-        self.assertTrue(parser.ProcessConditional('!if FALSE || TRUE'))
-        self.assertTrue(parser.InActiveCode())
-        self.assertTrue(parser.ProcessConditional('!if TRUE OR TRUE'))
-        self.assertTrue(parser.InActiveCode())
-        parser.ResetParserState()
-        self.assertTrue(parser.ProcessConditional('!if FALSE OR FALSE'))
-        self.assertFalse(parser.InActiveCode())
-
-        parser.ResetParserState()
-        self.assertTrue(parser.ProcessConditional('!if FALSE || FALSE'))
-        self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.EvaluateConditional('!IF TRUE OR FALSE'))
+        self.assertTrue(parser.EvaluateConditional('!if FALSE OR TRUE'))
+        self.assertTrue(parser.EvaluateConditional('!if FALSE || TRUE'))
+        self.assertTrue(parser.EvaluateConditional('!if TRUE OR TRUE'))
+        self.assertFalse(parser.EvaluateConditional('!if FALSE OR FALSE'))
+        self.assertFalse(parser.EvaluateConditional('!if FALSE || FALSE'))
 
     def test_process_and_operation_conditional(self):
         parser = BaseParser("")
-        self.assertTrue(parser.ProcessConditional('!if TRUE AND FALSE'))
-        self.assertFalse(parser.InActiveCode())
+        self.assertFalse(parser.EvaluateConditional('!if TRUE AND FALSE'))
+        self.assertFalse(parser.EvaluateConditional('!if FALSE AND TRUE'))
+        self.assertTrue(parser.EvaluateConditional('!if TRUE AND TRUE'))
+        self.assertTrue(parser.EvaluateConditional('!if TRUE && TRUE'))
+        self.assertFalse(parser.EvaluateConditional('!if FALSE AND FALSE'))
+        self.assertFalse(parser.EvaluateConditional('!if FALSE && FALSE'))
 
-        parser.ResetParserState()
-        self.assertTrue(parser.ProcessConditional('!if FALSE AND TRUE'))
-        self.assertFalse(parser.InActiveCode())
-
-        parser.ResetParserState()
-        self.assertTrue(parser.ProcessConditional('!if TRUE AND TRUE'))
-        self.assertTrue(parser.InActiveCode())
-
-        parser.ResetParserState()
-        self.assertTrue(parser.ProcessConditional('!if TRUE && TRUE'))
-        self.assertTrue(parser.InActiveCode())
-
-        parser.ResetParserState()
-        self.assertTrue(parser.ProcessConditional('!if FALSE AND FALSE'))
-        self.assertFalse(parser.InActiveCode())
-
-        parser.ResetParserState()
-        self.assertTrue(parser.ProcessConditional('!if FALSE && FALSE'))
-        self.assertFalse(parser.InActiveCode())
-
+    def test_process_invalid_conditional(self):
+        parser = BaseParser("")
+        with self.assertRaises(RuntimeError):
+            parser.EvaluateConditional('!if TRUE AND FALSE AND')
+        with self.assertRaises(RuntimeError):
+            parser.EvaluateConditional('TRUE AND FALSE AND')
 
 class TestBaseParserGuids(unittest.TestCase):
 
