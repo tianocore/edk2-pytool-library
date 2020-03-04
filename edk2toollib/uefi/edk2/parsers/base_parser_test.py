@@ -431,6 +431,7 @@ class TestBaseParserConditionals(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             parser.EvaluateConditional('TRUE AND FALSE AND')
 
+
 class TestBaseParserGuids(unittest.TestCase):
 
     def test_is_guid(self):
