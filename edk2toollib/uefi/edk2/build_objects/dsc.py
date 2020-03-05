@@ -23,7 +23,7 @@ class dsc_set(set):
             raise ValueError(f"Cannot add {type(item)} to restricted set: {self._allowed_classes}")
         if item in self:
             super().discard(item)
-            # TODO: get add the old_item to item
+            # NEXTVER: get add the old_item to item
         super().add(item)
 
 
@@ -58,7 +58,7 @@ class dsc_dict(collections.OrderedDict):
             elif type(val) not in self._allowed_value_classes:
                 raise ValueError(f"Cannot add {type(val)} to restricted dict: {self._allowed_value_classes}")
         if key in self:
-            # TODO merge these together?
+            # NEXTVER merge these together?
             raise ValueError(f"Cannot add section {key} since it already exists")
         dict.__setitem__(self, key, val)
 
@@ -82,7 +82,7 @@ class dsc:
         self.defines = dsc_set(allowed_classes=[definition, ])
         self.default_stores = dsc_set(allowed_classes=[definition, default_store])
 
-        # TODO: should we populate the default information into the DSC object?
+        # NEXTVER: should we populate the default information into the DSC object?
         # FOR EXAMPLE: default_stores and skus
 
     def __eq__(self, other):
@@ -258,7 +258,7 @@ class component:
     def __eq__(self, other):
         if (type(other) is not component):
             return False
-        return self.inf == other.inf  # TODO: should this be case insensitive?
+        return self.inf == other.inf  # NEXTVER: should this be case insensitive?
 
     def __hash__(self):
         return hash(self.inf)
@@ -307,7 +307,7 @@ class library:
         return self.inf == other.inf
 
     def __hash__(self):
-        return hash(self.inf)  # TODO how to figure out if they hash to the same spot?
+        return hash(self.inf)  # NEXTVER how to figure out if they hash to the same spot?
 
     def __repr__(self):
         return f"{self.inf} @ {self.source_info}"

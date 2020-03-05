@@ -479,7 +479,7 @@ class TestDscTranslator(unittest.TestCase):
         # parse the original DSC
         parser = DscParser()
         parser._ErrorLimit = 0
-        # TODO: actually parse the file
+        # NEXTVER: actually parse the file
         dsc_obj = []  # parser.ParseFile(filepath)
         # Write out to disk
         test_path = os.path.join(os.path.dirname(filepath), "test2.dsc")
@@ -488,7 +488,7 @@ class TestDscTranslator(unittest.TestCase):
         parser2 = DscParser()
         parser2._ErrorLimit = 0
         print(test_path)
-        # TODO: actually parse the file
+        # NEXTVER: actually parse the file
         # dsc_obj2 = parser2.ParseFile(test_path)
         # self.assertNotEqual(dsc_obj, None)
         # self.assertNotEqual(dsc_obj2, None)
