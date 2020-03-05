@@ -78,7 +78,8 @@ class TestDscObject(unittest.TestCase):
             d.build_options[common_section] = set()
         with self.assertRaises(ValueError):
             d.build_options[build_opt_section].add(library_class("TEST", "TEST.inf"))
-        with self.assertRaises(ValueError):  # NEXTVER: once the adding logic is implemented, this will be need to redone
+        # NEXTVER: once the adding logic is implemented, this will be need to redone
+        with self.assertRaises(ValueError):
             d.build_options[build_opt_section] = set()
 
         # now to check the pcds
@@ -87,7 +88,8 @@ class TestDscObject(unittest.TestCase):
             d.pcds[build_opt_section] = set()
         with self.assertRaises(ValueError):
             d.pcds[pcd_section].add(library_class("TEST", "TEST.inf"))
-        with self.assertRaises(ValueError):  # NEXTVER: once the adding logic is implemented, this will be need to redone
+        # NEXTVER: once the adding logic is implemented, this will be need to redone
+        with self.assertRaises(ValueError):
             d.pcds[pcd_section] = set()
 
         # now to check the library classes
@@ -96,7 +98,8 @@ class TestDscObject(unittest.TestCase):
             d.library_classes[build_opt_section] = set()
         with self.assertRaises(ValueError):
             d.library_classes[common_section].add(component("TEST.inf"))
-        with self.assertRaises(ValueError):  # NEXTVER: once the adding logic is implemented, this will be need to redone
+        # NEXTVER: once the adding logic is implemented, this will be need to redone
+        with self.assertRaises(ValueError):
             d.library_classes[common_section] = set()
 
         # now to check the components
@@ -105,7 +108,8 @@ class TestDscObject(unittest.TestCase):
             d.components[build_opt_section] = set()
         with self.assertRaises(ValueError):
             d.components[common_section].add(library_class("TEST", "TEST.inf"))
-        with self.assertRaises(ValueError):  # NEXTVER: once the adding logic is implemented, this will be need to redone
+        # NEXTVER: once the adding logic is implemented, this will be need to redone
+        with self.assertRaises(ValueError):
             d.components[common_section] = set()
 
     @staticmethod
