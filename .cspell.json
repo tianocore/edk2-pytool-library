@@ -78,6 +78,15 @@
         "ioapic",
         "SECUREBOOT",
         "OEMID",
+        "SKUID",
+        "pcdtype",
+        "PATCHABLEINMODULE",
+        "DYNAMICHII",
+        "DYNAMICVPD",
+        "DYNAMICEXHII",
+        "DYNAMICEXVPD",
+        "PCD's",
+        "MDEPKG",
         "iommu"
     ]
 }
