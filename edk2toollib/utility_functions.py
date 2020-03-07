@@ -185,7 +185,7 @@ def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstre
     logging.log(logging_level, "------------------------------------------------")
 
     if raise_exception_on_nonzero and c.returncode != 0:
-        raise Exception("{0} failed with error code: {1}".format(cmd, c.returncode))
+        raise Exception("{0} failed with Return Code: {1}".format(cmd, returncode_str))
     return c.returncode
 
 ####
@@ -266,7 +266,6 @@ def DetachedSignWithSignTool(SignToolPath, ToSignFilePath, SignatureOutputFile, 
     params = params + ' /debug /v "' + ToSignFilePath + '" '
     ret = RunCmd(SignToolPath, params)
     if(ret != 0):
-        logging.error("Signtool failed %d" % ret)
         return ret
     signedfile = os.path.join(OutputDir, os.path.basename(ToSignFilePath) + ".p7")
     if(not os.path.isfile(signedfile)):
@@ -303,10 +302,7 @@ def CatalogSignWithSignTool(SignToolPath, ToSignFilePath, PfxFilePath, PfxPass=N
         # add password if set
         params = params + ' /p ' + PfxPass
     params = params + ' /debug /v "' + ToSignFilePath + '" '
-    ret = RunCmd(SignToolPath, params, workingdir=OutputDir)
-    if(ret != 0):
-        logging.error("Signtool failed %d" % ret)
-    return ret
+    return RunCmd(SignToolPath, params, workingdir=OutputDir)
 
 
 ###
