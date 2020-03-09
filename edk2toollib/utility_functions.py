@@ -266,6 +266,7 @@ def DetachedSignWithSignTool(SignToolPath, ToSignFilePath, SignatureOutputFile, 
     params = params + ' /debug /v "' + ToSignFilePath + '" '
     ret = RunCmd(SignToolPath, params)
     if(ret != 0):
+        logging.error("Signtool failed %d" % ret)
         return ret
     signedfile = os.path.join(OutputDir, os.path.basename(ToSignFilePath) + ".p7")
     if(not os.path.isfile(signedfile)):
@@ -302,7 +303,10 @@ def CatalogSignWithSignTool(SignToolPath, ToSignFilePath, PfxFilePath, PfxPass=N
         # add password if set
         params = params + ' /p ' + PfxPass
     params = params + ' /debug /v "' + ToSignFilePath + '" '
-    return RunCmd(SignToolPath, params, workingdir=OutputDir)
+    ret = RunCmd(SignToolPath, params, workingdir=OutputDir)
+    if(ret != 0):
+        logging.error("Signtool failed %d" % ret)
+    return ret
 
 
 ###
