@@ -177,13 +177,15 @@ def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstre
     endtime = datetime.datetime.now()
     delta = endtime - starttime
     endtime_str = "{0[0]:02}:{0[1]:02}".format(divmod(delta.seconds, 60))
+    returncode_str = "{0:#010x}".format(c.returncode)
     logging.log(logging_level, "------------------------------------------------")
     logging.log(logging_level, "--------------Cmd Output Finished---------------")
     logging.log(logging_level, "--------- Running Time (mm:ss): " + endtime_str + " ----------")
+    logging.log(logging_level, "----------- Return Code: " + returncode_str + " ------------")
     logging.log(logging_level, "------------------------------------------------")
 
     if raise_exception_on_nonzero and c.returncode != 0:
-        raise Exception("{0} failed with error code: {1}".format(cmd, c.returncode))
+        raise Exception("{0} failed with Return Code: {1}".format(cmd, returncode_str))
     return c.returncode
 
 ####
