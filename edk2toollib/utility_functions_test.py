@@ -65,5 +65,32 @@ class UtilityFunctionsTest(unittest.TestCase):
         self.assertEqual(found_class, GrandChildOfDesiredClass)
 
 
+class EnumClassTest(unittest.TestCase):
+    def test_EnumClass_array(self):
+        all_animals = ["Dog", "Cat", "Rabbit"]
+        animals = utilities.Enum(all_animals)
+        
+        # make sure we have three animals
+        self.assertEqual(len(animals), 3)
+        self.assertTrue(hasattr(animals, "Dog"))
+        self.assertFalse(hasattr(animals, "Rat"))
+        self.assertFalse(hasattr(animals, "dog"))
+        # check to make sure the values are unique
+        self.assertNotEqual(animals.Dog, animals.Cat)
+
+        # make sure we can iterate over the members
+        for animal in animals.__members__:
+            self.assertIn(animal, all_animals)
+
+
+    def test_EnumClass_args(self):
+        colors = utilities.Enum("Green", "Blue", "Red", "Yellow")
+        # make sure we have four colors
+        self.assertEqual(len(colors), 4)
+        self.assertTrue(hasattr(colors, "Red"))
+        self.assertFalse(hasattr(colors, "Purple"))
+        # check to make sure the values are unique
+        self.assertNotEqual(colors.Green, colors.Red)
+
 # DO NOT PUT A MAIN FUNCTION HERE
 # this test runs itself to test runpython script, which is a tad bit strange yes.

@@ -19,16 +19,30 @@ import inspect
 import platform
 import importlib
 from collections import namedtuple
-
-####
-# Helper to allow Enum type to be used which allows better code readability
-#
-# ref: http://stackoverflow.com/questions/36932/how-can-i-represent-an-enum-in-python
-####
+from enum import Enum as StdEnum
 
 
-class Enum(tuple):
-    __getattr__ = tuple.index
+def Enum(*args):
+    items = []
+    if len(args) == 1:
+        item = args[0]
+        if isinstance(item, list):
+            items = item
+        elif isinstance(item, tuple):
+            items = list(item)
+        else:
+            items.append(item)
+    else:
+        items = args
+    calling_frame = inspect.stack()[1]
+    calling_mod = inspect.getmodule(calling_frame[0])
+    calling_func = calling_frame.function
+    calling_line = calling_frame.lineno
+    
+    enum_name = calling_func + ":" + str(calling_line)
+    print('Caller name: ', calling_func)
+    print("Module: ", calling_mod)
+    return StdEnum(enum_name, items, module=calling_mod)
 
 
 ####
