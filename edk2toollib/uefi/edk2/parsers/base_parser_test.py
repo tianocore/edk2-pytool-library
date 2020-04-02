@@ -431,6 +431,26 @@ class TestBaseParserConditionals(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             parser.EvaluateConditional('TRUE AND FALSE AND')
 
+    def test_emulator_conditional_which_causes_errors1(self):
+        parser = BaseParser("")
+        parser.SetInputVars({"ARCH": "X64"})
+        self.assertTrue(parser.ProcessConditional(
+            '!if "IA32" in $(ARCH) || "X64" in $(ARCH)'))
+        self.assertTrue(parser.InActiveCode())
+        parser.ResetParserState()
+        parser.SetInputVars({"ARCH": "IA32"})
+        self.assertTrue(parser.ProcessConditional(
+            '!if "IA32" in $(ARCH) || "X64" in $(ARCH)'))
+        self.assertTrue(parser.InActiveCode())
+        parser.ResetParserState()
+
+    def test_emulator_conditional_which_causes_errors2(self):
+        parser = BaseParser("")
+        parser.SetInputVars({"TOOL_CHAIN_TAG": "VS2019"})
+        self.assertTrue(parser.ProcessConditional('!if "XCODE5" not in $(TOOL_CHAIN_TAG)'))
+        self.assertTrue(parser.InActiveCode())
+        parser.ResetParserState()
+
 
 class TestBaseParserGuids(unittest.TestCase):
 
