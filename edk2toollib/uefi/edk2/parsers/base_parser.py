@@ -502,7 +502,7 @@ class BaseParser(object):
 
     @classmethod
     def _ConvertTokensToPostFix(cls, tokens):
-        # now we convert in fix into post fix?
+        # convert infix into post fix
         stack = ["("]
         tokens.append(")")  # add an extra parathesis
         expression = []
@@ -510,8 +510,8 @@ class BaseParser(object):
             # If the incoming symbol is a left parenthesis, push it on the stack.
             if token == "(":
                 stack.append(token)
-            # If the incoming symbol is a right parenthesis, 
-            # pop the stack and print the operators until you see a left parenthesis. 
+            # If the incoming symbol is a right parenthesis,
+            # pop the stack and print the operators until you see a left parenthesis.
             # Discard the pair of parentheses.
             elif token == ")":
                 while len(stack) > 0 and stack[-1] != '(':
@@ -527,12 +527,12 @@ class BaseParser(object):
             elif len(stack) == 0 or cls._GetOperatorPrecedence(token) > cls._GetOperatorPrecedence(stack[-1]):
                 stack.append(token)
             # If the incoming symbol has equal precedence with the top of the stack, use association.
-            # If the association is left to right, pop and print the top of the stack and 
+            # If the association is left to right, pop and print the top of the stack and
             # then push the incoming operator. If the association is right to left, push the incoming operator.
             elif len(stack) != 0 and cls._GetOperatorPrecedence(token) == cls._GetOperatorPrecedence(stack[-1]):
                 expression.append(stack.pop())
                 stack.append(token)
-            # If the incoming symbol has lower precedence than the symbol on the top of the stack, 
+            # If the incoming symbol has lower precedence than the symbol on the top of the stack,
             # pop the stack and print the top operator.
             # Then test the incoming operator against the new top of stack.
             elif len(stack) != 0 and cls._GetOperatorPrecedence(token) < cls._GetOperatorPrecedence(stack[-1]):
