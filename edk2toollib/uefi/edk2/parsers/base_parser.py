@@ -540,7 +540,7 @@ class BaseParser(object):
                     expression.append(stack.pop())
                 stack.append(token)
             else:
-                logging.error("We don't know what to do with "+ token)
+                logging.error("We don't know what to do with " + token)
             logging.debug(f"{token.ljust(10)} | {' '.join(stack).ljust(50)} | {' '.join(expression).ljust(50)}")
         logging.debug(stack)
         logging.debug(expression)
