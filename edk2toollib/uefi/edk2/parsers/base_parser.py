@@ -11,6 +11,7 @@ import logging
 
 class BaseParser(object):
     """ """
+    operators = ["OR", "AND", "IN", "==", "!=", ">", "<", "<=", ">="]
 
     def __init__(self, log=""):
         self.Logger = logging.getLogger(log)
@@ -142,6 +143,7 @@ class BaseParser(object):
         if (cond.upper() == "IN"):
             # strip quotes
             self.Logger.debug(f"{ivalue} in {ivalue2}")
+
             return ivalue in ivalue2
 
         try:
@@ -374,10 +376,60 @@ class BaseParser(object):
         if not text.lower().startswith("!if "):
             raise RuntimeError(f"Invalid conditional cannot be validated: {text}")
         text = text[3:].strip()
-        self.Logger.debug(f"STAGE 1: {text}")
+        print(f"STAGE 1: {text}")
         text = self.ReplaceVariables(text)
-        self.Logger.debug(f"STAGE 2: {text}")
+        print(f"STAGE 2: {text}")
+        tokens = self._TokenizeConditional(text)
+        print(f"STAGE 3: {tokens}")
+        expression = self._ConvertTokensToPostFix(tokens)
+        print(f"STAGE 4: {expression}")
 
+        # Now we evaluate the post fix expression
+        if len(expression) == 0:
+            raise RuntimeError(f"Malformed !if conditional expression {text} {expression}")
+        while len(expression) != 1:
+            first_operand_index = -1
+            for index, item in enumerate(expression):
+                if type(item) is not str:
+                    continue
+                if item.startswith("!+"):
+                    item = item[2:]
+                if item in self.operators:
+                    first_operand_index = index
+                    break
+            if first_operand_index == -1:
+                raise RuntimeError(f"We didn't find an operator to execute in {expression}: {text}")
+            operand = expression[first_operand_index]
+            if first_operand_index < 2:
+                raise RuntimeError(f"We have a stray operand {operand}")
+            operator1 = expression[first_operand_index - 2]
+            operator2 = expression[first_operand_index - 1]
+
+            do_invert = False
+
+            if str(operand).startswith("!+"):
+                operand = operand[2:]
+                do_invert = True
+
+            result = self.ComputeResult(operator1, operand, operator2)
+
+            if do_invert:
+                result = not result
+                
+            print(f"{operator1} {operand} {operator2} = {result} @ {first_operand_index}")
+            new_expression = expression[:first_operand_index - 2] if first_operand_index > 2 else []
+            print(new_expression)
+            new_expression += [result, ] + expression[first_operand_index + 1:]
+            expression = new_expression
+
+        final = self.ConvertToInt(expression[0])
+        print(f" FINAL {expression} {final}")
+
+        return bool(final)
+
+    @classmethod
+    def _TokenizeConditional(cls, text):
+        ''' takes in a string that has macros replaced '''
         # TOKENIZER
         # first we create tokens
         TEXT_MODE = 0
@@ -387,7 +439,6 @@ class BaseParser(object):
         mode = 0
         tokens = []
         for character in text:
-
             if character == "\"" and len(token) == 0:
                 mode = QUOTE_MODE
             elif character == "\"" and mode == QUOTE_MODE:
@@ -419,15 +470,11 @@ class BaseParser(object):
         if len(token) > 0:
             tokens.append(token)
 
-        self.Logger.debug(f"STAGE 3: {' '.join(tokens)}")
-
-        operators = ["OR", "AND", "IN", "==", "!=", ">", "<", "<=", ">="]
-
         # then we do the lexer and convert operands as necessary
         for index in range(len(tokens)):
             token = tokens[index]
             token_upper = token.upper()
-            if token_upper in operators:
+            if token_upper in cls.operators:
                 token = token_upper
             elif token_upper == "||":
                 token = "OR"
@@ -438,8 +485,26 @@ class BaseParser(object):
             elif token_upper == "NE":
                 token = "!="
             tokens[index] = token
-        self.Logger.debug(f"STAGE 4: {tokens}")
 
+        # collapse the not
+        collapsed_tokens = []
+        found_not = False
+        for token in tokens:
+            if str(token).upper() == "NOT":
+                found_not = True
+                continue
+            if not found_not:
+                collapsed_tokens.append(token)
+            elif token in cls.operators:
+                collapsed_tokens.append("!+" + token)
+                found_not = False
+            else:
+                raise RuntimeError(f"Confusing not in tokens: {text}")
+
+        return collapsed_tokens
+
+    @classmethod
+    def _ConvertTokensToPostFix(cls, tokens):
         # now we convert in fix into post fix?
         stack = ["("]
         tokens.append(")")  # add an extra parathesis
@@ -450,9 +515,8 @@ class BaseParser(object):
             elif token == ")":
                 while len(stack) > 0 and stack[-1] != '(':
                     expression.append(stack.pop())
-            elif token in operators:
+            elif (token.startswith("!+") and token[2:] in cls.operators) or token in cls.operators:
                 while len(stack) > 0 and stack[-1] != '(':
-                    self.Logger.debug(stack[-1])
                     expression.append(stack.pop())
                 stack.append(token)
             else:
@@ -461,38 +525,8 @@ class BaseParser(object):
             val = stack.pop()
             if val != '(':
                 expression.append(val)
-
-        self.Logger.debug(f"STAGE 5: {expression}")
-
-        # Now we evaluate the post fix expression
-        if len(expression) == 0:
-            raise RuntimeError(f"Malformed !if conditional expression {text} {expression}")
-        while len(expression) != 1:
-            first_operand_index = -1
-            for index, item in enumerate(expression):
-                if item in operators:
-                    first_operand_index = index
-                    break
-            if first_operand_index == -1:
-                raise RuntimeError(f"We didn't find an operator to execute in {expression}: {text}")
-            operand = expression[first_operand_index]
-            if first_operand_index < 2:
-                raise RuntimeError(f"We have a stray operand {operand}")
-            operator1 = expression[first_operand_index - 2]
-            operator2 = expression[first_operand_index - 1]
-
-            result = self.ComputeResult(operator1, operand, operator2)
-            self.Logger.debug(f"{operator1} {operand} {operator2} = {result} @ {first_operand_index}")
-            new_expression = expression[:first_operand_index - 2] if first_operand_index > 2 else []
-            self.Logger.debug(new_expression)
-            new_expression += [result, ] + expression[first_operand_index + 1:]
-            expression = new_expression
-
-        final = self.ConvertToInt(expression[0])
-        self.Logger.debug(f" FINAL {expression} {final}")
-
-        return bool(final)
-
+        return expression
+    
     #
     # returns true or false depending on what state of conditional you are currently in
     #
