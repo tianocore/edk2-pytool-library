@@ -376,25 +376,22 @@ class BaseParser(object):
         if not text.lower().startswith("!if "):
             raise RuntimeError(f"Invalid conditional cannot be validated: {text}")
         text = text[3:].strip()
-        print(f"STAGE 1: {text}")
+        logging.debug(f"STAGE 1: {text}")
         text = self.ReplaceVariables(text)
-        print(f"STAGE 2: {text}")
+        logging.debug(f"STAGE 2: {text}")
         tokens = self._TokenizeConditional(text)
-        print(f"STAGE 3: {tokens}")
+        logging.debug(f"STAGE 3: {tokens}")
         expression = self._ConvertTokensToPostFix(tokens)
-        print(f"STAGE 4: {expression}")
+        logging.debug(f"STAGE 4: {expression}")
 
         # Now we evaluate the post fix expression
         if len(expression) == 0:
             raise RuntimeError(f"Malformed !if conditional expression {text} {expression}")
         while len(expression) != 1:
             first_operand_index = -1
+            # find the first operator
             for index, item in enumerate(expression):
-                if type(item) is not str:
-                    continue
-                if item.startswith("!+"):
-                    item = item[2:]
-                if item in self.operators:
+                if self._IsOperator(item):
                     first_operand_index = index
                     break
             if first_operand_index == -1:
@@ -415,15 +412,15 @@ class BaseParser(object):
 
             if do_invert:
                 result = not result
-                
-            print(f"{operator1} {operand} {operator2} = {result} @ {first_operand_index}")
+
+            logging.debug(f"{operator1} {operand} {operator2} = {result} @ {first_operand_index}")
             new_expression = expression[:first_operand_index - 2] if first_operand_index > 2 else []
-            print(new_expression)
+            logging.debug(new_expression)
             new_expression += [result, ] + expression[first_operand_index + 1:]
             expression = new_expression
 
         final = self.ConvertToInt(expression[0])
-        print(f" FINAL {expression} {final}")
+        logging.debug(f" FINAL {expression} {final}")
 
         return bool(final)
 
@@ -510,23 +507,63 @@ class BaseParser(object):
         tokens.append(")")  # add an extra parathesis
         expression = []
         for token in tokens:
+            # If the incoming symbol is a left parenthesis, push it on the stack.
             if token == "(":
                 stack.append(token)
+            # If the incoming symbol is a right parenthesis, pop the stack and print the operators until you see a left parenthesis. Discard the pair of parentheses.
             elif token == ")":
                 while len(stack) > 0 and stack[-1] != '(':
                     expression.append(stack.pop())
-            elif (token.startswith("!+") and token[2:] in cls.operators) or token in cls.operators:
-                while len(stack) > 0 and stack[-1] != '(':
+                stack.pop()  # pop the last (
+            # If this isn't a operator ignore it
+            elif not cls._IsOperator(token):
+                expression.append(token)
+            # If the stack is empty or contains a left parenthesis on top, push the incoming operator onto the stack.
+            elif len(stack) == 0 or stack[-1] == '(':
+                stack.append(token)
+            # If the incoming symbol has higher precedence than the top of the stack, push it on the stack.
+            elif len(stack) == 0 or cls._GetOperatorPrecedence(token) > cls._GetOperatorPrecedence(stack[-1]):
+                stack.append(token)
+            # If the incoming symbol has equal precedence with the top of the stack, use association.
+            # If the association is left to right, pop and print the top of the stack and then push the incoming operator.
+            # If the association is right to left, push the incoming operator.
+            elif len(stack) != 0 and cls._GetOperatorPrecedence(token) == cls._GetOperatorPrecedence(stack[-1]):
+                expression.append(stack.pop())
+                stack.append(token)
+            # If the incoming symbol has lower precedence than the symbol on the top of the stack, pop the stack and print the top operator.
+            # Then test the incoming operator against the new top of stack.
+            elif len(stack) != 0 and cls._GetOperatorPrecedence(token) < cls._GetOperatorPrecedence(stack[-1]):
+                while len(stack) > 0 and cls._GetOperatorPrecedence(token) <= cls._GetOperatorPrecedence(stack[-1]):
                     expression.append(stack.pop())
                 stack.append(token)
             else:
-                expression.append(token)
+                logging.error("We don't know what to do with "+ token)
+            logging.debug(f"{token.ljust(10)} | {' '.join(stack).ljust(50)} | {' '.join(expression).ljust(50)}")
+        logging.debug(stack)
+        logging.debug(expression)
         while len(stack) > 0:
             val = stack.pop()
-            if val != '(':
-                expression.append(val)
+            expression.append(val)
         return expression
-    
+
+    @classmethod
+    def _IsOperator(cls, token):
+        if type(token) is not str:
+            return False
+        if token.startswith("!+"):
+            token = token[2:]
+        return token in cls.operators
+
+    @classmethod
+    def _GetOperatorPrecedence(cls, token):
+        if not cls._IsOperator(token):
+            return -1
+        if token == "(" or token == ")":
+            return 100
+        if token == "IN":
+            return 1
+        return 0
+
     #
     # returns true or false depending on what state of conditional you are currently in
     #
