@@ -402,10 +402,11 @@ class BaseParser(object):
                 # Special logic for handling the not
                 if first_operand_index < 1:
                     raise RuntimeError(f"We have a stray operand {operand}")
+                # grab the operand right before the NOT and invert it
                 operator1_raw = expression[first_operand_index - 1]
                 operator1 = self.ConvertToInt(operator1_raw)
                 result = not operator1
-
+                # grab what was before the operator and the operand, then smoosh it all together
                 new_expression = expression[:first_operand_index - 1] if first_operand_index > 1 else []
                 new_expression += [result, ] + expression[first_operand_index + 1:]
                 expression = new_expression
@@ -416,16 +417,16 @@ class BaseParser(object):
                 operator2 = expression[first_operand_index - 1]
 
                 do_invert = False
-
+                # check if we have a special operator that has a combined not on it
                 if str(operand).startswith("!+"):
                     operand = operand[2:]
                     do_invert = True
-
+                # compute the result now that we have the three things we need
                 result = self.ComputeResult(operator1, operand, operator2)
 
                 if do_invert:
                     result = not result
-
+                # grab what was before the operator and the operand, then smoosh it all together
                 new_expression = expression[:first_operand_index - 2] if first_operand_index > 2 else []
                 new_expression += [result, ] + expression[first_operand_index + 1:]
                 expression = new_expression
