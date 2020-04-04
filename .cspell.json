@@ -87,6 +87,7 @@
         "DYNAMICEXVPD",
         "PCD's",
         "MDEPKG",
-        "iommu"
+        "iommu",
+        "smoosh"
     ]
 }
