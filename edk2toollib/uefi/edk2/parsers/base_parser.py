@@ -397,27 +397,38 @@ class BaseParser(object):
             if first_operand_index == -1:
                 raise RuntimeError(f"We didn't find an operator to execute in {expression}: {text}")
             operand = expression[first_operand_index]
-            if first_operand_index < 2:
-                raise RuntimeError(f"We have a stray operand {operand}")
-            operator1 = expression[first_operand_index - 2]
-            operator2 = expression[first_operand_index - 1]
 
-            do_invert = False
+            if operand == "NOT":
+                # Special logic for handling the not
+                if first_operand_index < 1 :
+                    raise RuntimeError(f"We have a stray operand {operand}")
+                operator1_raw = expression[first_operand_index - 1]
+                operator1 = self.ConvertToInt(operator1_raw)
+                result = not operator1
+                
+                new_expression = expression[:first_operand_index - 1] if first_operand_index > 1 else []
+                new_expression += [result, ] + expression[first_operand_index + 1:]
+                expression = new_expression
+            else:
+                if first_operand_index < 2:
+                    raise RuntimeError(f"We have a stray operand {operand}")
+                operator1 = expression[first_operand_index - 2]
+                operator2 = expression[first_operand_index - 1]
 
-            if str(operand).startswith("!+"):
-                operand = operand[2:]
-                do_invert = True
+                do_invert = False
 
-            result = self.ComputeResult(operator1, operand, operator2)
+                if str(operand).startswith("!+"):
+                    operand = operand[2:]
+                    do_invert = True
 
-            if do_invert:
-                result = not result
+                result = self.ComputeResult(operator1, operand, operator2)
 
-            logging.debug(f"{operator1} {operand} {operator2} = {result} @ {first_operand_index}")
-            new_expression = expression[:first_operand_index - 2] if first_operand_index > 2 else []
-            logging.debug(new_expression)
-            new_expression += [result, ] + expression[first_operand_index + 1:]
-            expression = new_expression
+                if do_invert:
+                    result = not result
+
+                new_expression = expression[:first_operand_index - 2] if first_operand_index > 2 else []
+                new_expression += [result, ] + expression[first_operand_index + 1:]
+                expression = new_expression
 
         final = self.ConvertToInt(expression[0])
         logging.debug(f" FINAL {expression} {final}")
@@ -481,6 +492,8 @@ class BaseParser(object):
                 token = "=="
             elif token_upper == "NE":
                 token = "!="
+            elif token == "!":
+                token = "NOT"
             tokens[index] = token
 
         # collapse the not
@@ -495,8 +508,10 @@ class BaseParser(object):
             elif token in cls.operators:
                 collapsed_tokens.append("!+" + token)
                 found_not = False
-            else:
-                raise RuntimeError(f"Confusing not in tokens: {text}")
+            else:  # add the not back
+                found_not = False
+                collapsed_tokens.append("NOT")
+                collapsed_tokens.append(token)
 
         return collapsed_tokens
 
@@ -541,9 +556,6 @@ class BaseParser(object):
                 stack.append(token)
             else:
                 logging.error("We don't know what to do with " + token)
-            logging.debug(f"{token.ljust(10)} | {' '.join(stack).ljust(50)} | {' '.join(expression).ljust(50)}")
-        logging.debug(stack)
-        logging.debug(expression)
         while len(stack) > 0:
             val = stack.pop()
             expression.append(val)
@@ -555,6 +567,8 @@ class BaseParser(object):
             return False
         if token.startswith("!+"):
             token = token[2:]
+        if token == "NOT":  # technically an operator
+            return True
         return token in cls.operators
 
     @classmethod
@@ -563,6 +577,8 @@ class BaseParser(object):
             return -1
         if token == "(" or token == ")":
             return 100
+        if token == "NOT":  # not is the lowest
+            return -2
         if token == "IN":
             return 1
         return 0
