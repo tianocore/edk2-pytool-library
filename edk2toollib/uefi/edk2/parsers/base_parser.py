@@ -400,12 +400,12 @@ class BaseParser(object):
 
             if operand == "NOT":
                 # Special logic for handling the not
-                if first_operand_index < 1 :
+                if first_operand_index < 1:
                     raise RuntimeError(f"We have a stray operand {operand}")
                 operator1_raw = expression[first_operand_index - 1]
                 operator1 = self.ConvertToInt(operator1_raw)
                 result = not operator1
-                
+
                 new_expression = expression[:first_operand_index - 1] if first_operand_index > 1 else []
                 new_expression += [result, ] + expression[first_operand_index + 1:]
                 expression = new_expression
