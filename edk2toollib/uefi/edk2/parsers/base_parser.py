@@ -406,7 +406,7 @@ class BaseParser(object):
                 operator1_raw = expression[first_operand_index - 1]
                 operator1 = self.ConvertToInt(operator1_raw)
                 result = not operator1
-                # grab what was before the operator and the operand, then smoosh it all together
+                # grab what was before the operator and the operand, then squish it all together
                 new_expression = expression[:first_operand_index - 1] if first_operand_index > 1 else []
                 new_expression += [result, ] + expression[first_operand_index + 1:]
                 expression = new_expression
