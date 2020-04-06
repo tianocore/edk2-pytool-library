@@ -152,3 +152,42 @@ class Edk2Path(object):
         self.logger.info("PackagePath is: %s" % os.pathsep.join(self.PackagePathList))
         self.logger.info("Workspace path is : %s" % self.WorkspacePath)
         return None
+
+    # Find the list of modules (infs) that file path is in
+    #
+    # for now just assume any inf in the same dir or if none
+    # then check parent dir.
+    #
+    # @param InputPath:  absolute path to file
+    #
+    # @ret list of abs path file paths for module infs
+    def GetContainingModules(self, InputPath: str) -> list:
+        self.logger.debug("GetContainingModules: %s" % InputPath)
+
+        # if INF return self
+        if InputPath.endswith(".inf"):
+            return [InputPath]
+
+        modules = []
+        # Check current dir
+        dirpath = os.path.dirname(InputPath)
+        for f in os.listdir(dirpath):
+            if fnmatch.fnmatch(f, '*.inf'):
+                self.logger.debug("Found INF file in %s.  INf is: %s", dirpath, f)
+                modules.append(os.path.join(dirpath, f))
+
+        # if didn't find any in current dir go to parent dir.
+        # this handles cases like:
+        # ModuleDir/
+        #   Module.inf
+        #   x64/
+        #     file.c
+        #
+        if(len(modules) == 0):
+            dirpath = os.path.dirname(dirpath)
+            for f in os.listdir(dirpath):
+                if fnmatch.fnmatch(f, '*.inf'):
+                    self.logger.debug("Found INF file in %s.  INf is: %s", dirpath, f)
+                    modules.append(os.path.join(dirpath, f))
+
+        return modules

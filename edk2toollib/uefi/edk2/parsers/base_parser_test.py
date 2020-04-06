@@ -431,6 +431,55 @@ class TestBaseParserConditionals(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             parser.EvaluateConditional('TRUE AND FALSE AND')
 
+    def test_emulator_conditional_or_double_in(self):
+        parser = BaseParser("")
+        parser.SetInputVars({"ARCH": "X64"})
+        self.assertTrue(parser.ProcessConditional(
+            '!if "IA32" in $(ARCH) || "X64" in $(ARCH)'))
+        self.assertTrue(parser.InActiveCode())
+        parser.ResetParserState()
+        parser.SetInputVars({"ARCH": "IA32"})
+        self.assertTrue(parser.ProcessConditional(
+            '!if "IA32" in $(ARCH) || "X64" in $(ARCH)'))
+        self.assertTrue(parser.InActiveCode())
+        parser.ResetParserState()
+
+    def test_emulator_conditional_not_in(self):
+        parser = BaseParser("")
+        parser.SetInputVars({"TOOL_CHAIN_TAG": "VS2019"})
+        self.assertTrue(parser.ProcessConditional('!if "XCODE5" not in $(TOOL_CHAIN_TAG)'))
+        self.assertTrue(parser.InActiveCode())
+        parser.ResetParserState()
+
+    def test_emulator_conditional_parens_order(self):
+        ''' Makes sure the parenthesis affect the order of expressions '''
+        parser = BaseParser("")
+        self.assertFalse(parser.EvaluateConditional('!if TRUE OR FALSE AND FALSE'))
+        self.assertTrue(parser.EvaluateConditional('!if TRUE OR (FALSE AND FALSE)'))
+        parser.ResetParserState()
+
+    def test_emulator_conditional_not_or(self):
+        ''' Makes sure we can use the not with other operators '''
+        parser = BaseParser("")
+        self.assertTrue(parser.EvaluateConditional('!if FALSE NOT OR FALSE'))
+        self.assertFalse(parser.EvaluateConditional('!if TRUE NOT OR FALSE'))
+        self.assertFalse(parser.EvaluateConditional('!if FALSE NOT OR TRUE'))
+        self.assertFalse(parser.EvaluateConditional('!if TRUE NOT OR TRUE'))
+
+    def test_emulator_conditional_not_it_all(self):
+        ''' Makes sure the parenthesis affect the order of expressions '''
+        parser = BaseParser("")
+        self.assertTrue(parser.EvaluateConditional('!if NOT FALSE OR FALSE'))
+        self.assertFalse(parser.EvaluateConditional('!if NOT TRUE OR FALSE'))
+        # check to make sure it works with parenthesis
+        self.assertFalse(parser.EvaluateConditional('!if NOT(TRUE)'))
+        self.assertTrue(parser.EvaluateConditional('!if NOT(FALSE)'))
+        # make sure it works with the bang symbol
+        self.assertFalse(parser.EvaluateConditional('!if !(TRUE)'))
+        self.assertTrue(parser.EvaluateConditional('!if !(FALSE)'))
+
+        parser.ResetParserState()
+
 
 class TestBaseParserGuids(unittest.TestCase):
 
