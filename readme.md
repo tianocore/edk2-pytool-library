@@ -4,6 +4,22 @@ This is a Tianocore maintained project consisting of a python library supporting
 
 This is a supplemental package and is not required to be used for edk2 builds.
 
+## Current Status
+
+| Host Type | Toolchain | Branch | Build Status | Test Status | Code Coverage |
+| :-------- | :-------- | :---- | :----- | :---- | :--- |
+| Linux Ubuntu 1804 | Python 3.8.x | master | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/edk2-pytool-library%20-%20PR%20Gate%20-%20Linux)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=1) | ![Azure DevOps tests](https://img.shields.io/azure-devops/tests/tianocore/edk2-pytools-library/1.svg) | ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/tianocore/edk2-pytools-library/1.svg) |
+| Windows Server 2019 | Python 3.8.x | master | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/Edk2-PyTool-Library%20PR%20build%20-%20Win%20-%20VS2019)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=2) | ![Azure DevOps tests](https://img.shields.io/azure-devops/tests/tianocore/edk2-pytools-library/2.svg)| ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/tianocore/edk2-pytools-library/2.svg) |
+
+### Current Release
+
+[![PyPI](https://img.shields.io/pypi/v/edk2_pytool_library.svg)](https://pypi.org/project/edk2-pytool-library/)
+
+All release information is now tracked with Github
+ [tags](https://github.com/tianocore/edk2-pytool-extensions/tags),
+  [releases](https://github.com/tianocore/edk2-pytool-extensions/releases) and
+  [milestones](https://github.com/tianocore/edk2-pytool-extensions/milestones).
+
 ## Content
 
 The package contains classes and modules that can be used as the building blocks of tools that are relevant to UEFI firmware developers.  These modules should attempt to provide generic support and avoid tightly coupling with specific use cases.  It is expected these modules do not provide direct interaction with the user (through command line interfaces) but instead are intended to be wrapped in other scripts/tools which contains the specific usage and interface.
@@ -32,95 +48,10 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
     ```python
     from edk2toollib.<module> import <class>
     ```
+    
+## History
 
-## Current Status
-
-| Host Type | Toolchain | Branch | Build Status | Test Status | Code Coverage |
-| :-------- | :-------- | :---- | :----- | :---- | :--- |
-| Linux Ubuntu 1604 | Python 3.7.x | master | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/edk2-pytool-library%20-%20PR%20Gate%20-%20Linux)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=1) | ![Azure DevOps tests](https://img.shields.io/azure-devops/tests/tianocore/edk2-pytools-library/1.svg) | ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/tianocore/edk2-pytools-library/1.svg) |
-| Windows Server 2019 | Python 3.7.x | master | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/Edk2-PyTool-Library%20PR%20build%20-%20Win%20-%20VS2019)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=2) | ![Azure DevOps tests](https://img.shields.io/azure-devops/tests/tianocore/edk2-pytools-library/2.svg)| ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/tianocore/edk2-pytools-library/2.svg) |
-
-## Release Version History
-
-[![PyPI](https://img.shields.io/pypi/v/edk2_pytool_library.svg)](https://pypi.org/project/edk2-pytool-library/)
-
-### Version 0.10.8
-
-* Bugs:
-  * See the bugs in the [milestone](https://github.com/tianocore/edk2-pytool-library/milestone/6?closed=1) for this release
-
-
-### Version 0.10.7
-
-* Bugs:
-  * See the bugs in the [milestone](https://github.com/tianocore/edk2-pytool-library/milestone/5?closed=1) for this release
-
-### Version 0.10.6
-
-* Bugs:
-  * See the bugs in the [milestone](https://github.com/tianocore/edk2-pytool-library/milestone/4?closed=1) for this release
-
-### Version 0.10.5
-
-* Bugs:
-  * See the bugs in the [milestone](https://github.com/tianocore/edk2-pytool-library/milestone/3?closed=1) for this release
-
-
-### Version 0.10.4
-
-* Features:
-  * If multiple classes are found (ie when searching for a SettingsManager), it will now pick the one that is deepest in hierarchy from the desired class
-  * Updated parsers for DSC, FDF, and DEC
-* Bugs:
-  * See the bugs in the [milestone](https://github.com/tianocore/edk2-pytool-library/milestone/2?closed=1) for this release
-
-### Version 0.10.3
-
-* Features:
-  * If multiple classes are found (ie when searching for a SettingsManager), it can now pick the one that is closest to the original module file
-  * Unified Azure Pipeline
-  * Added Capsule object classes to support decoding and encoding
-* Bugs
-  * Catch errors when emitting invalid characters to the markdown log handler
-  * Processor info is now checked in a case insensitive manner (fixes OpenBSD)
-
-### Version 0.10.2
-
-* Features:
-  * Add GuidList object to allow easy file system parsing of edk2 files for complete list of guids
-  * Add gitignore syntax parser to allow for common method to ignore files or folders in tools
-* Bugs:
-  * Junit report format module was not escaping all user supplied strings which could cause invalid xml output
-
-### Version 0.10.1
-
-* Bugs:
-  * Added better logging when locate_tools queries vcvarsall and can't find a particular key
-  * Fixed bug in RunPythonScript that caused an exception
-  * Improved XML output by escaping
-
-### Version 0.10.0
-
-* Features:
-  * Change DEC parser
-    * More complete parser but is not backward compatible.  Users of DEC parser will need to update.
-    * LibraryClass, Protocol, Ppi, and Guid sections now parse each line to a custom object which contains all data fields.
-
-### Version 0.9.2
-
-* Bugs:
-  * Change QueryVcVariables so environment variable keys are not case sensitive.  On Windows these are not case sensitive and "Path" is not consistent.
-
-### Version 0.9.1
-
-* Features:
-  * Add support for getting WinSdk tools on platforms without VS2017 or newer
-  * FindToolInWinSdk in locate_tools.py throws a FileNotFoundException when it cannot find the tool requested, previously it returned None
-  * Add support for limiting vswhere to certain versions of visual studio (VS2017 and VS2019 supported)
-
-### Version 0.9.00
-
-Initial release of library with functionality ported from Project Mu.
+This library and functionality was ported from Project Mu.
 For history and documentation prior to this see the original Project Mu project
 https://github.com/microsoft/mu_pip_python_library
 
