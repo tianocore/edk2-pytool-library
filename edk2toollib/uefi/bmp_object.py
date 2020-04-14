@@ -8,6 +8,13 @@
 import logging
 import struct
 
+class UntestedCode(object):
+    def __init__(self):
+        print("This is an untested object to test the coverage reporting infra")
+        self.data = 0
+    
+    def get_data(self):
+        return self.data
 
 class BmpColorMap(object):
     STATIC_SIZE = 4
