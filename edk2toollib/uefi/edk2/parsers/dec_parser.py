@@ -118,11 +118,13 @@ class PcdDeclarationEntry():
         sp = rawtext.partition(".")
         self.token_space_name = sp[0].strip()
         op = sp[2].split("|")
-        # if it's less than 4, less
+        # if it's 2 long, we need to check that it's a structured PCD
         if(len(op) == 2 and op[0].count(".") > 0):
             pass
+        # otherwise it needs at least 4 parts
         elif(len(op) < 4):
             raise Exception(f"Too few parts: {op}")
+        # but also less than 5
         elif(len(op) > 5):
             raise Exception(f"Too many parts: {rawtext}")
         elif(len(op) == 5 and op[4].strip() != '{'):
@@ -130,6 +132,7 @@ class PcdDeclarationEntry():
 
         self.name = op[0].strip()
         self.default_value = op[1].strip()
+        # if we don't know what the type and id, it's because it's structured
         self.type = op[2].strip() if len(op) > 2 else "STRUCTURED_PCD"
         self.id = op[3].strip() if len(op) > 2 else "STRUCTURED_PCD"
 
