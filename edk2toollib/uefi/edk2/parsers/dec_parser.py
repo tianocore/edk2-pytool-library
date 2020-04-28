@@ -118,7 +118,7 @@ class PcdDeclarationEntry():
         sp = rawtext.partition(".")
         self.token_space_name = sp[0].strip()
         op = sp[2].split("|")
-        # if it's less than 4, less 
+        # if it's less than 4, less
         if(len(op) == 2 and op[0].count(".") > 0):
             pass
         elif(len(op) < 4):
