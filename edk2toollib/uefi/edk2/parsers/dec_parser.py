@@ -118,18 +118,20 @@ class PcdDeclarationEntry():
         sp = rawtext.partition(".")
         self.token_space_name = sp[0].strip()
         op = sp[2].split("|")
-
-        if(len(op) < 4):
-            raise Exception("Too few parts")
-        if(len(op) > 5):
-            raise Exception("Too many parts")
-        if(len(op) == 5 and op[4].strip() != '{'):
-            raise Exception("Too many parts")
+        # if it's less than 4, less 
+        if(len(op) == 2 and op[0].count(".") > 0):
+            pass
+        elif(len(op) < 4):
+            raise Exception(f"Too few parts: {op}")
+        elif(len(op) > 5):
+            raise Exception(f"Too many parts: {rawtext}")
+        elif(len(op) == 5 and op[4].strip() != '{'):
+            raise Exception(f"Too many parts: {rawtext}")
 
         self.name = op[0].strip()
         self.default_value = op[1].strip()
-        self.type = op[2].strip()
-        self.id = op[3].strip()
+        self.type = op[2].strip() if len(op) > 2 else "STRUCTURED_PCD"
+        self.id = op[3].strip() if len(op) > 2 else "STRUCTURED_PCD"
 
 
 class DecParser(HashFileParser):
