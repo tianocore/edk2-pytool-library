@@ -148,6 +148,18 @@ class Edk2Path(object):
             dirpathprevious = dirpath
             dirpath = os.path.dirname(dirpath)
 
+            #
+            # Catch all exit.  Have seen endless loop cases on Windows
+            # with case insensitivity issues with path.
+            # Do after assignment of dirpathprevious since initial
+            # loop entry has these two equal
+            #
+            if dirpath == dirpathprevious:
+                self.logger.error("Never found package.  Endless loop")
+                break
+
+
+
         self.logger.error("Failed to find containing package for %s" % InputPath)
         self.logger.info("PackagePath is: %s" % os.pathsep.join(self.PackagePathList))
         self.logger.info("Workspace path is : %s" % self.WorkspacePath)
