@@ -38,10 +38,9 @@ def Enum(*args):
     calling_mod = inspect.getmodule(calling_frame[0])
     calling_func = calling_frame.function
     calling_line = calling_frame.lineno
-    
+
     enum_name = calling_func + ":" + str(calling_line)
-    print('Caller name: ', calling_func)
-    print("Module: ", calling_mod)
+    logging.warning(f"Enum is deprecated! Please fix it in {calling_mod}:{calling_func}")
     return StdEnum(enum_name, items, module=calling_mod)
 
 
