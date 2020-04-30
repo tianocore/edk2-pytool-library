@@ -96,6 +96,17 @@ class TestPcdDeclarationEntry(unittest.TestCase):
         with self.assertRaises(Exception):
             PcdDeclarationEntry("testpkg", SAMPLE_DATA_DECL)
 
+    def test_good_structured_input(self):
+        SAMPLE_DATA_DECL = """gSomePkgTokenSpaceGuid.PcdThatInformation.Subfield|0x1"""
+        a = PcdDeclarationEntry("testpkg", SAMPLE_DATA_DECL)
+        self.assertEqual(a.token_space_name, "gSomePkgTokenSpaceGuid")
+        self.assertEqual(a.name, "PcdThatInformation.Subfield")
+
+    def test_bad_structured_input(self):
+        SAMPLE_DATA_DECL = """gSomePkgTokenSpaceGuid.PcdThatInformation|0x1"""
+        with self.assertRaises(Exception):
+            PcdDeclarationEntry("testpkg", SAMPLE_DATA_DECL)
+
 
 class TestDecParser(unittest.TestCase):
 
