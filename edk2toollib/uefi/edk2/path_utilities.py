@@ -153,7 +153,7 @@ class Edk2Path(object):
 
         dirpathprevious = os.path.dirname(InputPath)
         dirpath = os.path.dirname(InputPath)
-        while(True):
+        for _ in range(100):  # 100 is just a counter to avoid infinite loops.  Path nodes are unlikely to exceed 100
             #
             # Check for a DEC file in this folder
             # if here then return the directory name as the "package"
