@@ -17,19 +17,23 @@ from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 class PathUtilitiesTest(unittest.TestCase):
 
-    def MakeFile(self, parentpath, filename):
+    def _make_file_helper(self, parentpath: str, filename: str) -> None:
+        ''' simple internal helper to make a file and write basic content'''
         with open(os.path.join(parentpath, filename), "w") as f:
             f.write("Unit test content")
 
-    def MakeEdk2Module(self, parentpath, modname, extension_case_lower=True):
+    def _make_edk2_module_helper(self, parentpath: str, modname: str, extension_case_lower: bool = True) -> str:
+        ''' simple internal helper to make a folder and inf like edk2
+        return the path to the module folder
+        '''
         modfolder = os.path.join(parentpath, modname)
         os.makedirs(modfolder, exist_ok=True)
         fn = modname + (".inf" if extension_case_lower else ".INF")
-        self.MakeFile(modfolder, fn)
+        self._make_file_helper(modfolder, fn)
         return modfolder
 
-    def MakeEdk2Package(self, path, packagename, extension_case_lower=True):
-        ''' Make an ed2 package as follows:
+    def _make_edk2_package_helper(self, path: str, packagename: str, extension_case_lower: bool = True) -> str:
+        ''' simple internal helper to make an ed2 package as follows:
 
         path/
           packagename/
@@ -40,24 +44,30 @@ class PathUtilitiesTest(unittest.TestCase):
               module2.inf
               X64/
                 TestFile.c
+
+        return the path to the new package
         '''
         pkgfolder = os.path.join(path, packagename)
         os.makedirs(pkgfolder, exist_ok=True)
         pn = packagename + (".dec" if extension_case_lower else ".DEC")
-        self.MakeFile(pkgfolder, pn)
-        self.MakeEdk2Module(pkgfolder, "module1", extension_case_lower=extension_case_lower)
-        p2 = self.MakeEdk2Module(pkgfolder, "module2", extension_case_lower=extension_case_lower)
+        self._make_file_helper(pkgfolder, pn)
+        self._make_edk2_module_helper(pkgfolder, "module1", extension_case_lower=extension_case_lower)
+        p2 = self._make_edk2_module_helper(pkgfolder, "module2", extension_case_lower=extension_case_lower)
         p3 = os.path.join(p2, "X64")
         os.makedirs(p3)
-        self.MakeFile(p3, "TestFile.c")
+        self._make_file_helper(p3, "TestFile.c")
         return pkgfolder
 
     def setUp(self):
+        ''' unittest fixture run before each test.
+        Create a tmpdir and set the current working dir there'''
         self.tmp = tempfile.mkdtemp()
         self.precwd = os.getcwd()
         os.chdir(self.tmp)  # move to tempfile root
 
     def tearDown(self):
+        ''' unittest fixture run after each test.
+        Delete the tempdir and set the current working dir back'''
         os.chdir(self.precwd)
         if os.path.isdir(self.tmp):
             shutil.rmtree(self.tmp)
@@ -193,9 +203,9 @@ class PathUtilitiesTest(unittest.TestCase):
         folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
         os.mkdir(folder_pp1_abs)
         ws_p_name = "WSTestPkg"
-        ws_pkg_abs = self.MakeEdk2Package(ws_abs, ws_p_name)
+        ws_pkg_abs = self._make_edk2_package_helper(ws_abs, ws_p_name)
         pp_p_name = "PPTestPkg"
-        pp_pkg_abs = self.MakeEdk2Package(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pp_pkg_abs = self._make_edk2_package_helper(folder_pp1_abs, pp_p_name, extension_case_lower=False)
         pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
 
         # file in WSTestPkg root
@@ -259,9 +269,9 @@ class PathUtilitiesTest(unittest.TestCase):
         folder_pp1_abs = os.path.join(self.tmp, folder_pp_rel)
         os.mkdir(folder_pp1_abs)
         ws_p_name = "WSTestPkg"
-        ws_pkg_abs = self.MakeEdk2Package(ws_abs, ws_p_name)
+        ws_pkg_abs = self._make_edk2_package_helper(ws_abs, ws_p_name)
         pp_p_name = "PPTestPkg"
-        pp_pkg_abs = self.MakeEdk2Package(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pp_pkg_abs = self._make_edk2_package_helper(folder_pp1_abs, pp_p_name, extension_case_lower=False)
         pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
 
         # file in WSTestPkg root
@@ -328,9 +338,9 @@ class PathUtilitiesTest(unittest.TestCase):
         folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
         os.mkdir(folder_pp1_abs)
         ws_p_name = "WSTestPkg"
-        ws_pkg_abs = self.MakeEdk2Package(ws_abs, ws_p_name)
+        ws_pkg_abs = self._make_edk2_package_helper(ws_abs, ws_p_name)
         pp_p_name = "PPTestPkg"
-        pp_pkg_abs = self.MakeEdk2Package(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pp_pkg_abs = self._make_edk2_package_helper(folder_pp1_abs, pp_p_name, extension_case_lower=False)
         pathobj = Edk2Path(wsi_abs, [folder_pp1_abs])
 
         # confirm inverted
@@ -398,9 +408,9 @@ class PathUtilitiesTest(unittest.TestCase):
         folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
         os.mkdir(folder_pp1_abs)
         ws_p_name = "WSTestPkg"
-        ws_pkg_abs = self.MakeEdk2Package(ws_abs, ws_p_name)
+        ws_pkg_abs = self._make_edk2_package_helper(ws_abs, ws_p_name)
         pp_p_name = "PPTestPkg"
-        pp_pkg_abs = self.MakeEdk2Package(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pp_pkg_abs = self._make_edk2_package_helper(folder_pp1_abs, pp_p_name, extension_case_lower=False)
         pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
 
         # file in WSTestPkg root.  Module list is empty
@@ -491,9 +501,9 @@ class PathUtilitiesTest(unittest.TestCase):
         folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
         os.mkdir(folder_pp1_abs)
         ws_p_name = "WSTestPkg"
-        ws_pkg_abs = self.MakeEdk2Package(ws_abs, ws_p_name)
+        ws_pkg_abs = self._make_edk2_package_helper(ws_abs, ws_p_name)
         pp_p_name = "PPTestPkg"
-        pp_pkg_abs = self.MakeEdk2Package(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pp_pkg_abs = self._make_edk2_package_helper(folder_pp1_abs, pp_p_name, extension_case_lower=False)
         pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
 
         # file in packages path
@@ -552,9 +562,9 @@ class PathUtilitiesTest(unittest.TestCase):
         folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
         os.mkdir(folder_pp1_abs)
         ws_p_name = "WSTestPkg"
-        ws_pkg_abs = self.MakeEdk2Package(ws_abs, ws_p_name)
+        ws_pkg_abs = self._make_edk2_package_helper(ws_abs, ws_p_name)
         pp_p_name = "PPTestPkg"
-        pp_pkg_abs = self.MakeEdk2Package(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pp_pkg_abs = self._make_edk2_package_helper(folder_pp1_abs, pp_p_name, extension_case_lower=False)
         pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
 
         # file in packages path
