@@ -80,9 +80,9 @@ class PathUtilitiesTest(unittest.TestCase):
     def test_nonexistant_ws(self):
         ''' test edk2path with invalid workspace'''
 
-        invalidws = os.path.join(self.tmp, "invalidpath")
+        invalid_ws = os.path.join(self.tmp, "invalidpath")
         with self.assertRaises(Exception):
-            Edk2Path(invalidws, [])
+            Edk2Path(invalid_ws, [])
 
     def test_nonexistant_abs(self):
         ''' test edk2path with valid ws but invalid pp'''
@@ -98,58 +98,58 @@ class PathUtilitiesTest(unittest.TestCase):
     def test_pp_inside_workspace(self):
         ''' test with packagespath pointing to folder nested inside workspace
         root/                   <-- current working directory
-            folderws/           <-- workspace root
-                folderpp/       <-- packages path
+            folder_ws/           <-- workspace root
+                folder_pp/       <-- packages path
                     pp packages here
                 ws packages here
         '''
-        ws_rel = "folderws"
+        ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
-        folderpp_rel = "pp1"
-        folderpp1_abs = os.path.join(ws_abs, folderpp_rel)
-        os.mkdir(folderpp1_abs)
+        folder_pp_rel = "pp1"
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
+        os.mkdir(folder_pp1_abs)
 
         # pp absolute
-        pathobj = Edk2Path(ws_abs, [folderpp1_abs])
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
         self.assertEqual(pathobj.WorkspacePath, ws_abs)
-        self.assertEqual(pathobj.PackagePathList[0], folderpp1_abs)
+        self.assertEqual(pathobj.PackagePathList[0], folder_pp1_abs)
 
         # pp relative to workspace
-        pathobj = Edk2Path(ws_abs, [folderpp_rel])
+        pathobj = Edk2Path(ws_abs, [folder_pp_rel])
         self.assertEqual(pathobj.WorkspacePath, ws_abs)
-        self.assertEqual(pathobj.PackagePathList[0], folderpp1_abs)
+        self.assertEqual(pathobj.PackagePathList[0], folder_pp1_abs)
 
         # pp relative to cwd
-        pathobj = Edk2Path(ws_abs, [os.path.join(ws_rel, folderpp_rel)])
+        pathobj = Edk2Path(ws_abs, [os.path.join(ws_rel, folder_pp_rel)])
         self.assertEqual(pathobj.WorkspacePath, ws_abs)
-        self.assertEqual(pathobj.PackagePathList[0], folderpp1_abs)
+        self.assertEqual(pathobj.PackagePathList[0], folder_pp1_abs)
 
     def test_pp_outside_workspace(self):
         ''' test with packagespath pointing to folder outside of workspace
         root/                   <-- current working directory
-            folderws/           <-- workspace root
+            folder_ws/           <-- workspace root
                 ws packages here
-            folderpp/       <-- packages path
+            folder_pp/       <-- packages path
                 pp packages here
 
         '''
-        ws_rel = "folderws"
+        ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
-        folderpp_rel = "pp1"
-        folderpp1_abs = os.path.join(self.tmp, folderpp_rel)
-        os.mkdir(folderpp1_abs)
+        folder_pp_rel = "pp1"
+        folder_pp1_abs = os.path.join(self.tmp, folder_pp_rel)
+        os.mkdir(folder_pp1_abs)
 
         # pp absolute
-        pathobj = Edk2Path(ws_abs, [folderpp1_abs])
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
         self.assertEqual(pathobj.WorkspacePath, ws_abs)
-        self.assertEqual(pathobj.PackagePathList[0], folderpp1_abs)
+        self.assertEqual(pathobj.PackagePathList[0], folder_pp1_abs)
 
         # pp relative to cwd
-        pathobj = Edk2Path(ws_abs, [folderpp_rel])
+        pathobj = Edk2Path(ws_abs, [folder_pp_rel])
         self.assertEqual(pathobj.WorkspacePath, ws_abs)
-        self.assertEqual(pathobj.PackagePathList[0], folderpp1_abs)
+        self.assertEqual(pathobj.PackagePathList[0], folder_pp1_abs)
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_basic_init_ws_abs_different_case(self):
@@ -167,8 +167,8 @@ class PathUtilitiesTest(unittest.TestCase):
         File layout:
 
          root/                  <-- current working directory (self.tmp)
-            folderws/           <-- workspace root
-                folderpp/       <-- packages path
+            folder_ws/           <-- workspace root
+                folder_pp/       <-- packages path
                     PPTestPkg/   <-- A edk2 package
                         PPTestPkg.DEC
                         module1/
@@ -186,17 +186,17 @@ class PathUtilitiesTest(unittest.TestCase):
                         X64/
                             TestFile.c
         '''
-        ws_rel = "folderws"
+        ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
-        folderpp_rel = "pp1"
-        folderpp1_abs = os.path.join(ws_abs, folderpp_rel)
-        os.mkdir(folderpp1_abs)
+        folder_pp_rel = "pp1"
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
+        os.mkdir(folder_pp1_abs)
         ws_p_name = "WSTestPkg"
         ws_pkg_abs = self.MakeEdk2Package(ws_abs, ws_p_name)
         pp_p_name = "PPTestPkg"
-        pp_pkg_abs = self.MakeEdk2Package(folderpp1_abs, pp_p_name, extension_case_lower=False)
-        pathobj = Edk2Path(ws_abs, [folderpp1_abs])
+        pp_pkg_abs = self.MakeEdk2Package(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
 
         # file in WSTestPkg root
         p = os.path.join(ws_pkg_abs, "testfile.c")
@@ -223,8 +223,8 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(pathobj.GetContainingPackage(p), pp_p_name)
 
         # file in packages path root - no package- should return packages path dir
-        p = os.path.join(folderpp1_abs, "testfile.c")
-        self.assertEqual(pathobj.GetContainingPackage(p), folderpp_rel)
+        p = os.path.join(folder_pp1_abs, "testfile.c")
+        self.assertEqual(pathobj.GetContainingPackage(p), folder_pp_rel)
 
     def test_get_containing_package_outside_workspace(self):
         ''' test basic usage of GetContainingPackage with packages path
@@ -233,7 +233,7 @@ class PathUtilitiesTest(unittest.TestCase):
         File layout:
 
          root/                  <-- current working directory (self.tmp)
-            folderws/           <-- workspace root
+            folder_ws/           <-- workspace root
                 WSTestPkg/   <-- A edk2 package
                     WSTestPkg.dec
                     module1/
@@ -242,7 +242,7 @@ class PathUtilitiesTest(unittest.TestCase):
                         module2.inf
                         X64/
                             TestFile.c
-            folderpp/       <-- packages path
+            folder_pp/       <-- packages path
                 PPTestPkg/   <-- A edk2 package
                     PPTestPkg.DEC
                     module1/
@@ -252,17 +252,17 @@ class PathUtilitiesTest(unittest.TestCase):
                         X64/
                             TestFile.c
         '''
-        ws_rel = "folderws"
+        ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
-        folderpp_rel = "pp1"
-        folderpp1_abs = os.path.join(self.tmp, folderpp_rel)
-        os.mkdir(folderpp1_abs)
+        folder_pp_rel = "pp1"
+        folder_pp1_abs = os.path.join(self.tmp, folder_pp_rel)
+        os.mkdir(folder_pp1_abs)
         ws_p_name = "WSTestPkg"
         ws_pkg_abs = self.MakeEdk2Package(ws_abs, ws_p_name)
         pp_p_name = "PPTestPkg"
-        pp_pkg_abs = self.MakeEdk2Package(folderpp1_abs, pp_p_name, extension_case_lower=False)
-        pathobj = Edk2Path(ws_abs, [folderpp1_abs])
+        pp_pkg_abs = self.MakeEdk2Package(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
 
         # file in WSTestPkg root
         p = os.path.join(ws_pkg_abs, "testfile.c")
@@ -289,8 +289,8 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(pathobj.GetContainingPackage(p), pp_p_name)
 
         # file in packages path root - no package- should return packages path dir
-        p = os.path.join(folderpp1_abs, "testfile.c")
-        self.assertEqual(pathobj.GetContainingPackage(p), folderpp_rel)
+        p = os.path.join(folder_pp1_abs, "testfile.c")
+        self.assertEqual(pathobj.GetContainingPackage(p), folder_pp_rel)
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_get_containing_package_ws_abs_different_case(self):
@@ -301,8 +301,8 @@ class PathUtilitiesTest(unittest.TestCase):
         File layout:
 
          root/                  <-- current working directory (self.tmp)
-            folderws/           <-- workspace root
-                folderpp/       <-- packages path
+            folder_ws/           <-- workspace root
+                folder_pp/       <-- packages path
                     PPTestPkg/   <-- A edk2 package
                         PPTestPkg.DEC
                         module1/
@@ -320,18 +320,18 @@ class PathUtilitiesTest(unittest.TestCase):
                         X64/
                             TestFile.c
         '''
-        ws_rel = "folderws"
+        ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         wsi_abs = os.path.join(self.tmp, ws_rel.capitalize())  # invert the case of the first char of the ws folder name
         os.mkdir(ws_abs)
-        folderpp_rel = "pp1"
-        folderpp1_abs = os.path.join(ws_abs, folderpp_rel)
-        os.mkdir(folderpp1_abs)
+        folder_pp_rel = "pp1"
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
+        os.mkdir(folder_pp1_abs)
         ws_p_name = "WSTestPkg"
         ws_pkg_abs = self.MakeEdk2Package(ws_abs, ws_p_name)
         pp_p_name = "PPTestPkg"
-        pp_pkg_abs = self.MakeEdk2Package(folderpp1_abs, pp_p_name, extension_case_lower=False)
-        pathobj = Edk2Path(wsi_abs, [folderpp1_abs])
+        pp_pkg_abs = self.MakeEdk2Package(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pathobj = Edk2Path(wsi_abs, [folder_pp1_abs])
 
         # confirm inverted
         self.assertNotEqual(pathobj.WorkspacePath, ws_abs)
@@ -362,8 +362,8 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(pathobj.GetContainingPackage(p), pp_p_name)
 
         # file in packages path root - no package- should return packages path dir
-        p = os.path.join(folderpp1_abs, "testfile.c")
-        self.assertEqual(pathobj.GetContainingPackage(p), folderpp_rel)
+        p = os.path.join(folder_pp1_abs, "testfile.c")
+        self.assertEqual(pathobj.GetContainingPackage(p), folder_pp_rel)
 
     def test_get_containing_module(self):
         ''' test basic usage of GetContainingModule with packages path nested
@@ -372,8 +372,8 @@ class PathUtilitiesTest(unittest.TestCase):
         File layout:
 
          root/                  <-- current working directory (self.tmp)
-            folderws/           <-- workspace root
-                folderpp/       <-- packages path
+            folder_ws/           <-- workspace root
+                folder_pp/       <-- packages path
                     PPTestPkg/   <-- A edk2 package
                         PPTestPkg.DEC
                         module1/
@@ -391,17 +391,17 @@ class PathUtilitiesTest(unittest.TestCase):
                         X64/
                             TestFile.c
         '''
-        ws_rel = "folderws"
+        ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
-        folderpp_rel = "pp1"
-        folderpp1_abs = os.path.join(ws_abs, folderpp_rel)
-        os.mkdir(folderpp1_abs)
+        folder_pp_rel = "pp1"
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
+        os.mkdir(folder_pp1_abs)
         ws_p_name = "WSTestPkg"
         ws_pkg_abs = self.MakeEdk2Package(ws_abs, ws_p_name)
         pp_p_name = "PPTestPkg"
-        pp_pkg_abs = self.MakeEdk2Package(folderpp1_abs, pp_p_name, extension_case_lower=False)
-        pathobj = Edk2Path(ws_abs, [folderpp1_abs])
+        pp_pkg_abs = self.MakeEdk2Package(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
 
         # file in WSTestPkg root.  Module list is empty
         p = os.path.join(ws_pkg_abs, "testfile.c")
@@ -454,7 +454,7 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertIn(os.path.join(pp_pkg_abs, "module1", "module1.INF"), relist)
 
         # file in packages path root - no package- should return packages path dir
-        p = os.path.join(folderpp1_abs, "testfile.c")
+        p = os.path.join(folder_pp1_abs, "testfile.c")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 0)
 
@@ -465,8 +465,8 @@ class PathUtilitiesTest(unittest.TestCase):
         File layout:
 
          root/                  <-- current working directory (self.tmp)
-            folderws/           <-- workspace root
-                folderpp/       <-- packages path
+            folder_ws/           <-- workspace root
+                folder_pp/       <-- packages path
                     PPTestPkg/   <-- A edk2 package
                         PPTestPkg.DEC
                         module1/
@@ -484,17 +484,17 @@ class PathUtilitiesTest(unittest.TestCase):
                         X64/
                             TestFile.c
         '''
-        ws_rel = "folderws"
+        ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
-        folderpp_rel = "pp1"
-        folderpp1_abs = os.path.join(ws_abs, folderpp_rel)
-        os.mkdir(folderpp1_abs)
+        folder_pp_rel = "pp1"
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
+        os.mkdir(folder_pp1_abs)
         ws_p_name = "WSTestPkg"
         ws_pkg_abs = self.MakeEdk2Package(ws_abs, ws_p_name)
         pp_p_name = "PPTestPkg"
-        pp_pkg_abs = self.MakeEdk2Package(folderpp1_abs, pp_p_name, extension_case_lower=False)
-        pathobj = Edk2Path(ws_abs, [folderpp1_abs])
+        pp_pkg_abs = self.MakeEdk2Package(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
 
         # file in packages path
         p = os.path.join(pp_pkg_abs, "module1", "module1.INF")
@@ -519,15 +519,15 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_rel, ws_p_name, "module2", "X64", "TestFile.c")
         self.assertIsNone(pathobj.GetEdk2RelativePathFromAbsolutePath(p))
 
-    def test_get_absolute_path_on_this_sytem_from_edk2_relative_path(self):
+    def test_get_absolute_path_on_this_system_from_edk2_relative_path(self):
         ''' test basic usage of GetAbsolutePathOnThisSytemFromEdk2RelativePath with packages path nested
         inside the workspace
 
         File layout:
 
          root/                  <-- current working directory (self.tmp)
-            folderws/           <-- workspace root
-                folderpp/       <-- packages path
+            folder_ws/           <-- workspace root
+                folder_pp/       <-- packages path
                     PPTestPkg/   <-- A edk2 package
                         PPTestPkg.DEC
                         module1/
@@ -545,17 +545,17 @@ class PathUtilitiesTest(unittest.TestCase):
                         X64/
                             TestFile.c
         '''
-        ws_rel = "folderws"
+        ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
-        folderpp_rel = "pp1"
-        folderpp1_abs = os.path.join(ws_abs, folderpp_rel)
-        os.mkdir(folderpp1_abs)
+        folder_pp_rel = "pp1"
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
+        os.mkdir(folder_pp1_abs)
         ws_p_name = "WSTestPkg"
         ws_pkg_abs = self.MakeEdk2Package(ws_abs, ws_p_name)
         pp_p_name = "PPTestPkg"
-        pp_pkg_abs = self.MakeEdk2Package(folderpp1_abs, pp_p_name, extension_case_lower=False)
-        pathobj = Edk2Path(ws_abs, [folderpp1_abs])
+        pp_pkg_abs = self.MakeEdk2Package(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
 
         # file in packages path
         ep = os.path.join(pp_pkg_abs, "module1", "module1.INF")
