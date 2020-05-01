@@ -69,7 +69,7 @@ class EnumClassTest(unittest.TestCase):
     def test_EnumClass_array(self):
         all_animals = ["Dog", "Cat", "Rabbit"]
         animals = utilities.Enum(all_animals)
-        
+
         # make sure we have three animals
         self.assertEqual(len(animals), 3)
         self.assertTrue(hasattr(animals, "Dog"))
@@ -81,7 +81,6 @@ class EnumClassTest(unittest.TestCase):
         # make sure we can iterate over the members
         for animal in animals.__members__:
             self.assertIn(animal, all_animals)
-
 
     def test_EnumClass_args(self):
         colors = utilities.Enum("Green", "Blue", "Red", "Yellow")
