@@ -159,7 +159,7 @@ class Edk2Path(object):
             # if here then return the directory name as the "package"
             #
             for f in os.listdir(dirpath):
-                if fnmatch.fnmatch(f, '*.dec'):
+                if fnmatch.fnmatch(f.lower(), '*.dec'):
                     a = os.path.basename(dirpath)
                     self.logger.debug("Found DEC file at %s.  Pkg is: %s", dirpath, a)
                     return a
@@ -202,14 +202,14 @@ class Edk2Path(object):
         self.logger.debug("GetContainingModules: %s" % InputPath)
 
         # if INF return self
-        if fnmatch.fnmatch(InputPath, '*.inf'):
+        if fnmatch.fnmatch(InputPath.lower(), '*.inf'):
             return [InputPath]
 
         modules = []
         # Check current dir
         dirpath = os.path.dirname(InputPath)
         for f in os.listdir(dirpath):
-            if fnmatch.fnmatch(f, '*.inf'):
+            if fnmatch.fnmatch(f.lower(), '*.inf'):
                 self.logger.debug("Found INF file in %s.  INf is: %s", dirpath, f)
                 modules.append(os.path.join(dirpath, f))
 
@@ -223,7 +223,7 @@ class Edk2Path(object):
         if(len(modules) == 0):
             dirpath = os.path.dirname(dirpath)
             for f in os.listdir(dirpath):
-                if fnmatch.fnmatch(f, '*.inf'):
+                if fnmatch.fnmatch(f.lower(), '*.inf'):
                     self.logger.debug("Found INF file in %s.  INf is: %s", dirpath, f)
                     modules.append(os.path.join(dirpath, f))
 
