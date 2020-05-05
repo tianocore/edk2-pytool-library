@@ -56,14 +56,20 @@ class Edk2Path(object):
             raise Exception("Invalid package path directory(s)")
 
     def GetEdk2RelativePathFromAbsolutePath(self, abspath):
+        ''' Given an absolute path return a edk2 path relative
+        to workspace or packagespath.
+
+        If not valid return None
+        '''
+
         relpath = None
         found = False
         if abspath is None:
             return None
-        for a in self.PackagePathList:
-            stripped = abspath.lower().partition(a.lower())[2]
-            if stripped:
-                # found our path...now lets correct for case
+        for a in (os.path.normcase(p) for p in self.PackagePathList):
+            if os.path.normcase(abspath).startswith(a):
+                # found our path...now use original strings to avoid
+                # change in case
                 relpath = abspath[len(a):]
                 found = True
                 self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using PackagePath")
@@ -71,10 +77,10 @@ class Edk2Path(object):
                 break
 
         if(not found):
-            # try to strip the workspace
-            stripped = abspath.lower().partition(self.WorkspacePath.lower())[2]
-            if stripped:
-                # found our path...now lets correct for case
+            # Does path start with workspace
+            if os.path.normcase(abspath).startswith(os.path.normcase(self.WorkspacePath)):
+                # found our path...now use original strings to avoid
+                # change in case
                 relpath = abspath[len(self.WorkspacePath):]
                 found = True
                 self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using WorkspacePath")
@@ -90,6 +96,15 @@ class Edk2Path(object):
         return None
 
     def GetAbsolutePathOnThisSytemFromEdk2RelativePath(self, relpath):
+        ''' Given a edk2 relative path return an absolute path to the file
+        in this workspace.
+
+        Note: For case insensitive operating systems the case of the input
+        relpath will be used for the return value even if it doesn't match
+        the case in the filesystem.
+
+        If not valid or doesn't exist return None'''
+
         if relpath is None:
             return None
         relpath = relpath.replace("/", os.sep)
@@ -116,34 +131,56 @@ class Edk2Path(object):
     def GetContainingPackage(self, InputPath):
         self.logger.debug("GetContainingPackage: %s" % InputPath)
 
+        # Make a list that has the path case normalized for comparison.
+        # This only does anything on Windows
+        NormCasePackagesPathList = [os.path.normcase(x) for x in self.PackagePathList]
+
+        # check InputPath to make sure it is at least in the folder structure of the code tree
+        if os.path.normcase(self.WorkspacePath) not in os.path.normcase(InputPath):
+            # not in workspace - check all the packages paths
+            found_in_pp = False
+            for p in NormCasePackagesPathList:
+                if p in os.path.normcase(InputPath):
+                    found_in_pp = True
+                    break
+            if(not found_in_pp):
+                self.logger.error(f"{InputPath} not in code tree")
+                self.logger.info("PackagePath is: %s" % os.pathsep.join(self.PackagePathList))
+                self.logger.info("Workspace path is : %s" % self.WorkspacePath)
+                return None
+
+        # InputPath is in workspace or PackagesPath for worst case scenario.
+
         dirpathprevious = os.path.dirname(InputPath)
         dirpath = os.path.dirname(InputPath)
-        while(dirpath is not None):
-            #
-            # if at the root of a packagepath return the previous dir.
-            # this catches cases where a package has no DEC
-            #
-            if(dirpath in self.PackagePathList):
-                a = os.path.basename(dirpathprevious)
-                self.logger.debug("Reached Package Path.  Using previous directory: %s" % a)
-                return a
-            #
-            # if at the root of the workspace return the previous dir.
-            # this catches cases where a package has no DEC
-            #
-            if(dirpath == self.WorkspacePath):
-                a = os.path.basename(dirpathprevious)
-                self.logger.debug("Reached Workspace Path.  Using previous directory: %s" % a)
-                return a
+        for _ in range(100):  # 100 is just a counter to avoid infinite loops.  Path nodes are unlikely to exceed 100
             #
             # Check for a DEC file in this folder
             # if here then return the directory name as the "package"
             #
             for f in os.listdir(dirpath):
-                if fnmatch.fnmatch(f, '*.dec'):
+                if fnmatch.fnmatch(f.lower(), '*.dec'):
                     a = os.path.basename(dirpath)
                     self.logger.debug("Found DEC file at %s.  Pkg is: %s", dirpath, a)
                     return a
+
+            #
+            # if at the root of the workspace return the previous dir.
+            # this catches cases where a package has no DEC
+            #
+            if os.path.normcase(dirpath) == os.path.normcase(self.WorkspacePath):
+                a = os.path.basename(dirpathprevious)
+                self.logger.debug("Reached Workspace Path.  Using previous directory: %s" % a)
+                return a
+
+            #
+            # if at the root of a packagepath return the previous dir.
+            # this catches cases where a package has no DEC
+            #
+            if os.path.normcase(dirpath) in NormCasePackagesPathList:
+                a = os.path.basename(dirpathprevious)
+                self.logger.debug("Reached Package Path.  Using previous directory: %s" % a)
+                return a
 
             dirpathprevious = dirpath
             dirpath = os.path.dirname(dirpath)
@@ -165,14 +202,14 @@ class Edk2Path(object):
         self.logger.debug("GetContainingModules: %s" % InputPath)
 
         # if INF return self
-        if InputPath.endswith(".inf"):
+        if fnmatch.fnmatch(InputPath.lower(), '*.inf'):
             return [InputPath]
 
         modules = []
         # Check current dir
         dirpath = os.path.dirname(InputPath)
         for f in os.listdir(dirpath):
-            if fnmatch.fnmatch(f, '*.inf'):
+            if fnmatch.fnmatch(f.lower(), '*.inf'):
                 self.logger.debug("Found INF file in %s.  INf is: %s", dirpath, f)
                 modules.append(os.path.join(dirpath, f))
 
@@ -186,7 +223,7 @@ class Edk2Path(object):
         if(len(modules) == 0):
             dirpath = os.path.dirname(dirpath)
             for f in os.listdir(dirpath):
-                if fnmatch.fnmatch(f, '*.inf'):
+                if fnmatch.fnmatch(f.lower(), '*.inf'):
                     self.logger.debug("Found INF file in %s.  INf is: %s", dirpath, f)
                     modules.append(os.path.join(dirpath, f))
 
