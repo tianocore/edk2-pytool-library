@@ -140,7 +140,7 @@ class ModuleSummary(object):
                                 logging.debug("Parsing Mod: %s" % value)
                                 self.Name = value
                             elif(key == "module inf path"):
-                                self.InfPath = value
+                                self.InfPath = value.replace("\\", "/")
                             elif(key == "file guid"):
                                 self.Guid = value
                             elif(key == "driver type"):
