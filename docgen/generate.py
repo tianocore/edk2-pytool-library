@@ -19,6 +19,7 @@ from mike import commands as mike_commands
 import mkdocs.config as mkdocs_config
 import mkdocs.exceptions as _mkdocs_exceptions
 from mkdocs.commands.build import build as mkdocs_build
+from mkdocs.commands.serve import _static_server as mkdocs_serve
 from pdocs import as_markdown as pdocs_as_markdown
 
 project_config = {
@@ -81,7 +82,7 @@ project_config = {
     ],
     "nav": [
         {
-            "Home": "readme.md"
+            "Home": "index.md"
         }
     ]
 }
@@ -124,7 +125,9 @@ nav:
 #
 # Currently support changing snake_case and CamelCase
 #
-def ConvertToFriendlyName(self, string):
+def ConvertToFriendlyName(string):
+    if string.lower().endswith(".md"):
+        string = string[:-3]
     string = string.replace("_", " ").strip()  # strip snake case
     string = ' '.join(string.split())  # strip duplicate spaces
 
@@ -141,7 +144,7 @@ def ConvertToFriendlyName(self, string):
                 newstring += i
         prev_char_lowercase = i.islower()
 
-    return newstring
+    return newstring.capitalize()
 
 
 def parse_arguments():
@@ -164,6 +167,7 @@ def parse_arguments():
     parser.add_argument("--docs", "-d", type=str, dest="src_docs", action='append')
     parser.add_argument("--serve", "-s", dest="serve", default=False, action='store_true')
     parser.add_argument("--verbose", "-v", dest="verbose", action="store_true", default=False)
+    parser.add_argument("--deploy", "-deploy", dest="deploy", action="store_true", default=False)
     options = parser.parse_args()
     valid_reasons = ['Manual', 'IndividualCI', 'BatchedCI', 'Schedule', 'ValidateShelveset',
                      'CheckInShelveset', 'PullRequest', 'BuildCompletion', 'ResourceTrigger', ]
@@ -186,7 +190,6 @@ def parse_arguments():
 
 
 def generate_config_file(options):
-
     config_path = os.path.join(options["output_dir"], "mkdocs.yml")
     project_config["docs_dir"] = options["docs_dir"]
     project_config["site_dir"] = options["html_dir"]
@@ -221,33 +224,37 @@ def run_mkdocs(options):
     return mkdocs_build(config_instance)
 
 
+def handle_glob(glob_iter, src_folder, dst_folder):
+    for doc in glob_iter:
+        rel_path = os.path.relpath(doc, src_folder)
+        rel_dir = os.path.dirname(rel_path)
+        output_dir = os.path.join(dst_folder, rel_dir)
+        outfile = os.path.join(output_dir, os.path.basename(doc))
+        os.makedirs(output_dir, exist_ok=True)
+        if os.path.exists(outfile):
+            logging.warning(f"Overwritting {outfile}")
+            raise ValueError()
+        shutil.copy2(doc, outfile)
+
+
 def copy_docs(options):
     # first copy the readme if needed
     root_files = ["readme.md", "license.txt"]
     for root_filename in root_files:
         root_infile = os.path.join(options["ws"], root_filename)
+        if root_filename == "readme.md":
+            root_filename = "index.md"
         root_outfile = os.path.join(options["docs_dir"], root_filename)
         if os.path.exists(root_infile):
             shutil.copy2(root_infile, root_outfile)
-    
-    def handle_glob(glob_iter, src_folder, dst_folder):
-        for doc in glob_iter:
-            rel_path = os.path.relpath(doc, src_folder)
-            rel_dir = os.path.dirname(rel_path)
-            output_dir = os.path.join(dst_folder, rel_dir)
-            outfile = os.path.join(output_dir, os.path.basename(doc))
-            os.makedirs(output_dir, exist_ok=True)
-            if os.path.exists(outfile):
-                logging.warning(f"Overwritting {outfile}")
-                raise ValueError()
-            shutil.copy2(doc, outfile)
+
     # copy any files from the code tree
     module_path = os.path.join(options["ws"], options["module"])
     if os.path.exists(module_path):
         search_path = os.path.join(module_path, "**", "*.md")
         docs = glob.iglob(search_path, recursive=True)
         handle_glob(docs, options["ws"], options["docs_dir"])
-    
+
     # copy any doc folders
     if options["src_docs"] == None:
         return
@@ -259,18 +266,86 @@ def copy_docs(options):
         docs = glob.iglob(search_path, recursive=True)
         handle_glob(docs, src_folder, options["docs_dir"])
 
+
+def collapse_docs(options):
+    # look for any directory that has both a index and a readme in it- merge them into index.md
+    # index = index + readme (index comes first)
+    for root, _, files in os.walk(options["docs_dir"]):
+        if "index.md" in files and "readme.md" in files:
+            with open(os.path.join(root, "index.md"), "a") as index:
+                with open(os.path.join(root, "readme.md"), "r") as readme:
+                    lines = readme.readlines()
+                    index.write("\n")
+                    index.writelines(lines)
+            os.remove(os.path.join(root, "readme.md"))
+
+
 def generate_nav(options):
-    pass
+    search_path = os.path.join(options["docs_dir"], "*.md")
+    root_docs = glob.iglob(search_path, recursive=False)
+    for doc in root_docs:
+        doc_path = os.path.basename(doc)
+        if doc_path == "index.md":
+            continue
+        doc_name = ConvertToFriendlyName(doc_path)
+        link = {doc_name: doc_path}
+        project_config["nav"].append(link)
+    # now get docs from the source
+    tree = {}
+    search_root = os.path.join(options["docs_dir"], options["module"])
+    search_path = os.path.join(search_root, "**", "*.md")
+    sub_docs = glob.iglob(search_path, recursive=True)
+    for doc in sub_docs:
+        doc_filename = os.path.basename(doc)
+        doc_name = ConvertToFriendlyName(doc_filename)
+        doc_relpath = os.path.relpath(doc, search_root)
+        doc_path = os.path.join(options["module"], doc_relpath)
+        tree_ptr = tree
+        path_parts = doc_relpath.split(os.sep)
+        if doc.lower().endswith("_test.md") or doc.lower().startswith("test_"):
+            continue
+        if len(path_parts) == 1:
+            tree[doc_name] = doc_path
+            continue
+
+        for path_part in path_parts:
+            path_part_name = ConvertToFriendlyName(path_part)
+            if path_part == "":
+                continue
+            elif path_part.lower().endswith(".md"):
+                tree_ptr[path_part_name] = doc_path
+            elif path_part_name not in tree_ptr:
+                tree_ptr[path_part_name] = {}
+            tree_ptr = tree_ptr[path_part_name]
+    
+    def convert_tree(tree):
+        links = []
+        for item_key in tree:
+            item_value = tree[item_key]
+            if isinstance(item_value, str):
+                links.append({item_key: item_value})
+            else:
+                links.append({item_key: convert_tree(item_value)})
+        return links
+    links = convert_tree(tree)
+    # convert the tree to the mkdocs nav format
+    project_config["nav"].append({"Reference": links})
 
 
 def serve_docs(options):
     if options["serve"]:
+        logging.critical("Serving")
         print("Serving your project. Press Ctrl-C to exit")
-        mike_commands.serve(verbose=True)
+        print("Serving at http://localhost:3000")
+        mkdocs_serve("localhost", 3000, options["html_dir"])
+
 
 def deploy(options):
+    if not options["deploy"]:
+        return
+    logging.critical("Deploying")
     print(mike_commands.list_versions())
-    mike_commands.deploy(options["html_dir"], 1.0, branch="personal/macarl/add-docs")
+    #mike_commands.deploy(options["output_dir"], 1.0)
 
 
 def main():
@@ -279,13 +354,12 @@ def main():
     generate_pdoc_markdown(options)
     logging.critical("Copying existing documentation")
     copy_docs(options)
+    collapse_docs(options)
     logging.critical("Generating Navigation")
     generate_nav(options)
     logging.critical("Converting to HTML")
     run_mkdocs(options)
-    logging.critical("Deploying")
     deploy(options)
-    logging.critical("Serving")
     serve_docs(options)
 
 
