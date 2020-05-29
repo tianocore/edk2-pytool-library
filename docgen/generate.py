@@ -324,8 +324,8 @@ def deploy(options):
     version = get_version(options)
 
     logging.critical(f"Deploying {version}")
-    #mike_commands.deploy(options["output_dir"], version, branch=branch)
-    #git_utils.push_branch(remote, branch, force_push)
+    mike_commands.deploy(options["output_dir"], version, branch=branch)
+    git_utils.push_branch(remote, branch, force_push)
 
 
 def main(options=None):
