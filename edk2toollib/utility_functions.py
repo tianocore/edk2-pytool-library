@@ -384,6 +384,15 @@ def version_compare(version1, version2):
     return (a > b) - (a < b)
 
 
+def is_valid_version(version):
+    '''
+    Returns whether a version is valid it must be (number).(number).(and so on) or (number) 
+    There is no limit to the number of extra numbers you can have in a version string
+    '''
+    version_reg = re.compile(r'^[0-9]+(\.[0-9]+)*$')
+    return version_reg.match(version) is not None
+
+
 def import_module_by_file_name(module_file_path):
     ''' Standard method of importing a Python file. Expecting absolute path. '''
     module_name = os.path.basename(module_file_path)

@@ -19,6 +19,7 @@ from mike import mkdocs as mike_mkdocs
 from mike import git_utils
 from mkdocs.commands.serve import _static_server as mkdocs_serve
 from pdocs import as_markdown as pdocs_as_markdown
+from edk2toollib import utility_functions
 
 project_config = {
     "site_name": "Project Mu",
@@ -309,7 +310,9 @@ def get_version(options):
     print(distro)
     version = distro.version
     print(version)
-    return version
+    if utility_functions.is_valid_version(version):
+        return version
+    return "master" # we update it to master
 
 
 def deploy(options):
