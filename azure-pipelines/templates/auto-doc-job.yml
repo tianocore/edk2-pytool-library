@@ -45,10 +45,5 @@ jobs:
       arguments: '--reason ${{Build.Reason}}'
     displayName: 'Generate Documentation'
     condition: succeededOrFailed()
-  
-  - task: PythonScript@0
-    inputs:
-      scriptSource: 'filePath'
-      scriptPath: 'edk2toollib/docgen/publish.py'
-    displayName: 'Publish Documentation'
+
 
