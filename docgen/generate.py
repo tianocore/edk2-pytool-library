@@ -19,14 +19,14 @@ from mike import mkdocs as mike_mkdocs
 from mike import git_utils
 from mkdocs.commands.serve import _static_server as mkdocs_serve
 from pdocs import as_markdown as pdocs_as_markdown
-from edk2toollib import utility_functions
+from io import StringIO
 
 project_config = {
-    "site_name": "Project Mu",
-    "repo_url": "https://github.com/microsoft/mu",
+    "site_name": "EDK2 Pytool Library",
+    "repo_url": "https://github.com/matthewfcarlson/edk2-pytool-library/",
     "copyright": "Copyright (c) Microsoft.  All rights reserved",
     "site_description": "Project Mu Documentation",
-    "site_url": 'https://microsoft.github.io/mu/',
+    "site_url": 'https://matthewc.dev/edk2-pytool-library/master/',
     "plugins": ["search", ],  # "macros"],
 
     "theme": {
@@ -138,6 +138,7 @@ def parse_arguments():
     parser.add_argument("--verbose", "-v", dest="verbose", action="store_true", default=False)
     parser.add_argument("--deploy", "-deploy", dest="deploy", action="store_true", default=False)
     parser.add_argument("--include-tests", dest="include_tests", action="store_true", default=False)
+    parser.add_argument("--version", dest="version", type=str, default=None)
     options = parser.parse_args()
     valid_reasons = ['Manual', 'IndividualCI', 'BatchedCI', 'Schedule', 'ValidateShelveset',
                      'CheckInShelveset', 'PullRequest', 'BuildCompletion', 'ResourceTrigger', ]
@@ -152,7 +153,8 @@ def parse_arguments():
     options["output_dir"] = os.path.abspath(os.path.join(ws, options["output_dir"]))
     options["html_dir"] = os.path.abspath(os.path.join(options["output_dir"], "html"))
     options["docs_dir"] = os.path.abspath(os.path.join(options["output_dir"], "docs"))
-    shutil.rmtree(options["output_dir"], ignore_errors=True)
+    if os.path.exists(options["output_dir"]):
+        shutil.rmtree(options["output_dir"], ignore_errors=False)
     os.makedirs(options["output_dir"], exist_ok=True)
     os.makedirs(options["html_dir"], exist_ok=True)
     os.makedirs(options["docs_dir"], exist_ok=True)
@@ -167,12 +169,13 @@ def generate_config_file(options):
         yaml.dump(project_config, yaml_file)  # , default_flow_style=False)
     if options["verbose"]:
         print(f"Generating config file {config_path}")
-    mike_commands.install_extras(config_path)
+    mike_commands.install_extras(config_path, theme="material")
     return config_path
 
 
 def generate_pdoc_markdown(options):
     pdocs_as_markdown([options["module"], ], options["docs_dir"], overwrite=True)
+    print("Finished PDoc")
     if not options["include_tests"]:
         # if we aren't including any tests
         print("Removing test documentation")
@@ -223,8 +226,12 @@ def copy_docs(options):
         handle_glob(docs, options["ws"], options["docs_dir"])
 
     # copy any doc folders
+    docs_folder = os.path.join(options["ws"], "docs")
     if options["src_docs"] == None:
-        return
+        options["src_docs"] = []
+    if os.path.exists(docs_folder) and docs_folder and docs_folder not in options["src_docs"]:
+        options["src_docs"].append(docs_folder)
+
     for src_folder in options["src_docs"]:
         src_folder = os.path.join(options["ws"], src_folder)
         if not os.path.exists(src_folder):
@@ -257,7 +264,21 @@ def generate_nav(options):
         doc_name = ConvertToFriendlyName(doc_path)
         link = {doc_name: doc_path}
         project_config["nav"].append(link)
-    # now get docs from the source
+    # now look at docs from docs folder
+    directories = [f for f in os.listdir(options["docs_dir"]) if os.path.isdir(os.path.join(options["docs_dir"], f))]
+    for directory in directories:
+        if directory == options["module"]:
+            continue
+        folder_name = ConvertToFriendlyName(directory)
+        nav_links = []
+        directory_path = os.path.join(options["docs_dir"], directory)
+        files = [f for f in os.listdir(directory_path) if f.lower().endswith(".md")]
+        for mdfile in files:
+            file_name = ConvertToFriendlyName(mdfile)
+            file_path = os.path.relpath(os.path.join(directory_path, mdfile), options["docs_dir"])
+            nav_links.append({file_name: file_path})
+        project_config["nav"].append({folder_name: nav_links})
+    # now get auto generated docs from the module
     tree = {}
     search_root = os.path.join(options["docs_dir"], options["module"])
     search_path = os.path.join(search_root, "**", "*.md")
@@ -305,14 +326,41 @@ def serve_docs(options):
         mkdocs_serve("localhost", 3000, options["html_dir"])
 
 
-def get_version(options):
+def get_module_path_and_version(options):
     distro = pkg_resources.get_distribution("edk2-pytool-library")
-    print(distro)
-    version = distro.version
-    print(version)
-    if utility_functions.is_valid_version(version):
-        return version
-    return "master" # we update it to master
+    return (distro.location, distro.version)
+
+
+def get_version(options):
+    if options["version"] != None:
+        return options["version"]
+    '''
+    local install looks like this
+    edk2-pytool-library 0.10.9.dev22+g836cc30.d20200529
+    c:\git\edk2-pytool-library
+    0.10.9.dev22+g836cc30.d20200529
+    v0.10.8-22-g836cc30
+    '''
+    # we import it here as it may have changed since we imported this script
+    from edk2toollib import utility_functions
+    location, version = get_module_path_and_version(options)
+    try:
+        if utility_functions.is_valid_version(version):
+            return version
+    except:
+        pass
+    if version.count("+") == 1:
+        # we've installed locally
+        # figure out what branch we are on?
+        out_stream = StringIO()
+        utility_functions.RunCmd("git", "describe --tags", workingdir=os.path.dirname(location), outstream=out_stream)
+        out_stream.seek(0)
+        line = out_stream.readline()
+        print(line)
+        # Tag should be like v#.#.#
+        raise RuntimeError()
+        return "master"
+    return version
 
 
 def deploy(options):
@@ -324,13 +372,19 @@ def deploy(options):
     version = get_version(options)
 
     logging.critical(f"Deploying {version}")
-    mike_commands.deploy(options["output_dir"], version, branch=branch)
+    mike_commands.deploy(options["html_dir"], version, branch=branch)
+    mike_commands.set_default("master", branch=branch)
     git_utils.push_branch(remote, branch, force_push)
 
 
 def main(options=None):
     if options is None:
         options = parse_arguments()
+    mod_path, _ = get_module_path_and_version(options)
+    # we have to change the current working directory as this can conflict
+    cwd = os.getcwd()
+    os.chdir(mod_path)
+
     logging.critical("Generating Python documentation")
     generate_pdoc_markdown(options)
     logging.critical("Copying existing documentation")
@@ -340,8 +394,10 @@ def main(options=None):
     generate_nav(options)
     logging.critical("Converting to HTML")
     run_mkdocs(options)
+    os.chdir(cwd)
     deploy(options)
     serve_docs(options)
+    
 
 
 if __name__ == "__main__":
