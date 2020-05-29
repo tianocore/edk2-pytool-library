@@ -13,6 +13,7 @@ import glob
 import logging
 import yaml
 import shutil
+import pkg_resources
 from mike import commands as mike_commands
 from mike import mkdocs as mike_mkdocs
 from mike import git_utils
@@ -174,7 +175,8 @@ def generate_pdoc_markdown(options):
     if not options["include_tests"]:
         # if we aren't including any tests
         print("Removing test documentation")
-        search_paths = [os.path.join("**", "*_test.md"), os.path.join("**", "test_*.md"), os.path.join("**", "test", "*.md")]
+        search_paths = [os.path.join("**", "*_test.md"), os.path.join("**", "test_*.md"),
+                        os.path.join("**", "test", "*.md")]
         for search_path in search_paths:
             docs = glob.iglob(os.path.join(options["docs_dir"], search_path), recursive=True)
             for doc in docs:
@@ -302,24 +304,30 @@ def serve_docs(options):
         mkdocs_serve("localhost", 3000, options["html_dir"])
 
 
+def get_version(options):
+    distro = pkg_resources.get_distribution("edk2-pytool-library")
+    print(distro)
+    version = distro.version
+    print(version)
+    return version
+
+
 def deploy(options):
     if not options["deploy"]:
         return
-    logging.critical("Deploying")
-    versions = mike_commands.list_versions()
-
-    for version in versions:
-        print(version)
-        print(version.dumps())
     remote = "personal"
-    branch = "gh_pages"
+    branch = "gh-pages"
     force_push = True
-    mike_commands.deploy(options["output_dir"], "0.10.8", branch=branch)
-    git_utils.push_branch(remote, branch, force_push)
+    version = get_version(options)
+
+    logging.critical(f"Deploying {version}")
+    #mike_commands.deploy(options["output_dir"], version, branch=branch)
+    #git_utils.push_branch(remote, branch, force_push)
 
 
-def main():
-    options = parse_arguments()
+def main(options=None):
+    if options is None:
+        options = parse_arguments()
     logging.critical("Generating Python documentation")
     generate_pdoc_markdown(options)
     logging.critical("Copying existing documentation")
