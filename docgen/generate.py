@@ -309,11 +309,12 @@ def deploy(options):
     versions = mike_commands.list_versions()
 
     for version in versions:
+        print(version)
         print(version.dumps())
     remote = "personal"
     branch = "gh_pages"
     force_push = True
-    mike_commands.deploy(options["output_dir"], 1.0, branch=branch)
+    mike_commands.deploy(options["output_dir"], "0.10.8", branch=branch)
     git_utils.push_branch(remote, branch, force_push)
 
 
