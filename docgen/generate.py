@@ -86,14 +86,13 @@ project_config = {
     ]
 }
 
+
 #
 # When generating the nav convert visible names
 # to something more human readable
 #
 # Currently support changing snake_case and CamelCase
 #
-
-
 def ConvertToFriendlyName(string):
     if string.lower().endswith(".md"):
         string = string[:-3]
@@ -116,7 +115,7 @@ def ConvertToFriendlyName(string):
     return newstring.capitalize()
 
 
-def parse_arguments():
+def parse_arguments(args=None):
     parser = argparse.ArgumentParser(description="Generates the python documentation")
     '''
     Manual: A user manually queued the build.
@@ -139,18 +138,21 @@ def parse_arguments():
     parser.add_argument("--deploy", "-deploy", dest="deploy", action="store_true", default=False)
     parser.add_argument("--include-tests", dest="include_tests", action="store_true", default=False)
     parser.add_argument("--version", dest="version", type=str, default=None)
-    options = parser.parse_args()
+    options = validate_arguments(vars(parser.parse_args(args=args)))
+    return options
+
+def validate_arguments(options):
     valid_reasons = ['Manual', 'IndividualCI', 'BatchedCI', 'Schedule', 'ValidateShelveset',
                      'CheckInShelveset', 'PullRequest', 'BuildCompletion', 'ResourceTrigger', ]
-    options = vars(options)
-    if options["reason"] not in valid_reasons:
+    if "reason" not in options or options["reason"] not in valid_reasons:
         logging.error(f"{options['reason']} is not a valid reason")
         sys.exit(1)
     if options["module"] is None:
         # TODO figure out what module we are in?
         options["module"] = "edk2toollib"
     ws = options["ws"]
-    options["output_dir"] = os.path.abspath(os.path.join(ws, options["output_dir"]))
+    if not os.path.isabs(options["output_dir"]):
+        options["output_dir"] = os.path.abspath(os.path.join(ws, options["output_dir"]))
     options["html_dir"] = os.path.abspath(os.path.join(options["output_dir"], "html"))
     options["docs_dir"] = os.path.abspath(os.path.join(options["output_dir"], "docs"))
     if os.path.exists(options["output_dir"]):
@@ -375,6 +377,7 @@ def deploy(options):
     mike_commands.deploy(options["html_dir"], version, branch=branch)
     mike_commands.set_default("master", branch=branch)
     git_utils.push_branch(remote, branch, force_push)
+    print("Finished deployment")
 
 
 def main(options=None):
@@ -384,6 +387,7 @@ def main(options=None):
     # we have to change the current working directory as this can conflict
     cwd = os.getcwd()
     os.chdir(mod_path)
+    logging.critical(f"Using module at {mod_path}")
 
     logging.critical("Generating Python documentation")
     generate_pdoc_markdown(options)
@@ -397,7 +401,6 @@ def main(options=None):
     os.chdir(cwd)
     deploy(options)
     serve_docs(options)
-    
 
 
 if __name__ == "__main__":
