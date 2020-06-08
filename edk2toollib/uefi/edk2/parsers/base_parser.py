@@ -13,7 +13,7 @@ class BaseParser(object):
     """ """
     operators = ["OR", "AND", "IN", "==", "!=", ">", "<", "<=", ">="]
 
-    def __init__(self, log=""):
+    def __init__(self, log="BaseParser"):
         self.Logger = logging.getLogger(log)
         self.Lines = []
         self.LocalVars = {}
@@ -376,13 +376,13 @@ class BaseParser(object):
         if not text.lower().startswith("!if "):
             raise RuntimeError(f"Invalid conditional cannot be validated: {text}")
         text = text[3:].strip()
-        self.Logger(f"STAGE 1: {text}")
+        self.Logger.debug(f"STAGE 1: {text}")
         text = self.ReplaceVariables(text)
-        self.Logger(f"STAGE 2: {text}")
+        self.Logger.debug(f"STAGE 2: {text}")
         tokens = self._TokenizeConditional(text)
-        self.Logger(f"STAGE 3: {tokens}")
+        self.Logger.debug(f"STAGE 3: {tokens}")
         expression = self._ConvertTokensToPostFix(tokens)
-        self.Logger(f"STAGE 4: {expression}")
+        self.Logger.debug(f"STAGE 4: {expression}")
 
         # Now we evaluate the post fix expression
         if len(expression) == 0:
@@ -432,7 +432,7 @@ class BaseParser(object):
                 expression = new_expression
 
         final = self.ConvertToInt(expression[0])
-        self.Logger(f" FINAL {expression} {final}")
+        self.Logger.debug(f" FINAL {expression} {final}")
 
         return bool(final)
 
