@@ -113,10 +113,10 @@ class BaseParser(object):
 
         """
         self.Logger.debug("Writing all lines to file: %s" % filepath)
-        f = open(filepath, "w")
-        for l in self.Lines:
-            f.write(l + "\n")
-        f.close()
+        file_handle = open(filepath, "w")
+        for line in self.Lines:
+            file_handle.write(line + "\n")
+        file_handle.close()
     #
     # do logical comparisons
     #
@@ -598,21 +598,21 @@ class BaseParser(object):
 
         return ret
 
-    def IsGuidString(self, l):
+    def IsGuidString(self, line):
         """
         will return true if the the line has
         = { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
         Args:
-          l:
+          line:
 
         Returns:
 
         """
-        if(l.count("{") == 2 and l.count("}") == 2 and l.count(",") == 10 and l.count("=") == 1):
+        if(line.count("{") == 2 and line.count("}") == 2 and line.count(",") == 10 and l.count("=") == 1):
             return True
         return False
 
-    def ParseGuid(self, l):
+    def ParseGuid(self, line):
         """
         parse a guid into a different format
         Will throw exception if missing any of the 11 parts of isn't long enough
@@ -622,9 +622,10 @@ class BaseParser(object):
         Returns: a string of the guid. ex: D3B36F2C-D551-11D4-9A46-0090273FC14D
 
         """
-        entries = l.lstrip(' {').rstrip(' }').split(',')
+        entries = line.lstrip(' {').rstrip(' }').split(',')
         if len(entries) != 11:
-            raise RuntimeError(f"Invalid GUID found {l}. We are missing some parts since we only found: {len(entries)}")
+            raise RuntimeError(
+                f"Invalid GUID found {line}. We are missing some parts since we only found: {len(entries)}")
         gu = entries[0].lstrip(' 0').lstrip('x').strip()
         # pad front until 8 chars
         while(len(gu) < 8):
@@ -707,28 +708,28 @@ class HashFileParser(BaseParser):
     def __init__(self, log):
         BaseParser.__init__(self, log)
 
-    def StripComment(self, l):
+    def StripComment(self, line):
         """
 
         Args:
-          l:
+          line:
 
         Returns:
 
         """
-        return l.split('#')[0].strip()
+        return line.split('#')[0].strip()
 
-    def ParseNewSection(self, l):
+    def ParseNewSection(self, line):
         """
 
         Args:
-          l:
+          line:
 
         Returns:
 
         """
-        if(l.count("[") == 1 and l.count("]") == 1):  # new section
-            section = l.strip().lstrip("[").split(".")[0].split(",")[0].rstrip("]").strip()
-            self.CurrentFullSection = l.strip().lstrip("[").split(",")[0].rstrip("]").strip()
+        if(line.count("[") == 1 and line.count("]") == 1):  # new section
+            section = line.strip().lstrip("[").split(".")[0].split(",")[0].rstrip("]").strip()
+            self.CurrentFullSection = line.strip().lstrip("[").split(",")[0].rstrip("]").strip()
             return (True, section)
         return (False, "")
