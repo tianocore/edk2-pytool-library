@@ -159,6 +159,7 @@ def timing(f):
 # @param outstream - capture output to a stream.
 # @param environ - shell environment variables dictionary that replaces the one inherited from the
 #                  current process.
+# @param target- a function to call. It must accept four parameters: filepath, outstream, stream, logging_level
 # @param logging_level - log level to log output at.  Default is INFO
 # @param raise_exception_on_nonzero - Setting to true causes exception to be raised if the cmd
 #                                     return code is not zero.
@@ -166,13 +167,15 @@ def timing(f):
 # @return returncode of called cmd
 ####
 def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstream=None, environ=None,
-           logging_level=logging.INFO, raise_exception_on_nonzero=False):
+           target=None, logging_level=logging.INFO, raise_exception_on_nonzero=False):
     cmd = cmd.strip('"\'')
     if " " in cmd:
         cmd = '"' + cmd + '"'
     if parameters is not None:
         parameters = parameters.strip()
         cmd += " " + parameters
+    if target is None:
+        target = reader
     starttime = datetime.datetime.now()
     logging.log(logging_level, "Cmd to run is: " + cmd)
     logging.log(logging_level, "------------------------------------------------")

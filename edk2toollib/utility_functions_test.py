@@ -64,6 +64,28 @@ class UtilityFunctionsTest(unittest.TestCase):
         self.assertIsNotNone(found_class)
         self.assertEqual(found_class, GrandChildOfDesiredClass)
 
+    def test_run_cmd(self):
+        cmd = "echo"
+        args = '"Hello there"'
+        ret = utilities.RunCmd(cmd, args)
+        self.assertEqual(ret, 0)
+
+    def test_run_cmd_with_bad_cmd(self):
+        ret = utilities.RunCmd("not_a_real_command", "")
+        self.assertNotEqual(ret, 0)
+
+    def test_run_cmd_with_custom_target(self):
+        cmd = "echo"
+        args = '"Hello there"'
+        self.ran_custom = False
+        def custom_target(filepath, outstream, stream, logging_level):
+            print("Custom")
+            self.ran_custom = True
+        ret = utilities.RunCmd(cmd, args, target=custom_target)
+        self.assertEqual(ret, 0)
+        print(self.ran_custom)
+        self.assertTrue(self.ran_custom)
+
 
 class EnumClassTest(unittest.TestCase):
     def test_EnumClass_array(self):
@@ -91,5 +113,9 @@ class EnumClassTest(unittest.TestCase):
         # check to make sure the values are unique
         self.assertNotEqual(colors.Green, colors.Red)
 
+
 # DO NOT PUT A MAIN FUNCTION HERE
 # this test runs itself to test runpython script, which is a tad bit strange yes.
+test = UtilityFunctionsTest()
+test.test_run_cmd_with_custom_target()
+print("Done")
