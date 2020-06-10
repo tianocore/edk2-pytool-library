@@ -159,23 +159,22 @@ def timing(f):
 # @param outstream - capture output to a stream.
 # @param environ - shell environment variables dictionary that replaces the one inherited from the
 #                  current process.
-# @param target- a function to call. It must accept four parameters: filepath, outstream, stream, logging_level
+# @param target - a function to call. It must accept four parameters: filepath, outstream, stream, logging_level
 # @param logging_level - log level to log output at.  Default is INFO
 # @param raise_exception_on_nonzero - Setting to true causes exception to be raised if the cmd
 #                                     return code is not zero.
 #
 # @return returncode of called cmd
 ####
-def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstream=None, environ=None,
-           target=None, logging_level=logging.INFO, raise_exception_on_nonzero=False):
+def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstream=None, environ=None, thread_target=None, logging_level=logging.INFO, raise_exception_on_nonzero=False):
     cmd = cmd.strip('"\'')
     if " " in cmd:
         cmd = '"' + cmd + '"'
     if parameters is not None:
         parameters = parameters.strip()
         cmd += " " + parameters
-    if target is None:
-        target = reader
+    if thread_target is None:
+        thread_target = reader
     starttime = datetime.datetime.now()
     logging.log(logging_level, "Cmd to run is: " + cmd)
     logging.log(logging_level, "------------------------------------------------")
@@ -183,7 +182,7 @@ def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstre
     logging.log(logging_level, "------------------------------------------------")
     c = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=workingdir, shell=True, env=environ)
     if(capture):
-        thread = PropagatingThread(target=reader, args=(outfile, outstream, c.stdout, logging_level))
+        thread = PropagatingThread(target=thread_target, args=(outfile, outstream, c.stdout, logging_level))
         thread.start()
         c.wait()
         thread.join()

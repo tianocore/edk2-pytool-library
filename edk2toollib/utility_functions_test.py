@@ -74,17 +74,22 @@ class UtilityFunctionsTest(unittest.TestCase):
         ret = utilities.RunCmd("not_a_real_command", "")
         self.assertNotEqual(ret, 0)
 
+    def test_run_cmd_raise_exception_on_nonzero(self):
+        with self.assertRaises(Exception):
+            utilities.RunCmd("not_a_real_command", "", raise_exception_on_nonzero=True)
+        utilities.RunCmd("not_a_real_command", "", raise_exception_on_nonzero=True)
+
     def test_run_cmd_with_custom_target(self):
         cmd = "echo"
         args = '"Hello there"'
-        self.ran_custom = False
-        def custom_target(filepath, outstream, stream, logging_level):
-            print("Custom")
-            self.ran_custom = True
-        ret = utilities.RunCmd(cmd, args, target=custom_target)
+        ran_custom = {"Did it": True}
+
+        def custom_target(*unused):
+            ran_custom["Did it"] =  True
+        ret = utilities.RunCmd(cmd, args, custom_target)
+        print(ran_custom)
         self.assertEqual(ret, 0)
-        print(self.ran_custom)
-        self.assertTrue(self.ran_custom)
+        # self.assertTrue(self.ran_custom)
 
 
 class EnumClassTest(unittest.TestCase):
@@ -116,6 +121,3 @@ class EnumClassTest(unittest.TestCase):
 
 # DO NOT PUT A MAIN FUNCTION HERE
 # this test runs itself to test runpython script, which is a tad bit strange yes.
-test = UtilityFunctionsTest()
-test.test_run_cmd_with_custom_target()
-print("Done")
