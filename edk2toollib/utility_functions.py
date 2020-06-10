@@ -54,17 +54,21 @@ def Enum(*args):
 class PropagatingThread(threading.Thread):
     def run(self):
         self.exc = None
+        self.ret = None
         try:
             if hasattr(self, '_Thread__target'):
                 # Thread uses name mangling prior to Python 3.
                 self.ret = self._Thread__target(*self._Thread__args, **self._Thread__kwargs)
             else:
                 self.ret = self._target(*self._args, **self._kwargs)
+        except SystemExit as e:
+            self.ret = e.code
         except BaseException as e:
             self.exc = e
 
-    def join(self, timeout=None):
-        super(PropagatingThread, self).join()
+    def join(self, timeout=0.5):
+        ''' timeout is the number of seconds to timeout '''
+        super(PropagatingThread, self).join(timeout)
         if self.exc:
             raise self.exc
         return self.ret
@@ -180,15 +184,26 @@ def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstre
     logging.log(logging_level, "------------------------------------------------")
     logging.log(logging_level, "--------------Cmd Output Starting---------------")
     logging.log(logging_level, "------------------------------------------------")
+    wait_delay = 0.5 # we check about every second
     c = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=workingdir, shell=True, env=environ)
     if(capture):
         thread = PropagatingThread(target=thread_target, args=(outfile, outstream, c.stdout, logging_level))
         thread.start()
-        c.wait()
-        thread.join()
+        while True:
+            try:
+                c.wait(wait_delay)
+            except subprocess.TimeoutExpired:
+                pass
+            ret = thread.join(wait_delay)
+            if c.poll() is not None or not thread.is_alive() or ret is not None:
+                break
+        # if the propagating thread exited but the cmd is still going
+        if c.poll() is None and not thread.is_alive():
+            logging.log(logging_level,"WARNING: Killing the process early due to target")
+            c.kill()
+            c.returncode = 1 # force the return code to be non zero
     else:
         c.wait()
-
     endtime = datetime.datetime.now()
     delta = endtime - starttime
     endtime_str = "{0[0]:02}:{0[1]:02}".format(divmod(delta.seconds, 60))

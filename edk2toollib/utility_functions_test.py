@@ -11,6 +11,7 @@ import unittest
 import os
 import sys
 import edk2toollib.utility_functions as utilities
+import time
 
 
 class DesiredClass():
@@ -83,6 +84,7 @@ class UtilityFunctionsTest(unittest.TestCase):
     def test_run_cmd_with_custom_target(self):
         cmd = "echo"
         args = '"Hello there"'
+
         self.did_custom_target = False
 
         def custom_target(*unused):
@@ -91,6 +93,34 @@ class UtilityFunctionsTest(unittest.TestCase):
         ret = utilities.RunCmd(cmd, args, thread_target=custom_target)
         self.assertEqual(ret, 0)
         self.assertTrue(self.did_custom_target)
+
+    @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
+    def test_run_cmd_with_breaking_target(self):
+
+        timeout_time = 10
+        kill_time = 5
+
+        def custom_target_break(filepath, outstream, stream, *unused):
+            expirer_time = time.time() + kill_time
+            while True:
+                if time.time() > expirer_time:
+                    break
+                time.sleep(1)
+            stream.close()
+            return 0
+        # Keep track of when we start
+        start_time = time.time()
+        ret = utilities.RunCmd("timeout", f"{timeout_time}", thread_target=custom_target_break)
+        # make sure our elapsed time is less than our kill time + 1 (for wiggle room)
+        self.assertLess(time.time() - start_time, kill_time + 1)
+
+        # this time without the custom target
+        timeout_time = 10
+        start_time = time.time()
+        ret = utilities.RunCmd("timeout", f"{timeout_time}", capture=False, thread_target=custom_target_break)
+        # make sure our elapsed time is more than the timeout (minus some wiggle room)
+        self.assertGreater(time.time() - start_time, timeout_time - 1)
+        self.assertEqual(ret, 0)
 
 
 class EnumClassTest(unittest.TestCase):
@@ -122,3 +152,7 @@ class EnumClassTest(unittest.TestCase):
 
 # DO NOT PUT A MAIN FUNCTION HERE
 # this test runs itself to test runpython script, which is a tad bit strange yes.
+test = UtilityFunctionsTest()
+test.test_run_cmd()
+test.test_run_cmd_with_breaking_target()
+test.test_run_cmd_raise_exception_on_nonzero()
