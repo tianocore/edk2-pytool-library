@@ -38,6 +38,8 @@ class BrotherOfChildOfDesiredClass(DesiredClass):
 
 class UtilityFunctionsTest(unittest.TestCase):
 
+    did_custom_target = False
+
     def test_RunPythonScript(self):  # simple- run yourself!
         path = __file__
         working_dir = os.path.dirname(__file__)
@@ -77,19 +79,18 @@ class UtilityFunctionsTest(unittest.TestCase):
     def test_run_cmd_raise_exception_on_nonzero(self):
         with self.assertRaises(Exception):
             utilities.RunCmd("not_a_real_command", "", raise_exception_on_nonzero=True)
-        utilities.RunCmd("not_a_real_command", "", raise_exception_on_nonzero=True)
 
     def test_run_cmd_with_custom_target(self):
         cmd = "echo"
         args = '"Hello there"'
-        ran_custom = {"Did it": True}
+        self.did_custom_target = False
 
         def custom_target(*unused):
-            ran_custom["Did it"] =  True
-        ret = utilities.RunCmd(cmd, args, custom_target)
-        print(ran_custom)
+            self.did_custom_target = True
+
+        ret = utilities.RunCmd(cmd, args, thread_target=custom_target)
         self.assertEqual(ret, 0)
-        # self.assertTrue(self.ran_custom)
+        self.assertTrue(self.did_custom_target)
 
 
 class EnumClassTest(unittest.TestCase):
