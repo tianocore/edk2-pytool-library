@@ -193,6 +193,7 @@ def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstre
             try:
                 c.wait(wait_delay)
             except subprocess.TimeoutExpired:
+                # we expect this to throw and this is safe behavior
                 pass
             ret = thread.join(wait_delay)
             if c.poll() is not None or not thread.is_alive() or ret is not None:
