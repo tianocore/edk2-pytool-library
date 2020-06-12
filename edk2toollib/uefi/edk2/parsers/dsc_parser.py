@@ -244,8 +244,8 @@ class DscParser(HashFileParser):
 
     def __ProcessDefines(self, lines):
         if(len(lines) > 0):
-            for l in lines:
-                (line, add) = self.__ParseDefineLine(l)
+            for raw_line in lines:
+                (line, add) = self.__ParseDefineLine(raw_line)
                 self.__ProcessDefines(add)
 
     def ResetParserState(self):

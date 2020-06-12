@@ -58,7 +58,7 @@ def _DownloadVsWhere(unpack_folder: os.PathLike = None):
             with urllib.request.urlopen(__URL) as response, open(out_file_name, 'wb') as out_file:
                 out_file.write(response.read())
         except urllib.error.HTTPError as e:
-            logging.error(f"We ran into an issue when getting VsWhere")
+            logging.error("We ran into an issue when getting VsWhere")
             raise e
 
     # do the hash to make sure the file is good
