@@ -608,7 +608,7 @@ class BaseParser(object):
         Returns:
 
         """
-        if(line.count("{") == 2 and line.count("}") == 2 and line.count(",") == 10 and l.count("=") == 1):
+        if(line.count("{") == 2 and line.count("}") == 2 and line.count(",") == 10 and line.count("=") == 1):
             return True
         return False
 
