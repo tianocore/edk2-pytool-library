@@ -7,8 +7,8 @@
 ##
 import os
 import logging
+from enum import Enum
 
-import edk2toollib.utility_functions as uf
 import edk2toollib.uefi.edk2.path_utilities as pu
 
 #
@@ -140,7 +140,7 @@ class ModuleSummary(object):
                                 logging.debug("Parsing Mod: %s" % value)
                                 self.Name = value
                             elif(key == "module inf path"):
-                                self.InfPath = value
+                                self.InfPath = value.replace("\\", "/")
                             elif(key == "file guid"):
                                 self.Guid = value
                             elif(key == "driver type"):
@@ -161,7 +161,12 @@ class ModuleSummary(object):
 
 
 class BuildReport(object):
-    RegionTypes = uf.Enum(['PCD', 'FD', 'MODULE', 'UNKNOWN'])
+
+    class RegionTypes(Enum):
+        PCD = 'PCD'
+        FD = 'FD'
+        MODULE = 'MODULE'
+        UNKNOWN = 'UNKNOWN'
 
     def __init__(self, filepath, ws, packagepathcsv, protectedWordsDict):
         self.PlatformName = ""
@@ -214,7 +219,7 @@ class BuildReport(object):
             type = self._GetRegionType(start)
             self._Regions.append((type, start, end))
             linenum = self._GetNextRegionStart(linenum)
-            logging.debug("Found a region of type: %s start: %d end: %d" % (BuildReport.RegionTypes[type], start, end))
+            logging.debug("Found a region of type: %s start: %d end: %d" % (type, start, end))
 
         #
         # Parse the basic header of the report.
