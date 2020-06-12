@@ -16,9 +16,9 @@ This is a supplemental package and is not required to be used for edk2 builds.
 [![PyPI](https://img.shields.io/pypi/v/edk2_pytool_library.svg)](https://pypi.org/project/edk2-pytool-library/)
 
 All release information is now tracked with Github
- [tags](https://github.com/tianocore/edk2-pytool-extensions/tags),
-  [releases](https://github.com/tianocore/edk2-pytool-extensions/releases) and
-  [milestones](https://github.com/tianocore/edk2-pytool-extensions/milestones).
+ [tags](https://github.com/tianocore/edk2-pytool-library/tags),
+  [releases](https://github.com/tianocore/edk2-pytool-library/releases) and
+  [milestones](https://github.com/tianocore/edk2-pytool-library/milestones).
 
 ## Content
 
@@ -48,7 +48,7 @@ NOTE: It is strongly recommended that you use python virtual environments.  Virt
     ```python
     from edk2toollib.<module> import <class>
     ```
-    
+
 ## History
 
 This library and functionality was ported from Project Mu.
