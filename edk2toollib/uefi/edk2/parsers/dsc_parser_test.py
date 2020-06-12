@@ -67,7 +67,7 @@ class TestDscParserIncludes(unittest.TestCase):
         parser.SetBaseAbsPath(workspace)
         with self.assertRaises(FileNotFoundError):
             parser.ParseFile(file1_path)
-        
+
     def test_dsc_include_missing_file_no_fail_mode(self):
         ''' This tests whether includes work properly if no fail mode is on'''
         workspace = tempfile.gettempdir()
