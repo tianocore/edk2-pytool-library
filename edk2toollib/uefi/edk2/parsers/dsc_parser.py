@@ -261,7 +261,11 @@ class DscParser(HashFileParser):
                     else:
                         self.Logger.warning(e)
 
-    def SetNoFailMode(self, enabled):
+    def SetNoFailMode(self, enabled=True):
+        ''' 
+        The parser won't throw exceptions when this is turned on
+        This can result in some weird behavior
+        '''
         self._no_fail_mode = enabled
 
     def ResetParserState(self):

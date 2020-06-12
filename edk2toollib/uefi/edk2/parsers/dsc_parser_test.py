@@ -67,3 +67,19 @@ class TestDscParserIncludes(unittest.TestCase):
         parser.SetBaseAbsPath(workspace)
         with self.assertRaises(FileNotFoundError):
             parser.ParseFile(file1_path)
+        
+    def test_dsc_include_missing_file_no_fail_mode(self):
+        ''' This tests whether includes work properly if no fail mode is on'''
+        workspace = tempfile.gettempdir()
+
+        file1_name = "file1.dsc"
+        file1_path = os.path.join(workspace, file1_name)
+
+        file1_data = f"!include BAD_FILE.dsc"
+
+        TestDscParserIncludes.write_to_file(file1_path, file1_data)
+
+        parser = DscParser()
+        parser.SetNoFailMode()
+        parser.SetBaseAbsPath(workspace)
+        parser.ParseFile(file1_path)
