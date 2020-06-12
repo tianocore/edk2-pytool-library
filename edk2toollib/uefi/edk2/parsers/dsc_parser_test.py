@@ -75,7 +75,7 @@ class TestDscParserIncludes(unittest.TestCase):
         file1_name = "file1.dsc"
         file1_path = os.path.join(workspace, file1_name)
 
-        file1_data = f"!include BAD_FILE.dsc"
+        file1_data = "!include BAD_FILE.dsc"
 
         TestDscParserIncludes.write_to_file(file1_path, file1_data)
 
