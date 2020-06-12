@@ -26,3 +26,4 @@ jobs:
     vm_image: 'ubuntu-latest'
     root_package_folder: "edk2toollib"
     name: 'ubuntu'
+    codecov_enabled: true
