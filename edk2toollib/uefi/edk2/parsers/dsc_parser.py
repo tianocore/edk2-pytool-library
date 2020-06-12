@@ -236,30 +236,50 @@ class DscParser(HashFileParser):
         return line.strip().split()[0].rstrip("{")
 
     def __ProcessMore(self, lines, file_name=None):
-        if(len(lines) > 0):
-            for index in range(0, len(lines)):
-                try:
-                    (line, add, new_file) = self.__ParseLine(lines[index], file_name=file_name, lineno=index + 1)
-                    if(len(line) > 0):
-                        self.Lines.append(line)
-                    self.__ProcessMore(add, file_name=new_file)
-                except Exception as e:
-                    if not self._no_fail_mode:
-                        raise
-                    else:
-                        self.Logger.warning(e)
+        '''
+        ProcessMore runs after ProcessDefines and does a full parsing of the DSC
+        Everything is resolved to a final state
+        '''
+        if(len(lines) == 0):
+            return
+        for index in range(0, len(lines)):
+            # we try here so that we can catch exceptions from individual lines
+            try:
+                (line, add, new_file) = self.__ParseLine(lines[index], file_name=file_name, lineno=index + 1)
+                if(len(line) > 0):
+                    self.Lines.append(line)
+                self.__ProcessMore(add, file_name=new_file)
+            except Exception as e:
+                # check if we're in no fail mode or not
+                if not self._no_fail_mode:  # if we are, fail
+                    raise
+                else:
+                    # otherwise, let the user know that we failed in the DSC
+                    self.Logger.warning(f"DSC Parser (No-Fail Mode): {raw_line}")
+                    self.Logger.warning(e)
 
     def __ProcessDefines(self, lines):
-        if(len(lines) > 0):
-            for raw_line in lines:
-                try:
-                    (line, add) = self.__ParseDefineLine(raw_line)
-                    self.__ProcessDefines(add)
-                except Exception as e:
-                    if not self._no_fail_mode:
-                        raise
-                    else:
-                        self.Logger.warning(e)
+        '''
+        ProcessDefines goes through a file once to look for [Define] sections.
+        Only Sections, DEFINE, X = Y, and !includes are resolved
+        This resolves all the defines since they can be anywhere in a file.
+        Ideally this should be run until we reach stable state but this parser is not
+        accurate and is more of an approximation of what the real parser does.
+        '''
+
+        if(len(lines) == 0):
+            return
+        for raw_line in lines:
+            # we want to catch exceptions here since we are doing includes as we potentially might blow up
+            # we want to catch on a line by line basis
+            try:
+                (line, add) = self.__ParseDefineLine(raw_line)
+                self.__ProcessDefines(add)
+            except Exception as e:
+                # Since we're going to do this in ProcessMore, don't warn people if there's an exception
+                # otherwise, raise the exception and act normally
+                if not self._no_fail_mode:
+                    raise
 
     def SetNoFailMode(self, enabled=True):
         '''
