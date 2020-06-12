@@ -578,7 +578,7 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(pathobj.GetAbsolutePathOnThisSytemFromEdk2RelativePath(rp), ep)
 
         # file not in workspace
-        rp = f"DoesNotExistPkg/module2/X64/TestFile.c"
+        rp = "DoesNotExistPkg/module2/X64/TestFile.c"
         self.assertIsNone(pathobj.GetAbsolutePathOnThisSytemFromEdk2RelativePath(rp))
 
         # pass in bad parameter
