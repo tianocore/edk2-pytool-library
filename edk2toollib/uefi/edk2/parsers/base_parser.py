@@ -376,13 +376,13 @@ class BaseParser(object):
         if not text.lower().startswith("!if "):
             raise RuntimeError(f"Invalid conditional cannot be validated: {text}")
         text = text[3:].strip()
-        self.Logger.debug(f"STAGE 1: {text}")
+        logging.debug(f"STAGE 1: {text}")
         text = self.ReplaceVariables(text)
-        self.Logger.debug(f"STAGE 2: {text}")
+        logging.debug(f"STAGE 2: {text}")
         tokens = self._TokenizeConditional(text)
-        self.Logger.debug(f"STAGE 3: {tokens}")
+        logging.debug(f"STAGE 3: {tokens}")
         expression = self._ConvertTokensToPostFix(tokens)
-        self.Logger.debug(f"STAGE 4: {expression}")
+        logging.debug(f"STAGE 4: {expression}")
 
         # Now we evaluate the post fix expression
         if len(expression) == 0:
@@ -432,7 +432,7 @@ class BaseParser(object):
                 expression = new_expression
 
         final = self.ConvertToInt(expression[0])
-        self.Logger.debug(f" FINAL {expression} {final}")
+        logging.debug(f" FINAL {expression} {final}")
 
         return bool(final)
 
