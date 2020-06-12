@@ -245,7 +245,8 @@ class DscParser(HashFileParser):
         for index in range(0, len(lines)):
             # we try here so that we can catch exceptions from individual lines
             try:
-                (line, add, new_file) = self.__ParseLine(lines[index], file_name=file_name, lineno=index + 1)
+                raw_line = lines[index]
+                (line, add, new_file) = self.__ParseLine(raw_line, file_name=file_name, lineno=index + 1)
                 if(len(line) > 0):
                     self.Lines.append(line)
                 self.__ProcessMore(add, file_name=new_file)
@@ -275,7 +276,7 @@ class DscParser(HashFileParser):
             try:
                 (line, add) = self.__ParseDefineLine(raw_line)
                 self.__ProcessDefines(add)
-            except Exception as e:
+            except Exception:
                 # Since we're going to do this in ProcessMore, don't warn people if there's an exception
                 # otherwise, raise the exception and act normally
                 if not self._no_fail_mode:
