@@ -24,8 +24,8 @@ class DscTranslator():
         file_path = os.path.abspath(filepath)
         f = open(file_path, "w")
         lines = cls._GetDscLinesFromDscObj(dsc_obj)
-        for l in lines:
-            f.write(l + "\n")
+        for line in lines:
+            f.write(line + "\n")
         f.close()
 
     @classmethod
