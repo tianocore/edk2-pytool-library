@@ -23,6 +23,7 @@ class DscParser(HashFileParser):
         self.ParsingInBuildOption = 0
         self.LibraryClassToInstanceDict = {}
         self.Pcds = []
+        self._no_fail_mode = False
         self._dsc_file_paths = set()  # This includes the full paths for every DSC that makes up the file
 
     def __ParseLine(self, Line, file_name=None, lineno=None):
@@ -237,16 +238,31 @@ class DscParser(HashFileParser):
     def __ProcessMore(self, lines, file_name=None):
         if(len(lines) > 0):
             for index in range(0, len(lines)):
-                (line, add, new_file) = self.__ParseLine(lines[index], file_name=file_name, lineno=index + 1)
-                if(len(line) > 0):
-                    self.Lines.append(line)
-                self.__ProcessMore(add, file_name=new_file)
+                try:
+                    (line, add, new_file) = self.__ParseLine(lines[index], file_name=file_name, lineno=index + 1)
+                    if(len(line) > 0):
+                        self.Lines.append(line)
+                    self.__ProcessMore(add, file_name=new_file)
+                except Exception as e:
+                    if not self._no_fail_mode:
+                        raise
+                    else:
+                        self.Logger.warning(e)
 
     def __ProcessDefines(self, lines):
         if(len(lines) > 0):
             for l in lines:
-                (line, add) = self.__ParseDefineLine(l)
-                self.__ProcessDefines(add)
+                try:
+                    (line, add) = self.__ParseDefineLine(l)
+                    self.__ProcessDefines(add)
+                except Exception as e:
+                    if not self._no_fail_mode:
+                        raise
+                    else:
+                        self.Logger.warning(e)
+
+    def SetNoFailMode(self, enabled):
+        self._no_fail_mode = enabled
 
     def ResetParserState(self):
         #
