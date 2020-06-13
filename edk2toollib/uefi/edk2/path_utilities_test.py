@@ -466,10 +466,27 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(len(relist), 1)
         self.assertIn(os.path.join(pp_pkg_abs, "module1", "module1.INF"), relist)
 
-        # file in packages path root - no package- should return packages path dir
+        # file in packages path root - no module
         p = os.path.join(folder_pp1_abs, "testfile.c")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 0)
+
+        # file doesn't exist and parent folder doesn't exist
+        p = os.path.join(ws_pkg_abs, "ThisParentDirDoesntExist", "ThisFileDoesntExist.c")
+        relist = pathobj.GetContainingModules(p)
+        self.assertEqual(len(relist), 0)
+
+        # file doesn't exist and parent folder doesn't exist and parent parent folder doesn't exist
+        p = os.path.join(ws_pkg_abs, "DirDirDoesntExist", "DirDoesntExist", "FileDoesntExist.c")
+        relist = pathobj.GetContainingModules(p)
+        self.assertEqual(len(relist), 0)
+
+        # file doesn't exist and parent folder doesn't exist but parent parent is valid module
+        # file in module in WSTestPkg/module1/module1.inf
+        p = os.path.join(ws_pkg_abs, "module1", "ThisParentDirDoesntExist", "testfile.c")
+        relist = pathobj.GetContainingModules(p)
+        self.assertEqual(len(relist), 1)
+        self.assertIn(os.path.join(ws_pkg_abs, "module1", "module1.inf"), relist)
 
     def test_get_edk2_relative_path_from_absolute_path(self):
         ''' test basic usage of GetEdk2RelativePathFromAbsolutePath with packages path nested

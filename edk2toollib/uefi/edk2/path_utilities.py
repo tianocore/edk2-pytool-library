@@ -219,20 +219,15 @@ class Edk2Path(object):
         # make sure filesystem has file or at least folder
         if not os.path.isfile(InputPath):
             logging.debug("InputPath doesn't exist in filesystem")
-        if not os.path.isdir(os.path.dirname(os.path.dirname(InputPath))):
-            logging.warning("InputPath parent parent directory doesn't exist in filesystem")
-            return []
-        if not os.path.isdir(os.path.dirname(InputPath)):
-            logging.warning("InputPath parent directory doesn't exist in filesystem")
-            return []
 
         modules = []
         # Check current dir
         dirpath = os.path.dirname(InputPath)
-        for f in os.listdir(dirpath):
-            if fnmatch.fnmatch(f.lower(), '*.inf'):
-                self.logger.debug("Found INF file in %s.  INf is: %s", dirpath, f)
-                modules.append(os.path.join(dirpath, f))
+        if os.path.isdir(dirpath):
+            for f in os.listdir(dirpath):
+                if fnmatch.fnmatch(f.lower(), '*.inf'):
+                    self.logger.debug("Found INF file in %s.  INf is: %s", dirpath, f)
+                    modules.append(os.path.join(dirpath, f))
 
         # if didn't find any in current dir go to parent dir.
         # this handles cases like:
@@ -243,9 +238,10 @@ class Edk2Path(object):
         #
         if(len(modules) == 0):
             dirpath = os.path.dirname(dirpath)
-            for f in os.listdir(dirpath):
-                if fnmatch.fnmatch(f.lower(), '*.inf'):
-                    self.logger.debug("Found INF file in %s.  INf is: %s", dirpath, f)
-                    modules.append(os.path.join(dirpath, f))
+            if os.path.isdir(dirpath):
+                for f in os.listdir(dirpath):
+                    if fnmatch.fnmatch(f.lower(), '*.inf'):
+                        self.logger.debug("Found INF file in %s.  INf is: %s", dirpath, f)
+                        modules.append(os.path.join(dirpath, f))
 
         return modules
