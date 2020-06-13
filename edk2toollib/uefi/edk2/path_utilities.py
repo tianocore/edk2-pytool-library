@@ -8,6 +8,7 @@
 import os
 import logging
 import fnmatch
+from typing import Iterable, Tuple
 
 #
 # Class to help convert from absolute path to EDK2 build path
@@ -17,11 +18,16 @@ import fnmatch
 
 class Edk2Path(object):
 
-    #
-    # ws - absolute path or cwd relative to workspace
-    # packagepathlist - list of packages path.  Absolute path list or workspace relative path
-    #
-    def __init__(self, ws, packagepathlist):
+
+    def __init__(self, ws: os.PathLike, packagepathlist: Iterable[os.PathLike], error_on_invalid_pp: bool = True):
+        """ An Edk2Path object is an object that can be used to resolve edk2 relative paths
+
+        Args:
+            ws: absolute path or cwd relative path of the workspace.
+            packagespathlist: list of packages path.  Entries can be Absolute path, workspace relative path, or CWD relative.
+            error_on_invalid_pp: default value is True. If packages path value is invalid raise exception
+        """
+
         self.WorkspacePath = ws
         self.logger = logging.getLogger("Edk2Path")
         if(not os.path.isabs(ws)):
@@ -46,13 +52,14 @@ class Edk2Path(object):
                     self.PackagePathList.append(os.path.abspath(os.path.join(os.getcwd(), a)))
 
         error = False
-        for a in self.PackagePathList:
+        for a in self.PackagePathList[:]:
             if(not os.path.isdir(a)):
-                self.logger.error("Invalid package path entry {0}".format(a))
+                self.logger.log(logging.ERROR if error_on_invalid_pp else logging.WARNING, "Invalid package path entry {0}".format(a))
+                self.PackagePathList.remove(a) # remove invalid path
                 error = True
 
         # report error
-        if(error):
+        if(error and error_on_invalid_pp):
             raise Exception("Invalid package path directory(s)")
 
     def GetEdk2RelativePathFromAbsolutePath(self, abspath):
@@ -193,7 +200,9 @@ class Edk2Path(object):
     # Find the list of modules (infs) that file path is in
     #
     # for now just assume any inf in the same dir or if none
-    # then check parent dir.
+    # then check parent dir.  If InputPath is not in the filesystem
+    # this function will try to return the likely containing module
+    # but if the entire module has been deleted this isn't possible.
     #
     # @param InputPath:  absolute path to file
     #
@@ -204,6 +213,18 @@ class Edk2Path(object):
         # if INF return self
         if fnmatch.fnmatch(InputPath.lower(), '*.inf'):
             return [InputPath]
+
+        # Before checking the local filesystem for an INF
+        # make sure filesystem has file or at least folder
+        if not os.path.isfile(InputPath):
+            logging.debug("InputPath doesn't exist in filesystem")
+        if not os.path.isdir(os.path.dirname(os.path.dirname(InputPath))):
+            logging.warning("InputPath parent parent directory doesn't exist in filesystem")
+            return []
+        if not os.path.isdir(os.path.dirname(InputPath)):
+            logging.warning("InputPath parent directory doesn't exist in filesystem")
+            return []
+
 
         modules = []
         # Check current dir

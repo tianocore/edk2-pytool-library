@@ -104,6 +104,10 @@ class PathUtilitiesTest(unittest.TestCase):
         # relative path
         with self.assertRaises(Exception):
             Edk2Path(self.tmp, [pp])
+        # confirm optional parameter to remove invalid pp values
+        pathobj = Edk2Path(self.tmp, [pp], error_on_invalid_pp=False)
+        self.assertEqual(len(pathobj.PackagePathList), 0)
+
 
     def test_pp_inside_workspace(self):
         ''' test with packagespath pointing to folder nested inside workspace
