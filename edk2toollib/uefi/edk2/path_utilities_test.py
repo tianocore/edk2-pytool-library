@@ -108,7 +108,6 @@ class PathUtilitiesTest(unittest.TestCase):
         pathobj = Edk2Path(self.tmp, [pp], error_on_invalid_pp=False)
         self.assertEqual(len(pathobj.PackagePathList), 0)
 
-
     def test_pp_inside_workspace(self):
         ''' test with packagespath pointing to folder nested inside workspace
         root/                   <-- current working directory

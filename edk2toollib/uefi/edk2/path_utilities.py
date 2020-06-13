@@ -8,7 +8,7 @@
 import os
 import logging
 import fnmatch
-from typing import Iterable, Tuple
+from typing import Iterable
 
 #
 # Class to help convert from absolute path to EDK2 build path
@@ -18,13 +18,13 @@ from typing import Iterable, Tuple
 
 class Edk2Path(object):
 
-
     def __init__(self, ws: os.PathLike, packagepathlist: Iterable[os.PathLike], error_on_invalid_pp: bool = True):
         """ An Edk2Path object is an object that can be used to resolve edk2 relative paths
 
         Args:
             ws: absolute path or cwd relative path of the workspace.
-            packagespathlist: list of packages path.  Entries can be Absolute path, workspace relative path, or CWD relative.
+            packagespathlist: list of packages path.
+                Entries can be Absolute path, workspace relative path, or CWD relative.
             error_on_invalid_pp: default value is True. If packages path value is invalid raise exception
         """
 
@@ -54,8 +54,9 @@ class Edk2Path(object):
         error = False
         for a in self.PackagePathList[:]:
             if(not os.path.isdir(a)):
-                self.logger.log(logging.ERROR if error_on_invalid_pp else logging.WARNING, "Invalid package path entry {0}".format(a))
-                self.PackagePathList.remove(a) # remove invalid path
+                self.logger.log(logging.ERROR if error_on_invalid_pp else logging.WARNING,
+                                "Invalid package path entry {0}".format(a))
+                self.PackagePathList.remove(a)  # remove invalid path
                 error = True
 
         # report error
@@ -224,7 +225,6 @@ class Edk2Path(object):
         if not os.path.isdir(os.path.dirname(InputPath)):
             logging.warning("InputPath parent directory doesn't exist in filesystem")
             return []
-
 
         modules = []
         # Check current dir
