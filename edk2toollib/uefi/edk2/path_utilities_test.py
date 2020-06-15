@@ -472,18 +472,18 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(len(relist), 0)
 
         # file doesn't exist and parent folder doesn't exist
-        p = os.path.join(ws_pkg_abs, "ThisParentDirDoesntExist", "ThisFileDoesntExist.c")
+        p = os.path.join(ws_pkg_abs, "ThisParentDirDoesNotExist", "ThisFileDoesNotExist.c")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 0)
 
         # file doesn't exist and parent folder doesn't exist and parent parent folder doesn't exist
-        p = os.path.join(ws_pkg_abs, "DirDirDoesntExist", "DirDoesntExist", "FileDoesntExist.c")
+        p = os.path.join(ws_pkg_abs, "DirDirDoesNotExist", "DirDoesNotExist", "FileDoesNotExist.c")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 0)
 
         # file doesn't exist and parent folder doesn't exist but parent parent is valid module
         # file in module in WSTestPkg/module1/module1.inf
-        p = os.path.join(ws_pkg_abs, "module1", "ThisParentDirDoesntExist", "testfile.c")
+        p = os.path.join(ws_pkg_abs, "module1", "ThisParentDirDoesNotExist", "testfile.c")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 1)
         self.assertIn(os.path.join(ws_pkg_abs, "module1", "module1.inf"), relist)
