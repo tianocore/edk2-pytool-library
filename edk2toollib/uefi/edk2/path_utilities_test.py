@@ -104,6 +104,9 @@ class PathUtilitiesTest(unittest.TestCase):
         # relative path
         with self.assertRaises(Exception):
             Edk2Path(self.tmp, [pp])
+        # confirm optional parameter to remove invalid pp values
+        pathobj = Edk2Path(self.tmp, [pp], error_on_invalid_pp=False)
+        self.assertEqual(len(pathobj.PackagePathList), 0)
 
     def test_pp_inside_workspace(self):
         ''' test with packagespath pointing to folder nested inside workspace
@@ -463,10 +466,27 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(len(relist), 1)
         self.assertIn(os.path.join(pp_pkg_abs, "module1", "module1.INF"), relist)
 
-        # file in packages path root - no package- should return packages path dir
+        # file in packages path root - no module
         p = os.path.join(folder_pp1_abs, "testfile.c")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 0)
+
+        # file doesn't exist and parent folder doesn't exist
+        p = os.path.join(ws_pkg_abs, "ThisParentDirDoesNotExist", "ThisFileDoesNotExist.c")
+        relist = pathobj.GetContainingModules(p)
+        self.assertEqual(len(relist), 0)
+
+        # file doesn't exist and parent folder doesn't exist and parent parent folder doesn't exist
+        p = os.path.join(ws_pkg_abs, "DirDirDoesNotExist", "DirDoesNotExist", "FileDoesNotExist.c")
+        relist = pathobj.GetContainingModules(p)
+        self.assertEqual(len(relist), 0)
+
+        # file doesn't exist and parent folder doesn't exist but parent parent is valid module
+        # file in module in WSTestPkg/module1/module1.inf
+        p = os.path.join(ws_pkg_abs, "module1", "ThisParentDirDoesNotExist", "testfile.c")
+        relist = pathobj.GetContainingModules(p)
+        self.assertEqual(len(relist), 1)
+        self.assertIn(os.path.join(ws_pkg_abs, "module1", "module1.inf"), relist)
 
     def test_get_edk2_relative_path_from_absolute_path(self):
         ''' test basic usage of GetEdk2RelativePathFromAbsolutePath with packages path nested
