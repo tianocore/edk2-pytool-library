@@ -99,7 +99,6 @@ class TestDscParserIncludes(unittest.TestCase):
         file1_path = os.path.join(working2_folder, file1_name)
         file1_short_path = os.path.join(working2_dir_name, file1_name)
         file1_data = "[Defines]\n INCLUDED=TRUE"
-        print(file1_short_path)
 
         TestDscParserIncludes.write_to_file(file1_path, file1_data)
         with self.assertRaises(FileNotFoundError):
