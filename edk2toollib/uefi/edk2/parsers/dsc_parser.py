@@ -47,9 +47,9 @@ class DscParser(HashFileParser):
         if(line_resolved.strip().lower().startswith("!include")):
             # include line.
             tokens = line_resolved.split()
-            self.Logger.debug("Opening Include File %s" % os.path.join(self.RootPath, tokens[1]))
-            sp = self.FindPath(tokens[1])
-            self._dsc_file_paths.add(sp)
+            sp = os.path.abspath(self.FindPath(tokens[1]))
+            self.Logger.error("Opening Include File %s" % sp)
+            self._PushTargetFile(sp)
             lf = open(sp, "r")
             loc = lf.readlines()
             lf.close()
@@ -183,7 +183,8 @@ class DscParser(HashFileParser):
             # include line.
             tokens = line_resolved.split()
             self.Logger.debug("Opening Include File %s" % os.path.join(self.RootPath, tokens[1]))
-            sp = self.FindPath(tokens[1])
+            sp = os.path.abspath(self.FindPath(tokens[1]))
+            self._PushTargetFile(sp)
             lf = open(sp, "r")
             loc = lf.readlines()
             lf.close()
@@ -297,19 +298,23 @@ class DscParser(HashFileParser):
 
     def ParseFile(self, filepath):
         self.Logger.debug("Parsing file: %s" % filepath)
-        self.TargetFile = os.path.abspath(filepath)
-        self.TargetFilePath = os.path.dirname(self.TargetFile)
-        sp = os.path.join(filepath)
-        self._dsc_file_paths.add(sp)
+        sp = self.FindPath(filepath)
+        self._PushTargetFile(sp)
         f = open(sp, "r")
         # expand all the lines and include other files
         file_lines = f.readlines()
         self.__ProcessDefines(file_lines)
         # reset the parser state before processing more
         self.ResetParserState()
+        self._PushTargetFile(sp)
         self.__ProcessMore(file_lines, file_name=sp)
         f.close()
         self.Parsed = True
+
+    def _PushTargetFile(self, targetFile):
+        self.TargetFile = targetFile
+        self.TargetFilePath = os.path.abspath(self.TargetFile)
+        self._dsc_file_paths.add(self.TargetFilePath)
 
     def GetMods(self):
         return self.ThreeMods + self.SixMods

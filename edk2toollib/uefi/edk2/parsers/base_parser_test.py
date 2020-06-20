@@ -588,17 +588,20 @@ class TestBaseParserPathAndFile(unittest.TestCase):
         parser.Lines = ["hello"]
         package_paths = ["Common/Test", "SM_MAGIC"]
         root_path = tempfile.mkdtemp()
+        # create the packages path folders
+        for package in package_paths:
+            pack_path = os.path.join(root_path, package)
+            os.makedirs(pack_path)
         target_filedir = os.path.join(root_path, "BuildPkg")
         parser.TargetFilePath = target_filedir
-        parser.SetPackagePaths(package_paths)
         parser.SetBaseAbsPath(root_path)
+        parser.SetPackagePaths(package_paths)
         os.makedirs(target_filedir)
         index = 0
         root_file = "root.txt"
         target_file = "target.txt"
         for package in package_paths:
             pack_path = os.path.join(root_path, package)
-            os.makedirs(pack_path)
             parser.WriteLinesToFile(os.path.join(pack_path, f"package_{index}.txt"))
             index += 1
         root_filepath = os.path.join(root_path, root_file)

@@ -7,6 +7,7 @@
 ##
 import os
 import logging
+from edk2toollib.uefi.edk2 import path_utilities
 
 
 class BaseParser(object):
@@ -24,6 +25,7 @@ class BaseParser(object):
         self.ConditionalStack = []
         self.RootPath = ""
         self.PPs = []
+        self._Edk2PathUtil = None
         self.TargetFile = None
         self.TargetFilePath = None
         self.CurrentLine = -1
@@ -43,18 +45,26 @@ class BaseParser(object):
 
         """
         self.RootPath = path
+        self._ConfigEdk2PathUtil()
         return self
+
+    def _ConfigEdk2PathUtil(self):
+        ''' creates the path utility object based on the root path and package paths '''
+        self._Edk2PathUtil = path_utilities.Edk2Path(self.RootPath, self.PPs)
 
     def SetPackagePaths(self, pps=[]):
         """
 
         Args:
           pps:  (Default value = [])
+        
+        This must be called after SetBaseAbsPath
 
         Returns:
 
         """
         self.PPs = pps
+        self._ConfigEdk2PathUtil()
         return self
 
     def SetInputVars(self, inputdict):
@@ -71,7 +81,7 @@ class BaseParser(object):
 
     def FindPath(self, *p):
         """
-
+        Given a path, it will find it relative to the root, the current target file, or the 
         Args:
           *p:
 
@@ -88,14 +98,16 @@ class BaseParser(object):
 
         # If that fails, check a path relative to the target file.
         if self.TargetFilePath is not None:
-            Path = os.path.join(self.TargetFilePath, *p)
+            Path = os.path.abspath(os.path.join(os.path.dirname(self.TargetFilePath), *p))
+            print("Checking " + Path + " " + self.TargetFilePath)
             if os.path.exists(Path):
                 return Path
 
         # If that fails, check in every possible Pkg path.
-        for Pkg in self.PPs:
-            Path = os.path.join(self.RootPath, Pkg, *p)
-            if os.path.exists(Path):
+        if self._Edk2PathUtil is not None:
+            target_path = os.path.join(*p)
+            Path = self._Edk2PathUtil.GetAbsolutePathOnThisSytemFromEdk2RelativePath(target_path)
+            if Path is not None:
                 return Path
 
         # log invalid file path
