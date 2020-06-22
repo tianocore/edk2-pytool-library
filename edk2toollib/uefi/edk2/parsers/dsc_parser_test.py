@@ -118,7 +118,7 @@ class TestDscParserIncludes(unittest.TestCase):
         outside_folder = os.path.join(workspace, "outside")
         inside_folder = os.path.join(outside_folder, "inside")
         inside2_folder = os.path.join(outside_folder, "inside2")
-        random_folder = os.path.join(outside_folder, "rando")
+        random_folder = os.path.join(outside_folder, "random")
         os.makedirs(inside_folder, exist_ok=True)
         os.makedirs(inside2_folder, exist_ok=True)
         os.makedirs(random_folder, exist_ok=True)
