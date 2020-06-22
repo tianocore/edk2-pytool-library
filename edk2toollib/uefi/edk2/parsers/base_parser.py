@@ -26,8 +26,8 @@ class BaseParser(object):
         self.RootPath = ""
         self.PPs = []
         self._Edk2PathUtil = None
-        self.TargetFile = None # the relative path of the target file
-        self.TargetFilePath = None # the abs path of the target file
+        self.TargetFile = None  # the relative path of the target file
+        self.TargetFilePath = None  # the abs path of the target file
         self.CurrentLine = -1
         self._MacroNotDefinedValue = "0"  # value to used for undefined macro
 
@@ -57,7 +57,7 @@ class BaseParser(object):
 
         Args:
           pps:  (Default value = [])
-        
+
         This must be called after SetBaseAbsPath
 
         Returns:

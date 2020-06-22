@@ -629,7 +629,9 @@ class TestBaseParserPathAndFile(unittest.TestCase):
         invalid_filename = "YOU_WONT_FIND_ME.txt"
         invalid_file = os.path.join(root_path, invalid_filename)
         invalid_result = parser.FindPath(invalid_filename)
+        invalid_result2 = parser.FindPath(invalid_filename)
         self.assertEqual(None, invalid_result)
+        self.assertEqual(None, invalid_result2)
 
     # make sure we can write out to a file
 
