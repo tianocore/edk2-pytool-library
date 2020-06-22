@@ -88,7 +88,6 @@ class BaseParser(object):
         Returns: None on failure
 
         """
-        print(f"Finding {p}")
         # If the absolute path exists, return it.
         Path = os.path.join(self.RootPath, *p)
         if os.path.exists(Path):
@@ -97,7 +96,6 @@ class BaseParser(object):
         # If that fails, check a path relative to the target file.
         if self.TargetFilePath is not None:
             Path = os.path.abspath(os.path.join(os.path.dirname(self.TargetFilePath), *p))
-            print("Checking " + Path + " " + self.TargetFilePath)
             if os.path.exists(Path):
                 return os.path.abspath(Path)
 
