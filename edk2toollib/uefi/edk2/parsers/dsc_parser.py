@@ -51,7 +51,7 @@ class DscParser(HashFileParser):
             sp = self.FindPath(include_file)
             if sp is None:
                 raise FileNotFoundError(include_file)
-            self.Logger.error("Opening Include File %s" % sp)
+            self.Logger.debug("Opening Include File %s" % sp)
             self._PushTargetFile(sp)
             lf = open(sp, "r")
             loc = lf.readlines()
