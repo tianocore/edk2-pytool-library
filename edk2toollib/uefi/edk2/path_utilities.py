@@ -63,7 +63,7 @@ class Edk2Path(object):
         if(error and error_on_invalid_pp):
             raise Exception("Invalid package path directory(s)")
 
-    def GetEdk2RelativePathFromAbsolutePath(self, abspath):
+    def GetEdk2RelativePathFromAbsolutePath(self, abspath, error_on_failure = True):
         ''' Given an absolute path return a edk2 path relative
         to workspace or packagespath.
 
@@ -99,8 +99,9 @@ class Edk2Path(object):
             return relpath.lstrip("/")
 
         # didn't find the path for conversion.
-        self.logger.error("Failed to convert AbsPath to Edk2Relative Path")
-        self.logger.error("AbsolutePath: %s" % abspath)
+        if error_on_failure:
+            self.logger.error("Failed to convert AbsPath to Edk2Relative Path")
+            self.logger.error("AbsolutePath: %s" % abspath)
         return None
 
     def GetAbsolutePathOnThisSytemFromEdk2RelativePath(self, relpath):

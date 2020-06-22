@@ -47,7 +47,10 @@ class DscParser(HashFileParser):
         if(line_resolved.strip().lower().startswith("!include")):
             # include line.
             tokens = line_resolved.split()
-            sp = os.path.abspath(self.FindPath(tokens[1]))
+            include_file = tokens[1]
+            sp = self.FindPath(include_file)
+            if sp is None:
+                raise FileNotFoundError(include_file)
             self.Logger.error("Opening Include File %s" % sp)
             self._PushTargetFile(sp)
             lf = open(sp, "r")
@@ -182,8 +185,11 @@ class DscParser(HashFileParser):
         if(line_resolved.strip().lower().startswith("!include")):
             # include line.
             tokens = line_resolved.split()
-            self.Logger.debug("Opening Include File %s" % os.path.join(self.RootPath, tokens[1]))
-            sp = os.path.abspath(self.FindPath(tokens[1]))
+            include_file = tokens[1]
+            self.Logger.debug("Opening Include File %s" % include_file)
+            sp = self.FindPath(include_file)
+            if sp is None:
+                raise FileNotFoundError(include_file)
             self._PushTargetFile(sp)
             lf = open(sp, "r")
             loc = lf.readlines()
@@ -299,6 +305,8 @@ class DscParser(HashFileParser):
     def ParseFile(self, filepath):
         self.Logger.debug("Parsing file: %s" % filepath)
         sp = self.FindPath(filepath)
+        if sp is None:
+            raise FileNotFoundError(filepath)
         self._PushTargetFile(sp)
         f = open(sp, "r")
         # expand all the lines and include other files

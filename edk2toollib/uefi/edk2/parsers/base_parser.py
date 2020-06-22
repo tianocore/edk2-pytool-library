@@ -26,8 +26,8 @@ class BaseParser(object):
         self.RootPath = ""
         self.PPs = []
         self._Edk2PathUtil = None
-        self.TargetFile = None
-        self.TargetFilePath = None
+        self.TargetFile = None # the relative path of the target file
+        self.TargetFilePath = None # the abs path of the target file
         self.CurrentLine = -1
         self._MacroNotDefinedValue = "0"  # value to used for undefined macro
 
@@ -81,39 +81,37 @@ class BaseParser(object):
 
     def FindPath(self, *p):
         """
-        Given a path, it will find it relative to the root, the current target file, or the 
+        Given a path, it will find it relative to the root, the current target file, or the packages path
         Args:
           *p:
 
-        Returns:
+        Returns: None on failure
 
         """
-        # NOTE: Some of this logic should be replaced
-        #       with the path resolution from Edk2Module code.
-
+        print(f"Finding {p}")
         # If the absolute path exists, return it.
         Path = os.path.join(self.RootPath, *p)
         if os.path.exists(Path):
-            return Path
+            return os.path.abspath(Path)
 
         # If that fails, check a path relative to the target file.
         if self.TargetFilePath is not None:
             Path = os.path.abspath(os.path.join(os.path.dirname(self.TargetFilePath), *p))
             print("Checking " + Path + " " + self.TargetFilePath)
             if os.path.exists(Path):
-                return Path
+                return os.path.abspath(Path)
 
         # If that fails, check in every possible Pkg path.
         if self._Edk2PathUtil is not None:
             target_path = os.path.join(*p)
             Path = self._Edk2PathUtil.GetAbsolutePathOnThisSytemFromEdk2RelativePath(target_path)
             if Path is not None:
-                return Path
+                return os.path.abspath(Path)
 
         # log invalid file path
         Path = os.path.join(self.RootPath, *p)
         self.Logger.error("Invalid file path %s" % Path)
-        return Path
+        return None
 
     def WriteLinesToFile(self, filepath):
         """

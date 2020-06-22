@@ -30,7 +30,7 @@ class TestDscParserIncludes(unittest.TestCase):
 
     def test_dsc_include_single_file(self):
         ''' This tests whether includes work properly '''
-        workspace = tempfile.gettempdir()
+        workspace = tempfile.mkdtemp()
 
         file1_name = "file1.dsc"
         file2_name = "file2.dsc"
@@ -54,7 +54,7 @@ class TestDscParserIncludes(unittest.TestCase):
 
     def test_dsc_include_missing_file(self):
         ''' This tests whether includes work properly '''
-        workspace = tempfile.gettempdir()
+        workspace = tempfile.mkdtemp()
 
         file1_name = "file1.dsc"
         file1_path = os.path.join(workspace, file1_name)
@@ -70,7 +70,7 @@ class TestDscParserIncludes(unittest.TestCase):
 
     def test_dsc_include_missing_file_no_fail_mode(self):
         ''' This tests whether includes work properly if no fail mode is on'''
-        workspace = tempfile.gettempdir()
+        workspace = tempfile.mkdtemp()
 
         file1_name = "file1.dsc"
         file1_path = os.path.join(workspace, file1_name)
