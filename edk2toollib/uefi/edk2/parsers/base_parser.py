@@ -44,7 +44,7 @@ class BaseParser(object):
         Returns:
 
         """
-        self.RootPath = path
+        self.RootPath = os.path.abspath(path)
         self._ConfigEdk2PathUtil()
         return self
 
@@ -85,7 +85,7 @@ class BaseParser(object):
         Args:
           *p:
 
-        Returns: None on failure
+        Returns: a full absolute path if the file exists, None on failure
 
         """
         # If the absolute path exists, return it.
@@ -104,11 +104,11 @@ class BaseParser(object):
             target_path = os.path.join(*p)
             Path = self._Edk2PathUtil.GetAbsolutePathOnThisSytemFromEdk2RelativePath(target_path, False)
             if Path is not None:
-                return os.path.abspath(Path)
+                return Path
 
         # log invalid file path
         Path = os.path.join(self.RootPath, *p)
-        self.Logger.error("Invalid file path %s" % Path)
+        self.Logger.error(f"Invalid file path: {p}")
         return None
 
     def WriteLinesToFile(self, filepath):
