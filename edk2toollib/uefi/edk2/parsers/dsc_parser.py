@@ -320,8 +320,7 @@ class DscParser(HashFileParser):
         self.Parsed = True
 
     def _PushTargetFile(self, targetFile):
-        self.TargetFile = targetFile
-        self.TargetFilePath = os.path.abspath(self.TargetFile)
+        self.TargetFilePath = os.path.abspath(targetFile)
         self._dsc_file_paths.add(self.TargetFilePath)
 
     def GetMods(self):
