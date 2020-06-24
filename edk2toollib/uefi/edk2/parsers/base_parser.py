@@ -7,6 +7,7 @@
 ##
 import os
 import logging
+from edk2toollib.uefi.edk2 import path_utilities
 
 
 class BaseParser(object):
@@ -24,8 +25,8 @@ class BaseParser(object):
         self.ConditionalStack = []
         self.RootPath = ""
         self.PPs = []
-        self.TargetFile = None
-        self.TargetFilePath = None
+        self._Edk2PathUtil = None
+        self.TargetFilePath = None  # the abs path of the target file
         self.CurrentLine = -1
         self._MacroNotDefinedValue = "0"  # value to used for undefined macro
 
@@ -42,8 +43,13 @@ class BaseParser(object):
         Returns:
 
         """
-        self.RootPath = path
+        self.RootPath = os.path.abspath(path)
+        self._ConfigEdk2PathUtil()
         return self
+
+    def _ConfigEdk2PathUtil(self):
+        ''' creates the path utility object based on the root path and package paths '''
+        self._Edk2PathUtil = path_utilities.Edk2Path(self.RootPath, self.PPs, error_on_invalid_pp=False)
 
     def SetPackagePaths(self, pps=[]):
         """
@@ -51,10 +57,13 @@ class BaseParser(object):
         Args:
           pps:  (Default value = [])
 
+        This must be called after SetBaseAbsPath
+
         Returns:
 
         """
         self.PPs = pps
+        self._ConfigEdk2PathUtil()
         return self
 
     def SetInputVars(self, inputdict):
@@ -71,37 +80,43 @@ class BaseParser(object):
 
     def FindPath(self, *p):
         """
-
+        Given a path, it will find it relative to the root, the current target file, or the packages path
         Args:
-          *p:
+          *p: any number of strings or path like objects
 
-        Returns:
+        Returns: a full absolute path if the file exists, None on failure
 
         """
-        # NOTE: Some of this logic should be replaced
-        #       with the path resolution from Edk2Module code.
+        # check if we're getting a None
+        if p is None or (len(p) == 1 and p[0] is None):
+            return None
+
+        Path = os.path.join(*p)
+        # check if it it is absolute
+        if os.path.isabs(Path) and os.path.exists(Path):
+            return Path
 
         # If the absolute path exists, return it.
         Path = os.path.join(self.RootPath, *p)
         if os.path.exists(Path):
-            return Path
+            return os.path.abspath(Path)
 
         # If that fails, check a path relative to the target file.
         if self.TargetFilePath is not None:
-            Path = os.path.join(self.TargetFilePath, *p)
+            Path = os.path.abspath(os.path.join(os.path.dirname(self.TargetFilePath), *p))
             if os.path.exists(Path):
-                return Path
+                return os.path.abspath(Path)
 
         # If that fails, check in every possible Pkg path.
-        for Pkg in self.PPs:
-            Path = os.path.join(self.RootPath, Pkg, *p)
-            if os.path.exists(Path):
+        if self._Edk2PathUtil is not None:
+            target_path = os.path.join(*p)
+            Path = self._Edk2PathUtil.GetAbsolutePathOnThisSytemFromEdk2RelativePath(target_path, False)
+            if Path is not None:
                 return Path
 
         # log invalid file path
-        Path = os.path.join(self.RootPath, *p)
-        self.Logger.error("Invalid file path %s" % Path)
-        return Path
+        self.Logger.error(f"Invalid file path: {p}")
+        return None
 
     def WriteLinesToFile(self, filepath):
         """

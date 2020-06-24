@@ -103,7 +103,7 @@ class Edk2Path(object):
         self.logger.error("AbsolutePath: %s" % abspath)
         return None
 
-    def GetAbsolutePathOnThisSytemFromEdk2RelativePath(self, relpath):
+    def GetAbsolutePathOnThisSytemFromEdk2RelativePath(self, relpath, log_errors=True):
         ''' Given a edk2 relative path return an absolute path to the file
         in this workspace.
 
@@ -124,8 +124,9 @@ class Edk2Path(object):
             abspath = os.path.join(a, relpath)
             if(os.path.exists(abspath)):
                 return abspath
-        self.logger.error("Failed to convert Edk2Relative Path to an Absolute Path on this system.")
-        self.logger.error("Relative Path: %s" % relpath)
+        if log_errors:
+            self.logger.error("Failed to convert Edk2Relative Path to an Absolute Path on this system.")
+            self.logger.error("Relative Path: %s" % relpath)
 
         return None
 

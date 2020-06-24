@@ -588,26 +588,34 @@ class TestBaseParserPathAndFile(unittest.TestCase):
         parser.Lines = ["hello"]
         package_paths = ["Common/Test", "SM_MAGIC"]
         root_path = tempfile.mkdtemp()
-        target_filedir = os.path.join(root_path, "BuildPkg")
-        parser.TargetFilePath = target_filedir
-        parser.SetPackagePaths(package_paths)
-        parser.SetBaseAbsPath(root_path)
-        os.makedirs(target_filedir)
         index = 0
-        root_file = "root.txt"
-        target_file = "target.txt"
+        # create the packages path folders
         for package in package_paths:
             pack_path = os.path.join(root_path, package)
             os.makedirs(pack_path)
             parser.WriteLinesToFile(os.path.join(pack_path, f"package_{index}.txt"))
             index += 1
-        root_filepath = os.path.join(root_path, root_file)
-        target_filepath = os.path.join(target_filedir, target_file)
-        parser.WriteLinesToFile(root_filepath)
-        parser.WriteLinesToFile(target_filepath)
+        # setup the parser
+        parser.SetBaseAbsPath(root_path)
+        parser.SetPackagePaths(package_paths)
 
+        # create the root and target files
+        root_file = "root.txt"
+        target_file = "target.txt"
+
+        root_filepath = os.path.join(root_path, root_file)
+        target_filedir = os.path.join(root_path, "BuildPkg")
+        target_filepath = os.path.join(target_filedir, target_file)
+        # create root file
+        parser.WriteLinesToFile(root_filepath)
+        # create target file
+        os.makedirs(target_filedir)
+        parser.WriteLinesToFile(target_filepath)
+        parser.TargetFilePath = target_filepath
+        # check if we can find the root
         root_found = parser.FindPath(root_file)
         self.assertEqual(root_found, root_filepath)
+        # check we can find the target using the target path
         target_found = parser.FindPath(target_file)
         self.assertEqual(target_found, target_filepath)
 
@@ -620,8 +628,12 @@ class TestBaseParserPathAndFile(unittest.TestCase):
         # invalid files
         invalid_filename = "YOU_WONT_FIND_ME.txt"
         invalid_file = os.path.join(root_path, invalid_filename)
-        invalid_result = parser.FindPath(invalid_filename)
-        self.assertEqual(invalid_file, invalid_result)
+        invalid_result = parser.FindPath(invalid_file)
+        invalid_result2 = parser.FindPath(invalid_filename)
+        self.assertEqual(None, invalid_result)
+        self.assertEqual(None, invalid_result2)
+        invalid_result3 = parser.FindPath(None)
+        self.assertEqual(None, invalid_result3)
 
     # make sure we can write out to a file
 
