@@ -49,7 +49,7 @@ class BaseParser(object):
 
     def _ConfigEdk2PathUtil(self):
         ''' creates the path utility object based on the root path and package paths '''
-        self._Edk2PathUtil = path_utilities.Edk2Path(self.RootPath, self.PPs)
+        self._Edk2PathUtil = path_utilities.Edk2Path(self.RootPath, self.PPs, error_on_invalid_pp=False)
 
     def SetPackagePaths(self, pps=[]):
         """
@@ -82,11 +82,20 @@ class BaseParser(object):
         """
         Given a path, it will find it relative to the root, the current target file, or the packages path
         Args:
-          *p:
+          *p: any number of strings or path like objects
 
         Returns: a full absolute path if the file exists, None on failure
 
         """
+        # check if we're getting a None
+        if p is None or (len(p) == 1 and p[0] is None):
+            return None
+
+        Path = os.path.join(*p)
+        # check if it it is absolute
+        if os.path.isabs(Path) and os.path.exists(Path):
+            return Path
+
         # If the absolute path exists, return it.
         Path = os.path.join(self.RootPath, *p)
         if os.path.exists(Path):
@@ -106,7 +115,6 @@ class BaseParser(object):
                 return Path
 
         # log invalid file path
-        Path = os.path.join(self.RootPath, *p)
         self.Logger.error(f"Invalid file path: {p}")
         return None
 

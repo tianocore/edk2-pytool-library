@@ -632,6 +632,8 @@ class TestBaseParserPathAndFile(unittest.TestCase):
         invalid_result2 = parser.FindPath(invalid_filename)
         self.assertEqual(None, invalid_result)
         self.assertEqual(None, invalid_result2)
+        invalid_result3 = parser.FindPath(None)
+        self.assertEqual(None, invalid_result3)
 
     # make sure we can write out to a file
 
