@@ -6,61 +6,84 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-##
-#
-##
-def Section_Offset_Parse(x):
-    return x
+import struct
 
-##
-#
-##
-def Section_Length_Parse(x):
-    return x
+"""
+A Section Header within a CPER has the following structure
 
-##
-#
-##
-def Revision_Parse(x):
-    return x
+Section Offset      (4  bytes) : Offset from start of the CPER (not the start of the section)
+                                 to the beginning of the section body
+Section Length      (4  bytes) : Length in bytes of the section body
+Revision            (2  bytes) : Represents the major and minor version number of the Error Record
+                                 definition
+Validation Bits     (1  byte ) : Indicates the validity of the FRU ID and FRU String fields
+Reserved            (1  byte ) : Must be zero
+Flags               (12 bytes) : Contains info describing the Error Record TODO: More info here
+Section Type        (16 bytes) : Holds a pre-defined GUID value indicating that this section is from a 
+                                 particular error.
+Section Severity    (4  bytes) : Value from 0 - 3 indicating the severity of the error
+FRU String          (20 bytes) : String identifying the FRU hardware
+"""
 
-##
-#
-##
-def Section_Valid_Mask_Parse(x):
-    return x
+class CPER_SECTION(object):
 
-##
-#
-##
-def Flags_Parse(x):
-    return x
+    STRUCT_FORMAT = "=IIH1s1sH16sH20s"
 
-##
-#
-##
-def Section_Type_Parse(x):
-    return x
-
-##
-#
-##
-def Section_Severity_Parse(x):
-    return x
-
-##
-#
-##
-def FRU_String_Parse(x):
-    return x
+    def __init__(self, cper_section_byte_array):
+        (self.SectionOffset,
+            self.Revision,
+            self.ValidationBits,
+            self.Reserved,
+            self.Flags,
+            self.SectionType,
+            self.SectionSeverity,
+            self.FRUString) = struct.unpack_from(self.STRUCT_FORMAT, cper_section_byte_array)
 
 
-###
-# Main Parser
-###
-def CPER_Section_Parse(x):
-    print("Hello World!")
-    return x
+    ##
+    #
+    ##
+    def Section_Offset_Parse(self, x):
+        return x
 
-if __name__ == "__main__":
-    CPER_Section_Parse(1)
+    ##
+    #
+    ##
+    def Section_Length_Parse(self, x):
+        return x
+
+    ##
+    #
+    ##
+    def Revision_Parse(self, x):
+        return x
+
+    ##
+    #
+    ##
+    def Section_Valid_Mask_Parse(self, x):
+        return x
+
+    ##
+    #
+    ##
+    def Flags_Parse(self, x):
+        return x
+
+    ##
+    #
+    ##
+    def Section_Type_Parse(self, x):
+        return x
+
+    ##
+    #
+    ##
+    def Section_Severity_Parse(self, x):
+        return x
+
+    ##
+    #
+    ##
+    def FRU_String_Parse(self, x):
+        return x
