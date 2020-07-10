@@ -7,6 +7,28 @@
 ##
 
 import struct
+# TODO: Find out what each field means and fill in
+"""
+  WHEA: Windows Hardware Error Architecture
+
+  Structure of a WHEA Record
+  Revision          (1  byte )  : The Revision of WHEA Record
+  Phase             (1  byte )  :
+  Reserved          (2  bytes)  :   
+  ErrorSeverity     (4  bytes)  :
+  PayloadSize       (4  bytes)  :
+  ErrorStatusValue  (4  bytes)  :
+  AdditionalInfo1   (8  bytes)  :
+  AdditionalInfo2   (8  bytes)  :
+  ModuleID          (4  bytes)  :
+  LibraryID         (4  bytes)  :
+  IhvSharingGuid    (4  bytes)  :
+"""
+##
+#
+##
+def Revision_Parse(x):
+    return x
 
 """
 WHEA: Windows Hardware Error Architecture
