@@ -3,74 +3,128 @@
 #
 # Copyright (c) Microsoft Corporation
 #
-# SPDX-License-Identifier: BSD-2-Clause-Patent
+# SPDX-License-Identifier(self): BSD-2-Clause-Patent
 ##
 
-##
-#
-##
-def Revision_Parse(x):
-    return x
+import struct
 
-##
-#
-##
-def Phase_Parse(x):
-    return x
+"""
+WHEA: Windows Hardware Error Architecture
 
-##
-#
-##
-def Reserved_Parse(x):
-    return x
+TODO: Fill this out with breakdown of whea header
+"""
 
-##
-#
-##
-def Error_Severity_Parse(x):
-    return x
+"""
+Python Struct Format Characters
 
-##
-#
-##
-def Payload_Size_Parse(x)
-    return x
+Format      C Type                  Python Type     Standard Size
+x           pad byte                none            1
+c           char                    integer         1
+b           signed char             integer         1
+B           unsigned char           integer         1
+?           _Bool                   bool            1
+h           short                   integer         2
+H           unsigned short          integer         2
+i           int                     integer         4
+I           unsigned int            integer         4
+l           long                    integer         4
+L           unsigned long           integer         4
+q           long long               integer         8
+Q           unsigned long long      integer         8
+n           ssize_t                 integer
+N           size_t                  integer
+e           (6)                     float           2
+f           float                   float           4
+d           double                  float           8
+s           char[]                  bytes
+p           char[]                  bytes
+P           void *                  integer
+"""
 
-##
-#
-##
-def Additional_Info_1_Parse(x)
-    return x
+class WHEA_HEAD(object):
 
-##
-#
-##
-def Additional_Info_2_Parse(x)
-    return x
+    STRUCT_FORMAT = "="
+    placeholder = 0
+    def __init__(self,whea_byte_array):
+        (self.SignatureStart,
+            self.Revision,
+            self.SignatureEnd,
+            self.SectionCount,
+            self.ErrorSeverity,
+            self.ValidationBytes,
+            self.RecordLength,
+            self.Timestamp,
+            self.PlatformID,
+            self.PartitionID,
+            self.CreatorID,
+            self.NotificationType,
+            self.RecordID,
+            self.Flags,
+            self.PersistenceInfo,
+            self.Reserved) = struct.unpack_from(self.STRUCT_FORMAT, whea_byte_array)
 
-##
-#
-##
-def Module_ID_Parse(x)
-    return x
+    ##
+    #
+    ##
+    def Revision_Parse(self):
+        return self.placeholder
 
-##
-#
-##
-def Library_ID_Parse(x)
-    return x
+    ##
+    #
+    ##
+    def Phase_Parse(self):
+        return self.placeholder
 
-##
-#
-##
-def Ihv_Sharing_Guid_Parse(x)
-    return x
+    ##
+    #
+    ##
+    def Reserved_Parse(self):
+        return self.placeholder
 
-##
-#
-##
-def WHEA_Parse(x):
-    return x
+    ##
+    #
+    ##
+    def Error_Severity_Parse(self):
+        return self.placeholder
 
-if __name__ == "__main__":
-    WHEA_Parse(1)
+    ##
+    #
+    ##
+    def Payload_Size_Parse(self):
+        return self.placeholder
+
+    ##
+    #
+    ##
+    def Additional_Info_1_Parse(self):
+        return self.placeholder
+
+    ##
+    #
+    ##
+    def Additional_Info_2_Parse(self):
+        return self.placeholder
+
+    ##
+    #
+    ##
+    def Module_ID_Parse(self):
+        return self.placeholder
+
+    ##
+    #
+    ##
+    def Library_ID_Parse(self):
+        return self.placeholder
+
+    ##
+    #
+    ##
+    def Ihv_Sharing_Guid_Parse(self):
+        return self.placeholder
+
+    ##
+    #
+    ##
+    def WHEA_Parse(self):
+        return self.placeholder

@@ -8,7 +8,6 @@
 
 import struct
 
-#TODO Add more info here
 """
 CPER: Common Platform Error Record
 
@@ -33,11 +32,38 @@ Persistence Info  (8  bytes)  : Produced and consumed by the creator of the Erro
 Reserved          (12 bytes)  : Must be zero
 """
 
+"""
+Python Struct Format Characters
+
+Format      C Type                  Python Type     Standard Size
+x           pad byte                none            1
+c           char                    integer         1
+b           signed char             integer         1
+B           unsigned char           integer         1
+?           _Bool                   bool            1
+h           short                   integer         2
+H           unsigned short          integer         2
+i           int                     integer         4
+I           unsigned int            integer         4
+l           long                    integer         4
+L           unsigned long           integer         4
+q           long long               integer         8
+Q           unsigned long long      integer         8
+n           ssize_t                 integer
+N           size_t                  integer
+e           (6)                     float           2
+f           float                   float           4
+d           double                  float           8
+s           char[]                  bytes
+p           char[]                  bytes
+P           void *                  integer
+"""
+
 class CPER_HEAD(object):
 
     STRUCT_FORMAT = "=IHIHIIIQ16s16s16s16sQIQ12s"
 
-    def __init__(self, cper_head_byte_array):
+    def __init__(self,cper_head_byte_array):
         (self.SignatureStart,
             self.Revision,
             self.SignatureEnd,
@@ -57,94 +83,101 @@ class CPER_HEAD(object):
 
 
     ##
-    #
+    # 
     ##
-    def Signature_Parse(self,x):
-        return x
+    def Signature_Parse(self):
+        return self.SignatureStart
 
     ##
     #
     ##
-    def Revision_Parse(self,x):
-        return x
+    def Revision_Parse(self):
+        return self.Revision
 
     ##
     #
     ##
-    def Section_Count_Parse(self,x):
-        return x
+    def Section_Count_Parse(self):
+        return self.SectionCount
 
     ##
     #
     ##
-    def Error_Severity_Parse(self,x):
-        return x
+    def Error_Severity_Parse(self):
+        return self.ErrorSeverity
 
     ##
     #
     ##
-    def Validation_Bytes_Parse(self,x):
-        return x
+    def Validation_Bytes_Parse(self):
+        return self.ValidationBytes
 
     ##
     #
     ##
-    def Record_Length_Parse(self,x):
-        return x
+    def Record_Length_Parse(self):
+        return self.RecordLength
 
     ##
     #
     ##
-    def Timestamp_Parse(self,x):
-        return x
+    def Timestamp_Parse(self):
+        return self.Timestamp
 
     ##
     #
     ##
-    def Platform_ID_Parse(self,x):
-        return x
+    def Platform_ID_Parse(self):
+        return self.PlatformID
 
     ##
     #
     ##
-    def Partition_ID_Parse(self,x):
-        return x
+    def Partition_ID_Parse(self):
+        return self.PartitionID
 
     ##
     #
     ##
-    def Creator_ID_Parse(self,x):
-        return x
+    def Creator_ID_Parse(self):
+        return self.CreatorID
 
     ##
     #
     ##
-    def Notification_Type_Parse(self,x):
-        return x
+    def Notification_Type_Parse(self):
+        return self.NotificationType
 
     ##
     #
     ##
-    def Record_ID_Parse(self,x):
-        return x
+    def Record_ID_Parse(self):
+        return self.RecordID
 
     ##
     #
     ##
-    def Flags_Parse(self,x):
-        return x
+    def Flags_Parse(self):
+        return self.Flags
 
     ##
     #
     ##
-    def Persistence_Info_Parse(self,x):
-        return x
+    def Persistence_Info_Parse(self):
+        return self.PersistenceInfo
 
     ##
     #
     ##
-    def Reserved_Parse(self,x):
-        return x
+    def Reserved_Parse(self):
+        return self.Reserved
         
-if __name__ == "__main__":
-    CPER_Head_Parse(1)
+    ##
+    #
+    ##
+    def Pretty_Pring(self):
+        print("Hello World!")
+
+
+def Handle(thing2handle):
+    # Handle that thing!
