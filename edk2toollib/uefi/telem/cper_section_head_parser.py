@@ -70,6 +70,8 @@ class CPER_SECTION_HEAD(object):
         self.ValidBitsList = [False,False]
         self.FlagList = []
 
+        print("In section parsing. Section Length: " + str(self.SectionLength) + " Section Offset: " + str(self.SectionOffset))
+
     ##
     #
     ##

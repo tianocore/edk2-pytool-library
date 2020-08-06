@@ -11,6 +11,7 @@ import uuid
 import csv
 import sys
 from cper_head_parser import *
+from cper_section_head_parser import *
 
 """
 CPER: Common Platform Error Record
@@ -82,29 +83,35 @@ class CPER(object):
 
     def __init__(self, input):
         self.RawData = bytearray.fromhex(input)
-        #print(self.RawData)
         self.Header = 1
         self.Sections = []
         self.SetCPERHeader()
+        self.SetSectionHeaders()
 
+    ##
+    # Turn the portion of the raw input associated with the CPER head into a CPER_HEAD object
+    ##
     def SetCPERHeader(self):
         temp = self.RawData[:self.CPER_HEADER_SIZE]
         self.Header = CPER_HEAD(temp)
         self.Header.CreatorIDParse()
 
+    ##
+    # Set each of the section headers to CPER_SECTION_HEADER objects
+    ##
     def SetSectionHeaders(self):
-        x = 1
-        return x
+        temp = self.RawData[self.CPER_HEADER_SIZE:self.CPER_HEADER_SIZE + (self.CPER_SECTION_HEADER_SIZE * self.Header.SectionCount)]
+        for x in range(self.Header.SectionCount):
+            #print("going from " + str(x * self.CPER_SECTION_HEADER_SIZE) + " to " + str(((x + 1) * self.CPER_SECTION_HEADER_SIZE) - 1))
+            self.Sections.append(CPER_SECTION_HEAD(temp[x * self.CPER_SECTION_HEADER_SIZE: (x + 1) * self.CPER_SECTION_HEADER_SIZE]))
+        return temp
     
+    ##
+    # Get each of the actual section data pieces and either pass it to something which can parse it, or dump the hex
+    ##
     def SetSectionData(self):
         x = 1
         return x
-    
-    ##
-    #
-    ##
-    def Pretty_Print(self):
-        print("Hello World!")
 
 if __name__ == "__main__":
     with open('HeadersData.csv','r') as csv_file:

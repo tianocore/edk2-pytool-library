@@ -40,7 +40,7 @@ x           pad byte                none            1
 c           char                    integer         1
 b           signed char             integer         1
 B           unsigned char           integer         1
-?           Bool                   bool            1
+?           _Bool                   bool            1
 h           short                   integer         2
 H           unsigned short          integer         2
 i           int                     integer         4
@@ -49,8 +49,8 @@ l           long                    integer         4
 L           unsigned long           integer         4
 q           long long               integer         8
 Q           unsigned long long      integer         8
-n           ssizet                 integer
-N           sizet                  integer
+n           ssize_t                 integer
+N           size_t                  integer
 e           (6)                     float           2
 f           float                   float           4
 d           double                  float           8
@@ -93,7 +93,7 @@ class CPER_HEAD(object):
         return str(self.SignatureStart)
 
     ##
-    #
+    # Parse the CPER Revision value
     ##
     def RevisionParse(self):
         return self.Revision
@@ -102,7 +102,16 @@ class CPER_HEAD(object):
     #
     ##
     def ErrorSeverityParse(self):
-        return self.ErrorSeverity
+        if(self.ErrorSeverity == 0):
+            return "Recoverable"
+        elif(self.ErrorSeverity == 1):
+            return "Fatal"
+        elif(self.ErrorSeverity == 2):
+            return "Corrected"
+        elif(self.ErrorSeverity == 3):
+            return "Informational"
+        
+        return "Unknown"
 
     ##
     # if bit 1: PlatformID contains valid info
@@ -130,7 +139,7 @@ class CPER_HEAD(object):
                                      str((self.Timestamp >> 0) & int('0b11111111', 2))
 
     ##
-    # 
+    # Parse the Platform GUID (Typically, the Platform SMBIOS UUID)
     ##
     def PlatformIDParse(self):
         
@@ -144,7 +153,7 @@ class CPER_HEAD(object):
         return self.PlatformID
 
     ##
-    #
+    # Parse the GUID for the Software Partition (if applicable)
     ##
     def PartitionIDParse(self):
         if(self.ValidBitsList[3]):
@@ -157,7 +166,7 @@ class CPER_HEAD(object):
         return self.PartitionID
 
     ##
-    #
+    # Parse the GUID for the GUID of the Error "Creator"
     ##
     def CreatorIDParse(self):
         try:
@@ -167,7 +176,7 @@ class CPER_HEAD(object):
             return self.CreatorID
 
     ##
-    #
+    # Parse the pre-assigned GUID associated with the event (ex.Boot)
     ##
     def NotificationTypeParse(self):
         try:
@@ -177,7 +186,7 @@ class CPER_HEAD(object):
             return self.NotificationType
 
     ##
-    #
+    # When combined with the Creator ID, Record ID identifies the Error Record
     ##
     def RecordIDParse(self):
         return self.RecordID
@@ -201,7 +210,7 @@ class CPER_HEAD(object):
             self.FlagList += "Persist"
 
     ##
-    #
+    # Parse the persistence info which is produced and consumed by the creator of the Error Record
     ##
     def PersistenceInfoParse(self):
         return self.PersistenceInfo
