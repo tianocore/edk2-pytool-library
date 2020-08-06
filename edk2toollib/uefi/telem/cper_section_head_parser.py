@@ -17,8 +17,8 @@ Section Length      (4  byte offset, 4  byte length) : Length in bytes of the se
 Revision            (8  byte offset, 2  byte length) : Represents the major and minor version number of the Error Record definition
 Validation Bits     (10 byte offset, 1  byte length) : Indicates the validity of the FRU ID and FRU String fields
 Reserved            (11 byte offset, 1  byte length) : Must be zero
-Flags               (12 byte offset, 4  byte length) : Contains info describing the Error Record TODO: More info here
-Section Type        (16 byte offset, 16 byte length) : Holds a pre-defined GUID value indicating that this section is from a particular error.
+Flags               (12 byte offset, 4  byte length) : Contains info describing the Error Record (ex. Is this the primary section of the error, has the component been reset if applicable, has the error been contained)
+Section Type        (16 byte offset, 16 byte length) : Holds a pre-defined GUID value indicating that this section is from a particular error
 FRU ID              (32 byte offset, 16 byte length) : ? Not detailed in the CPER doc
 Section Severity    (48 byte offset, 4  byte length) : Value from 0 - 3 indicating the severity of the error
 FRU String          (52 byte offset, 20 byte length) : String identifying the FRU hardware
@@ -57,6 +57,10 @@ class CPER_SECTION_HEAD(object):
     STRUCT_FORMAT = "=IIH1s1sH16sH20s"
 
     def __init__(self, cper_section_byte_array):
+        
+        self.ValidBitsList = [False,False]
+        self.FlagList = []
+
         (self.SectionOffset,
             self.SectionLength,
             self.Revision,
@@ -67,20 +71,20 @@ class CPER_SECTION_HEAD(object):
             self.SectionSeverity,
             self.FRUString) = struct.unpack_from(self.STRUCT_FORMAT, cper_section_byte_array)
 
-        self.ValidBitsList = [False,False]
-        self.FlagList = []
 
-        print("In section parsing. Section Length: " + str(self.SectionLength) + " Section Offset: " + str(self.SectionOffset))
+        # print("In section parsing. Section Length: " + str(self.SectionLength) + " Section Offset: " + str(self.SectionOffset))
 
     ##
+    # Parse the major and minor version number of the Error Record definition
     #
+    # TODO: Actually parse out the zeroth and first byte which represent the minor and major version numbers respectively 
     ##
     def RevisionParse(self):
         return self.Revision
 
     ##
-    # if bit 1: FruID contains valid info
-    # if bit 2: FruID String contains valid info
+    # if bit 0: FruID contains valid info
+    # if bit 1: FruID String contains valid info
     ##
     def ValidationBitsParse(self):
         if(self.ValidationBits & int('0b1', 2)):
@@ -90,6 +94,12 @@ class CPER_SECTION_HEAD(object):
 
     ##
     # Check the flags field and populate list containing applicable flags
+    # if bit 0: This is the section to be associated with the error condition
+    # if bit 1: The error was not contained within the processor or memery heirarchy
+    # if bit 2: The component has been reset and must be reinitialized
+    # if bit 3: Error threshold exceeded for this componenet
+    # if bit 4: Resource could not be queried for additional information
+    # if bit 5: Action has been taken to contain the error, but the error has not been corrected
     ##
     def FlagsParse(self):
 
@@ -107,7 +117,7 @@ class CPER_SECTION_HEAD(object):
             self.FlagList += "Latent Error"
 
     ##
-    #
+    # Parse the Section Type which is a pre-defined GUID indicating that this section is from a particular error
     ##
     def SectionTypeParse(self):
         try:
@@ -117,7 +127,7 @@ class CPER_SECTION_HEAD(object):
             return self.SectionType
 
     ##
-    #
+    # TODO: Fill in
     ##
     def FRUIDParse(self):
         if(self.ValidationBits[0]):
@@ -145,7 +155,7 @@ class CPER_SECTION_HEAD(object):
             return "Informational"
 
     ##
-    #
+    # Parse out the custom string identifying the FRU hardware
     ##
     def FRUStringParse(self):
         if(self.ValidBitsList[1]):

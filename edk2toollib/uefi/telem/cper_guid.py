@@ -6,6 +6,8 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
+# TODO: Probably going to trash this as known guids will exist in the friendlynames.csv file
+
 """
 /* ---Notify type GUIDs--- */
 

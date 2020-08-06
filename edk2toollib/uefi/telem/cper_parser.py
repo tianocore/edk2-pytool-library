@@ -42,38 +42,11 @@ Section Length      (4  byte offset, 4  byte length) : Length in bytes of the se
 Revision            (8  byte offset, 2  byte length) : Represents the major and minor version number of the Error Record definition
 Validation Bits     (10 byte offset, 1  byte length) : Indicates the validity of the FRU ID and FRU String fields
 Reserved            (11 byte offset, 1  byte length) : Must be zero
-Flags               (12 byte offset, 4  byte length) : Contains info describing the Error Record TODO: More info here
-Section Type        (16 byte offset, 16 byte length) : Holds a pre-defined GUID value indicating that this section is from a particular error.
+Flags               (12 byte offset, 4  byte length) : Contains info describing the Error Record (ex. Is this the primary section of the error, has the component been reset if applicable, has the error been contained)
+Section Type        (16 byte offset, 16 byte length) : Holds a pre-defined GUID value indicating that this section is from a particular error
 FRU ID              (32 byte offset, 16 byte length) : ? Not detailed in the CPER doc
 Section Severity    (48 byte offset, 4  byte length) : Value from 0 - 3 indicating the severity of the error
 FRU String          (52 byte offset, 20 byte length) : String identifying the FRU hardware
-"""
-
-"""
-Python Struct Format Characters
-
-Format      C Type                  Python Type     Standard Size
-x           pad byte                none            1
-c           char                    integer         1
-b           signed char             integer         1
-B           unsigned char           integer         1
-?           _Bool                   bool            1
-h           short                   integer         2
-H           unsigned short          integer         2
-i           int                     integer         4
-I           unsigned int            integer         4
-l           long                    integer         4
-L           unsigned long           integer         4
-q           long long               integer         8
-Q           unsigned long long      integer         8
-n           ssize_t                 integer
-N           size_t                  integer
-e           (6)                     float           2
-f           float                   float           4
-d           double                  float           8
-s           char[]                  bytes
-p           char[]                  bytes
-P           void *                  integer
 """
 
 class CPER(object):
@@ -94,18 +67,18 @@ class CPER(object):
     def SetCPERHeader(self):
         temp = self.RawData[:self.CPER_HEADER_SIZE]
         self.Header = CPER_HEAD(temp)
-        self.Header.CreatorIDParse()
 
     ##
     # Set each of the section headers to CPER_SECTION_HEADER objects
     ##
     def SetSectionHeaders(self):
-        temp = self.RawData[self.CPER_HEADER_SIZE:self.CPER_HEADER_SIZE + (self.CPER_SECTION_HEADER_SIZE * self.Header.SectionCount)]
-        for x in range(self.Header.SectionCount):
-            #print("going from " + str(x * self.CPER_SECTION_HEADER_SIZE) + " to " + str(((x + 1) * self.CPER_SECTION_HEADER_SIZE) - 1))
-            self.Sections.append(CPER_SECTION_HEAD(temp[x * self.CPER_SECTION_HEADER_SIZE: (x + 1) * self.CPER_SECTION_HEADER_SIZE]))
-        return temp
-    
+        try:
+            temp = self.RawData[self.CPER_HEADER_SIZE:self.CPER_HEADER_SIZE + (self.CPER_SECTION_HEADER_SIZE * self.Header.SectionCount)]
+            for x in range(self.Header.SectionCount):
+                #print("going from " + str(x * self.CPER_SECTION_HEADER_SIZE) + " to " + str(((x + 1) * self.CPER_SECTION_HEADER_SIZE) - 1))
+                self.Sections.append(CPER_SECTION_HEAD(temp[x * self.CPER_SECTION_HEADER_SIZE: (x + 1) * self.CPER_SECTION_HEADER_SIZE]))
+        except:
+            pass
     ##
     # Get each of the actual section data pieces and either pass it to something which can parse it, or dump the hex
     ##
