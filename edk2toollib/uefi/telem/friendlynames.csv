@@ -17,9 +17,9 @@ CMCI Notify Type,919448b2-3739-4b7f-a8f1-e0062805c2a3
 Processor Generic Error Section,9876ccad-47b4-4bdb-b65e-16f193c4f3db
 Device Driver Error Section,00000000-0000-0000-0000-000000000000
 IPMI MSR Dump Section,1c15b445-9b06-4667-ac25-33c056b88803
-XPF Processor Errordc3ea0b0-a144-4797-b95b-53fa242b6e1d
-IPF Processor Errore429faf1-3cb7-11d4-bca7-0080c73c8881
-ARM Processor Errore19e3d16-bc11-11e4-9caa-c2051d5d46b0
+XPF Processor Errord,c3ea0b0-a144-4797-b95b-53fa242b6e1d
+IPF Processor Errore,429faf1-3cb7-11d4-bca7-0080c73c8881
+ARM Processor Errore,19e3d16-bc11-11e4-9caa-c2051d5d46b0
 Memory Error Section,a5bc1114-6f64-4ede-b863-3e83ed7c83b1
 PCIe Error Section,d995e954-bbc1-430f-ad91-b44dcb3c6f35
 PCIX Bus Error Section,c5753963-3b84-4095-bf78-eddad3f9c9dd
