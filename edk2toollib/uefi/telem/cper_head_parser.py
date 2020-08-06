@@ -1,4 +1,4 @@
-# @file cper_head_parser.py
+# @file cperheadparser.py
 # Code to help parse cper header
 #
 # Copyright (c) Microsoft Corporation
@@ -8,6 +8,7 @@
 
 import struct
 import uuid
+import sys
 
 """
 CPER: Common Platform Error Record
@@ -39,7 +40,7 @@ x           pad byte                none            1
 c           char                    integer         1
 b           signed char             integer         1
 B           unsigned char           integer         1
-?           _Bool                   bool            1
+?           Bool                   bool            1
 h           short                   integer         2
 H           unsigned short          integer         2
 i           int                     integer         4
@@ -48,8 +49,8 @@ l           long                    integer         4
 L           unsigned long           integer         4
 q           long long               integer         8
 Q           unsigned long long      integer         8
-n           ssize_t                 integer
-N           size_t                  integer
+n           ssizet                 integer
+N           sizet                  integer
 e           (6)                     float           2
 f           float                   float           4
 d           double                  float           8
@@ -85,27 +86,22 @@ class CPER_HEAD(object):
         self.ValidBitsList = [False,False,False]
         self.TimestampFriendly = ""
 
-        # self.PlatformID = uuid.UUID(self.PlatformID)
-        # self.RecordID = uuid.UUID(self.RecordID)
-        # self.CreatorID = uuid.UUID(self.CreatorID)
-        # self.NotificationType = uuid.UUID(self.NotificationType)
-
     ##
     # Signature should be ascii array (0x43,0x50,0x45,0x52) or "CPER"
     ##
-    def Signature_Parse(self):
+    def SignatureParse(self):
         return str(self.SignatureStart)
 
     ##
     #
     ##
-    def Revision_Parse(self):
+    def RevisionParse(self):
         return self.Revision
 
     ##
     #
     ##
-    def Error_Severity_Parse(self):
+    def ErrorSeverityParse(self):
         return self.ErrorSeverity
 
     ##
@@ -113,7 +109,7 @@ class CPER_HEAD(object):
     # if bit 2: Timestamp contains valid info
     # if bit 3: PartitionID contains valid info
     ##
-    def Validation_Bits_Parse(self):
+    def ValidationBitsParse(self):
         if(self.ValidationBits & int('0b1', 2)):
             self.ValidBitsList[0] = True
         if(self.ValidationBits & int('0b10', 2)):
@@ -124,7 +120,7 @@ class CPER_HEAD(object):
     ##
     # Convert the timestamp into a friendly version formatted to (MM/DD/YY Hours:Minutes:Seconds)
     ##
-    def Timestamp_Parse(self):
+    def TimestampParse(self):
         if(self.ValidBitsList[1]):
             self.TimestampFriendly = str((self.Timestamp >> 5) & int('0b11111111', 2)) + "/" + \
                                      str((self.Timestamp >> 4) & int('0b11111111', 2)) + "/" + \
@@ -136,52 +132,60 @@ class CPER_HEAD(object):
     ##
     # 
     ##
-    def Platform_ID_Parse(self):
+    def PlatformIDParse(self):
+        
         if(self.ValidBitsList[0]):
-            guid = uuid.UUID(self.PlatformID)
-            return guid.bytes_le()
+            try:
+                guid = uuid.UUID(bytes=self.PlatformID)
+                return guid
+            except:
+                pass
 
         return self.PlatformID
 
     ##
     #
     ##
-    def Partition_ID_Parse(self):
+    def PartitionIDParse(self):
         if(self.ValidBitsList[3]):
-            guid = uuid.UUID(self.PartitionID)
-            return guid.bytes_le()
-            
+            try:
+                guid = uuid.UUID(bytes=self.PartitionID)
+                return guid
+            except:
+                pass
+
         return self.PartitionID
 
     ##
     #
     ##
-    def Creator_ID_Parse(self):
+    def CreatorIDParse(self):
         try:
-            guid = uuid.UUID(self.CreatorID)
-            return guid.bytes_le()
+            guid = uuid.UUID(bytes=self.CreatorID)
+            return guid
         except:
             return self.CreatorID
+
     ##
     #
     ##
-    def Notification_Type_Parse(self):
+    def NotificationTypeParse(self):
         try:
-            guid = uuid.UUID(self.NotificationType)
-            return guid.bytes_le()
+            guid = uuid.UUID(bytes=self.NotificationType)
+            return guid
         except:
             return self.NotificationType
 
     ##
     #
     ##
-    def Record_ID_Parse(self):
+    def RecordIDParse(self):
         return self.RecordID
 
     ##
     # Check the flags field and populate list containing applicable flags
     ##
-    def Flags_Parse(self):
+    def FlagsParse(self):
 
         if(self.Flags & int('0b1', 2)):
             self.FlagList += "Recovered"
@@ -199,13 +203,13 @@ class CPER_HEAD(object):
     ##
     #
     ##
-    def Persistence_Info_Parse(self):
+    def PersistenceInfoParse(self):
         return self.PersistenceInfo
 
     ##
     #
     ##
-    def Pretty_Print(self):
+    def PrettyPrint(self):
         print("Hello World!")
 
 

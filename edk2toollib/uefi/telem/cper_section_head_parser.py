@@ -8,6 +8,7 @@
 
 import struct
 import uuid
+
 """
 A Section Header within a CPER has the following structure
 
@@ -72,14 +73,14 @@ class CPER_SECTION_HEAD(object):
     ##
     #
     ##
-    def Revision_Parse(self):
+    def RevisionParse(self):
         return self.Revision
 
     ##
     # if bit 1: FruID contains valid info
     # if bit 2: FruID String contains valid info
     ##
-    def Validation_Bits_Parse(self):
+    def ValidationBitsParse(self):
         if(self.ValidationBits & int('0b1', 2)):
             self.ValidBitsList[0] = True
         if(self.ValidationBits & int('0b10', 2)):
@@ -88,7 +89,7 @@ class CPER_SECTION_HEAD(object):
     ##
     # Check the flags field and populate list containing applicable flags
     ##
-    def Flags_Parse(self):
+    def FlagsParse(self):
 
         if(self.Flags & int('0b1', 2)):
             self.FlagList += "Primary"
@@ -106,19 +107,32 @@ class CPER_SECTION_HEAD(object):
     ##
     #
     ##
-    def Section_Type_Parse(self):
+    def SectionTypeParse(self):
         try:
-            guid = uuid.UUID(self.SectionType)
+            guid = uuid.UUID(bytes=self.SectionType)
             return guid.bytes_le()
         except:
             return self.SectionType
+
+    ##
+    #
+    ##
+    def FRUIDParse(self):
+        if(self.ValidationBits[0]):
+            try:
+                guid = uuid.UUID(bytes=self.SectionType)
+                return guid.bytes_le()
+            except:
+                pass
+
+        return self.SectionType
 
     ##
     # Parse the severity of the error in this section
     #
     # Note that severity of "Informational" indicates that the section contains extra information that can be safely ignored by error handling software.
     ##
-    def Section_Severity_Parse(self):
+    def SectionSeverityParse(self):
         if(self.SectionSeverity == 0):
             return "Recoverable"
         elif(self.SectionSeverity == 1):
@@ -131,5 +145,8 @@ class CPER_SECTION_HEAD(object):
     ##
     #
     ##
-    def FRU_String_Parse(self):
-        return self.FRUString
+    def FRUStringParse(self):
+        if(self.ValidBitsList[1]):
+            return self.FRUString
+        else:
+            return "none"
