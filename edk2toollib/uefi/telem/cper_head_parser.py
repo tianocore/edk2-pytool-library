@@ -15,7 +15,7 @@ CPER: Common Platform Error Record
 
 Structure of a CPER:
 Signature           (0   byte offset, 4  byte length) : CPER Signature
-Revision            (4   byte offset, 2  byte length) : The Revision of CPER
+Revision            (4   byte offset, 2  byte length) : Represents the major and minor version number of the Error Record definition
 Signature End       (6   byte offset, 4  byte length) : Must always be 0xffffffff
 Section Count       (10  byte offset, 4  byte length) : The Number of Sections of CPER
 Error Severity      (12  byte offset, 4  byte length) : The Severity of Error of CPER
@@ -93,7 +93,9 @@ class CPER_HEAD(object):
         return str(self.SignatureStart)
 
     ##
-    # Parse the CPER Revision value
+    # Parse the major and minor version number of the Error Record definition
+    #
+    # TODO: Actually parse out the zeroth and first byte which represent the minor and major version numbers respectively 
     ##
     def RevisionParse(self):
         return self.Revision
@@ -150,7 +152,7 @@ class CPER_HEAD(object):
             except:
                 pass
 
-        return self.PlatformID
+        return uuid.UUID(bytes=bytes(16))
 
     ##
     # Parse the GUID for the Software Partition (if applicable)
@@ -162,8 +164,8 @@ class CPER_HEAD(object):
                 return guid
             except:
                 pass
-
-        return self.PartitionID
+    
+        return uuid.UUID(bytes=bytes(16))
 
     ##
     # Parse the GUID for the GUID of the Error "Creator"
@@ -173,7 +175,7 @@ class CPER_HEAD(object):
             guid = uuid.UUID(bytes=self.CreatorID)
             return guid
         except:
-            return self.CreatorID
+            return uuid.UUID(bytes=bytes(16))
 
     ##
     # Parse the pre-assigned GUID associated with the event (ex.Boot)
@@ -183,7 +185,7 @@ class CPER_HEAD(object):
             guid = uuid.UUID(bytes=self.NotificationType)
             return guid
         except:
-            return self.NotificationType
+            return uuid.UUID(bytes=bytes(16))
 
     ##
     # When combined with the Creator ID, Record ID identifies the Error Record
@@ -197,31 +199,20 @@ class CPER_HEAD(object):
     def FlagsParse(self):
 
         if(self.Flags & int('0b1', 2)):
-            self.FlagList += "Recovered"
+            self.FlagList.append("Recovered")
         if(self.Flags & int('0b10', 2)):
-            self.FlagList += "Previous Error"
+            self.FlagList.append("Previous Error")
         if(self.Flags & int('0b100', 2)):
-            self.FlagList += "Simulated"
+            self.FlagList.append("Simulated")
         if(self.Flags & int('0b1000', 2)):
-            self.FlagList += "Device Driver"
+            self.FlagList.append("Device Driver")
         if(self.Flags & int('0b10000', 2)):
-            self.FlagList += "Critical"
+            self.FlagList.append("Critical")
         if(self.Flags & int('0b100000', 2)):
-            self.FlagList += "Persist"
+            self.FlagList.append("Persist")
 
     ##
     # Parse the persistence info which is produced and consumed by the creator of the Error Record
     ##
     def PersistenceInfoParse(self):
         return self.PersistenceInfo
-
-    ##
-    #
-    ##
-    def PrettyPrint(self):
-        print("Hello World!")
-
-
-def Dispatch(x):
-    # Use to dispatch to external
-    print(x)

@@ -54,10 +54,10 @@ P           void *                  integer
 
 class CPER_SECTION_HEAD(object):
 
-    STRUCT_FORMAT = "=IIH1s1sH16sH20s"
+    STRUCT_FORMAT = "=IIH1s1sH16s16sH20s"
 
     def __init__(self, cper_section_byte_array):
-        
+
         self.ValidBitsList = [False,False]
         self.FlagList = []
 
@@ -68,6 +68,7 @@ class CPER_SECTION_HEAD(object):
             self.Reserved,
             self.Flags,
             self.SectionType,
+            self.FRUID,
             self.SectionSeverity,
             self.FRUString) = struct.unpack_from(self.STRUCT_FORMAT, cper_section_byte_array)
 
@@ -77,7 +78,7 @@ class CPER_SECTION_HEAD(object):
     ##
     # Parse the major and minor version number of the Error Record definition
     #
-    # TODO: Actually parse out the zeroth and first byte which represent the minor and major version numbers respectively 
+    # TODO: Actually parse the zeroth and first byte which represent the minor and major version numbers respectively 
     ##
     def RevisionParse(self):
         return self.Revision
@@ -104,17 +105,17 @@ class CPER_SECTION_HEAD(object):
     def FlagsParse(self):
 
         if(self.Flags & int('0b1', 2)):
-            self.FlagList += "Primary"
+            self.FlagList.append("Primary")
         if(self.Flags & int('0b10', 2)):
-            self.FlagList += "Containment Warning"
+            self.FlagList.append("Containment Warning")
         if(self.Flags & int('0b100', 2)):
-            self.FlagList += "Reset"
+            self.FlagList.append("Reset")
         if(self.Flags & int('0b1000', 2)):
-            self.FlagList += "Error Threshold Exceeded"
+            self.FlagList.append("Error Threshold Exceeded")
         if(self.Flags & int('0b10000', 2)):
-            self.FlagList += "Resource Not Accessible"
+            self.FlagList.append("Resource Not Accessible")
         if(self.Flags & int('0b100000', 2)):
-            self.FlagList += "Latent Error"
+            self.FlagList.append("Latent Error")
 
     ##
     # Parse the Section Type which is a pre-defined GUID indicating that this section is from a particular error
@@ -124,7 +125,7 @@ class CPER_SECTION_HEAD(object):
             guid = uuid.UUID(bytes=self.SectionType)
             return guid.bytes_le()
         except:
-            return self.SectionType
+            return uuid.UUID(bytes=bytes(16))
 
     ##
     # TODO: Fill in
@@ -132,7 +133,7 @@ class CPER_SECTION_HEAD(object):
     def FRUIDParse(self):
         if(self.ValidationBits[0]):
             try:
-                guid = uuid.UUID(bytes=self.SectionType)
+                guid = uuid.UUID(bytes=self.FRUID)
                 return guid.bytes_le()
             except:
                 pass

@@ -59,6 +59,7 @@ class CPER(object):
         self.Header = 1
         self.Sections = []
         self.SetCPERHeader()
+        self.Header.PartitionIDParse()
         self.SetSectionHeaders()
 
     ##

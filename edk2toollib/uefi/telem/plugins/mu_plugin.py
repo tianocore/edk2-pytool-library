@@ -1,4 +1,4 @@
-# @file cper_section_data_parser.py
+# @file mu_plugin.py
 # Code to help parse cper header
 #
 # Copyright (c) Microsoft Corporation
@@ -6,15 +6,15 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-# TODO: This will be the archetype for plugins
+from ..cper_section_data_parser import SECTION_PARSER_PLUGIN
 
-class SECTION_PARSER_PLUGIN(object):
+class MU_SECTION_DATA_PARSER(SECTION_PARSER_PLUGIN):
 
     def __init__(self):
         pass
 
     def CanParse(self,guid):
-        raise NotImplementedError
+        return True
 
     def Parse(self,data):
-        raise NotImplementedError
+        pass
