@@ -1,12 +1,10 @@
 # @file cper_section_data_parser.py
-# Code to help parse cper header
+# Base class for all parsing types
 #
 # Copyright (c) Microsoft Corporation
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-
-# TODO: This will be the archetype for plugins
 
 class SECTION_PARSER_PLUGIN(object):
 

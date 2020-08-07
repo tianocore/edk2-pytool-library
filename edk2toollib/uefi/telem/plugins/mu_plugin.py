@@ -1,12 +1,14 @@
 # @file mu_plugin.py
-# Code to help parse cper header
+# Parser for MU telemetry
 #
 # Copyright (c) Microsoft Corporation
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-from ..cper_section_data_parser import SECTION_PARSER_PLUGIN
+import sys
+sys.path.append('../..')
+from cper_section_data_parser import SECTION_PARSER_PLUGIN
 
 class MU_SECTION_DATA_PARSER(SECTION_PARSER_PLUGIN):
 

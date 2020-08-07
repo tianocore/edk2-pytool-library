@@ -1,5 +1,5 @@
 # @file cper_section_parser.py
-# Code to help parse cper header
+# Parses the header of a section within a CPER
 #
 # Copyright (c) Microsoft Corporation
 #
@@ -58,7 +58,7 @@ class CPER_SECTION_HEAD(object):
 
     def __init__(self, cper_section_byte_array):
 
-        self.ValidBitsList = [False,False]
+        self.ValidSectionBitsList = [False,False]
         self.FlagList = []
 
         (self.SectionOffset,
@@ -89,9 +89,9 @@ class CPER_SECTION_HEAD(object):
     ##
     def ValidationBitsParse(self):
         if(self.ValidationBits & int('0b1', 2)):
-            self.ValidBitsList[0] = True
+            self.ValidSectionBitsList[0] = True
         if(self.ValidationBits & int('0b10', 2)):
-            self.ValidBitsList[1] = True
+            self.ValidSectionBitsList[1] = True
 
     ##
     # Check the flags field and populate list containing applicable flags
@@ -131,7 +131,7 @@ class CPER_SECTION_HEAD(object):
     # TODO: Fill in
     ##
     def FRUIDParse(self):
-        if(self.ValidationBits[0]):
+        if(self.ValidSectionBitsList[0]):
             try:
                 guid = uuid.UUID(bytes=self.FRUID)
                 return guid.bytes_le()
@@ -159,7 +159,7 @@ class CPER_SECTION_HEAD(object):
     # Parse out the custom string identifying the FRU hardware
     ##
     def FRUStringParse(self):
-        if(self.ValidBitsList[1]):
+        if(self.ValidSectionBitsList[1]):
             return self.FRUString
         else:
             return "none"

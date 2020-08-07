@@ -1,5 +1,5 @@
 # @file cper_parser.py
-# Code to help parse cper header
+# CPER object
 #
 # Copyright (c) Microsoft Corporation
 #
@@ -12,6 +12,7 @@ import csv
 import sys
 from cper_head_parser import *
 from cper_section_head_parser import *
+from plugin_setup import PLUGIN_SETUP
 
 """
 CPER: Common Platform Error Record
@@ -61,6 +62,8 @@ class CPER(object):
         self.SetCPERHeader()
         self.Header.PartitionIDParse()
         self.SetSectionHeaders()
+        self.parsers = PLUGIN_SETUP()
+        self.parsers.CheckPluginsForGuid(1)
 
     ##
     # Turn the portion of the raw input associated with the CPER head into a CPER_HEAD object
@@ -80,6 +83,7 @@ class CPER(object):
                 self.Sections.append(CPER_SECTION_HEAD(temp[x * self.CPER_SECTION_HEADER_SIZE: (x + 1) * self.CPER_SECTION_HEADER_SIZE]))
         except:
             pass
+    
     ##
     # Get each of the actual section data pieces and either pass it to something which can parse it, or dump the hex
     ##
@@ -93,3 +97,4 @@ if __name__ == "__main__":
         next(csv_reader) # skip the header
         for row in csv_reader:
             x = CPER(row[0])
+            break # to parse just one cper for testing

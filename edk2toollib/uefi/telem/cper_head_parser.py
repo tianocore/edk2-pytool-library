@@ -1,5 +1,5 @@
 # @file cperheadparser.py
-# Code to help parse cper header
+# Parses the header of a CPER
 #
 # Copyright (c) Microsoft Corporation
 #
@@ -158,7 +158,7 @@ class CPER_HEAD(object):
     # Parse the GUID for the Software Partition (if applicable)
     ##
     def PartitionIDParse(self):
-        if(self.ValidBitsList[3]):
+        if(self.ValidBitsList[2]):
             try:
                 guid = uuid.UUID(bytes=self.PartitionID)
                 return guid
