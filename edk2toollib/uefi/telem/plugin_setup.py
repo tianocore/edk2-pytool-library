@@ -16,6 +16,7 @@ class PLUGIN_SETUP(object):
     def __init__(self):
         self.SubclassList = []
         self.LoadPlugins()
+        self.FoundPlugin = None
 
     def LoadPlugins(self):
         subclasslist = SECTION_PARSER_PLUGIN.__subclasses__()
@@ -25,8 +26,18 @@ class PLUGIN_SETUP(object):
 
     def CheckPluginsForGuid(self,guid):
         for p in self.SubclassList:
+            print("Checking if " + p.__str__() + " can parse the data...")
             if p.CanParse(guid):
-                print(type(p).__name__ + " can parse the guid")
+                print(p.__str__()  + " can parse the data")
+                self.FoundPlugin = p
+                return True
+            else:
+                print(p.__str__() + " cannot parse the data")
+        
+        return False
 
     def ApplyPlugin(self,data):
-        pass
+        try:
+            self.FoundPlugin.Parse(data)   
+        except:
+            print("Unable to apply plugin " + type(self.FoundPlugin).__name__  + " on data!")

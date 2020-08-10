@@ -63,7 +63,9 @@ class CPER(object):
         self.Header.PartitionIDParse()
         self.SetSectionHeaders()
         self.parsers = PLUGIN_SETUP()
-        self.parsers.CheckPluginsForGuid(1)
+        if(self.parsers.CheckPluginsForGuid(uuid.UUID(bytes=bytes(16)))):
+            self.parsers.ApplyPlugin(1)
+        
 
     ##
     # Turn the portion of the raw input associated with the CPER head into a CPER_HEAD object
