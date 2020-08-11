@@ -1,5 +1,5 @@
 # @file parser_main.py
-# CPER object
+# TODO: Write Readme and short description
 #
 # Copyright (c) Microsoft Corporation
 #
@@ -89,6 +89,7 @@ class CPER(object):
         self.SetCPERHeader()
         self.Sections = []
         self.SetSectionHeaders()
+        self.SetSectionData()
 
     ##
     # Turn the portion of the raw input associated with the CPER head into a CPER_HEAD object
@@ -116,10 +117,13 @@ class CPER(object):
             p = CheckPluginsForGuid(x.SectionType)
             if p != None:
                 try:
-                    p.Parse(0000) # TODO: Actually pass data
+                    print("Passing data to plugin " + str(p) + ". Data wihin CPER from byte " + str(x.SectionOffset) + " to byte " + str(x.SectionOffset + x.SectionLength) \
+                         + ". Total section length: " + str(x.SectionLength))
+                    p.Parse(self.RawData[x.SectionOffset : x.SectionOffset + x.SectionLength])
                 except:
-                    print("Unable to apply plugin " + str(p)  + " on data!") # TODO: Replace this with hex dump
-        
+                    print("Unable to apply plugin " + str(p)  + " on section data!")
+                    HexDump(self.RawData[x.SectionOffset : x.SectionOffset + x.SectionLength])
+
 class CPER_HEADER(object):
 
     STRUCT_FORMAT = "=IHIHIIIQ16s16s16s16sQIQ12s"
@@ -213,7 +217,6 @@ class CPER_HEADER(object):
         try:
             guid = uuid.UUID(bytes_le=self.PlatformID)
             if(FriendlyNames.get(guid)):
-                print(FriendlyNames[guid])
                 return FriendlyNames[guid]
         except:
             pass
@@ -228,7 +231,6 @@ class CPER_HEADER(object):
         try:
             guid = uuid.UUID(bytes_le=self.PartitionID)
             if(FriendlyNames.get(guid)):
-                print(FriendlyNames[guid])
                 return FriendlyNames[guid]
         except:
             pass
@@ -242,7 +244,6 @@ class CPER_HEADER(object):
         try:
             guid = uuid.UUID(bytes_le=self.CreatorID)
             if(FriendlyNames.get(guid)):
-                print(FriendlyNames[guid]) # TODO: Stop printing friendly name debug 
                 return FriendlyNames[guid]
         except:
             pass
@@ -257,7 +258,6 @@ class CPER_HEADER(object):
         try:
             guid = uuid.UUID(bytes_le=self.NotificationType)
             if(FriendlyNames.get(guid)):
-                print(FriendlyNames[guid]) # TODO: Stop printing friendly name debug 
                 return FriendlyNames[guid]
         except:
             pass
@@ -316,9 +316,6 @@ class CPER_SECTION_HEADER(object):
 
         self.SectionTypeParse()
 
-
-        # print("In section parsing. Section Length: " + str(self.SectionLength) + " Section Offset: " + str(self.SectionOffset))
-
     ##
     # Parse the major and minor version number of the Error Record definition
     #
@@ -369,7 +366,6 @@ class CPER_SECTION_HEADER(object):
         try:
             guid = uuid.UUID(bytes_le=self.SectionType)
             if(FriendlyNames.get(guid)):
-                print(FriendlyNames[guid]) # TODO: Stop printing friendly name debug 
                 return FriendlyNames[guid]
         except:
             pass
@@ -384,7 +380,6 @@ class CPER_SECTION_HEADER(object):
         try:
             guid = uuid.UUID(bytes_le=self.FRUID)
             if(FriendlyNames.get(guid)):
-                print(FriendlyNames[guid])
                 return FriendlyNames[guid]
         except:
             pass
@@ -414,6 +409,13 @@ class CPER_SECTION_HEADER(object):
             return self.FRUString
         else:
             return "None"
+
+##
+# Dumps byte code of input TODO: Fill out or find if it exists elsewhere in edk2toollib
+##
+def HexDump(input):
+    x = 1
+    return x
 
 ##
 # Import Friendly Names from friendlynames.csv
@@ -447,12 +449,12 @@ def LoadPlugins():
 ##
 def CheckPluginsForGuid(guid):
     for p in Parsers:
-        print("Checking if " + str(p) + " can parse the data...")
+        # print("Checking if " + str(p) + " can parse the data...")
         if p.CanParse(guid):
             print(str(p)  + " can parse the data")
             return p
-        else:
-            print(str(p) + " cannot parse the data")
+        # else:
+            # print(str(p) + " cannot parse the data")
 
     return None
 

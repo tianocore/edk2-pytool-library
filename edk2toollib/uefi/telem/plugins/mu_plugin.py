@@ -15,7 +15,7 @@ from cper_section_data import SECTION_PARSER_PLUGIN
 
 """
 A MU Telemetry section has the following structure:
-
+# TODO : FILL IN
 Library IDD             (0  byte offset, 16  byte length) : 
 IHV Sharing Guid        (16 byte offset, 16  byte length) : 
 Additional Info 1       (32 byte offset, 64  byte length) : 
@@ -59,22 +59,23 @@ class MU_SECTION_DATA_PARSER(SECTION_PARSER_PLUGIN):
         self.IhvSharingGuid = None
         self.AdditionalInfo1 = None
         self.AdditionalInfo2 = None
+        self.MuTelemGuid = uuid.UUID(bytes=bytes(16)) # TODO: Fill in with real mu telemetry guid
 
     def __str__(self):
         return "MU PARSER"
 
     def CanParse(self,guid):
-        if guid == uuid.UUID(bytes=bytes(16)): # Fill in with real mu telemetry guid
+        #if guid == self.MuTelemGuid:
             return True
 
     def Parse(self,data):
-        if(sys.getsizeof(data) < self.STRUCT_SIZE):
-            print("Data passed to " + self.__str__() + " was smaller than the minimum size. Minimum size: " + str(self.STRUCT_SIZE) + " size of input: " + str(sys.getsizeof(data)))
+        if(len(data) < self.STRUCT_SIZE):
+            print("Data passed to " + self.__str__() + " was smaller than the minimum size. Minimum size: " + str(self.STRUCT_SIZE) + " size of input: " + str(len(data)))
             return
             
         (self.LibraryID,
-        self.IhvSharingGuid,
-        self.AdditionalInfo1,
-        self.AdditionalInfo2) = struct.unpack_from(self.STRUCT_FORMAT, data)
+         self.IhvSharingGuid,
+         self.AdditionalInfo1,
+         self.AdditionalInfo2) = struct.unpack_from(self.STRUCT_FORMAT, data)
 
         # TODO: Fill in actual parse code for mu section - consult Kun or read source code
