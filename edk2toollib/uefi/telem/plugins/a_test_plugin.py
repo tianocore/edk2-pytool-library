@@ -10,7 +10,7 @@ import sys
 import uuid
 
 sys.path.append('../..')
-from cper_section_data_parser import SECTION_PARSER_PLUGIN
+from cper_section_data import SECTION_PARSER_PLUGIN
 
 class A_TEST_PLUGIN(SECTION_PARSER_PLUGIN):
 

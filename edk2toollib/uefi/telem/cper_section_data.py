@@ -1,4 +1,4 @@
-# @file cper_section_data_parser.py
+# @file cper_section_data.py
 # Base class for all parsing types
 #
 # Copyright (c) Microsoft Corporation

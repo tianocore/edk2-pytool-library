@@ -11,7 +11,7 @@ import uuid
 import struct
 
 sys.path.append('../..')
-from cper_section_data_parser import SECTION_PARSER_PLUGIN
+from cper_section_data import SECTION_PARSER_PLUGIN
 
 """
 A MU Telemetry section has the following structure:
@@ -55,6 +55,7 @@ class MU_SECTION_DATA_PARSER(SECTION_PARSER_PLUGIN):
     STRUCT_SIZE = 160
 
     def __init__(self):
+        print("initializing mu plugin")
         self.LibraryID = None
         self.IhvSharingGuid = None
         self.AdditionalInfo1 = None
@@ -70,9 +71,10 @@ class MU_SECTION_DATA_PARSER(SECTION_PARSER_PLUGIN):
     def Parse(self,data):
         if(sys.getsizeof(data) < self.STRUCT_SIZE):
             print("Data passed to " + self.__str__() + " was smaller than the minimum size. Minimum size: " + str(self.STRUCT_SIZE) + " size of input: " + str(sys.getsizeof(data)))
-        else:
-            (self.LibraryID,
-            self.IhvSharingGuid,
-            self.AdditionalInfo1,
-            self.AdditionalInfo2) = struct.unpack_from(self.STRUCT_FORMAT, data)
+            return
+            
+        (self.LibraryID,
+        self.IhvSharingGuid,
+        self.AdditionalInfo1,
+        self.AdditionalInfo2) = struct.unpack_from(self.STRUCT_FORMAT, data)
 
