@@ -104,7 +104,6 @@ class CPER(object):
         try:
             temp = self.RawData[CPER_HEADER_SIZE:CPER_HEADER_SIZE + (CPER_SECTION_HEADER_SIZE * self.Header.SectionCount)]
             for x in range(self.Header.SectionCount):
-                #print("going from " + str(x * self.CPER_SECTION_HEADER_SIZE) + " to " + str(((x + 1) * self.CPER_SECTION_HEADER_SIZE) - 1))
                 self.Sections.append(CPER_SECTION_HEADER(temp[x * CPER_SECTION_HEADER_SIZE: (x + 1) * CPER_SECTION_HEADER_SIZE]))
         except:
             pass
@@ -113,9 +112,14 @@ class CPER(object):
     # Get each of the actual section data pieces and either pass it to something which can parse it, or dump the hex
     ##
     def SetSectionData(self):
-        x = 1
-        return x
-
+        for x in self.Sections:
+            p = CheckPluginsForGuid(x.SectionType)
+            if p != None:
+                try:
+                    p.Parse(0000) # TODO: Actually pass data
+                except:
+                    print("Unable to apply plugin " + str(p)  + " on data!") # TODO: Replace this with hex dump
+        
 class CPER_HEADER(object):
 
     STRUCT_FORMAT = "=IHIHIIIQ16s16s16s16sQIQ12s"
@@ -205,7 +209,7 @@ class CPER_HEADER(object):
     # Parse the Platform GUID (Typically, the Platform SMBIOS UUID)
     ##
     def PlatformIDParse(self):
-        #if(self.ValidBitsList[0]):            
+        #if(self.ValidBitsList[0]): # TODO: Uncomment this and stop printing friendly name debug     
         try:
             guid = uuid.UUID(bytes_le=self.PlatformID)
             if(FriendlyNames.get(guid)):
@@ -220,7 +224,7 @@ class CPER_HEADER(object):
     # Parse the GUID for the Software Partition (if applicable)
     ##
     def PartitionIDParse(self):
-        # if(self.ValidBitsList[2]):            
+        # if(self.ValidBitsList[2]): # TODO: Uncomment this and stop printing friendly name debug        
         try:
             guid = uuid.UUID(bytes_le=self.PartitionID)
             if(FriendlyNames.get(guid)):
@@ -238,7 +242,7 @@ class CPER_HEADER(object):
         try:
             guid = uuid.UUID(bytes_le=self.CreatorID)
             if(FriendlyNames.get(guid)):
-                print(FriendlyNames[guid])
+                print(FriendlyNames[guid]) # TODO: Stop printing friendly name debug 
                 return FriendlyNames[guid]
         except:
             pass
@@ -253,7 +257,7 @@ class CPER_HEADER(object):
         try:
             guid = uuid.UUID(bytes_le=self.NotificationType)
             if(FriendlyNames.get(guid)):
-                print(FriendlyNames[guid])
+                print(FriendlyNames[guid]) # TODO: Stop printing friendly name debug 
                 return FriendlyNames[guid]
         except:
             pass
@@ -264,7 +268,7 @@ class CPER_HEADER(object):
     # When combined with the Creator ID, Record ID identifies the Error Record
     ##
     def RecordIDParse(self):
-        return str(self.RecordID)
+        return str(self.RecordID) 
 
     ##
     # Check the flags field and populate list containing applicable flags
@@ -365,7 +369,7 @@ class CPER_SECTION_HEADER(object):
         try:
             guid = uuid.UUID(bytes_le=self.SectionType)
             if(FriendlyNames.get(guid)):
-                print(FriendlyNames[guid])
+                print(FriendlyNames[guid]) # TODO: Stop printing friendly name debug 
                 return FriendlyNames[guid]
         except:
             pass
@@ -376,7 +380,7 @@ class CPER_SECTION_HEADER(object):
     # TODO: Fill in
     ##
     def FRUIDParse(self):
-        # if(self.ValidSectionBitsList[0]):
+        # if(self.ValidSectionBitsList[0]): # TODO: Uncomment this and stop printing friendly name debug  
         try:
             guid = uuid.UUID(bytes_le=self.FRUID)
             if(FriendlyNames.get(guid)):
@@ -409,7 +413,7 @@ class CPER_SECTION_HEADER(object):
         if(self.ValidSectionBitsList[1]):
             return self.FRUString
         else:
-            return "none"
+            return "None"
 
 ##
 # Import Friendly Names from friendlynames.csv
@@ -430,7 +434,7 @@ def ImportFriendlyNames():
             rowcounter += 1
     
 ##
-# 
+# Load all plugins from the /plugins folder
 ##
 def LoadPlugins():
     subclasslist = SECTION_PARSER_PLUGIN.__subclasses__()
@@ -439,42 +443,39 @@ def LoadPlugins():
         Parsers.append(cl())
 
 ##
-# 
+# Run each plugins CanParse() method to see if it can parse the input guid
 ##
-def CheckPluginsForGuid(guid,data):
+def CheckPluginsForGuid(guid):
     for p in Parsers:
         print("Checking if " + str(p) + " can parse the data...")
         if p.CanParse(guid):
             print(str(p)  + " can parse the data")
-            try:
-                p.Parse(data)
-                return True
-            except:
-                print("Unable to apply plugin " + str(p)  + " on data!")
+            return p
         else:
             print(str(p) + " cannot parse the data")
-    return False
+
+    return None
 
 ##
-#
+# Parse a list of cper record strings
 ##
 def parse_cper_list(input):
-    # for x in input:
-    #     CPER_WRAPPER(x)
-    pass
+    for x in input:
+        CPER(x)
 
 ##
-#
+# Parse a single cper record
 ##
 def parse_cper(input):
     CPER(input)
 
 ##
-#
+# Parse cper records from event viewer xml file
 ##
-def parse_from_xml(input):
+def parse_from_xml(input): # TODO: Create xml parser
     pass
 
+# Main function used to test functionality
 if __name__ == "__main__":
     LoadPlugins()
     ImportFriendlyNames()
@@ -484,4 +485,3 @@ if __name__ == "__main__":
 
         for row in csv_reader:
             parse_cper(row[0])
-            #break # parse just one cper for testing

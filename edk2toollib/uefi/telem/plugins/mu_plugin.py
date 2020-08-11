@@ -55,7 +55,6 @@ class MU_SECTION_DATA_PARSER(SECTION_PARSER_PLUGIN):
     STRUCT_SIZE = 160
 
     def __init__(self):
-        print("initializing mu plugin")
         self.LibraryID = None
         self.IhvSharingGuid = None
         self.AdditionalInfo1 = None
@@ -65,7 +64,7 @@ class MU_SECTION_DATA_PARSER(SECTION_PARSER_PLUGIN):
         return "MU PARSER"
 
     def CanParse(self,guid):
-        if guid == uuid.UUID(bytes=bytes(16)):
+        if guid == uuid.UUID(bytes=bytes(16)): # Fill in with real mu telemetry guid
             return True
 
     def Parse(self,data):
@@ -78,3 +77,4 @@ class MU_SECTION_DATA_PARSER(SECTION_PARSER_PLUGIN):
         self.AdditionalInfo1,
         self.AdditionalInfo2) = struct.unpack_from(self.STRUCT_FORMAT, data)
 
+        # TODO: Fill in actual parse code for mu section - consult Kun or read source code
