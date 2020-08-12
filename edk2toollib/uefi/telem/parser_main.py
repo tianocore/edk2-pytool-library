@@ -121,8 +121,8 @@ class CPER(object):
                 #          + ". Total section length: " + str(x.SectionLength))
                 #     p.Parse(self.RawData[x.SectionOffset : x.SectionOffset + x.SectionLength])
                 # except:
-                    print("Unable to apply plugin " + str(p)  + " on section data!")
-                    HexDump(self.RawData[x.SectionOffset : x.SectionOffset + x.SectionLength])
+                #     print("Unable to apply plugin " + str(p)  + " on section data!")
+                    HexDump(self.RawData[x.SectionOffset : x.SectionOffset + x.SectionLength],16)
 
 class CPER_HEADER(object):
 
@@ -414,17 +414,51 @@ class CPER_SECTION_HEADER(object):
             return "None"
 
 ##
-# Dumps byte code of input TODO: Fill out or find if it exists elsewhere in edk2toollib
+# Dumps byte code of input
 ##
-def HexDump(input):
-    rangelen = 16
-    for x in range(len(input)//rangelen):
-        for y in range(rangelen):
-            print(format(input[(x * 8) + y],'02X'),end=" ")
-        print(end="  ")
-        for y in range(rangelen):
-            print(format(chr(input[(x * 8) + y])," >2"),end = " ")
+def HexDump(input, bytesperline):
+
+    rangelen    = bytesperline
+    inputlen    = len(input)
+    offset      = lambda x : x * rangelen
+    modprint    = lambda x : print(x,end=" ")
+    rangecheck  = lambda x : x < 31 or x > 127
+
+    for i in range(inputlen//rangelen):
+        
+        for j in range(rangelen):
+            modprint(format(input[offset(i) + j],'02X'))
+            
+        modprint(" ")
+        
+        for j in range(rangelen):
+            if rangecheck(input[offset(i) + j]):
+                modprint(". ")
+            else:
+                modprint(format(chr(input[offset(i) + j])," <2"))
         print()
+    
+    if(inputlen % rangelen == 0):
+        return
+
+    for i in range(rangelen):
+        if(i < inputlen % rangelen):
+            modprint(format(input[inputlen - rangelen + i],'02X'))
+        else:
+            modprint("  ")
+
+    modprint(" ")
+
+    for i in range(rangelen):
+        if(i < inputlen % rangelen):
+            if rangecheck(input[inputlen - rangelen + i]):
+                    modprint(". ")
+            else:
+                modprint(format(chr(input[inputlen - rangelen + i])," <2"))
+        else:
+            modprint("  ")
+
+    print()
 
 ##
 # Import Friendly Names from friendlynames.csv
@@ -443,7 +477,7 @@ def ImportFriendlyNames():
                 print("Unable to add row " + str(rowcounter) + " to the friendly name dictionary!")
             
             rowcounter += 1
-    
+
 ##
 # Load all plugins from the /plugins folder
 ##
@@ -458,12 +492,9 @@ def LoadPlugins():
 ##
 def CheckPluginsForGuid(guid):
     for p in Parsers:
-        # print("Checking if " + str(p) + " can parse the data...")
         if p.CanParse(guid):
             print(str(p)  + " can parse the data")
             return p
-        # else:
-            # print(str(p) + " cannot parse the data")
 
     return None
 
