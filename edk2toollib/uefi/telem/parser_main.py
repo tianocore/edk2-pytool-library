@@ -116,11 +116,11 @@ class CPER(object):
         for x in self.Sections:
             p = CheckPluginsForGuid(x.SectionType)
             if p != None:
-                try:
-                    print("Passing data to plugin " + str(p) + ". Data wihin CPER from byte " + str(x.SectionOffset) + " to byte " + str(x.SectionOffset + x.SectionLength) \
-                         + ". Total section length: " + str(x.SectionLength))
-                    p.Parse(self.RawData[x.SectionOffset : x.SectionOffset + x.SectionLength])
-                except:
+                # try:
+                #     print("Passing data to plugin " + str(p) + ". Data wihin CPER from byte " + str(x.SectionOffset) + " to byte " + str(x.SectionOffset + x.SectionLength) \
+                #          + ". Total section length: " + str(x.SectionLength))
+                #     p.Parse(self.RawData[x.SectionOffset : x.SectionOffset + x.SectionLength])
+                # except:
                     print("Unable to apply plugin " + str(p)  + " on section data!")
                     HexDump(self.RawData[x.SectionOffset : x.SectionOffset + x.SectionLength])
 
@@ -128,7 +128,7 @@ class CPER_HEADER(object):
 
     STRUCT_FORMAT = "=IHIHIIIQ16s16s16s16sQIQ12s"
 
-    def __init__(self, cper_head_byte_array):
+    def __init__(self, input):
         (self.SignatureStart,
          self.Revision,
          self.SignatureEnd,
@@ -144,7 +144,7 @@ class CPER_HEADER(object):
          self.RecordID,
          self.Flags,
          self.PersistenceInfo,
-         self.Reserved) = struct.unpack_from(self.STRUCT_FORMAT, cper_head_byte_array)
+         self.Reserved) = struct.unpack_from(self.STRUCT_FORMAT, input)
             
         self.FlagList = []
         self.ValidBitsList = [False,False,False]
@@ -158,7 +158,7 @@ class CPER_HEADER(object):
     ##
     # Signature should be ascii array (0x43,0x50,0x45,0x52) or "CPER"
     ##
-    def SignatureParse(self):
+    def SignatureParse(self) -> str:
         return str(self.SignatureStart)
 
     ##
@@ -166,13 +166,13 @@ class CPER_HEADER(object):
     #
     # TODO: Actually parse out the zeroth and first byte which represent the minor and major version numbers respectively 
     ##
-    def RevisionParse(self):
-        return self.Revision
+    def RevisionParse(self) -> str:
+        return str(self.Revision)
 
     ##
     #
     ##
-    def ErrorSeverityParse(self):
+    def ErrorSeverityParse(self) -> str:
         if(self.ErrorSeverity == 0):
             return "Recoverable"
         elif(self.ErrorSeverity == 1):
@@ -200,20 +200,21 @@ class CPER_HEADER(object):
     ##
     # Convert the timestamp into a friendly version formatted to (MM/DD/YY Hours:Minutes:Seconds)
     ##
-    def TimestampParse(self):
+    def TimestampParse(self) -> str:
         if(self.ValidBitsList[1]):
-            self.TimestampFriendly = str((self.Timestamp >> 5) & int('0b11111111', 2)) + "/" + \
-                                     str((self.Timestamp >> 4) & int('0b11111111', 2)) + "/" + \
-                                     str((self.Timestamp >> 6) & int('0b11111111', 2)) + " " + \
-                                     str((self.Timestamp >> 2) & int('0b11111111', 2)) + ":" + \
-                                     str((self.Timestamp >> 1) & int('0b11111111', 2)) + ":" + \
-                                     str((self.Timestamp >> 0) & int('0b11111111', 2))
+            self.TimestampFriendly = str(( self.Timestamp >> 40) & int('0b11111111', 2)) + "/" + \
+                                     str(( self.Timestamp >> 32) & int('0b11111111', 2)) + "/" + \
+                                     str(((self.Timestamp >> 48) & int('0b11111111', 2) * 100) + (self.Timestamp >> 56) & int('0b11111111', 2)) + " " + \
+                                     str(( self.Timestamp >> 16) & int('0b11111111', 2)) + ":" + \
+                                     str(( self.Timestamp >> 8 ) & int('0b11111111', 2)) + ":" + \
+                                     str(( self.Timestamp >> 0 ) & int('0b11111111', 2))
+            return self.TimestampFriendly
 
     ##
     # Parse the Platform GUID (Typically, the Platform SMBIOS UUID)
     ##
-    def PlatformIDParse(self):
-        #if(self.ValidBitsList[0]): # TODO: Uncomment this and stop printing friendly name debug     
+    def PlatformIDParse(self) -> str:
+        #if(self.ValidBitsList[0]): # TODO: Uncomment this   
         try:
             guid = uuid.UUID(bytes_le=self.PlatformID)
             if(FriendlyNames.get(guid)):
@@ -226,8 +227,8 @@ class CPER_HEADER(object):
     ##
     # Parse the GUID for the Software Partition (if applicable)
     ##
-    def PartitionIDParse(self):
-        # if(self.ValidBitsList[2]): # TODO: Uncomment this and stop printing friendly name debug        
+    def PartitionIDParse(self) -> str:
+        # if(self.ValidBitsList[2]): # TODO: Uncomment this      
         try:
             guid = uuid.UUID(bytes_le=self.PartitionID)
             if(FriendlyNames.get(guid)):
@@ -240,7 +241,7 @@ class CPER_HEADER(object):
     ##
     # Parse the GUID for the GUID of the Error "Creator"
     ##
-    def CreatorIDParse(self):
+    def CreatorIDParse(self) -> str:
         try:
             guid = uuid.UUID(bytes_le=self.CreatorID)
             if(FriendlyNames.get(guid)):
@@ -254,7 +255,7 @@ class CPER_HEADER(object):
     ##
     # Parse the pre-assigned GUID associated with the event (ex.Boot)
     ##
-    def NotificationTypeParse(self):
+    def NotificationTypeParse(self) -> str:
         try:
             guid = uuid.UUID(bytes_le=self.NotificationType)
             if(FriendlyNames.get(guid)):
@@ -267,7 +268,7 @@ class CPER_HEADER(object):
     ##
     # When combined with the Creator ID, Record ID identifies the Error Record
     ##
-    def RecordIDParse(self):
+    def RecordIDParse(self) -> str:
         return str(self.RecordID) 
 
     ##
@@ -291,8 +292,8 @@ class CPER_HEADER(object):
     ##
     # Parse the persistence info which is produced and consumed by the creator of the Error Record
     ##
-    def PersistenceInfoParse(self):
-        return self.PersistenceInfo
+    def PersistenceInfoParse(self) -> str:
+        return str(self.PersistenceInfo)
 
 class CPER_SECTION_HEADER(object):
 
@@ -321,8 +322,8 @@ class CPER_SECTION_HEADER(object):
     #
     # TODO: Actually parse the zeroth and first byte which represent the minor and major version numbers respectively 
     ##
-    def RevisionParse(self):
-        return self.Revision
+    def RevisionParse(self) -> str:
+        return str(self.Revision)
 
     ##
     # if bit 0: FruID contains valid info
@@ -357,11 +358,13 @@ class CPER_SECTION_HEADER(object):
             self.FlagList.append("Resource Not Accessible")
         if(self.Flags & int('0b100000', 2)):
             self.FlagList.append("Latent Error")
+        
+        return self.FlagList
 
     ##
     # Parse the Section Type which is a pre-defined GUID indicating that this section is from a particular error
     ##
-    def SectionTypeParse(self):
+    def SectionTypeParse(self) -> str:
 
         try:
             guid = uuid.UUID(bytes_le=self.SectionType)
@@ -375,8 +378,8 @@ class CPER_SECTION_HEADER(object):
     ##
     # TODO: Fill in
     ##
-    def FRUIDParse(self):
-        # if(self.ValidSectionBitsList[0]): # TODO: Uncomment this and stop printing friendly name debug  
+    def FRUIDParse(self) -> str:
+        # if(self.ValidSectionBitsList[0]): # TODO: Uncomment this
         try:
             guid = uuid.UUID(bytes_le=self.FRUID)
             if(FriendlyNames.get(guid)):
@@ -391,7 +394,7 @@ class CPER_SECTION_HEADER(object):
     #
     # Note that severity of "Informational" indicates that the section contains extra information that can be safely ignored by error handling software.
     ##
-    def SectionSeverityParse(self):
+    def SectionSeverityParse(self) -> str:
         if(self.SectionSeverity == 0):
             return "Recoverable"
         elif(self.SectionSeverity == 1):
@@ -404,7 +407,7 @@ class CPER_SECTION_HEADER(object):
     ##
     # Parse out the custom string identifying the FRU hardware
     ##
-    def FRUStringParse(self):
+    def FRUStringParse(self) -> str:
         if(self.ValidSectionBitsList[1]):
             return self.FRUString
         else:
@@ -414,8 +417,14 @@ class CPER_SECTION_HEADER(object):
 # Dumps byte code of input TODO: Fill out or find if it exists elsewhere in edk2toollib
 ##
 def HexDump(input):
-    x = 1
-    return x
+    rangelen = 16
+    for x in range(len(input)//rangelen):
+        for y in range(rangelen):
+            print(format(input[(x * 8) + y],'02X'),end=" ")
+        print(end="  ")
+        for y in range(rangelen):
+            print(format(chr(input[(x * 8) + y])," >2"),end = " ")
+        print()
 
 ##
 # Import Friendly Names from friendlynames.csv
