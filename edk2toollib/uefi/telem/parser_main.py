@@ -114,15 +114,15 @@ class CPER(object):
     ##
     def SetSectionData(self):
         for x in self.Sections:
-            p = CheckPluginsForGuid(x.SectionType)
-            if p != None:
-                # try:
-                #     print("Passing data to plugin " + str(p) + ". Data wihin CPER from byte " + str(x.SectionOffset) + " to byte " + str(x.SectionOffset + x.SectionLength) \
-                #          + ". Total section length: " + str(x.SectionLength))
-                #     p.Parse(self.RawData[x.SectionOffset : x.SectionOffset + x.SectionLength])
-                # except:
-                #     print("Unable to apply plugin " + str(p)  + " on section data!")
-                    HexDump(self.RawData[x.SectionOffset : x.SectionOffset + x.SectionLength],16)
+            # p = CheckPluginsForGuid(x.SectionType)
+            # if p != None:
+            #     try:
+            #         print("Passing data to plugin " + str(p) + ". Data wihin CPER from byte " + str(x.SectionOffset) + " to byte " + str(x.SectionOffset + x.SectionLength) \
+            #              + ". Total section length: " + str(x.SectionLength))
+            #         p.Parse(self.RawData[x.SectionOffset : x.SectionOffset + x.SectionLength])
+            #     except:
+            #         print("Unable to apply plugin " + str(p)  + " on section data!")
+            print(HexDump(self.RawData[x.SectionOffset : x.SectionOffset + x.SectionLength],16))
 
 class CPER_HEADER(object):
 
@@ -420,45 +420,50 @@ def HexDump(input, bytesperline):
 
     rangelen    = bytesperline
     inputlen    = len(input)
+    string      = ""
     offset      = lambda x : x * rangelen
-    modprint    = lambda x : print(x,end=" ")
+    concat      = lambda x, y : (''.join([x, y," "]))
     rangecheck  = lambda x : x < 31 or x > 127
 
     for i in range(inputlen//rangelen):
+
+        string = ''.join([string,"\n"])
         
         for j in range(rangelen):
-            modprint(format(input[offset(i) + j],'02X'))
+            string = concat(string, format(input[offset(i) + j],'02X'))
             
-        modprint(" ")
+        string = concat(string, " ")
         
         for j in range(rangelen):
             if rangecheck(input[offset(i) + j]):
-                modprint(". ")
+                string = concat(string,". ")
             else:
-                modprint(format(chr(input[offset(i) + j])," <2"))
-        print()
+                string = concat(string,format(chr(input[offset(i) + j])," <2"))
+        
     
     if(inputlen % rangelen == 0):
-        return
+        return string
+
+    string = ''.join([string,"\n"])
 
     for i in range(rangelen):
         if(i < inputlen % rangelen):
-            modprint(format(input[inputlen - rangelen + i],'02X'))
+            string = concat(string,format(input[inputlen - rangelen + i],'02X'))
         else:
-            modprint("  ")
+            string = concat(string,"  ")
 
-    modprint(" ")
+    string = concat(string," ")
 
     for i in range(rangelen):
         if(i < inputlen % rangelen):
             if rangecheck(input[inputlen - rangelen + i]):
-                    modprint(". ")
+                    string = concat(string,". ")
             else:
-                modprint(format(chr(input[inputlen - rangelen + i])," <2"))
+                string = concat(string,format(chr(input[inputlen - rangelen + i])," <2"))
         else:
-            modprint("  ")
+            string = concat(string,"  ")
 
-    print()
+    return string
 
 ##
 # Import Friendly Names from friendlynames.csv

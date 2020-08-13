@@ -65,7 +65,7 @@ class MU_SECTION_DATA_PARSER(SECTION_PARSER_PLUGIN):
         return "MU PARSER"
 
     def CanParse(self,guid):
-        #if guid == self.MuTelemGuid:
+        if guid == self.MuTelemGuid:
             return True
 
     def Parse(self,data):
