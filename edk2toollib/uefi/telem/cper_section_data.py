@@ -8,11 +8,11 @@
 
 class SECTION_PARSER_PLUGIN(object):
 
-    def __str__(self):
+    def __str__(self) -> str:
         raise NotImplementedError
 
-    def CanParse(self,guid):
+    def CanParse(self,guid) -> bool:
         raise NotImplementedError
 
-    def Parse(self,data):
+    def Parse(self,data) -> str:
         raise NotImplementedError

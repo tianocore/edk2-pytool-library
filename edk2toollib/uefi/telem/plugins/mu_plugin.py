@@ -61,14 +61,16 @@ class MU_SECTION_DATA_PARSER(SECTION_PARSER_PLUGIN):
         self.AdditionalInfo2 = None
         self.MuTelemGuid = uuid.UUID(bytes=bytes(16)) # TODO: Fill in with real mu telemetry guid
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "MU PARSER"
 
-    def CanParse(self,guid):
+    def CanParse(self,guid) -> bool:
         if guid == self.MuTelemGuid:
             return True
+        
+        return False 
 
-    def Parse(self,data):
+    def Parse(self,data) -> str:
         if(len(data) < self.STRUCT_SIZE):
             print("Data passed to " + self.__str__() + " was smaller than the minimum size. Minimum size: " + str(self.STRUCT_SIZE) + " size of input: " + str(len(data)))
             return

@@ -598,23 +598,30 @@ class CPER_SECTION_HEADER(object):
 ##
 def HexDump(input, bytesperline):
 
-    string      = ""
-    asc         = ""
-    byte        = ""
-    rangecheck  = lambda x : x < 31 or x > 127
+    string      = "" # Stores the entire hexdump string
+    asc         = "" # Stores the ascii version of the current hexdump line
+    byte        = "" # Stores the base 16 byte version of the current hexdump line
+    rangecheck  = lambda x : x < 31 or x > 127 # Used to check if a byte value is within relevant ascii character bounds
 
+    # Go through every byte from the input
     for i in range(len(input)):
+
+        # Add a byte string version of the byte onto the byte string
         byte = concat_s(byte, format(input[i],'02X'))
+        
+        # Add an ascii version of the byte onto the ascii string
         if rangecheck(input[i]):
                 asc = concat_s(asc,". ")
         else:
             asc = concat_s(asc,format(chr(input[i])," <2"))
         
+        # Once we've reached bytesperline length, concatenate asc and byte strings and start a new line
         if(not (i + 1) % bytesperline):
             string = concat_n(string,concat(byte,asc))
             asc = ""
             byte = ""
     
+    # Check if there are any remaining characters in the asc and byte strings to be added to string 
     if(len(input) % bytesperline):  
         string = concat(string,concat_n(concat(byte,"   " * (bytesperline - (len(byte)//3))),concat(asc,"   " * (bytesperline - (len(asc)//3)))))
 
@@ -656,7 +663,7 @@ def LoadPlugins():
 # Run each plugins CanParse() method to see if it can parse the input guid
 ##
 def CheckPluginsForGuid(guid):
-    
+
     for p in Parsers:
         # CanParse() returns true if it recognizes the guid
         if p.CanParse(guid):
