@@ -674,30 +674,32 @@ def CheckPluginsForGuid(guid):
 ##
 # Parse a list of cper record strings
 ##
-def parse_cper_list(input):
+def ParseCPERList(input):
     for x in input:
         CPER(x)
 
 ##
 # Parse a single cper record
 ##
-def parse_cper(input):
+def ParseCPER(input):
     c = CPER(input)
     c.PrettyPrint()
 
 ##
 # Parse cper records from event viewer xml file
 ##
-def parse_from_xml(input): # TODO: Create xml parser
+def ParseCPERFromXML(input): # TODO: Create xml parser
     pass
 
+##
 # Main function used to test functionality
-if __name__ == "__main__":
-    LoadPlugins()
-    ImportFriendlyNames()
-    with open('testdata.csv','r') as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        next(csv_reader) # skip the header
+##
+# if __name__ == "__main__":
+#     LoadPlugins()
+#     ImportFriendlyNames()
+#     with open('testdata.csv','r') as csv_file:
+#         csv_reader = csv.reader(csv_file, delimiter=',')
+#         next(csv_reader) # skip the header
 
-        for row in csv_reader:
-            parse_cper(row[0])
+#         for row in csv_reader:
+#             ParseCPER(row[0])
