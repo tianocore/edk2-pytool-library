@@ -82,9 +82,9 @@ FriendlyNames               = {}  # dict loaded from friendlynames.csv used to a
 Parsers                     = []  # list of plugin classes which inherit from CPER_SECTION_DATA and are therefore capable of parsing section data
 
 # Using these lambda concat statements to guarantee linear runtime when concatonating strings, and for simplicity
-concat_s = lambda x, y  : (''.join([x, y," "]))  # Concatenate two strings and put a space at the end
-concat_n = lambda x, y  : (''.join([x, y,"\n"])) # Concatenate two strings and put a newline at the end
-concat   = lambda x, y  : (''.join([x, y]))      # Concatenate two strings
+concat_s = lambda x,y  : (''.join([x,y," "]))  # Concatenate two strings and put a space at the end
+concat_n = lambda x,y  : (''.join([x,y,"\n"])) # Concatenate two strings and put a newline at the end
+concat   = lambda x,y  : (''.join([x,y]))      # Concatenate two strings
 
 # Useful lambdas
 empty    = lambda x     : x == "" or x == None or x == []   # True if x is an empty string, list, etc.
@@ -486,8 +486,8 @@ class CPER_SECTION_HEADER(object):
             return "Corrected"
         elif(self.SectionSeverity == 3):
             return "Informational"
-        else:
-            return ""
+        
+        return ""
 
     ##
     # Parse out the custom string identifying the FRU hardware
@@ -502,8 +502,8 @@ class CPER_SECTION_HEADER(object):
                 return self.FRUString.decode('utf-8')
             except:
                 return "Unable to parse"
-        else:
-            return "Invalid"
+        
+        return "Invalid"
 
     ##
     # Print relevant portions of the section header. Change to suit your needs
@@ -649,12 +649,12 @@ def ParseCPERFromXML(input): # TODO: Create xml parser
 ##
 # Main function used to test functionality
 ##
-if __name__ == "__main__":
-    LoadPlugins()
-    ImportFriendlyNames()
-    with open('testdata.csv','r') as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        next(csv_reader) # skip the header
+# if __name__ == "__main__":
+#     LoadPlugins()
+#     ImportFriendlyNames()
+#     with open('testdata.csv','r') as csv_file:
+#         csv_reader = csv.reader(csv_file, delimiter=',')
+#         next(csv_reader) # skip the header
 
-        for row in csv_reader:
-            ParseCPER(row[0])
+#         for row in csv_reader:
+#             ParseCPER(row[0])
