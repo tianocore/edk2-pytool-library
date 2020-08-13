@@ -84,9 +84,9 @@ Parsers = []
 concat_s = lambda x, y : (''.join([x, y," "]))
 concat_n = lambda x, y : (''.join([x, y,"\n"]))
 concat   = lambda x, y : (''.join([x, y]))
-eq       = lambda x, y : x == y
-neq      = lambda x, y : x != y
 empty    = lambda x : x == "" or x == None
+neq      = lambda x,y : x != y
+eq       = lambda x,y : x == y
 
 class CPER(object):
 
@@ -138,7 +138,6 @@ class CPER(object):
         for s in self.SectionHeaders:
             print(concat("Section ",str(counter)))
             counter += 1
-
             print(s.PrettyPrint())
             print(self.ParseSectionData(s))
 
@@ -503,48 +502,27 @@ class CPER_SECTION_HEADER(object):
 ##
 def HexDump(input, bytesperline):
 
-    rangelen    = bytesperline
     inputlen    = len(input)
     string      = ""
-    offset      = lambda x : x * rangelen
+    asc         = ""
+    byte        = ""
     rangecheck  = lambda x : x < 31 or x > 127
 
-    for i in range(inputlen//rangelen):        
-        for j in range(rangelen):
-            string = concat_s(string, format(input[offset(i) + j],'02X'))
-            
-        string = concat(string, "  ")
+    for i in range(inputlen):
+        byte = concat_s(byte, format(input[i],'02X'))
+        if rangecheck(input[i]):
+                asc = concat_s(asc,". ")
+        else:
+            asc = concat_s(asc,format(chr(input[i])," <2"))
         
-        for j in range(rangelen):
-            if rangecheck(input[offset(i) + j]):
-                string = concat_s(string,". ")
-            else:
-                string = concat_s(string,format(chr(input[offset(i) + j])," <2"))
-        
-        string = concat_n(string,'')
-        
+        if(not (i + 1) % bytesperline):
+            string = concat_n(string,concat(byte,asc))
+            asc = ""
+            byte = ""
     
-    if(inputlen % rangelen == 0):
-        return string
-
-    for i in range(rangelen):
-        if(i < inputlen % rangelen):
-            string = concat_s(string,format(input[inputlen - rangelen + i],'02X'))
-        else:
-            string = concat_s(string,"  ")
-
-    string = concat(string,"  ")
-
-    for i in range(rangelen):
-        if(i < inputlen % rangelen):
-            if rangecheck(input[inputlen - rangelen + i]):
-                    string = concat_s(string,". ")
-            else:
-                string = concat_s(string,format(chr(input[inputlen - rangelen + i])," <2"))
-        else:
-            string = concat_s(string,"  ")
-
-    return concat_n(string,'')
+    if(inputlen % bytesperline):  
+        string = concat(string,concat_n(concat(byte,"   " * (bytesperline - (len(byte)//3))),concat(asc,"   " * (bytesperline - (len(asc)//3)))))
+    return string
 
 ##
 # Import Friendly Names from friendlynames.csv
@@ -579,7 +557,6 @@ def LoadPlugins():
 def CheckPluginsForGuid(guid):
     for p in Parsers:
         if p.CanParse(guid):
-            print(str(p)  + " can parse the data")
             return p
 
     return None
