@@ -303,9 +303,6 @@ class CPER_HEADER(object):
             FlagList.append("Critical")
         if(self.Flags & int('0b100000', 2)):
             FlagList.append("Persist")
-        
-        # if(FlagList == []): # TODO: Delete or uncomment after testing .join on empty list
-        #     return ""
 
         return ", ".join(FlagList)
 
@@ -408,9 +405,6 @@ class CPER_SECTION_HEADER(object):
             FlagList.append("Resource Not Accessible")
         if(self.Flags & int('0b100000', 2)):
             FlagList.append("Latent Error")
-        
-        if FlagList == []:  # TODO: Delete or uncomment after testing .join on empty list
-            return ""
 
         return ' '.join(FlagList)
 
