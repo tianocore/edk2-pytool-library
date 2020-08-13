@@ -87,9 +87,9 @@ concat_n = lambda x, y  : (''.join([x, y,"\n"])) # Concatenate two strings and p
 concat   = lambda x, y  : (''.join([x, y]))      # Concatenate two strings
 
 # Useful lambdas
-empty    = lambda x     : x == "" or x == None or x == []
-neq      = lambda x,y   : x != y
-eq       = lambda x,y   : x == y
+empty    = lambda x     : x == "" or x == None or x == []   # True if x is an empty string, list, etc.
+neq      = lambda x,y   : x != y                            # True if x and y are not equal
+eq       = lambda x,y   : x == y                            # True if x and y are equal
 
 class CPER(object):
 
@@ -268,17 +268,8 @@ class CPER_HEADER(object):
 
         # Only parse if data is valid
         if(self.ValidBitsList[0]):
-            try:
-                guid = uuid.UUID(bytes_le=self.PlatformID)
-                # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
-                if(FriendlyNames.get(guid)):
-                    return FriendlyNames[guid]
-            except:
-                pass
-            
-            # Return the guid if a friendly name cannot be found
-            return str(uuid.UUID(bytes_le=self.PlatformID))
-        
+            return AttemptGuidParse(self.PlatformID)
+
         # Platform ID is invalid based on validation bits
         return "Invalid"
 
@@ -289,16 +280,7 @@ class CPER_HEADER(object):
 
         # Only parse if data is valid
         if(self.ValidBitsList[2]):
-            try:
-                guid = uuid.UUID(bytes_le=self.PartitionID)
-                # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
-                if(FriendlyNames.get(guid)):
-                    return FriendlyNames[guid]
-            except:
-                pass
-            
-            # Return the guid if a friendly name cannot be found
-            return str(uuid.UUID(bytes_le=self.PartitionID))
+            return AttemptGuidParse(self.PartitionID)
         
         # Partition ID is invalid based on validation bits
         return "Invalid"
@@ -307,37 +289,13 @@ class CPER_HEADER(object):
     # Parse the GUID for the GUID of the Error "Creator"
     ##
     def CreatorIDParse(self) -> str:
-        
-        try:
-            guid = uuid.UUID(bytes_le=self.CreatorID)
-
-            # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
-            if(FriendlyNames.get(guid)):
-                return FriendlyNames[guid]
-        except:
-            pass
-
-        # Return the guid if a friendly name cannot be found
-        return str(uuid.UUID(bytes_le=self.CreatorID))
-
-        
+        return AttemptGuidParse(self.CreatorID)
 
     ##
     # Parse the pre-assigned GUID associated with the event (ex.Boot)
     ##
     def NotificationTypeParse(self) -> str:
-
-        try:
-            guid = uuid.UUID(bytes_le=self.NotificationType)
-
-            # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
-            if(FriendlyNames.get(guid)):
-                return FriendlyNames[guid]
-        except:
-            pass
-        
-        # Return the guid if a friendly name cannot be found
-        return str(uuid.UUID(bytes_le=self.NotificationType))
+        return AttemptGuidParse(self.NotificationType)
 
     ##
     # When combined with the Creator ID, Record ID identifies the Error Record
@@ -499,17 +457,7 @@ class CPER_SECTION_HEADER(object):
     # Parse the Section Type which is a pre-defined GUID indicating that this section is from a particular error
     ##
     def SectionTypeParse(self) -> str:
-
-        try:
-            guid = uuid.UUID(bytes_le=self.SectionType)
-            # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
-            if(FriendlyNames.get(guid)):
-                return FriendlyNames[guid]
-        except:
-            pass
-        
-        # Return the guid if a friendly name cannot be found
-        return str(uuid.UUID(bytes_le=self.SectionType))
+        return AttemptGuidParse(self.SectionType)
 
     ##
     # TODO: Fill in - not detailed in CPER doc
@@ -518,17 +466,7 @@ class CPER_SECTION_HEADER(object):
 
         # Only parse if data is valid
         if(self.ValidSectionBitsList[0]):
-
-            try:
-                guid = uuid.UUID(bytes_le=self.FRUID)
-                # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
-                if(FriendlyNames.get(guid)):
-                    return FriendlyNames[guid]
-            except:
-                pass
-            
-            # Return the guid if a friendly name cannot be found
-            return str(uuid.UUID(bytes_le=self.FRUID))
+            return AttemptGuidParse(self.FRUID)
 
         return "Invalid"
     
@@ -660,6 +598,23 @@ def LoadPlugins():
         Parsers.append(cl())
 
 ##
+# Attempt to parse a guid. If that fails, notify user, otherwisesee if it has an associated 
+# friendly name. Just return the guid if no friendly name can be found.
+##
+def AttemptGuidParse(g) -> str:
+        try:
+            guid = uuid.UUID(bytes_le=g)
+        except:
+            return "Unable to parse"
+
+        # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
+        if(FriendlyNames.get(guid)):
+            return FriendlyNames[guid]
+
+        # Return the guid if a friendly name cannot be found
+        return str(guid)
+
+##
 # Run each plugins CanParse() method to see if it can parse the input guid
 ##
 def CheckPluginsForGuid(guid):
@@ -694,12 +649,12 @@ def ParseCPERFromXML(input): # TODO: Create xml parser
 ##
 # Main function used to test functionality
 ##
-# if __name__ == "__main__":
-#     LoadPlugins()
-#     ImportFriendlyNames()
-#     with open('testdata.csv','r') as csv_file:
-#         csv_reader = csv.reader(csv_file, delimiter=',')
-#         next(csv_reader) # skip the header
+if __name__ == "__main__":
+    LoadPlugins()
+    ImportFriendlyNames()
+    with open('testdata.csv','r') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        next(csv_reader) # skip the header
 
-#         for row in csv_reader:
-#             ParseCPER(row[0])
+        for row in csv_reader:
+            ParseCPER(row[0])
