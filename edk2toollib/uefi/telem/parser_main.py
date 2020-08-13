@@ -17,7 +17,7 @@ from cper_section_data import SECTION_PARSER_PLUGIN
 """
 CPER: Common Platform Error Record
 
-Structure of a CPER:
+Structure of a CPER Header:
 Signature           (0   byte offset, 4  byte length) : CPER Signature
 Revision            (4   byte offset, 2  byte length) : The Revision of CPER
 Signature End       (6   byte offset, 4  byte length) : Must always be 0xffffffff
@@ -76,17 +76,20 @@ p           char[]                  bytes
 P           void *                  integer
 """
 
-CPER_HEADER_SIZE = 128
-CPER_SECTION_HEADER_SIZE = 72
-FriendlyNames = {}
-Parsers = []
+CPER_HEADER_SIZE            = 128 # A CPER header is 128 bytes 
+CPER_SECTION_HEADER_SIZE    = 72  # A CPER section header is 72 bytes
+FriendlyNames               = {}  # dict loaded from friendlynames.csv used to associate guids with friendly strings
+Parsers                     = []  # list of plugin classes which inherit from CPER_SECTION_DATA and are therefore capable of parsing section data
 
-concat_s = lambda x, y : (''.join([x, y," "]))
-concat_n = lambda x, y : (''.join([x, y,"\n"]))
-concat   = lambda x, y : (''.join([x, y]))
-empty    = lambda x : x == "" or x == None or x == []
-neq      = lambda x,y : x != y
-eq       = lambda x,y : x == y
+# Using these lambda concat statements to guarantee linear runtime when concatonating strings, and for simplicity
+concat_s = lambda x, y  : (''.join([x, y," "]))  # Concatenate two strings and put a space at the end
+concat_n = lambda x, y  : (''.join([x, y,"\n"])) # Concatenate two strings and put a newline at the end
+concat   = lambda x, y  : (''.join([x, y]))      # Concatenate two strings
+
+# Useful lambdas
+empty    = lambda x     : x == "" or x == None or x == []
+neq      = lambda x,y   : x != y
+eq       = lambda x,y   : x == y
 
 class CPER(object):
 
@@ -108,9 +111,12 @@ class CPER(object):
     # Set each of the section headers to CPER_SECTION_HEADER objects
     ##
     def SetSectionHeaders(self):
+        # Section of RawData containing the section headers
         temp = self.RawData[CPER_HEADER_SIZE:CPER_HEADER_SIZE + (CPER_SECTION_HEADER_SIZE * self.Header.SectionCount)]
+
+        # Go through each section header and attempt to create a CPER_SECTION_HEADER object. Store each header in SectionHeaders list
         for x in range(self.Header.SectionCount):
-            try:
+            try: # Don't want to stop runtime if parsing fails
                 self.SectionHeaders.append(CPER_SECTION_HEADER(temp[x * CPER_SECTION_HEADER_SIZE: (x + 1) * CPER_SECTION_HEADER_SIZE]))
             except:
                 print("Error parsing section header %d" % x)
@@ -119,37 +125,67 @@ class CPER(object):
     # Get each of the actual section data pieces and either pass it to something which can parse it, or dump the hex
     ##
     def ParseSectionData(self, s):
-        p = CheckPluginsForGuid(s.SectionType)
-        if p != None:
+        p = CheckPluginsForGuid(s.SectionType) # Runs CanParse() on each plugin in .\plugins\ folder to see if it can parse the section type 
+        
+        # if we've found a plugin which can parse this section
+        if p != None: 
             try:
-                # print("Passing data to plugin " + str(p) + ". Data wihin CPER from byte " + str(x.SectionOffset) + " to byte " + str(x.SectionOffset + x.SectionLength) \
-                #      + ". Total section length: " + str(x.SectionLength))
+                # pass the data to that parser which should return a string of the data parsed/formatted
                 return p.Parse(self.RawData[s.SectionOffset : s.SectionOffset + s.SectionLength])
             except:
                 print("Unable to apply plugin " + str(p)  + " on section data!")
 
+        # If no plugin can parse the section data, do a simple hex dump
         return HexDump(self.RawData[s.SectionOffset : s.SectionOffset + s.SectionLength],16)
     
+    ##
+    # Print the entire CPER record
+    ##
     def PrettyPrint(self):
         counter = 1
         
         print(self.Header.PrettyPrint())
 
+        # Alert user that section count doesn't match sections being printed.
+        # This could be because there was an error parsing a section, or the
+        # section count is incorrect
         if neq(self.Header.SectionCount,self.SectionHeaders.count):
-            print("Error parsing one or more headers...\n")
+            print("Section Count of CPER header \n")
 
-
+        # Print each section header followed by the correlated section
         for s in self.SectionHeaders:
             print(concat("Section ",str(counter)))
-            counter += 1
             print(s.PrettyPrint())
             print(self.ParseSectionData(s))
+            counter += 1
 
+# CPER: Common Platform Error Record
+
+# Structure of a CPER Header:
+# Signature           (0   byte offset, 4  byte length) : CPER Signature
+# Revision            (4   byte offset, 2  byte length) : The Revision of CPER
+# Signature End       (6   byte offset, 4  byte length) : Must always be 0xffffffff
+# Section Count       (10  byte offset, 4  byte length) : The Number of Sections of CPER
+# Error Severity      (12  byte offset, 4  byte length) : The Severity of Error of CPER
+# Validation Bits     (16  byte offset, 4  byte length) : Identify Valid IDs of the CPER
+# Record Length       (20  byte offset, 4  byte length) : The size(in bytes) of the ENTIRE Error Record
+# Timestamp           (24  byte offset, 8  byte length) : The Time at which the Error occured
+# Platform ID         (32  byte offset, 16 byte length) : The Platform GUID (Typically, the Platform SMBIOS UUID)
+# Partition ID        (48  byte offset, 16 byte length) : The Software Partition (if applicable)
+# Creator ID          (64  byte offset, 16 byte length) : The GUID of the Error "Creator"
+# Notification Type   (80  byte offset, 16 byte length) : A pre-assigned GUID associated with the event (ex.Boot)
+# Record ID           (96  byte offset, 8  byte length) : When combined with the Creator ID, identifies the Error Record
+# Flags               (104 byte offset, 4  byte length) : A specific "flag" for the Error Record. Flags are pre-defined values which provide more information on the Error
+# Persistence Info    (108 byte offset, 8  byte length) : Produced and consumed by the creator of the Error Record.There are no guidelines for these bytes.
+# Reserved            (116 byte offset, 12 byte length) : Must be zero
 class CPER_HEADER(object):
 
     STRUCT_FORMAT = "=IHIHIIIQ16s16s16s16sQIQ12s"
 
     def __init__(self, input):
+        
+        self.ValidBitsList = [False,False,False] # Go to self.ValidBitsParse to see description of the field
+
         (self.SignatureStart,
          self.Revision,
          self.SignatureEnd,
@@ -167,14 +203,13 @@ class CPER_HEADER(object):
          self.PersistenceInfo,
          self.Reserved) = struct.unpack_from(self.STRUCT_FORMAT, input)
             
-        self.ValidBitsList = [False,False,False]
         self.ValidBitsParse()
 
     ##
     # Signature should be ascii array (0x43,0x50,0x45,0x52) or "CPER"
     ##
     def SignatureParse(self) -> str:
-        return str(self.SignatureStart)
+        return self.SignatureStart.decode('utf-8')
 
     ##
     # Parse the major and minor version number of the Error Record definition
@@ -185,7 +220,7 @@ class CPER_HEADER(object):
         return str(self.Revision)
 
     ##
-    #
+    # Parse the error severity for 4 known values
     ##
     def ErrorSeverityParse(self) -> str:
         if(self.ErrorSeverity == 0):
@@ -205,11 +240,11 @@ class CPER_HEADER(object):
     # if bit 3: PartitionID contains valid info
     ##
     def ValidBitsParse(self):
-        if(self.ValidationBits & int('0b1', 2)):
+        if(self.ValidationBits & int('0b1', 2)): # Check bit 0
             self.ValidBitsList[0] = True
-        if(self.ValidationBits & int('0b10', 2)):
+        if(self.ValidationBits & int('0b10', 2)): # Check bit 1
             self.ValidBitsList[1] = True
-        if(self.ValidationBits & int('0b100', 2)):
+        if(self.ValidationBits & int('0b100', 2)): # Check bit 2
             self.ValidBitsList[2] = True
 
     ##
@@ -219,7 +254,7 @@ class CPER_HEADER(object):
         if(self.ValidBitsList[1]):
             return str(( self.Timestamp >> 40) & int('0b11111111', 2)) + "/" + \
                                      str(( self.Timestamp >> 32) & int('0b11111111', 2)) + "/" + \
-                                     str(((self.Timestamp >> 48) & int('0b11111111', 2) * 100) + (self.Timestamp >> 56) & int('0b11111111', 2)) + " " + \
+                                     str((((self.Timestamp >> 56) & int('0b11111111', 2)) * 100) + ((self.Timestamp >> 48) & int('0b11111111', 2))) + " " + \
                                      str(( self.Timestamp >> 16) & int('0b11111111', 2)) + ":" + \
                                      str(( self.Timestamp >> 8 ) & int('0b11111111', 2)) + ":" + \
                                      str(( self.Timestamp >> 0 ) & int('0b11111111', 2))
@@ -230,45 +265,59 @@ class CPER_HEADER(object):
     # Parse the Platform GUID (Typically, the Platform SMBIOS UUID)
     ##
     def PlatformIDParse(self) -> str:
+
+        # Only parse if data is valid
         if(self.ValidBitsList[0]):
             try:
                 guid = uuid.UUID(bytes_le=self.PlatformID)
+                # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
                 if(FriendlyNames.get(guid)):
                     return FriendlyNames[guid]
             except:
                 pass
-
+            
+            # Return the guid if a friendly name cannot be found
             return str(uuid.UUID(bytes_le=self.PlatformID))
         
+        # Platform ID is invalid based on validation bits
         return "Invalid"
 
     ##
     # Parse the GUID for the Software Partition (if applicable)
     ##
     def PartitionIDParse(self) -> str:
+
+        # Only parse if data is valid
         if(self.ValidBitsList[2]):
             try:
                 guid = uuid.UUID(bytes_le=self.PartitionID)
+                # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
                 if(FriendlyNames.get(guid)):
                     return FriendlyNames[guid]
             except:
                 pass
-
+            
+            # Return the guid if a friendly name cannot be found
             return str(uuid.UUID(bytes_le=self.PartitionID))
         
+        # Partition ID is invalid based on validation bits
         return "Invalid"
 
     ##
     # Parse the GUID for the GUID of the Error "Creator"
     ##
     def CreatorIDParse(self) -> str:
+        
         try:
             guid = uuid.UUID(bytes_le=self.CreatorID)
+
+            # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
             if(FriendlyNames.get(guid)):
                 return FriendlyNames[guid]
         except:
             pass
 
+        # Return the guid if a friendly name cannot be found
         return str(uuid.UUID(bytes_le=self.CreatorID))
 
         
@@ -277,13 +326,17 @@ class CPER_HEADER(object):
     # Parse the pre-assigned GUID associated with the event (ex.Boot)
     ##
     def NotificationTypeParse(self) -> str:
+
         try:
             guid = uuid.UUID(bytes_le=self.NotificationType)
+
+            # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
             if(FriendlyNames.get(guid)):
                 return FriendlyNames[guid]
         except:
             pass
         
+        # Return the guid if a friendly name cannot be found
         return str(uuid.UUID(bytes_le=self.NotificationType))
 
     ##
@@ -295,10 +348,11 @@ class CPER_HEADER(object):
     ##
     # Check the flags field and populate list containing applicable flags
     ##
-    def FlagsParse(self):
+    def FlagsParse(self) -> str:
 
         FlagList = []
 
+        # Check each bit for associated flag
         if(self.Flags & int('0b1', 2)):
             FlagList.append("Recovered")
         if(self.Flags & int('0b10', 2)):
@@ -312,8 +366,11 @@ class CPER_HEADER(object):
         if(self.Flags & int('0b100000', 2)):
             FlagList.append("Persist")
 
+        # If no flags were found
         if(empty(FlagList)):
             return "None"
+        
+        # Join the FlagsList elements separated by commas
         return ", ".join(FlagList)
 
     ##
@@ -322,7 +379,9 @@ class CPER_HEADER(object):
     def PersistenceInfoParse(self) -> str:
         return str(self.PersistenceInfo)
 
-
+    ##
+    # Print relevant portions of the CPER header. Change to suit your needs
+    ##
     def PrettyPrint(self) -> str:
 
         string = ""
@@ -331,22 +390,22 @@ class CPER_HEADER(object):
         string = concat_n(string,concat("Record Length:  ",str(self.RecordLength)))
 
         temp = self.TimestampParse()
-        string = concat_n(string,concat("Time of error:  ","?" if empty(temp) else temp))
+        string = concat_n(string,concat("Time of error:  ",temp))
 
         temp = self.ErrorSeverityParse()
-        string = concat_n(string,concat("Error severity: ","?" if empty(temp) else temp))
+        string = concat_n(string,concat("Error severity: ",temp))
 
         temp = self.FlagsParse()
-        string = concat_n(string,concat("Flags ID:       ","?" if empty(temp) else temp))
+        string = concat_n(string,concat("Flags ID:       ",temp))
 
         temp = self.PlatformIDParse()
-        string = concat_n(string,concat("Platform ID:    ","?" if empty(temp) else temp))
+        string = concat_n(string,concat("Platform ID:    ",temp))
 
         temp = self.PartitionIDParse()
-        string = concat_n(string,concat("Partition ID:   ","?" if empty(temp) else temp))
+        string = concat_n(string,concat("Partition ID:   ",temp))
 
         temp = self.CreatorIDParse()
-        string = concat_n(string,concat("Creator ID:     ","?" if empty(temp) else temp))
+        string = concat_n(string,concat("Creator ID:     ",temp))
 
         return string[0:-1] #omit the last newline
 
@@ -366,10 +425,10 @@ class CPER_SECTION_HEADER(object):
 
     STRUCT_FORMAT = "=IIHccH16s16sH20s"
 
-    def __init__(self, cper_section_byte_array):
+    def __init__(self, input):
 
-        self.ValidSectionBitsList = [False,False]
-        self.FlagList = []
+        self.ValidSectionBitsList = [False,False] # Go to self.ValidBitsParse to see description of the field
+        self.FlagList = [] # go to self.FlagsParse to se description of this field
 
         (self.SectionOffset,
             self.SectionLength,
@@ -380,7 +439,7 @@ class CPER_SECTION_HEADER(object):
             self.SectionType,
             self.FRUID,
             self.SectionSeverity,
-            self.FRUString) = struct.unpack_from(self.STRUCT_FORMAT, cper_section_byte_array)
+            self.FRUString) = struct.unpack_from(self.STRUCT_FORMAT, input)
         
         self.FlagsParse()
         self.ValidBitsParse()
@@ -398,9 +457,9 @@ class CPER_SECTION_HEADER(object):
     # if bit 1: FruID String contains valid info
     ##
     def ValidBitsParse(self):
-        if(ord(self.ValidationBits) & 0b1):
+        if(ord(self.ValidationBits) & 0b1): # check bit 0
             self.ValidSectionBitsList[0] = True
-        if(ord(self.ValidationBits) & 0b10):
+        if(ord(self.ValidationBits) & 0b10): # check bit 1
             self.ValidSectionBitsList[1] = True
 
     ##
@@ -416,22 +475,24 @@ class CPER_SECTION_HEADER(object):
 
         FlagList = []
 
-        if(self.Flags & int('0b1', 2)):
+        if(self.Flags & int('0b1', 2)): # Check bit 0
             FlagList.append("Primary")
-        if(self.Flags & int('0b10', 2)):
+        if(self.Flags & int('0b10', 2)): # Check bit 1
             FlagList.append("Containment Warning")
-        if(self.Flags & int('0b100', 2)):
+        if(self.Flags & int('0b100', 2)): # Check bit 2
             FlagList.append("Reset")
-        if(self.Flags & int('0b1000', 2)):
+        if(self.Flags & int('0b1000', 2)): # Check bit 3
             FlagList.append("Error Threshold Exceeded")
-        if(self.Flags & int('0b10000', 2)):
+        if(self.Flags & int('0b10000', 2)): # Check bit 4
             FlagList.append("Resource Not Accessible")
-        if(self.Flags & int('0b100000', 2)):
+        if(self.Flags & int('0b100000', 2)): # Check bit 5
             FlagList.append("Latent Error")
 
+        # If no flags were found
         if(empty(FlagList)):
             return "None"
         
+        # Join the FlagsList elements separated by commas
         return ' '.join(FlagList)
 
     ##
@@ -441,34 +502,42 @@ class CPER_SECTION_HEADER(object):
 
         try:
             guid = uuid.UUID(bytes_le=self.SectionType)
+            # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
             if(FriendlyNames.get(guid)):
                 return FriendlyNames[guid]
         except:
             pass
-
+        
+        # Return the guid if a friendly name cannot be found
         return str(uuid.UUID(bytes_le=self.SectionType))
 
     ##
-    # TODO: Fill in
+    # TODO: Fill in - not detailed in CPER doc
     ##
     def FRUIDParse(self) -> str:
+
+        # Only parse if data is valid
         if(self.ValidSectionBitsList[0]):
+
             try:
                 guid = uuid.UUID(bytes_le=self.FRUID)
+                # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
                 if(FriendlyNames.get(guid)):
                     return FriendlyNames[guid]
             except:
                 pass
             
+            # Return the guid if a friendly name cannot be found
             return str(uuid.UUID(bytes_le=self.FRUID))
 
         return "Invalid"
     
 
     ##
-    # Parse the severity of the error in this section
+    # Parse the error severity for 4 known values
     #
-    # Note that severity of "Informational" indicates that the section contains extra information that can be safely ignored by error handling software.
+    # NOTE: A severity of "Informational" indicates that the section contains extra information that 
+    #       can be safely ignored
     ##
     def SectionSeverityParse(self) -> str:
         if(self.SectionSeverity == 0):
@@ -486,12 +555,21 @@ class CPER_SECTION_HEADER(object):
     # Parse out the custom string identifying the FRU hardware
     ##
     def FRUStringParse(self) -> str:
-        
+
+        # Only parse if data is valid
         if(self.ValidSectionBitsList[1]):
-            return self.FRUString.decode('utf-8')
+
+            # Convert the FRU string from bytes to a string
+            try:
+                return self.FRUString.decode('utf-8')
+            except:
+                return "Unable to parse"
         else:
             return "Invalid"
 
+    ##
+    # Print relevant portions of the section header. Change to suit your needs
+    ##
     def PrettyPrint(self) -> str:
         string = ""
         temp = ""
@@ -499,19 +577,19 @@ class CPER_SECTION_HEADER(object):
         string = concat_n(string,concat("Section Length:    ",str(self.SectionLength)))
 
         temp = self.FlagsParse()
-        string = concat_n(string,concat("Flags:             ","?" if empty(temp) else temp))
+        string = concat_n(string,concat("Flags:             ",temp))
 
         temp = self.SectionSeverityParse()
-        string = concat_n(string,concat("Section Severity:  ","?" if empty(temp) else temp))
+        string = concat_n(string,concat("Section Severity:  ",temp))
 
         temp = self.SectionTypeParse()
-        string = concat_n(string,concat("Section Type:      ","?" if empty(temp) else temp))
+        string = concat_n(string,concat("Section Type:      ",temp))
 
         temp = self.FRUIDParse()
-        string = concat_n(string,concat("FRU ID:            ","?" if empty(temp) else temp))
+        string = concat_n(string,concat("FRU ID:            ",temp))
         
         temp = self.FRUStringParse()
-        string = concat_n(string,concat("FRU String:        ","?" if empty(temp) else temp))
+        string = concat_n(string,concat("FRU String:        ",temp))
         
         return string
 
@@ -520,13 +598,12 @@ class CPER_SECTION_HEADER(object):
 ##
 def HexDump(input, bytesperline):
 
-    inputlen    = len(input)
     string      = ""
     asc         = ""
     byte        = ""
     rangecheck  = lambda x : x < 31 or x > 127
 
-    for i in range(inputlen):
+    for i in range(len(input)):
         byte = concat_s(byte, format(input[i],'02X'))
         if rangecheck(input[i]):
                 asc = concat_s(asc,". ")
@@ -538,25 +615,28 @@ def HexDump(input, bytesperline):
             asc = ""
             byte = ""
     
-    if(inputlen % bytesperline):  
+    if(len(input) % bytesperline):  
         string = concat(string,concat_n(concat(byte,"   " * (bytesperline - (len(byte)//3))),concat(asc,"   " * (bytesperline - (len(asc)//3)))))
 
     return string
 
 ##
-# Import Friendly Names from friendlynames.csv
+# Load friendly names from friendlynames.csv to FriendlyNames dict
 ##
 def ImportFriendlyNames():
+    # open friendlynames.csv
     with open('friendlynames.csv','r') as csv_file:
-        
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        next(csv_reader) # skip the header
-        rowcounter = 2
+
+        rowcounter = 2 # Used to track which row we are reading
+        csv_reader = csv.reader(csv_file, delimiter=',') # Read the csv file
+        next(csv_reader) # Skip the header
 
         for row in csv_reader:
             try:
+                # Input friendly name into dict
                 FriendlyNames[uuid.UUID(row[1].strip())] = row[0]
             except:
+                # Alert user if a row could not be parsed
                 print("Unable to add row " + str(rowcounter) + " to the friendly name dictionary!")
             
             rowcounter += 1
@@ -565,6 +645,8 @@ def ImportFriendlyNames():
 # Load all plugins from the /plugins folder
 ##
 def LoadPlugins():
+    # Get all subclasses of SECTION_PARSER_PLUGIN which have been imported 
+    # using the "from plugins import *" call at start of file
     subclasslist = SECTION_PARSER_PLUGIN.__subclasses__()
     
     for cl in subclasslist:
@@ -574,7 +656,9 @@ def LoadPlugins():
 # Run each plugins CanParse() method to see if it can parse the input guid
 ##
 def CheckPluginsForGuid(guid):
+    
     for p in Parsers:
+        # CanParse() returns true if it recognizes the guid
         if p.CanParse(guid):
             return p
 
@@ -604,7 +688,7 @@ def parse_from_xml(input): # TODO: Create xml parser
 if __name__ == "__main__":
     LoadPlugins()
     ImportFriendlyNames()
-    with open('HeadersData.csv','r') as csv_file:
+    with open('testdata.csv','r') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         next(csv_reader) # skip the header
 
