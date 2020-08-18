@@ -1,4 +1,4 @@
-# @file parser_main.py
+# @file cper_parser.py
 # TODO: Write Readme and short description
 #
 # Copyright (c) Microsoft Corporation
@@ -21,7 +21,7 @@ Structure of a CPER Header:
 Signature           (0   byte offset, 4  byte length) : CPER Signature
 Revision            (4   byte offset, 2  byte length) : The Revision of CPER
 Signature End       (6   byte offset, 4  byte length) : Must always be 0xffffffff
-Section Count       (10  byte offset, 4  byte length) : The Number of Sections of CPER
+Section Count       (10  byte offset, 2  byte length) : The Number of Sections of CPER
 Error Severity      (12  byte offset, 4  byte length) : The Severity of Error of CPER
 Validation Bits     (16  byte offset, 4  byte length) : Identify Valid IDs of the CPER
 Record Length       (20  byte offset, 4  byte length) : The size(in bytes) of the ENTIRE Error Record
@@ -165,7 +165,7 @@ class CPER(object):
 # Signature           (0   byte offset, 4  byte length) : CPER Signature
 # Revision            (4   byte offset, 2  byte length) : The Revision of CPER
 # Signature End       (6   byte offset, 4  byte length) : Must always be 0xffffffff
-# Section Count       (10  byte offset, 4  byte length) : The Number of Sections of CPER
+# Section Count       (10  byte offset, 2  byte length) : The Number of Sections of CPER
 # Error Severity      (12  byte offset, 4  byte length) : The Severity of Error of CPER
 # Validation Bits     (16  byte offset, 4  byte length) : Identify Valid IDs of the CPER
 # Record Length       (20  byte offset, 4  byte length) : The size(in bytes) of the ENTIRE Error Record
@@ -649,12 +649,12 @@ def ParseCPERFromXML(input): # TODO: Create xml parser
 ##
 # Main function used to test functionality
 ##
-# if __name__ == "__main__":
-#     LoadPlugins()
-#     ImportFriendlyNames()
-#     with open('testdata.csv','r') as csv_file:
-#         csv_reader = csv.reader(csv_file, delimiter=',')
-#         next(csv_reader) # skip the header
+if __name__ == "__main__":
+    LoadPlugins()
+    ImportFriendlyNames()
+    with open('testdata.csv','r') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        next(csv_reader) # skip the header
 
-#         for row in csv_reader:
-#             ParseCPER(row[0])
+        for row in csv_reader:
+            ParseCPER(row[0])
