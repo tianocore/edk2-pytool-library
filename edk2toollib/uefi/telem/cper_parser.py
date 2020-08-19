@@ -105,7 +105,10 @@ class CPER(object):
     ##
     def SetCPERHeader(self):
         temp = self.RawData[:CPER_HEADER_SIZE]
-        self.Header = CPER_HEADER(temp)
+        try:
+            self.Header = CPER_HEADER(temp)
+        except:
+            print("Unable to parse record")
 
     ##
     # Set each of the section headers to CPER_SECTION_HEADER objects
