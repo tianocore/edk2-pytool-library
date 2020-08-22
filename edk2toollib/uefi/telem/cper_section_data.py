@@ -12,7 +12,7 @@ class SECTION_PARSER_PLUGIN(object):
     # Returns string representation of this parser
     ##
     def __str__(self) -> str:
-        raise NotImplementedError
+        return "UNNAMED PLUGIN"
 
     ##
     # True if this parser recognizes the input guid

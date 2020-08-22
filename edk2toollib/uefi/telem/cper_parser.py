@@ -82,8 +82,9 @@ FriendlyNames               = {}  # dict loaded from friendlynames.csv used to a
 Parsers                     = []  # list of plugin classes which inherit from CPER_SECTION_DATA and are therefore capable of parsing section data
 
 class CPER(object):
+    '''TODO: Fill in'''
 
-    def __init__(self, input):
+    def __init__(self, input:str):
         self.RawData = bytearray.fromhex(input)
         self.Header = None
         self.SetCPERHeader()
@@ -112,7 +113,7 @@ class CPER(object):
             except:
                 print("Error parsing section header %d" % x)
 
-    def ParseSectionData(self, s):
+    def ParseSectionData(self, s:object):
         '''Get each of the actual section data pieces and either pass it to something which can parse it, or dump the hex'''
 
         p = CheckPluginsForGuid(s.SectionType) # Runs CanParse() on each plugin in .\plugins\ folder to see if it can parse the section type 
@@ -149,10 +150,11 @@ class CPER(object):
             counter += 1
 
 class CPER_HEADER(object):
+    '''TODO: Fill in'''
 
     STRUCT_FORMAT = "=IHIHIIIQ16s16s16s16sQIQ12s"
 
-    def __init__(self, input):
+    def __init__(self, input:str):
         
         self.ValidBitsList = [False,False,False] # Go to self.ValidBitsParse to see description of the field
 
@@ -319,10 +321,11 @@ class CPER_HEADER(object):
         return string[0:-1] #omit the last newline
 
 class CPER_SECTION_HEADER(object):
+    '''TODO: Fill in'''
 
     STRUCT_FORMAT = "=IIHccH16s16sH20s"
 
-    def __init__(self, input):
+    def __init__(self, input:str):
 
         self.ValidSectionBitsList = [False,False] # Go to self.ValidBitsParse to see description of the field
         self.FlagList = [] # go to self.FlagsParse to se description of this field
@@ -468,7 +471,7 @@ class CPER_SECTION_HEADER(object):
         
         return string
 
-def HexDump(input, bytesperline):
+def HexDump(input:bytes, bytesperline:int):
     '''Dumps byte code of input'''
 
     string      = "" # Stores the entire hexdump string
@@ -530,7 +533,7 @@ def LoadPlugins():
     for cl in subclasslist:
         Parsers.append(cl())
 
-def AttemptGuidParse(g) -> str:
+def AttemptGuidParse(g:bytes) -> str:
     '''
     Attempt to parse a guid. If that fails, notify user, otherwise if it has an associated 
     friendly name. Just return the guid if no friendly name can be found.
@@ -548,7 +551,7 @@ def AttemptGuidParse(g) -> str:
     # Return the guid if a friendly name cannot be found
     return str(guid)
 
-def CheckPluginsForGuid(guid):
+def CheckPluginsForGuid(guid:uuid):
     '''Run each plugins CanParse() method to see if it can parse the input guid'''
 
     for p in Parsers:
@@ -558,12 +561,12 @@ def CheckPluginsForGuid(guid):
 
     return None
 
-def ParseCPERList(input):
+def ParseCPERList(input:list):
     '''Parse a list of cper record strings'''
     for x in input:
-        CPER(x)
+        ParseCPER(x)
 
-def ParseCPER(input):
+def ParseCPER(input:str):
     '''Parse a single cper record'''
     c = CPER(input)
     c.PrettyPrint()
