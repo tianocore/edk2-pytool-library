@@ -81,16 +81,6 @@ CPER_SECTION_HEADER_SIZE    = 72  # A CPER section header is 72 bytes
 FriendlyNames               = {}  # dict loaded from friendlynames.csv used to associate guids with friendly strings
 Parsers                     = []  # list of plugin classes which inherit from CPER_SECTION_DATA and are therefore capable of parsing section data
 
-# Using these lambda concat statements to guarantee linear runtime when concatonating strings, and for simplicity
-concat_s = lambda x,y  : (''.join([x,y," "]))  # Concatenate two strings and put a space at the end
-concat_n = lambda x,y  : (''.join([x,y,"\n"])) # Concatenate two strings and put a newline at the end
-concat   = lambda x,y  : (''.join([x,y]))      # Concatenate two strings
-
-# Useful lambdas
-empty    = lambda x     : x == "" or x == None or x == []   # True if x is an empty string, list, etc.
-neq      = lambda x,y   : x != y                            # True if x and y are not equal
-eq       = lambda x,y   : x == y                            # True if x and y are equal
-
 class CPER(object):
 
     def __init__(self, input):
@@ -152,12 +142,12 @@ class CPER(object):
         # Alert user that section count doesn't match sections being printed.
         # This could be because there was an error parsing a section, or the
         # section count is incorrect
-        if neq(self.Header.SectionCount,self.SectionHeaders.count):
+        if self.Header.SectionCount != self.SectionHeaders.count:
             print("Section Count of CPER header \n")
 
         # Print each section header followed by the correlated section
         for s in self.SectionHeaders:
-            print(concat("Section ",str(counter)))
+            print("Section " + str(counter))
             print(s.PrettyPrint())
             print(self.ParseSectionData(s))
             counter += 1
@@ -328,7 +318,7 @@ class CPER_HEADER(object):
             FlagList.append("Persist")
 
         # If no flags were found
-        if(empty(FlagList)):
+        if(FlagList == []):
             return "None"
         
         # Join the FlagsList elements separated by commas
@@ -348,25 +338,25 @@ class CPER_HEADER(object):
         string = ""
         temp = ""
 
-        string = concat_n(string,concat("Record Length:  ",str(self.RecordLength)))
+        string += "Record Length:  " + str(self.RecordLength) + '\n'
 
         temp = self.TimestampParse()
-        string = concat_n(string,concat("Time of error:  ",temp))
+        string += "Time of error:  " + temp + '\n'
 
         temp = self.ErrorSeverityParse()
-        string = concat_n(string,concat("Error severity: ",temp))
+        string += "Error severity: " + temp + '\n'
 
         temp = self.FlagsParse()
-        string = concat_n(string,concat("Flags ID:       ",temp))
+        string += "Flags ID:       " + temp + '\n'
 
         temp = self.PlatformIDParse()
-        string = concat_n(string,concat("Platform ID:    ",temp))
+        string += "Platform ID:    " + temp + '\n'
 
         temp = self.PartitionIDParse()
-        string = concat_n(string,concat("Partition ID:   ",temp))
+        string += "Partition ID:   " + temp + '\n'
 
         temp = self.CreatorIDParse()
-        string = concat_n(string,concat("Creator ID:     ",temp))
+        string += "Creator ID:     " + temp + '\n'
 
         return string[0:-1] #omit the last newline
 
@@ -450,7 +440,7 @@ class CPER_SECTION_HEADER(object):
             FlagList.append("Latent Error")
 
         # If no flags were found
-        if(empty(FlagList)):
+        if(FlagList == []):
             return "None"
         
         # Join the FlagsList elements separated by commas
@@ -514,23 +504,23 @@ class CPER_SECTION_HEADER(object):
     def PrettyPrint(self) -> str:
         string = ""
         temp = ""
-
-        string = concat_n(string,concat("Section Length:    ",str(self.SectionLength)))
+        
+        string += "Section Length:      " + str(self.SectionLength) + '\n'
 
         temp = self.FlagsParse()
-        string = concat_n(string,concat("Flags:             ",temp))
+        string += "Flags:               " + temp + '\n'
 
         temp = self.SectionSeverityParse()
-        string = concat_n(string,concat("Section Severity:  ",temp))
+        string += "Section Severity:    " + temp + '\n'
 
         temp = self.SectionTypeParse()
-        string = concat_n(string,concat("Section Type:      ",temp))
+        string += "Section Type:        " + temp + '\n'
 
         temp = self.FRUIDParse()
-        string = concat_n(string,concat("FRU ID:            ",temp))
+        string += "FRU ID:              " + temp + '\n'
         
         temp = self.FRUStringParse()
-        string = concat_n(string,concat("FRU String:        ",temp))
+        string += "FRU String:          " + temp + '\n'
         
         return string
 
@@ -548,23 +538,23 @@ def HexDump(input, bytesperline):
     for i in range(len(input)):
 
         # Add a byte string version of the byte onto the byte string
-        byte = concat_s(byte, format(input[i],'02X'))
+        byte += format(input[i],'02X') + " "
         
         # Add an ascii version of the byte onto the ascii string
         if rangecheck(input[i]):
-                asc = concat_s(asc,". ")
+                asc += ".  "
         else:
-            asc = concat_s(asc,format(chr(input[i])," <2"))
+            asc += format(chr(input[i])," <2") + " "
         
         # Once we've reached bytesperline length, concatenate asc and byte strings and start a new line
         if(not (i + 1) % bytesperline):
-            string = concat_n(string,concat(byte,asc))
-            asc = ""
+            string += byte + " " + asc + "\n"
+            asc  = ""
             byte = ""
     
     # Check if there are any remaining characters in the asc and byte strings to be added to string 
     if(len(input) % bytesperline):  
-        string = concat(string,concat_n(concat(byte,"   " * (bytesperline - (len(byte)//3))),concat(asc,"   " * (bytesperline - (len(asc)//3)))))
+        string += byte + "   " * (bytesperline - (len(byte)//3)) + " " + asc + "   " * (bytesperline - (len(asc)//3)) + "\n"
 
     return string
 
@@ -652,12 +642,12 @@ def ParseCPERFromXML(input): # TODO: Create xml parser
 ##
 # Main function used to test functionality
 ##
-if __name__ == "__main__":
-    LoadPlugins()
-    ImportFriendlyNames()
-    with open('testdata.csv','r') as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        next(csv_reader) # skip the header
+# if __name__ == "__main__":
+#     LoadPlugins()
+#     ImportFriendlyNames()
+#     with open('testdata.csv','r') as csv_file:
+#         csv_reader = csv.reader(csv_file, delimiter=',')
+#         next(csv_reader) # skip the header
 
-        for row in csv_reader:
-            ParseCPER(row[0])
+#         for row in csv_reader:
+#             ParseCPER(row[0])
