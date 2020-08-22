@@ -24,14 +24,14 @@ Revision            (4   byte offset, 2  byte length) : The Revision of CPER
 Signature End       (6   byte offset, 4  byte length) : Must always be 0xffffffff
 Section Count       (10  byte offset, 2  byte length) : The Number of Sections of CPER
 Error Severity      (12  byte offset, 4  byte length) : The Severity of Error of CPER
-Validation Bits     (16  byte offset, 4  byte length) : Identify Valid IDs of the CPER
+Validation Bits     (16  byte offset, 4  byte length) : Identify Valid Ids of the CPER
 Record Length       (20  byte offset, 4  byte length) : The size(in bytes) of the ENTIRE Error Record
 Timestamp           (24  byte offset, 8  byte length) : The Time at which the Error occured
-Platform ID         (32  byte offset, 16 byte length) : The Platform GUID (Typically, the Platform SMBIOS UUID)
-Partition ID        (48  byte offset, 16 byte length) : The Software Partition (if applicable)
-Creator ID          (64  byte offset, 16 byte length) : The GUID of the Error "Creator"
+Platform Id         (32  byte offset, 16 byte length) : The Platform GUID (Typically, the Platform SMBIOS UUID)
+Partition Id        (48  byte offset, 16 byte length) : The Software Partition (if applicable)
+Creator Id          (64  byte offset, 16 byte length) : The GUID of the Error "Creator"
 Notification Type   (80  byte offset, 16 byte length) : A pre-assigned GUID associated with the event (ex.Boot)
-Record ID           (96  byte offset, 8  byte length) : When combined with the Creator ID, identifies the Error Record
+Record Id           (96  byte offset, 8  byte length) : When combined with the Creator Id, identifies the Error Record
 Flags               (104 byte offset, 4  byte length) : A specific "flag" for the Error Record. Flags are pre-defined values which provide more information on the Error
 Persistence Info    (108 byte offset, 8  byte length) : Produced and consumed by the creator of the Error Record.There are no guidelines for these bytes.
 Reserved            (116 byte offset, 12 byte length) : Must be zero
@@ -42,13 +42,13 @@ A Section Header within a CPER has the following structure
 Section Offset      (0  byte offset, 4  byte length) : Offset from start of the CPER(not the start of the section) to the beginning of the section body
 Section Length      (4  byte offset, 4  byte length) : Length in bytes of the section body
 Revision            (8  byte offset, 2  byte length) : Represents the major and minor version number of the Error Record definition
-Validation Bits     (10 byte offset, 1  byte length) : Indicates the validity of the FRU ID and FRU String fields
+Validation Bits     (10 byte offset, 1  byte length) : Indicates the validity of the Fru Id and Fru String fields
 Reserved            (11 byte offset, 1  byte length) : Must be zero
 Flags               (12 byte offset, 4  byte length) : Contains info describing the Error Record (ex. Is this the primary section of the error, has the component been reset if applicable, has the error been contained)
 Section Type        (16 byte offset, 16 byte length) : Holds a pre-defined GUID value indicating that this section is from a particular error
-FRU ID              (32 byte offset, 16 byte length) : ? Not detailed in the CPER doc
+Fru Id              (32 byte offset, 16 byte length) : ? Not detailed in the CPER doc
 Section Severity    (48 byte offset, 4  byte length) : Value from 0 - 3 indicating the severity of the error
-FRU String          (52 byte offset, 20 byte length) : String identifying the FRU hardware
+Fru String          (52 byte offset, 20 byte length) : String identifying the Fru hardware
 
 
 Python Struct Format Characters
@@ -167,11 +167,11 @@ class CPER_HEADER(object):
          self.ValidationBits,
          self.RecordLength,
          self.Timestamp,
-         self.PlatformID,
-         self.PartitionID,
-         self.CreatorID,
+         self.PlatformId,
+         self.PartitionId,
+         self.CreatorId,
          self.NotificationType,
-         self.RecordID,
+         self.RecordId,
          self.Flags,
          self.PersistenceInfo,
          self.Reserved) = struct.unpack_from(self.STRUCT_FORMAT, input)
@@ -208,9 +208,9 @@ class CPER_HEADER(object):
         '''
         Parse validation bits from header
 
-        if bit 1: PlatformID contains valid info\n
+        if bit 1: PlatformId contains valid info\n
         if bit 2: Timestamp contains valid info\n
-        if bit 3: PartitionID contains valid info
+        if bit 3: PartitionId contains valid info
         '''
         if(self.ValidationBits & int('0b1', 2)): # Check bit 0
             self.ValidBitsList[0] = True
@@ -231,37 +231,37 @@ class CPER_HEADER(object):
         
         return "Invalid"
 
-    def PlatformIDParse(self) -> str:
+    def PlatformIdParse(self) -> str:
         '''Parse the Platform GUID (Typically, the Platform SMBIOS UUID)'''
 
         # Only parse if data is valid
         if(self.ValidBitsList[0]):
-            return AttemptGuidParse(self.PlatformID)
+            return AttemptGuidParse(self.PlatformId)
 
-        # Platform ID is invalid based on validation bits
+        # Platform Id is invalid based on validation bits
         return "Invalid"
 
-    def PartitionIDParse(self) -> str:
+    def PartitionIdParse(self) -> str:
         '''Parse the GUID for the Software Partition (if applicable)'''
 
         # Only parse if data is valid
         if(self.ValidBitsList[2]):
-            return AttemptGuidParse(self.PartitionID)
+            return AttemptGuidParse(self.PartitionId)
         
-        # Partition ID is invalid based on validation bits
+        # Partition Id is invalid based on validation bits
         return "Invalid"
 
-    def CreatorIDParse(self) -> str:
+    def CreatorIdParse(self) -> str:
         '''Parse the GUID for the GUID of the Error "Creator"'''
-        return AttemptGuidParse(self.CreatorID)
+        return AttemptGuidParse(self.CreatorId)
 
     def NotificationTypeParse(self) -> str:
         '''Parse the pre-assigned GUID associated with the event (ex.Boot)'''
         return AttemptGuidParse(self.NotificationType)
 
-    def RecordIDParse(self) -> str:
-        '''When combined with the Creator ID, Record ID identifies the Error Record'''
-        return str(self.RecordID)
+    def RecordIdParse(self) -> str:
+        '''When combined with the Creator Id, Record Id identifies the Error Record'''
+        return str(self.RecordId)
 
     def FlagsParse(self) -> str:
         '''Check the flags field and populate list containing applicable flags'''
@@ -308,16 +308,16 @@ class CPER_HEADER(object):
         string += "Error severity: " + temp + '\n'
 
         temp = self.FlagsParse()
-        string += "Flags ID:       " + temp + '\n'
+        string += "Flags Id:       " + temp + '\n'
 
-        temp = self.PlatformIDParse()
-        string += "Platform ID:    " + temp + '\n'
+        temp = self.PlatformIdParse()
+        string += "Platform Id:    " + temp + '\n'
 
-        temp = self.PartitionIDParse()
-        string += "Partition ID:   " + temp + '\n'
+        temp = self.PartitionIdParse()
+        string += "Partition Id:   " + temp + '\n'
 
-        temp = self.CreatorIDParse()
-        string += "Creator ID:     " + temp + '\n'
+        temp = self.CreatorIdParse()
+        string += "Creator Id:     " + temp + '\n'
 
         return string[0:-1] #omit the last newline
 
@@ -338,9 +338,9 @@ class CPER_SECTION_HEADER(object):
             self.Reserved,
             self.Flags,
             self.SectionType,
-            self.FRUID,
+            self.FruId,
             self.SectionSeverity,
-            self.FRUString) = struct.unpack_from(self.STRUCT_FORMAT, input)
+            self.FruString) = struct.unpack_from(self.STRUCT_FORMAT, input)
         
         self.FlagsParse()
         self.ValidBitsParse()
@@ -356,8 +356,8 @@ class CPER_SECTION_HEADER(object):
 
     def ValidBitsParse(self):
         '''
-        if bit 0: FruID contains valid info\n
-        if bit 1: FruID String contains valid info
+        if bit 0: FruId contains valid info\n
+        if bit 1: FruId String contains valid info
         '''
 
         if(ord(self.ValidationBits) & 0b1): # check bit 0
@@ -405,12 +405,12 @@ class CPER_SECTION_HEADER(object):
         return AttemptGuidParse(self.SectionType)
 
     
-    def FRUIDParse(self) -> str:
+    def FruIdParse(self) -> str:
         '''TODO: Fill in - not detailed in CPER doc'''
         
         # Only parse if data is valid
         if(self.ValidSectionBitsList[0]):
-            return AttemptGuidParse(self.FRUID)
+            return AttemptGuidParse(self.FruId)
 
         return "Invalid"
     
@@ -433,15 +433,15 @@ class CPER_SECTION_HEADER(object):
         
         return ""
 
-    def FRUStringParse(self) -> str:
-        '''Parse out the custom string identifying the FRU hardware'''
+    def FruStringParse(self) -> str:
+        '''Parse out the custom string identifying the Fru hardware'''
 
         # Only parse if data is valid
         if(self.ValidSectionBitsList[1]):
 
-            # Convert the FRU string from bytes to a string
+            # Convert the Fru string from bytes to a string
             try:
-                return self.FRUString.decode('utf-8')
+                return self.FruString.decode('utf-8')
             except:
                 return "Unable to parse"
         
@@ -464,11 +464,11 @@ class CPER_SECTION_HEADER(object):
         temp = self.SectionTypeParse()
         string += "Section Type:        " + temp + '\n'
 
-        temp = self.FRUIDParse()
-        string += "FRU ID:              " + temp + '\n'
+        temp = self.FruIdParse()
+        string += "Fru Id:              " + temp + '\n'
         
-        temp = self.FRUStringParse()
-        string += "FRU String:          " + temp + '\n'
+        temp = self.FruStringParse()
+        string += "Fru String:          " + temp + '\n'
         
         return string
 
@@ -572,7 +572,7 @@ def ParseCPERFromXML(input): # TODO: Create xml parser
 ##
 # Main function used to test functionality
 ##
-# if __name__ == "__main__":
-#     LoadPlugins()
-#     ValidateFriendlyNames()
-#     ParseCPERList(TestData)
+if __name__ == "__main__":
+    LoadPlugins()
+    ValidateFriendlyNames()
+    ParseCPERList(TestData)
