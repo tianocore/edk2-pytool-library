@@ -13,6 +13,7 @@ import csv
 import sys
 from plugins import *
 from cper_section_data import SECTION_PARSER_PLUGIN
+from friendlynames import friendlynamedict
 
 """
 CPER: Common Platform Error Record
@@ -78,8 +79,8 @@ P           void *                  integer
 
 CPER_HEADER_SIZE            = 128 # A CPER header is 128 bytes 
 CPER_SECTION_HEADER_SIZE    = 72  # A CPER section header is 72 bytes
-FriendlyNames               = {}  # dict loaded from friendlynames.csv used to associate guids with friendly strings
 Parsers                     = []  # list of plugin classes which inherit from CPER_SECTION_DATA and are therefore capable of parsing section data
+FriendlyNames               = friendlynamedict
 
 class CPER(object):
     '''TODO: Fill in'''
@@ -503,25 +504,19 @@ def HexDump(input:bytes, bytesperline:int):
 
     return string
 
-def ImportFriendlyNames():
-    '''Load friendly names from friendlynames.csv to FriendlyNames dict'''
+# def ImportFriendlyNames():
+#     '''Load friendly names from friendlynames.csv to FriendlyNames dict'''
+#     rowcounter = 0 # Used to track which row we are reading
 
-    # open friendlynames.csv
-    with open('friendlynames.csv','r') as csv_file:
-
-        rowcounter = 2 # Used to track which row we are reading
-        csv_reader = csv.reader(csv_file, delimiter=',') # Read the csv file
-        next(csv_reader) # Skip the header
-
-        for row in csv_reader:
-            try:
-                # Input friendly name into dict
-                FriendlyNames[uuid.UUID(row[1].strip())] = row[0]
-            except:
-                # Alert user if a row could not be parsed
-                print("Unable to add row " + str(rowcounter) + " to the friendly name dictionary!")
-            
-            rowcounter += 1
+#     for f in friendlynamedict:
+#         try:
+#             # Input friendly name into dict
+#             FriendlyNames[uuid.UUID(f[0].strip())] = f[1]
+#         except:
+#             # Alert user if a row could not be parsed
+#             print("Unable to add row " + str(rowcounter) + " to the friendly name dictionary!")
+      
+#         rowcounter += 1
 
 def LoadPlugins():
     '''Load all plugins from the /plugins folder'''
@@ -538,15 +533,15 @@ def AttemptGuidParse(g:bytes) -> str:
     Attempt to parse a guid. If that fails, notify user, otherwise if it has an associated 
     friendly name. Just return the guid if no friendly name can be found.
     '''
-
+    
     try:
         guid = uuid.UUID(bytes_le=g)
     except:
         return "Unable to parse"
 
     # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
-    if(FriendlyNames.get(guid)):
-        return FriendlyNames[guid]
+    if(FriendlyNames.get(str(guid))):
+        return FriendlyNames[str(guid)]
 
     # Return the guid if a friendly name cannot be found
     return str(guid)
@@ -578,12 +573,12 @@ def ParseCPERFromXML(input): # TODO: Create xml parser
 ##
 # Main function used to test functionality
 ##
-# if __name__ == "__main__":
-#     LoadPlugins()
-#     ImportFriendlyNames()
-#     with open('testdata.csv','r') as csv_file:
-#         csv_reader = csv.reader(csv_file, delimiter=',')
-#         next(csv_reader) # skip the header
+if __name__ == "__main__":
+    LoadPlugins()
+    # ImportFriendlyNames()
+    with open('testdata.csv','r') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        next(csv_reader) # skip the header
 
-#         for row in csv_reader:
-#             ParseCPER(row[0])
+        for row in csv_reader:
+            ParseCPER(row[0])

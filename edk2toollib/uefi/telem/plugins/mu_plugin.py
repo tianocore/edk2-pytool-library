@@ -64,13 +64,13 @@ class MU_SECTION_DATA_PARSER(SECTION_PARSER_PLUGIN):
     def __str__(self) -> str:
         return "MU PARSER"
 
-    def CanParse(self,guid) -> bool:
+    def CanParse(self,guid:uuid) -> bool:
         if guid == self.MuTelemGuid:
             return True
         
         return False 
 
-    def Parse(self,data) -> str:
+    def Parse(self,data:str) -> str:
         if(len(data) < self.STRUCT_SIZE):
             print("Data passed to " + self.__str__() + " was smaller than the minimum size. Minimum size: " + str(self.STRUCT_SIZE) + " size of input: " + str(len(data)))
             return
