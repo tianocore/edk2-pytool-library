@@ -90,20 +90,18 @@ class CPER(object):
         self.SectionHeaders = []
         self.SetSectionHeaders()
 
-    ##
-    # Turn the portion of the raw input associated with the CPER head into a CPER_HEAD object
-    ##
     def SetCPERHeader(self):
+        '''Turn the portion of the raw input associated with the CPER head into a CPER_HEAD object'''
+        
         temp = self.RawData[:CPER_HEADER_SIZE]
         try:
             self.Header = CPER_HEADER(temp)
         except:
             print("Unable to parse record")
 
-    ##
-    # Set each of the section headers to CPER_SECTION_HEADER objects
-    ##
     def SetSectionHeaders(self):
+        '''Set each of the section headers to CPER_SECTION_HEADER objects'''
+
         # Section of RawData containing the section headers
         temp = self.RawData[CPER_HEADER_SIZE:CPER_HEADER_SIZE + (CPER_SECTION_HEADER_SIZE * self.Header.SectionCount)]
 
@@ -114,10 +112,9 @@ class CPER(object):
             except:
                 print("Error parsing section header %d" % x)
 
-    ##
-    # Get each of the actual section data pieces and either pass it to something which can parse it, or dump the hex
-    ##
     def ParseSectionData(self, s):
+        '''Get each of the actual section data pieces and either pass it to something which can parse it, or dump the hex'''
+
         p = CheckPluginsForGuid(s.SectionType) # Runs CanParse() on each plugin in .\plugins\ folder to see if it can parse the section type 
         
         # if we've found a plugin which can parse this section
@@ -131,10 +128,9 @@ class CPER(object):
         # If no plugin can parse the section data, do a simple hex dump
         return HexDump(self.RawData[s.SectionOffset : s.SectionOffset + s.SectionLength],16)
     
-    ##
-    # Print the entire CPER record
-    ##
     def PrettyPrint(self):
+        '''Print the entire CPER record'''
+
         counter = 1
         
         print(self.Header.PrettyPrint())
@@ -152,25 +148,6 @@ class CPER(object):
             print(self.ParseSectionData(s))
             counter += 1
 
-# CPER: Common Platform Error Record
-
-# Structure of a CPER Header:
-# Signature           (0   byte offset, 4  byte length) : CPER Signature
-# Revision            (4   byte offset, 2  byte length) : The Revision of CPER
-# Signature End       (6   byte offset, 4  byte length) : Must always be 0xffffffff
-# Section Count       (10  byte offset, 2  byte length) : The Number of Sections of CPER
-# Error Severity      (12  byte offset, 4  byte length) : The Severity of Error of CPER
-# Validation Bits     (16  byte offset, 4  byte length) : Identify Valid IDs of the CPER
-# Record Length       (20  byte offset, 4  byte length) : The size(in bytes) of the ENTIRE Error Record
-# Timestamp           (24  byte offset, 8  byte length) : The Time at which the Error occured
-# Platform ID         (32  byte offset, 16 byte length) : The Platform GUID (Typically, the Platform SMBIOS UUID)
-# Partition ID        (48  byte offset, 16 byte length) : The Software Partition (if applicable)
-# Creator ID          (64  byte offset, 16 byte length) : The GUID of the Error "Creator"
-# Notification Type   (80  byte offset, 16 byte length) : A pre-assigned GUID associated with the event (ex.Boot)
-# Record ID           (96  byte offset, 8  byte length) : When combined with the Creator ID, identifies the Error Record
-# Flags               (104 byte offset, 4  byte length) : A specific "flag" for the Error Record. Flags are pre-defined values which provide more information on the Error
-# Persistence Info    (108 byte offset, 8  byte length) : Produced and consumed by the creator of the Error Record.There are no guidelines for these bytes.
-# Reserved            (116 byte offset, 12 byte length) : Must be zero
 class CPER_HEADER(object):
 
     STRUCT_FORMAT = "=IHIHIIIQ16s16s16s16sQIQ12s"
@@ -198,24 +175,21 @@ class CPER_HEADER(object):
             
         self.ValidBitsParse()
 
-    ##
-    # Signature should be ascii array (0x43,0x50,0x45,0x52) or "CPER"
-    ##
     def SignatureParse(self) -> str:
+        '''Signature should be ascii array (0x43,0x50,0x45,0x52) or "CPER"'''
         return self.SignatureStart.decode('utf-8')
 
-    ##
-    # Parse the major and minor version number of the Error Record definition
-    #
-    # TODO: Actually parse out the zeroth and first byte which represent the minor and major version numbers respectively 
-    ##
     def RevisionParse(self) -> str:
+        '''
+        Parse the major and minor version number of the Error Record definition
+    
+        TODO: Actually parse out the zeroth and first byte which represent the minor and major version numbers respectively
+        '''
         return str(self.Revision)
 
-    ##
-    # Parse the error severity for 4 known values
-    ##
     def ErrorSeverityParse(self) -> str:
+        '''Parse the error severity for 4 known values'''
+
         if(self.ErrorSeverity == 0):
             return "Recoverable"
         elif(self.ErrorSeverity == 1):
@@ -227,12 +201,14 @@ class CPER_HEADER(object):
         
         return "Unknown"
 
-    ##
-    # if bit 1: PlatformID contains valid info
-    # if bit 2: Timestamp contains valid info
-    # if bit 3: PartitionID contains valid info
-    ##
     def ValidBitsParse(self):
+        '''
+        Parse validation bits from header
+
+        if bit 1: PlatformID contains valid info\n
+        if bit 2: Timestamp contains valid info\n
+        if bit 3: PartitionID contains valid info
+        '''
         if(self.ValidationBits & int('0b1', 2)): # Check bit 0
             self.ValidBitsList[0] = True
         if(self.ValidationBits & int('0b10', 2)): # Check bit 1
@@ -240,10 +216,8 @@ class CPER_HEADER(object):
         if(self.ValidationBits & int('0b100', 2)): # Check bit 2
             self.ValidBitsList[2] = True
 
-    ##
-    # Convert the timestamp into a friendly version formatted to (MM/DD/YY Hours:Minutes:Seconds)
-    ##
     def TimestampParse(self) -> str:
+        '''Convert the timestamp into a friendly version formatted to (MM/DD/YY Hours:Minutes:Seconds)'''
         if(self.ValidBitsList[1]):
             return str(( self.Timestamp >> 40) & int('0b11111111', 2)) + "/" + \
                                      str(( self.Timestamp >> 32) & int('0b11111111', 2)) + "/" + \
@@ -254,10 +228,8 @@ class CPER_HEADER(object):
         
         return "Invalid"
 
-    ##
-    # Parse the Platform GUID (Typically, the Platform SMBIOS UUID)
-    ##
     def PlatformIDParse(self) -> str:
+        '''Parse the Platform GUID (Typically, the Platform SMBIOS UUID)'''
 
         # Only parse if data is valid
         if(self.ValidBitsList[0]):
@@ -266,10 +238,8 @@ class CPER_HEADER(object):
         # Platform ID is invalid based on validation bits
         return "Invalid"
 
-    ##
-    # Parse the GUID for the Software Partition (if applicable)
-    ##
     def PartitionIDParse(self) -> str:
+        '''Parse the GUID for the Software Partition (if applicable)'''
 
         # Only parse if data is valid
         if(self.ValidBitsList[2]):
@@ -278,28 +248,20 @@ class CPER_HEADER(object):
         # Partition ID is invalid based on validation bits
         return "Invalid"
 
-    ##
-    # Parse the GUID for the GUID of the Error "Creator"
-    ##
     def CreatorIDParse(self) -> str:
+        '''Parse the GUID for the GUID of the Error "Creator"'''
         return AttemptGuidParse(self.CreatorID)
 
-    ##
-    # Parse the pre-assigned GUID associated with the event (ex.Boot)
-    ##
     def NotificationTypeParse(self) -> str:
+        '''Parse the pre-assigned GUID associated with the event (ex.Boot)'''
         return AttemptGuidParse(self.NotificationType)
 
-    ##
-    # When combined with the Creator ID, Record ID identifies the Error Record
-    ##
     def RecordIDParse(self) -> str:
+        '''When combined with the Creator ID, Record ID identifies the Error Record'''
         return str(self.RecordID)
 
-    ##
-    # Check the flags field and populate list containing applicable flags
-    ##
     def FlagsParse(self) -> str:
+        '''Check the flags field and populate list containing applicable flags'''
 
         FlagList = []
 
@@ -324,16 +286,12 @@ class CPER_HEADER(object):
         # Join the FlagsList elements separated by commas
         return ", ".join(FlagList)
 
-    ##
-    # Parse the persistence info which is produced and consumed by the creator of the Error Record
-    ##
     def PersistenceInfoParse(self) -> str:
+        '''Parse the persistence info which is produced and consumed by the creator of the Error Record'''
         return str(self.PersistenceInfo)
 
-    ##
-    # Print relevant portions of the CPER header. Change to suit your needs
-    ##
     def PrettyPrint(self) -> str:
+        '''Print relevant portions of the CPER header. Change to suit your needs'''
 
         string = ""
         temp = ""
@@ -360,18 +318,6 @@ class CPER_HEADER(object):
 
         return string[0:-1] #omit the last newline
 
-# A Section Header within a CPER has the following structure
-
-# Section Offset      (0  byte offset, 4  byte length) : Offset from start of the CPER(not the start of the section) to the beginning of the section body
-# Section Length      (4  byte offset, 4  byte length) : Length in bytes of the section body
-# Revision            (8  byte offset, 2  byte length) : Represents the major and minor version number of the Error Record definition
-# Validation Bits     (10 byte offset, 1  byte length) : Indicates the validity of the FRU ID and FRU String fields
-# Reserved            (11 byte offset, 1  byte length) : Must be zero
-# Flags               (12 byte offset, 4  byte length) : Contains info describing the Error Record (ex. Is this the primary section of the error, has the component been reset if applicable, has the error been contained)
-# Section Type        (16 byte offset, 16 byte length) : Holds a pre-defined GUID value indicating that this section is from a particular error
-# FRU ID              (32 byte offset, 16 byte length) : ? Not detailed in the CPER doc
-# Section Severity    (48 byte offset, 4  byte length) : Value from 0 - 3 indicating the severity of the error
-# FRU String          (52 byte offset, 20 byte length) : String identifying the FRU hardware
 class CPER_SECTION_HEADER(object):
 
     STRUCT_FORMAT = "=IIHccH16s16sH20s"
@@ -395,34 +341,37 @@ class CPER_SECTION_HEADER(object):
         self.FlagsParse()
         self.ValidBitsParse()
 
-    ##
-    # Parse the major and minor version number of the Error Record definition
-    #
-    # TODO: Actually parse the zeroth and first byte which represent the minor and major version numbers respectively 
-    ##
     def RevisionParse(self) -> str:
+        '''
+        Parse the major and minor version number of the Error Record definition
+
+        TODO: Actually parse the zeroth and first byte which represent the minor and major version numbers respectively 
+        '''
+
         return str(self.Revision)
 
-    ##
-    # if bit 0: FruID contains valid info
-    # if bit 1: FruID String contains valid info
-    ##
     def ValidBitsParse(self):
+        '''
+        if bit 0: FruID contains valid info\n
+        if bit 1: FruID String contains valid info
+        '''
+
         if(ord(self.ValidationBits) & 0b1): # check bit 0
             self.ValidSectionBitsList[0] = True
         if(ord(self.ValidationBits) & 0b10): # check bit 1
             self.ValidSectionBitsList[1] = True
-
-    ##
-    # Check the flags field and populate list containing applicable flags
-    # if bit 0: This is the section to be associated with the error condition
-    # if bit 1: The error was not contained within the processor or memery heirarchy
-    # if bit 2: The component has been reset and must be reinitialized
-    # if bit 3: Error threshold exceeded for this componenet
-    # if bit 4: Resource could not be queried for additional information
-    # if bit 5: Action has been taken to contain the error, but the error has not been corrected
-    ##
+    
     def FlagsParse(self):
+        '''
+        Check the flags field and populate list containing applicable flags
+
+        if bit 0: This is the section to be associated with the error condition\n
+        if bit 1: The error was not contained within the processor or memery heirarchy\n
+        if bit 2: The component has been reset and must be reinitialized\n
+        if bit 3: Error threshold exceeded for this component\n
+        if bit 4: Resource could not be queried for additional information\n
+        if bit 5: Action has been taken to contain the error, but the error has not been corrected
+        '''
 
         FlagList = []
 
@@ -446,31 +395,29 @@ class CPER_SECTION_HEADER(object):
         # Join the FlagsList elements separated by commas
         return ' '.join(FlagList)
 
-    ##
-    # Parse the Section Type which is a pre-defined GUID indicating that this section is from a particular error
-    ##
     def SectionTypeParse(self) -> str:
+        '''Parse the Section Type which is a pre-defined GUID indicating that this section is from a particular error'''
+
         return AttemptGuidParse(self.SectionType)
 
-    ##
-    # TODO: Fill in - not detailed in CPER doc
-    ##
+    
     def FRUIDParse(self) -> str:
-
+        '''TODO: Fill in - not detailed in CPER doc'''
+        
         # Only parse if data is valid
         if(self.ValidSectionBitsList[0]):
             return AttemptGuidParse(self.FRUID)
 
         return "Invalid"
     
-
-    ##
-    # Parse the error severity for 4 known values
-    #
-    # NOTE: A severity of "Informational" indicates that the section contains extra information that 
-    #       can be safely ignored
-    ##
     def SectionSeverityParse(self) -> str:
+        '''
+        Parse the error severity for 4 known values
+    
+        NOTE: A severity of "Informational" indicates that the section contains extra information that 
+        can be safely ignored
+        '''
+
         if(self.SectionSeverity == 0):
             return "Recoverable"
         elif(self.SectionSeverity == 1):
@@ -482,10 +429,8 @@ class CPER_SECTION_HEADER(object):
         
         return ""
 
-    ##
-    # Parse out the custom string identifying the FRU hardware
-    ##
     def FRUStringParse(self) -> str:
+        '''Parse out the custom string identifying the FRU hardware'''
 
         # Only parse if data is valid
         if(self.ValidSectionBitsList[1]):
@@ -498,10 +443,9 @@ class CPER_SECTION_HEADER(object):
         
         return "Invalid"
 
-    ##
-    # Print relevant portions of the section header. Change to suit your needs
-    ##
     def PrettyPrint(self) -> str:
+        '''Print relevant portions of the section header. Change to suit your needs'''
+
         string = ""
         temp = ""
         
@@ -524,10 +468,8 @@ class CPER_SECTION_HEADER(object):
         
         return string
 
-##
-# Dumps byte code of input
-##
 def HexDump(input, bytesperline):
+    '''Dumps byte code of input'''
 
     string      = "" # Stores the entire hexdump string
     asc         = "" # Stores the ascii version of the current hexdump line
@@ -558,10 +500,9 @@ def HexDump(input, bytesperline):
 
     return string
 
-##
-# Load friendly names from friendlynames.csv to FriendlyNames dict
-##
 def ImportFriendlyNames():
+    '''Load friendly names from friendlynames.csv to FriendlyNames dict'''
+
     # open friendlynames.csv
     with open('friendlynames.csv','r') as csv_file:
 
@@ -579,10 +520,9 @@ def ImportFriendlyNames():
             
             rowcounter += 1
 
-##
-# Load all plugins from the /plugins folder
-##
 def LoadPlugins():
+    '''Load all plugins from the /plugins folder'''
+
     # Get all subclasses of SECTION_PARSER_PLUGIN which have been imported 
     # using the "from plugins import *" call at start of file
     subclasslist = SECTION_PARSER_PLUGIN.__subclasses__()
@@ -590,27 +530,26 @@ def LoadPlugins():
     for cl in subclasslist:
         Parsers.append(cl())
 
-##
-# Attempt to parse a guid. If that fails, notify user, otherwisesee if it has an associated 
-# friendly name. Just return the guid if no friendly name can be found.
-##
 def AttemptGuidParse(g) -> str:
-        try:
-            guid = uuid.UUID(bytes_le=g)
-        except:
-            return "Unable to parse"
+    '''
+    Attempt to parse a guid. If that fails, notify user, otherwise if it has an associated 
+    friendly name. Just return the guid if no friendly name can be found.
+    '''
 
-        # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
-        if(FriendlyNames.get(guid)):
-            return FriendlyNames[guid]
+    try:
+        guid = uuid.UUID(bytes_le=g)
+    except:
+        return "Unable to parse"
 
-        # Return the guid if a friendly name cannot be found
-        return str(guid)
+    # Check the friendlynames list (loaded from the friendlynames.csv file) for this guid
+    if(FriendlyNames.get(guid)):
+        return FriendlyNames[guid]
 
-##
-# Run each plugins CanParse() method to see if it can parse the input guid
-##
+    # Return the guid if a friendly name cannot be found
+    return str(guid)
+
 def CheckPluginsForGuid(guid):
+    '''Run each plugins CanParse() method to see if it can parse the input guid'''
 
     for p in Parsers:
         # CanParse() returns true if it recognizes the guid
@@ -619,24 +558,18 @@ def CheckPluginsForGuid(guid):
 
     return None
 
-##
-# Parse a list of cper record strings
-##
 def ParseCPERList(input):
+    '''Parse a list of cper record strings'''
     for x in input:
         CPER(x)
 
-##
-# Parse a single cper record
-##
 def ParseCPER(input):
+    '''Parse a single cper record'''
     c = CPER(input)
     c.PrettyPrint()
 
-##
-# Parse cper records from event viewer xml file
-##
 def ParseCPERFromXML(input): # TODO: Create xml parser
+    '''Parse cper records from event viewer xml file'''
     pass
 
 ##
