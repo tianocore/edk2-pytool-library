@@ -80,7 +80,6 @@ P           void *                  integer
 CPER_HEADER_SIZE            = 128 # A CPER header is 128 bytes 
 CPER_SECTION_HEADER_SIZE    = 72  # A CPER section header is 72 bytes
 Parsers                     = []  # list of plugin classes which inherit from CPER_SECTION_DATA and are therefore capable of parsing section data
-FriendlyNames               = friendlynamedict
 
 class CPER(object):
     '''TODO: Fill in'''
@@ -157,7 +156,9 @@ class CPER_HEADER(object):
 
     def __init__(self, input:str):
         
-        self.ValidBitsList = [False,False,False] # Go to self.ValidBitsParse to see description of the field
+        self.PlatformIdValid = False
+        self.TimestampValid = False
+        self.PartitionIdValid = False
 
         (self.SignatureStart,
          self.Revision,
@@ -213,15 +214,15 @@ class CPER_HEADER(object):
         if bit 3: PartitionId contains valid info
         '''
         if(self.ValidationBits & int('0b1', 2)): # Check bit 0
-            self.ValidBitsList[0] = True
+            self.PlatformIdValid = True
         if(self.ValidationBits & int('0b10', 2)): # Check bit 1
-            self.ValidBitsList[1] = True
+            self.TimestampValid = True
         if(self.ValidationBits & int('0b100', 2)): # Check bit 2
-            self.ValidBitsList[2] = True
+            self.PartitionIdValid = True
 
     def TimestampParse(self) -> str:
         '''Convert the timestamp into a friendly version formatted to (MM/DD/YY Hours:Minutes:Seconds)'''
-        if(self.ValidBitsList[1]):
+        if(self.TimestampValid):
             return str(( self.Timestamp >> 40) & int('0b11111111', 2)) + "/" + \
                                      str(( self.Timestamp >> 32) & int('0b11111111', 2)) + "/" + \
                                      str((((self.Timestamp >> 56) & int('0b11111111', 2)) * 100) + ((self.Timestamp >> 48) & int('0b11111111', 2))) + " " + \
@@ -235,7 +236,7 @@ class CPER_HEADER(object):
         '''Parse the Platform GUID (Typically, the Platform SMBIOS UUID)'''
 
         # Only parse if data is valid
-        if(self.ValidBitsList[0]):
+        if(self.PlatformIdValid):
             return AttemptGuidParse(self.PlatformId)
 
         # Platform Id is invalid based on validation bits
@@ -245,7 +246,7 @@ class CPER_HEADER(object):
         '''Parse the GUID for the Software Partition (if applicable)'''
 
         # Only parse if data is valid
-        if(self.ValidBitsList[2]):
+        if(self.PartitionIdValid):
             return AttemptGuidParse(self.PartitionId)
         
         # Partition Id is invalid based on validation bits
@@ -328,8 +329,9 @@ class CPER_SECTION_HEADER(object):
 
     def __init__(self, input:str):
 
-        self.ValidSectionBitsList = [False,False] # Go to self.ValidBitsParse to see description of the field
         self.FlagList = [] # go to self.FlagsParse to se description of this field
+        self.FruIdValid = False
+        self.FruStringValid = False
 
         (self.SectionOffset,
             self.SectionLength,
@@ -361,9 +363,9 @@ class CPER_SECTION_HEADER(object):
         '''
 
         if(ord(self.ValidationBits) & 0b1): # check bit 0
-            self.ValidSectionBitsList[0] = True
+            self.FruIdValid = True
         if(ord(self.ValidationBits) & 0b10): # check bit 1
-            self.ValidSectionBitsList[1] = True
+            self.FruStringValid = True
     
     def FlagsParse(self):
         '''
@@ -409,7 +411,7 @@ class CPER_SECTION_HEADER(object):
         '''TODO: Fill in - not detailed in CPER doc'''
         
         # Only parse if data is valid
-        if(self.ValidSectionBitsList[0]):
+        if(self.FruIdValid):
             return AttemptGuidParse(self.FruId)
 
         return "Invalid"
@@ -437,7 +439,7 @@ class CPER_SECTION_HEADER(object):
         '''Parse out the custom string identifying the Fru hardware'''
 
         # Only parse if data is valid
-        if(self.ValidSectionBitsList[1]):
+        if(self.FruStringValid):
 
             # Convert the Fru string from bytes to a string
             try:
@@ -539,8 +541,8 @@ def AttemptGuidParse(g:bytes) -> str:
     except:
         return "Unable to parse"
 
-    if(FriendlyNames.get(str(guid))):
-        return FriendlyNames[str(guid)]
+    if(friendlynamedict.get(str(guid))):
+        return friendlynamedict[str(guid)]
 
     # Return the guid if a friendly name cannot be found
     return str(guid)
@@ -569,10 +571,8 @@ def ParseCPERFromXML(input): # TODO: Create xml parser
     '''Parse cper records from event viewer xml file'''
     pass
 
-##
-# Main function used to test functionality
-##
-if __name__ == "__main__":
+def TestParser():
     LoadPlugins()
     ValidateFriendlyNames()
     ParseCPERList(TestData)
+
