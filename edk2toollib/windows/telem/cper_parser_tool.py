@@ -11,10 +11,10 @@ import struct
 import uuid
 import sys
 import logging
-import edk2toollib.uefi.telem.plugins
-from edk2toollib.uefi.telem.cper_section_data import SECTION_PARSER_PLUGIN
-from edk2toollib.uefi.telem.friendlynames import friendlynamedict
-from edk2toollib.uefi.telem.testdata import TestData
+import edk2toollib.windows.telem.decoders
+from edk2toollib.windows.telem.cper_section_data import SECTION_PARSER_PLUGIN
+from edk2toollib.windows.telem.friendlynames import friendlynamedict
+from edk2toollib.windows.telem.testdata import TestData
 
 """
 CPER: Common Platform Error Record
@@ -93,7 +93,7 @@ class CPER(object):
         self.SectionHeaders = []
         self.SetSectionHeaders()
 
-    def SetCPERHeader(self):
+    def SetCPERHeader(self) -> None:
         '''Turn the portion of the raw input associated with the CPER head into a CPER_HEAD object'''
         
         temp = self.RawData[:CPER_HEADER_SIZE]
@@ -102,7 +102,7 @@ class CPER(object):
         except:
             print("Unable to parse record")
 
-    def SetSectionHeaders(self):
+    def SetSectionHeaders(self) -> None:
         '''Set each of the section headers to CPER_SECTION_HEADER objects'''
 
         # Section of RawData containing the section headers
@@ -115,11 +115,11 @@ class CPER(object):
             except: # TODO: Add specific exception instructions
                 logging.debug("Error parsing section header %d" % x)
 
-    def ParseSectionData(self, s:object):
+    def ParseSectionData(self, s:object) -> None:
         '''Get each of the actual section data pieces and either pass it to something which can parse it, or dump the hex'''
 
         # TODO: Should we only apply one plugin if multiple claim they can parse the data?
-        p = CheckPluginsForGuid(s.SectionType) # Runs CanParse() on each plugin in .\plugins\ folder to see if it can parse the section type 
+        p = CheckDecodersForGuid(s.SectionType) # Runs CanParse() on each plugin in .\decoders\ folder to see if it can parse the section type 
         
         # if we've found a plugin which can parse this section
         if p != None: 
@@ -132,7 +132,7 @@ class CPER(object):
         # If no plugin can parse the section data, do a simple hex dump
         return HexDump(self.RawData[s.SectionOffset : s.SectionOffset + s.SectionLength],16)
     
-    def PrettyPrint(self):
+    def PrettyPrint(self) -> None:
         '''Print the entire CPER record'''
 
         counter = 1
@@ -208,7 +208,7 @@ class CPER_HEADER(object):
         
         return "Unknown"
 
-    def ValidBitsParse(self):
+    def ValidBitsParse(self) -> None:
         '''
         Parse validation bits from header
 
@@ -359,7 +359,7 @@ class CPER_SECTION_HEADER(object):
 
         return str(self.Revision)
 
-    def ValidBitsParse(self):
+    def ValidBitsParse(self) -> None:
         '''
         if bit 0: FruId contains valid info\n
         if bit 1: FruId String contains valid info
@@ -370,7 +370,7 @@ class CPER_SECTION_HEADER(object):
         if(ord(self.ValidationBits) & 0b10): # check bit 1
             self.FruStringValid = True
     
-    def FlagsParse(self):
+    def FlagsParse(self) -> None:
         '''
         Check the flags field and populate list containing applicable flags
 
@@ -477,7 +477,7 @@ class CPER_SECTION_HEADER(object):
         
         return string
 
-def HexDump(input:bytes, bytesperline:int):
+def HexDump(input:bytes, bytesperline:int) -> str:
     '''Dumps byte code of input'''
 
     string      = "" # Stores the entire hexdump string
@@ -509,7 +509,7 @@ def HexDump(input:bytes, bytesperline:int):
 
     return string
 
-def ValidateFriendlyNames():
+def ValidateFriendlyNames() -> None:
     '''Check the validity of each guid from the friendlynamedict in friendlynames.py'''
     rowcounter = 0 # Used to track which row we are checking
 
@@ -540,8 +540,8 @@ def AttemptGuidParse(g:bytes) -> str:
     # Return the guid if a friendly name cannot be found
     return str(guid)
 
-def CheckPluginsForGuid(guid:uuid):
-    '''Run each plugins CanParse() method to see if it can parse the input guid'''
+def CheckDecodersForGuid(guid:uuid):
+    '''Run each decoders CanParse() method to see if it can parse the input guid'''
 
     for p in Parsers:
         # CanParse() returns true if it recognizes the guid
@@ -550,22 +550,9 @@ def CheckPluginsForGuid(guid:uuid):
 
     return None
 
-def ParseCPERList(input:list):
-    '''Parse a list of cper record strings'''
-    for x in input:
-        ParseCPER(x)
-
-def ParseCPER(input:str):
-    '''Parse a single cper record'''
-    c = CPER(input)
-    c.PrettyPrint()
-
-def ParseCPERFromXML(input): # TODO: Create xml parser
-    '''Parse cper records from event viewer xml file'''
-    pass
-
-def TestParser():
-    "Loads all plugins and prints out a parse of items in testdata.py"
+def TestParser() -> None:
+    "Loads all decoders and prints out a parse of items in testdata.py"
     ValidateFriendlyNames()
-    ParseCPERList(TestData)
+    for line in TestData:
+        CPER(line).PrettyPrint()
 
