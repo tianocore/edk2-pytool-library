@@ -9,9 +9,7 @@
 import sys
 import uuid
 import struct
-
-sys.path.append('../..')
-from cper_section_data import SECTION_PARSER_PLUGIN
+from edk2toollib.uefi.telem.cper_section_data import SECTION_PARSER_PLUGIN
 
 """
 A MU Telemetry section has the following structure:

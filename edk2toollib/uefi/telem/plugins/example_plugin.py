@@ -8,9 +8,7 @@
 
 import sys
 import uuid
-
-sys.path.append('../..')
-from cper_section_data import SECTION_PARSER_PLUGIN
+from edk2toollib.uefi.telem.cper_section_data import SECTION_PARSER_PLUGIN
 
 class EXAMPLE_PLUGIN(SECTION_PARSER_PLUGIN):
 

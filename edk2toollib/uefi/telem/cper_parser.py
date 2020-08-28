@@ -10,10 +10,10 @@
 import struct
 import uuid
 import sys
-from plugins import *
-from cper_section_data import SECTION_PARSER_PLUGIN
-from friendlynames import friendlynamedict
-from testdata import TestData
+import edk2toollib.uefi.telem.plugins
+from edk2toollib.uefi.telem.cper_section_data import SECTION_PARSER_PLUGIN
+from edk2toollib.uefi.telem.friendlynames import friendlynamedict
+from edk2toollib.uefi.telem.testdata import TestData
 
 """
 CPER: Common Platform Error Record
