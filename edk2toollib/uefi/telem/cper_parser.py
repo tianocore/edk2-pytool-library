@@ -10,6 +10,7 @@
 import struct
 import uuid
 import sys
+import logging
 import edk2toollib.uefi.telem.plugins
 from edk2toollib.uefi.telem.cper_section_data import SECTION_PARSER_PLUGIN
 from edk2toollib.uefi.telem.friendlynames import friendlynamedict
@@ -50,6 +51,7 @@ Fru Id              (32 byte offset, 16 byte length) : ? Not detailed in the CPE
 Section Severity    (48 byte offset, 4  byte length) : Value from 0 - 3 indicating the severity of the error
 Fru String          (52 byte offset, 20 byte length) : String identifying the Fru hardware
 
+# TODO: Remove once done with development
 
 Python Struct Format Characters
 
@@ -79,7 +81,7 @@ P           void *                  integer
 
 CPER_HEADER_SIZE            = 128 # A CPER header is 128 bytes 
 CPER_SECTION_HEADER_SIZE    = 72  # A CPER section header is 72 bytes
-Parsers                     = []  # list of plugin classes which inherit from CPER_SECTION_DATA and are therefore capable of parsing section data
+Parsers                     = SECTION_PARSER_PLUGIN.__subclasses__()  # list of plugin classes which inherit from CPER_SECTION_DATA and are therefore capable of parsing section data
 
 class CPER(object):
     '''TODO: Fill in'''
@@ -110,12 +112,13 @@ class CPER(object):
         for x in range(self.Header.SectionCount):
             try: # Don't want to stop runtime if parsing fails
                 self.SectionHeaders.append(CPER_SECTION_HEADER(temp[x * CPER_SECTION_HEADER_SIZE: (x + 1) * CPER_SECTION_HEADER_SIZE]))
-            except:
-                print("Error parsing section header %d" % x)
+            except: # TODO: Add specific exception instructions
+                logging.debug("Error parsing section header %d" % x)
 
     def ParseSectionData(self, s:object):
         '''Get each of the actual section data pieces and either pass it to something which can parse it, or dump the hex'''
 
+        # TODO: Should we only apply one plugin if multiple claim they can parse the data?
         p = CheckPluginsForGuid(s.SectionType) # Runs CanParse() on each plugin in .\plugins\ folder to see if it can parse the section type 
         
         # if we've found a plugin which can parse this section
@@ -123,8 +126,8 @@ class CPER(object):
             try:
                 # pass the data to that parser which should return a string of the data parsed/formatted
                 return p.Parse(self.RawData[s.SectionOffset : s.SectionOffset + s.SectionLength])
-            except:
-                print("Unable to apply plugin " + str(p)  + " on section data!")
+            except: # TODO: Add specific exception instructions
+                logging.debug("Unable to apply plugin " + str(p)  + " on section data!")
 
         # If no plugin can parse the section data, do a simple hex dump
         return HexDump(self.RawData[s.SectionOffset : s.SectionOffset + s.SectionLength],16)
@@ -508,7 +511,7 @@ def HexDump(input:bytes, bytesperline:int):
 
 def ValidateFriendlyNames():
     '''Check the validity of each guid from the friendlynamedict in friendlynames.py'''
-    rowcounter = 0 # Used to track which row we are reading
+    rowcounter = 0 # Used to track which row we are checking
 
     for f in friendlynamedict:
         try:
@@ -516,19 +519,9 @@ def ValidateFriendlyNames():
             uuid.UUID(f)
         except:
             # Alert user if a guid could not be parsed
-            print("Guid " + str(rowcounter) + " of FriendlyName in dictionary located in friendlyname.py file is invalid")
+            logging.debug("Guid " + str(rowcounter) + " of FriendlyName in dictionary located in friendlyname.py file is invalid")
 
         rowcounter += 1
-
-def LoadPlugins():
-    '''Load all plugins from the /plugins folder'''
-
-    # Get all subclasses of SECTION_PARSER_PLUGIN which have been imported 
-    # using the "from plugins import *" call at start of file
-    subclasslist = SECTION_PARSER_PLUGIN.__subclasses__()
-    
-    for cl in subclasslist:
-        Parsers.append(cl())
 
 def AttemptGuidParse(g:bytes) -> str:
     '''
@@ -572,7 +565,7 @@ def ParseCPERFromXML(input): # TODO: Create xml parser
     pass
 
 def TestParser():
-    LoadPlugins()
+    "Loads all plugins and prints out a parse of items in testdata.py"
     ValidateFriendlyNames()
     ParseCPERList(TestData)
 
