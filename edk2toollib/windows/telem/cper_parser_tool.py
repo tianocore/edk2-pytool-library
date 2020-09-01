@@ -152,6 +152,75 @@ class CPER(object):
             print(self.ParseSectionData(s))
             counter += 1
 
+    def GetSectionCount(self) -> int:
+        return self.Header.SectionCount
+
+    def GetErrorSeverity(self) -> str:
+        return self.Header.ErrorSeverityParse()
+    
+    def GetRecordLength(self) -> int:
+        return self.Header.RecordLength
+    
+    def GetTimestamp(self) -> str:
+        return self.Header.TimestampParse()
+    
+    def GetPlatformId(self) -> str:
+        return self.Header.PlatformIdParse()
+
+    def GetPartitionId(self) -> str:
+        return self.Header.PartitionIdParse()
+    
+    def GetCreatorId(self) -> str:
+        return self.Header.CreatorIdParse()
+    
+    def GetRecordId(self) -> str:
+        return self.Header.RecordIdParse()
+    
+    def GetFlags(self) -> list:
+        return self.Header.FlagsParse()
+    
+    def GetSectionLengths(self) -> list:
+        temp = []
+        for sec in self.SectionHeaders:
+            temp.append(sec.SectionLength)
+        return temp
+
+    def GetSectionOffsets(self) -> list:
+        temp = []
+        for sec in self.SectionHeaders:
+            temp.append(sec.SectionOffset)
+        return temp
+
+    def GetSectionFlags(self) -> list:
+        temp = []
+        for sec in self.SectionHeaders:
+            temp.append(sec.FlagsParse())
+        return temp
+    
+    def GetSectionTypes(self) -> list:
+        temp = []
+        for sec in self.SectionHeaders:
+            temp.append(sec.SectionTypeParse())
+        return temp
+    
+    def GetSectionFruIds(self) -> list:
+        temp = []
+        for sec in self.SectionHeaders:
+            temp.append(sec.FruIdParse())
+        return temp
+    
+    def GetSectionSeverities(self) -> list:
+        temp = []
+        for sec in self.SectionHeaders:
+            temp.append(sec.SectionSeverityParse())
+        return temp
+    
+    def GetSectionFruStrings(self) -> list:
+        temp = []
+        for sec in self.SectionHeaders:
+            temp.append(sec.FruStringParse())
+        return temp
+    
 class CPER_HEADER(object):
     '''TODO: Fill in'''
 
@@ -409,7 +478,6 @@ class CPER_SECTION_HEADER(object):
 
         return AttemptGuidParse(self.SectionType)
 
-    
     def FruIdParse(self) -> str:
         '''TODO: Fill in - not detailed in CPER doc'''
         
