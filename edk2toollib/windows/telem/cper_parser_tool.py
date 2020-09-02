@@ -113,7 +113,7 @@ class CPER(object):
             try: # Don't want to stop runtime if parsing fails
                 self.SectionHeaders.append(CPER_SECTION_HEADER(temp[x * CPER_SECTION_HEADER_SIZE: (x + 1) * CPER_SECTION_HEADER_SIZE]))
             except: # TODO: Add specific exception instructions
-                logging.debug("Error parsing section header %d" % x)
+                print("Error parsing section header %d" % x)
 
     def ParseSectionData(self, s:object) -> None:
         '''Get each of the actual section data pieces and either pass it to something which can parse it, or dump the hex'''
@@ -142,8 +142,8 @@ class CPER(object):
         # Alert user that section count doesn't match sections being printed.
         # This could be because there was an error parsing a section, or the
         # section count is incorrect
-        if self.Header.SectionCount != self.SectionHeaders.count:
-            print("Section Count of CPER header \n")
+        if self.Header.SectionCount != len(self.SectionHeaders):
+            print("Section Count of CPER header is incorrect!\n")
 
         # Print each section header followed by the correlated section
         for s in self.SectionHeaders:
@@ -177,45 +177,48 @@ class CPER(object):
         return self.Header.RecordIdParse()
     
     def GetFlags(self) -> list:
-        return self.Header.FlagsParse()
+        if self.Header.FlagsParse() == "None":
+            return []
+
+        return self.Header.FlagsParse().split(', ')
     
-    def GetSectionLengths(self) -> list:
+    def GetSectionsLength(self) -> list:
         temp = []
         for sec in self.SectionHeaders:
             temp.append(sec.SectionLength)
         return temp
 
-    def GetSectionOffsets(self) -> list:
+    def GetSectionsOffset(self) -> list:
         temp = []
         for sec in self.SectionHeaders:
             temp.append(sec.SectionOffset)
         return temp
 
-    def GetSectionFlags(self) -> list:
+    def GetSectionsFlags(self) -> list:
         temp = []
         for sec in self.SectionHeaders:
             temp.append(sec.FlagsParse())
         return temp
     
-    def GetSectionTypes(self) -> list:
+    def GetSectionsType(self) -> list:
         temp = []
         for sec in self.SectionHeaders:
             temp.append(sec.SectionTypeParse())
         return temp
     
-    def GetSectionFruIds(self) -> list:
+    def GetSectionsFruId(self) -> list:
         temp = []
         for sec in self.SectionHeaders:
             temp.append(sec.FruIdParse())
         return temp
     
-    def GetSectionSeverities(self) -> list:
+    def GetSectionsSeverity(self) -> list:
         temp = []
         for sec in self.SectionHeaders:
             temp.append(sec.SectionSeverityParse())
         return temp
     
-    def GetSectionFruStrings(self) -> list:
+    def GetSectionsFruString(self) -> list:
         temp = []
         for sec in self.SectionHeaders:
             temp.append(sec.FruStringParse())
@@ -293,14 +296,14 @@ class CPER_HEADER(object):
             self.PartitionIdValid = True
 
     def TimestampParse(self) -> str:
-        '''Convert the timestamp into a friendly version formatted to (MM/DD/YY Hours:Minutes:Seconds)'''
+        '''Convert the timestamp into a friendly version formatted to (M/D/YYYY Hours:Minutes:Seconds)'''
         if(self.TimestampValid):
             return str(( self.Timestamp >> 40) & int('0b11111111', 2)) + "/" + \
                                      str(( self.Timestamp >> 32) & int('0b11111111', 2)) + "/" + \
                                      str((((self.Timestamp >> 56) & int('0b11111111', 2)) * 100) + ((self.Timestamp >> 48) & int('0b11111111', 2))) + " " + \
-                                     str(( self.Timestamp >> 16) & int('0b11111111', 2)) + ":" + \
-                                     str(( self.Timestamp >> 8 ) & int('0b11111111', 2)) + ":" + \
-                                     str(( self.Timestamp >> 0 ) & int('0b11111111', 2))
+                                     format(str(( self.Timestamp >> 16) & int('0b11111111', 2)),"0>2") + ":" + \
+                                     format(str(( self.Timestamp >> 8 ) & int('0b11111111', 2)),"0>2")  + ":" + \
+                                     format(str(( self.Timestamp >> 0 ) & int('0b11111111', 2)),"0>2") 
         
         return "Invalid"
 
@@ -397,7 +400,7 @@ class CPER_HEADER(object):
 class CPER_SECTION_HEADER(object):
     '''TODO: Fill in'''
 
-    STRUCT_FORMAT = "=IIHccH16s16sH20s"
+    STRUCT_FORMAT = "=IIHccI16s16sI20s"
 
     def __init__(self, input:str):
 
@@ -514,7 +517,7 @@ class CPER_SECTION_HEADER(object):
 
             # Convert the Fru string from bytes to a string
             try:
-                return self.FruString.decode('utf-8')
+                return "".join([chr(x) for x in self.FruString])
             except:
                 return "Unable to parse"
         
@@ -621,6 +624,9 @@ def CheckDecodersForGuid(guid:uuid):
 def TestParser() -> None:
     "Loads all decoders and prints out a parse of items in testdata.py"
     ValidateFriendlyNames()
+    counter = 0
     for line in TestData:
-        CPER(line).PrettyPrint()
+        if counter == 12:
+            CPER(line).PrettyPrint()
+        counter += 1
 
