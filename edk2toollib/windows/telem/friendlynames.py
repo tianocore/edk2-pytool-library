@@ -1,3 +1,11 @@
+# @file testdata.py
+# Dictionary for replacing guids with friendly names
+#
+# Copyright (c) Microsoft Corporation
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
 friendlynamedict = {"2dce8bb1-bdd7-450e-b9ad-9cf4ebd4f890": "CMC Notify Type",
                     "4e292f96-d843-4a55-a8c2-d481f27ebeee": "CPE Notify Type",
                     "e8f56ffe-919c-4cc5-ba88-65abe14913bb": "MCE Notify Type",

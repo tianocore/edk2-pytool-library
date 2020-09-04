@@ -1,3 +1,11 @@
+# @file testdata.py
+# Example data blobs and parsed data for testing
+#
+# Copyright (c) Microsoft Corporation
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
 # flake8: noqa
 
 TestData = [
