@@ -25,11 +25,11 @@ class DMARTable(object):
     DeviceScopeHeaderLength = 6
 
     def __init__(self, data):
-        self.dmar_table = self.ACPITableHeader(data)
+        self.dmar_table = self.AcpiTableHeader(data)
         self.data = data[DMARTable.DMARHeaderLength:]
         while len(self.data) > 0:
             # Get type and length of remapping struct
-            remapping_header = self.Remp(self.data)
+            remapping_header = self.RemappingStructHeader(self.data)
             assert remapping_header.Type < 5, "Reserved remapping struct found in DMAR table"
 
             # Parse remapping struct
