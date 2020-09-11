@@ -6,6 +6,8 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
+# spell-checker: ignore deduplicated, deduplication, Dedpulication
+
 import unittest
 import uuid
 import io
@@ -69,7 +71,6 @@ HASHSTR = [
 ]
 
 
-# TODO: should we move the builders from the test to the classes as convenient factories?
 def sha256_esl_builder(initList: []):
     """
     Creates an EfiSignatureList of type EFI_CERT_SHA256 from a list of (hash, sigowner) tuples
@@ -748,7 +749,7 @@ class AuthVarSupportLibraryUnitTests(unittest.TestCase):
                 self.assertEqual(output_dupes.GetBytes(), expected_dupes_esl.GetBytes())
                 self.assertEqual(testEsl.GetBytes(), expected_sort_esl.GetBytes())
 
-    def test_EfiSignatureList_Sort_and_Dedpulication_sha256(self):
+    def test_EfiSignatureList_Sort_and_Deduplication_sha256(self):
 
         owner1 = uuid.uuid4().hex
         owner2 = uuid.uuid4().hex
@@ -921,7 +922,7 @@ class AuthVarSupportLibraryUnitTests(unittest.TestCase):
                 self.assertEqual(testEsl.GetBytes(), expected_sort_esl.GetBytes())
                 self.assertEqual(output_dupes_esl.GetBytes(), expected_dupes_esl.GetBytes())
 
-    def test_EfiSignatureDatabase_Sort_and_Dedpulication(self):
+    def test_EfiSignatureDatabase_Sort_and_Deduplication(self):
         subTestList = [
             ("MixedCerts", MixedCertsData()),
             ("BootHole", BootHoleData()),

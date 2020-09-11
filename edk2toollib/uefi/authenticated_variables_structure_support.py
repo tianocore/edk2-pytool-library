@@ -17,7 +17,7 @@ from operator import attrgetter
 from edk2toollib.uefi.wincert import WinCert, WinCertUefiGuid
 from edk2toollib.utility_functions import PrintByteList
 
-# spell-checker: ignore decodefs, createfs
+# spell-checker: ignore decodefs, createfs, deduplicated, deduplication
 
 '''
 Structures definition based on UEFI specification (UEFI 2.7)
@@ -302,7 +302,6 @@ class EfiSignatureDataFactory(object):
 class EfiSignatureList(object):
     STATIC_STRUCT_SIZE = 16 + 4 + 4 + 4
 
-    # typeguid must be type uuid
     def __init__(self, filestream: BinaryIO = None, typeguid: uuid = None):
         if(filestream is None):
 
@@ -495,9 +494,9 @@ class EfiSignatureList(object):
         Sort self's SignatureData_List by SignatureData values (ignores SigOwner) & optionally deduplicate
 
         When deduplicate is true, remove duplicate SignatureData values from self and return them in an
-        EfiSignatureList.  This duplicate ESL is itself not deduplicated.
+        EfiSignatureList.  This EfiSignatureList of duplicates is itself not deduplicated.
 
-        Returns an EfiSignatureList when deduplicate is True (the default)
+        When deduplicate is false, returns an empty EfiSignatureList (has 0 Data elements)
         """
 
         # initialize the duplicate list, an EFI_SIGNATURE_LIST with no signature data entries
@@ -585,7 +584,7 @@ class EfiSignatureDatabase(object):
 
         Returns -> (canonical: EfiSignatureDatabase, duplicates: EfiSignatureDatabase)
         canonical is an EfiSignatureDatabase where EfiSignatureLists are merged (where possible),
-            deduplicated, & sorted, and the EfiSignatureData elementes are also deduplicated & sorted
+            deduplicated, & sorted, and the EfiSignatureData elements are also deduplicated & sorted
         duplicates is an EfiSignatureDatabase with EfiSignatureLists containing any duplicated
             EfiSignatureData entries (only the data contents are checked for effective equality,
             signature owner is ignored)
@@ -615,7 +614,7 @@ class EfiSignatureDatabase(object):
         # for each type, sort and de-duplicate, and then populate the respective databases
         # note the ordering of this section is the prescribed canonical order
         # first 1 EfiSignatureList for SHA256 hashes, EfiSignatureData elements sorted ascending
-        # followed by EfiSignatureLists for each x509 certificate, sorted asending by data content
+        # followed by EfiSignatureLists for each x509 certificate, sorted ascending by data content
 
         canonicalDb = EfiSignatureDatabase()
         duplicatesDb = EfiSignatureDatabase()
