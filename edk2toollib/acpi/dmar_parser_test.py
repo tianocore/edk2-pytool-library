@@ -19,53 +19,6 @@ class DmarParserTest(unittest.TestCase):
     drhd_t = None
     rmrr_t = None
 
-    # 0x00, 0x00, Subtable Type
-    # 0x18, 0x00, Length
-    # 0x00, Flags
-    # 0x00, 0x00, 0x00, Reserved
-    # 0x00, 0x00, 0xd9, 0xfe, 0x00, 0x00, 0x00, 0x00, Register Base Address
-    # 
-    # 0x01, Device Scope Entry Type
-    # 0x08, Entry Length 
-    # 0x00,PCI Segment Number
-    # 0x00, PCI Bus Number
-    # 0x00, 0x00, PCI Path :
-    # 0x02, 0x00, PCI Path :
-    # 
-    # 0x00, 0x00, Subtable Type
-    # 0x20, 0x00, Length
-    # 0x01, Flags
-    # 0x00, 0x00, 0x00, 
-    # 0x00, 0x10, 0xd9, 0xfe, 0x00, 0x00, 0x00, 0x00, 
-    # 
-    # 0x03,
-    # 0x08, 
-    # 0x00, 
-    # 0x00, 
-    # 0x02, 0xf0, 
-    # 0x1f, 0x00, 
-    # 
-    # 0x04, 
-    # 0x08, 
-    # 0x00, 
-    # 0x00, 
-    # 0x00, 0x00, 
-    # 0x1f, 0x00, 
-    # 
-    # 0x01, 0x00, 
-    # 0x20, 0x00, 
-    # 0x00, 
-    # 0x00, 0x00, 0x00, 
-    # 0x00, 0x00, 0x00, 0x8d, 0x00, 0x00, 0x00, 0x00, 
-    # 0xff, 0xff, 0x7f, 0x8f, 0x00, 0x00, 0x00, 0x00, 
-    #
-    # 0x01, Device Scope Entry Type
-    # 0x08, Entry Length 
-    # 0x00,PCI Segment Number
-    # 0x00, PCI Bus Number
-    # 0x00, 0x00, PCI Path :
-    # 0x02, 0x00, PCI Path :
-
     def test_dmar_parser_dse_01h(self):
         # PCI Endpoint Device
         dse_t_01h = bytes([0x01, 0x08, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00])
@@ -83,7 +36,7 @@ class DmarParserTest(unittest.TestCase):
             dse_01_str = str(DmarParserTest.dse_t_01h)
             self.assertNotEqual(dse_01_str, None)
         except:
-            self.assertFalse (False, "Failed to convert Device Scope Entry type 0 object to string")
+            self.assertFalse(False, "Failed to convert Device Scope Entry type 0 object to string")
 
     def test_dmar_parser_dse_03h(self):
         # IOAPIC
@@ -102,7 +55,7 @@ class DmarParserTest(unittest.TestCase):
             dse_03_str = str(DmarParserTest.dse_t_03h)
             self.assertNotEqual(dse_03_str, None)
         except:
-            self.assertFalse (False, "Failed to convert Device Scope Entry type 3 object to string")
+            self.assertFalse(False, "Failed to convert Device Scope Entry type 3 object to string")
 
     def test_dmar_parser_dse_04h(self):
         # MSI_CAPABLE_HPET
@@ -121,7 +74,7 @@ class DmarParserTest(unittest.TestCase):
             dse_04_str = str(DmarParserTest.dse_t_04h)
             self.assertNotEqual(dse_04_str, None)
         except:
-            self.assertFalse (False, "Failed to convert Device Scope Entry type 4 object to string")
+            self.assertFalse(False, "Failed to convert Device Scope Entry type 4 object to string")
 
     def test_dmar_parser_drhd(self):
         # DRHD header
@@ -146,13 +99,13 @@ class DmarParserTest(unittest.TestCase):
             drhd_xml = DmarParserTest.drhd_t.toXml()
             self.assertNotEqual(drhd_xml, None)
         except:
-            self.assertFalse (False, "Failed to convert DRHD object to xml")
+            self.assertFalse(False, "Failed to convert DRHD object to xml")
 
         try:
             drhd_str = str(DmarParserTest.drhd_t)
             self.assertNotEqual(drhd_str, None)
         except:
-            self.assertFalse (False, "Failed to convert DRHD object to string")
+            self.assertFalse(False, "Failed to convert DRHD object to string")
 
     def test_dmar_parser_rmrr(self):
         # RMRR header
@@ -177,13 +130,13 @@ class DmarParserTest(unittest.TestCase):
             rmrr_xml = DmarParserTest.rmrr_t.toXml()
             self.assertNotEqual(rmrr_xml, None)
         except:
-            self.assertFalse (False, "Failed to convert RMRR object to xml")
+            self.assertFalse(False, "Failed to convert RMRR object to xml")
 
         try:
             rmrr_str = str(DmarParserTest.rmrr_t)
             self.assertNotEqual(rmrr_str, None)
         except:
-            self.assertFalse (False, "Failed to convert RMRR object to string")
+            self.assertFalse(False, "Failed to convert RMRR object to string")
 
     def test_dmar_parser_acpi_header(self):
         # Just ACPI header only
@@ -219,13 +172,13 @@ class DmarParserTest(unittest.TestCase):
             dmar_xml = acpi_header.toXml()
             self.assertNotEqual(dmar_xml, None)
         except:
-            self.assertFalse (False, "Failed to convert ACPI header object to xml")
+            self.assertFalse(False, "Failed to convert ACPI header object to xml")
 
         try:
             dmar_str = str(acpi_header)
             self.assertNotEqual(dmar_str, None)
         except:
-            self.assertFalse (False, "Failed to convert ACPI header object to string")
+            self.assertFalse(False, "Failed to convert ACPI header object to string")
 
     def test_dmar_parser_ivrs_full(self):
         # finally a real deal, just to see if they are stiched porperly
@@ -256,13 +209,13 @@ class DmarParserTest(unittest.TestCase):
             dmar_xml = dmar_table.toXml()
             self.assertNotEqual(dmar_xml, None)
         except:
-            self.assertFalse (False, "Failed to convert DMAR object to xml")
+            self.assertFalse(False, "Failed to convert DMAR object to xml")
 
         try:
             dmar_str = str(dmar_table)
             self.assertNotEqual(dmar_str, None)
         except:
-            self.assertFalse (False, "Failed to convert DMAR object to string")
+            self.assertFalse(False, "Failed to convert DMAR object to string")
 
 
 if __name__ == '__main__':
