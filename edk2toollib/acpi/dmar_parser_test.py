@@ -181,7 +181,7 @@ class DmarParserTest(unittest.TestCase):
             self.assertFalse(False, "Failed to convert ACPI header object to string")
 
     def test_dmar_parser_ivrs_full(self):
-        # finally a real deal, just to see if they are stiched porperly
+        # finally a real deal, just to see if they are stitched properly
         full_table = bytes([0x44, 0x4d, 0x41, 0x52, 0x88, 0x00, 0x00, 0x00,
                             0x01, 0xad, 0x4d, 0x53, 0x46, 0x54, 0x20, 0x20,
                             0x4d, 0x53, 0x46, 0x54, 0x20, 0x20, 0x20, 0x20,
