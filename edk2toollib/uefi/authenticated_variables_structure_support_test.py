@@ -16,6 +16,7 @@ from edk2toollib.uefi.authenticated_variables_structure_support import \
     EfiSignatureDataEfiCertX509, EfiSignatureDataFactory
 # import logging
 
+VERBOSE = False
 
 DEBIAN_CERT = '308202FC308201E4A003020102020500A7468DEF300D06092A864886F70D01010B05003020311E301C060355040313154465' \
               '6269616E2053656375726520426F6F74204341301E170D3136303831363138323235305A170D323630383136313832323530' \
@@ -696,6 +697,7 @@ class AuthVarSupportLibraryUnitTests(unittest.TestCase):
 
     def test_print(self):
         esd = basicEfiSignatureDatabase()
+        print("\nPrint test:")
         esd.Print(compact=True)
         esd.Print(compact=False)
 
@@ -932,16 +934,17 @@ class AuthVarSupportLibraryUnitTests(unittest.TestCase):
             (testName, (Esd, ExpectedDupesEsd, ExpectedCanonicalEsd)) = subTest
             with self.subTest(msg=testName):
 
-                print("Starting EfiSignatureDatabase: ")
-                Esd.Print(compact=True)
-
                 (output_canonical_esd, output_dupes_esd) = Esd.GetCanonicalAndDupes()
 
-                print("Dupes: ")
-                output_dupes_esd.Print(compact=True)
+                if VERBOSE:
+                    print("Starting EfiSignatureDatabase: ")
+                    Esd.Print(compact=True)
 
-                print("Canonical: ")
-                output_canonical_esd.Print(compact=True)
+                    print("Dupes: ")
+                    output_dupes_esd.Print(compact=True)
+
+                    print("Canonical: ")
+                    output_canonical_esd.Print(compact=True)
 
                 self.assertEqual(output_dupes_esd.GetBytes(), ExpectedDupesEsd.GetBytes())
                 self.assertEqual(output_canonical_esd.GetBytes(), ExpectedCanonicalEsd.GetBytes())

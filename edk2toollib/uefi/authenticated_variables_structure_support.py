@@ -99,7 +99,7 @@ class EfiSignatureDataEfiCertX509(object):
 
         # read remaining decode size for x509 data
         self.SignatureDataSize = decodesize - EfiSignatureDataEfiCertX509.STATIC_STRUCT_SIZE
-        self.SignatureData = (fs.read(self.SignatureDataSize))
+        self.SignatureData = fs.read(self.SignatureDataSize)
 
     def Print(self, compact: bool = False):
         if not compact:
@@ -191,7 +191,7 @@ class EfiSignatureDataEfiCertSha256(object):
 
         self.SignatureOwner = uuid.UUID(bytes_le=fs.read(16))
 
-        self.SignatureData = (fs.read(hashlib.sha256().digest_size))
+        self.SignatureData = fs.read(hashlib.sha256().digest_size)
 
     def Print(self, compact: bool = False):
         if not compact:
