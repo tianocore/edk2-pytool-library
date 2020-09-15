@@ -201,8 +201,10 @@ class DmarParserTest(unittest.TestCase):
                             0x01, 0x08, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00])
 
         dmar_table = DMARTable(full_table)
-        self.assertEqual(dmar_table.dmar_table.ANDDCount, 0)
+        self.assertEqual(dmar_table.ANDDCount(), 0)
+        self.assertTrue(dmar_table.DMARBitEnabled())
         self.assertEqual(len(dmar_table.dmar_table.RMRRlist), 1)
+        self.assertFalse(dmar_table.CheckRMRRCount())
         self.assertEqual(len(dmar_table.dmar_table.SubStructs), 3)
 
         try:
