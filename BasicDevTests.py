@@ -14,12 +14,13 @@ import glob
 import os
 import sys
 import logging
+import re
 
 
 def TestEncodingOk(apath, encodingValue):
     try:
-        with open(apath, "rb") as fobj:
-            fobj.read().decode(encodingValue)
+        with open(apath, "rb") as f_obj:
+            f_obj.read().decode(encodingValue)
     except Exception as exp:
         logging.critical("Encoding failure: file: {0} type: {1}".format(apath, encodingValue))
         logging.error("EXCEPTION: while processing {1} - {0}".format(exp, apath))
@@ -35,6 +36,17 @@ def TestFilenameLowercase(apath):
     return True
 
 
+def PackageAndModuleValidCharacters(apath):
+    ''' check pep8 recommendations for package and module names'''
+
+    match = re.match('^[a-z0-9_/.]+$', apath.replace("\\", "/"))
+    if match is None:
+        logging.critical(
+            f"PackageAndModuleValidCharacters failure: package or module name {apath} has something invalid")
+        return False
+    return True
+
+
 def TestNoSpaces(apath):
     if " " in apath:
         logging.critical(f"NoSpaces failure: file {apath} has spaces in path")
@@ -45,8 +57,8 @@ def TestNoSpaces(apath):
 def TestRequiredLicense(apath):
     licenses = ["SPDX-License-Identifier: BSD-2-Clause-Patent", ]
     try:
-        with open(apath, "rb") as fobj:
-            contents = fobj.read().decode()
+        with open(apath, "rb") as f_obj:
+            contents = f_obj.read().decode()
             found = False
             for lic in licenses:
                 if lic in contents:
@@ -74,6 +86,8 @@ for a in py_files:
     if(not TestNoSpaces(aRelativePath)):
         error += 1
     if(not TestRequiredLicense(a)):
+        error += 1
+    if(not PackageAndModuleValidCharacters(aRelativePath)):  # use relative path so only test within package
         error += 1
 
 logging.critical(f"Found {error} error(s) in {len(py_files)} file(s)")
