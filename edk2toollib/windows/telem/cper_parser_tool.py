@@ -12,8 +12,8 @@ import uuid
 import logging
 import edk2toolext.telem.decoders
 from edk2toollib.windows.telem.cper_section_data import SECTION_PARSER_PLUGIN
-from edk2toolext.telem.friendlynames import friendlynamedict
-from edk2toolext.telem.testdata import TestData
+from edk2toolext.telem.friendlynames import FriendlyNameDict
+from edk2toollib.windows.telem.cper_parser_tool_test import TestData
 
 """
 CPER: Common Platform Error Record
@@ -623,19 +623,16 @@ def HexDump(input: bytes, bytesperline: int) -> str:
 
 
 def ValidateFriendlyNames() -> None:
-    '''Check the validity of each guid from the friendlynamedict in friendlynames.py'''
-    rowcounter = 0  # Used to track which row we are checking
+    '''Check the validity of each guid from the FriendlyNameDict in friendlynames.py'''
 
-    for f in friendlynamedict:
+    for f in enumerate(FriendlyNameDict):
         try:
             # Try to convert each friendly name guid into a uuid
-            uuid.UUID(f)
+            uuid.UUID(f[1])
         except:
             # Alert user if a guid could not be parsed
-            logging.debug("Guid " + str(rowcounter) + " of FriendlyName \
+            logging.debug("Guid " + str(f[0]) + " of FriendlyName \
                           in dictionary located in friendlyname.py file is invalid")
-
-        rowcounter += 1
 
 
 def AttemptGuidParse(g: bytes) -> str:
@@ -649,8 +646,8 @@ def AttemptGuidParse(g: bytes) -> str:
     except:
         return "Unable to parse"
 
-    if(friendlynamedict.get(str(guid))):
-        return friendlynamedict[str(guid)]
+    if(FriendlyNameDict.get(str(guid))):
+        return FriendlyNameDict[str(guid)]
 
     # Return the guid if a friendly name cannot be found
     return str(guid)
