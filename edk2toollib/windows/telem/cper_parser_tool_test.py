@@ -8,7 +8,7 @@
 
 import unittest
 from edk2toollib.windows.telem import cper_parser_tool as parser
-from edk2toollib.windows.telem.testdata import TestData, TestDataParsed
+from edk2toolext.windows.telem.testdata import TestData, TestDataParsed
 
 
 class cper_parser_tool_test(unittest.TestCase):

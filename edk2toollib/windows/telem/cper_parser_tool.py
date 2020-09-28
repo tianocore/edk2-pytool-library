@@ -10,10 +10,10 @@
 import struct
 import uuid
 import logging
-import edk2toollib.windows.telem.decoders
+import edk2toolext.telem.decoders
 from edk2toollib.windows.telem.cper_section_data import SECTION_PARSER_PLUGIN
-from edk2toollib.windows.telem.friendlynames import friendlynamedict
-from edk2toollib.windows.telem.testdata import TestData
+from edk2toolext.telem.friendlynames import friendlynamedict
+from edk2toolext.telem.testdata import TestData
 
 """
 CPER: Common Platform Error Record
@@ -168,72 +168,88 @@ class CPER(object):
             counter += 1
 
     def GetSectionCount(self) -> int:
+        "Returns the number of sections in this record"
         return self.header.sectionCount
 
     def GetErrorSeverity(self) -> str:
+        "Returns the severity of this record"
         return self.header.ErrorSeverityParse()
 
     def GetRecordLength(self) -> int:
+        "Returns the length in bytes of this record"
         return self.header.recordLength
 
     def GetTimestamp(self) -> str:
+        "Returns the time at which this error occured"
         return self.header.TimestampParse()
 
     def GetPlatformId(self) -> str:
+        "Returns the guid of the platform"
         return self.header.PlatformIdParse()
 
     def GetPartitionId(self) -> str:
+        "Returns the guid of the software partition"
         return self.header.PartitionIdParse()
 
     def GetCreatorId(self) -> str:
+        "Returns the guid of error creator"
         return self.header.CreatorIdParse()
 
     def GetRecordId(self) -> str:
+        "Returns an 8 byte value which, when used with the creator id, identifies the record"
         return self.header.RecordIdParse()
 
     def GetFlags(self) -> list:
+        "Returns a list of all flags set in the record"
         if self.header.FlagsParse() == "None":
             return []
 
         return self.header.FlagsParse().split(', ')
 
     def GetSectionsLength(self) -> list:
+        "Returns the length of each section as a list"
         temp = []
         for sec in self.sectionHeaders:
             temp.append(sec.sectionLength)
         return temp
 
     def GetSectionsOffset(self) -> list:
+        "Returns the byte offset of each section as a list"
         temp = []
         for sec in self.sectionHeaders:
             temp.append(sec.sectionOffset)
         return temp
 
     def GetSectionsFlags(self) -> list:
+        "Returns the flags set in each error section as a list"
         temp = []
         for sec in self.sectionHeaders:
             temp.append(sec.FlagsParse())
         return temp
 
     def GetSectionsType(self) -> list:
+        "Returns the type of each section as a list"
         temp = []
         for sec in self.sectionHeaders:
             temp.append(sec.SectionTypeParse())
         return temp
 
     def GetSectionsFruId(self) -> list:
+        "Returns the fru id of each section as a list"
         temp = []
         for sec in self.sectionHeaders:
             temp.append(sec.FruIdParse())
         return temp
 
     def GetSectionsSeverity(self) -> list:
+        "Returns the severity of each section error as a list"
         temp = []
         for sec in self.sectionHeaders:
             temp.append(sec.SectionSeverityParse())
         return temp
 
     def GetSectionsFruString(self) -> list:
+        "Returns the fru string of each section as a list"
         temp = []
         for sec in self.sectionHeaders:
             temp.append(sec.FruStringParse())
