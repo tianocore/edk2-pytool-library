@@ -15,6 +15,8 @@ from edk2toollib.windows.telem.cper_section_data import SECTION_PARSER_PLUGIN
 from edk2toolext.telem.friendlynames import FriendlyNameDict
 from edk2toollib.windows.telem.cper_parser_tool_test import TestData
 
+# TODO: Remove once done with development
+
 """
 CPER: Common Platform Error Record
 
@@ -57,8 +59,6 @@ Fru Id              (32 byte offset, 16 byte length) : ? Not detailed in the CPE
 Section Severity    (48 byte offset, 4  byte length) : Value from 0 - 3 indicating the severity of the error
 Fru String          (52 byte offset, 20 byte length) : String identifying the Fru hardware
 
-# TODO: Remove once done with development
-
 Python Struct Format Characters
 
 Format      C Type                  Python Type     Standard Size
@@ -85,21 +85,364 @@ p           char[]                  bytes
 P           void *                  integer
 """
 
-CPER_HEADER_SIZE = 128  # A CPER header is 128 bytes
-CPER_SECTION_HEADER_SIZE = 72  # A CPER section header is 72 bytes
+CPER_HEADER_SIZE = 128          # CPER spec defines header as 128 bytes
+CPER_SECTION_HEADER_SIZE = 72   # CPER spec defines section header as 72 bytes
 
 # List of plugin classes which inherit from CPER_SECTION_DATA and are
 # therefore capable of parsing section data
 Parsers = SECTION_PARSER_PLUGIN.__subclasses__()
 
 
+class GENERIC_FIELD(object):
+
+    def __init__(self, raw_value):
+        self.raw_value = raw_value
+        self.parsed_value = ""
+        self.valid = False
+        self.Parse()
+
+    def Parse(self):
+        '''Parse this field'''
+        self.parsed_value = str(self.raw_value)
+        self.valid = True
+
+    def Valid(self):
+        ''''Returns true if this field is valid'''
+        return self.valid
+
+    def GetString(self, parsed = True):
+        '''Returns a string version of this field. If parsed is true,
+        it will return a parsed version of the field if available'''
+        if(parsed):
+            return str(self.parsed_value)
+        
+        return str(self.raw_value)
+    
+    def GetRaw(self):
+        return self.raw_value
+
+
+class SIGNATURE_FIELD(GENERIC_FIELD):
+    '''Signature should be ascii array (0x43,0x50,0x45,0x52) or "CPER"'''
+    
+    def __init__(self,raw_value):
+        super().__init__(raw_value)
+
+    def Parse(self):
+        # TODO: Finish
+        # self.parsed_value = self.raw_value.decode('ascii')
+        
+        # if(self.parsed_value == "CPER"):
+        #     self.valid = True
+        self.valid = True
+
+class REVISION_FIELD(GENERIC_FIELD):
+    '''
+        Parse the major and minor version number of the Error Record definition
+
+        TODO: Actually parse out the zeroth and first byte which represent the minor and
+        major version numbers respectively
+        '''
+
+    def __init__(self,raw_value):
+        super().__init__(raw_value)
+
+
+class SECTION_COUNT_FIELD(GENERIC_FIELD):
+    '''The number of sections in this record'''
+
+    def __init__(self,raw_value):
+        super().__init__(raw_value)
+        
+
+class SEVERITY_FIELD(GENERIC_FIELD):
+    '''
+        The severity of this record or section. The severity of a record
+        corresponds to the most severe error section
+    '''
+
+    def __init__(self,raw_value):
+        super().__init__(raw_value)
+
+    def Parse(self):
+        '''Parse the error severity for 4 known values'''
+
+        if(self.raw_value == 0):
+            self.parsed_value = "Recoverable"
+        elif(self.raw_value == 1):
+            self.parsed_value = "Fatal"
+        elif(self.raw_value == 2):
+            self.parsed_value = "Corrected"
+        elif(self.raw_value == 3):
+            self.parsed_value = "Informational"
+        else:
+            self.parsed_value = "Unknown"
+
+
+class CPER_HEADER_VALIDATION_BITS_FIELD(GENERIC_FIELD):
+    '''
+        Capture the validation bits from CPER header
+
+        if bit 1: PlatformId contains valid info\n
+        if bit 2: Timestamp contains valid info\n
+        if bit 3: PartitionId contains valid info
+        '''
+    def __init__(self,raw_value):
+        self.raw_value = raw_value
+        self.parsed_value = ""
+        self.valid = True
+        self.platform_id_valid = False
+        self.timestamp_valid = False
+        self.partition_id_valid = False
+
+    def Parse(self):
+        
+        self.parsed_value = "Platform ID Valid?: "
+        if(self.raw_value & int('0b1', 2)):   # Check bit 0
+            self.platform_id_valid = True
+            self.parsed_value += "True\n"
+        else:
+            self.parsed_value += "False\n"
+        
+        self.parsed_value = "Timestamp Valid?: "
+
+        if(self.raw_value & int('0b10', 2)):  # Check bit 1
+            self.timestamp_valid = True
+            self.parsed_value += "True\n"
+        else:
+            self.parsed_value += "False\n"
+        
+        self.parsed_value = "Partition ID Valid?: "
+        
+        if(self.raw_value & int('0b100', 2)): # Check bit 2
+            self.partition_id_valid = True
+            self.parsed_value += "True\n"
+        else:
+            self.parsed_value += "False\n"
+    
+    def PlatformIdValid(self):
+        return self.partition_id_valid
+    
+    def TimestampValid(self):
+        return self.timestamp_valid
+    
+    def PartitionIdValid(self):
+        return self.partition_id_valid
+
+
+class RECORD_LENGTH_FIELD(GENERIC_FIELD):
+    
+    def __init__(self,raw_value):
+        super().__init__(raw_value)
+
+
+class TIMESTAMP_FIELD(GENERIC_FIELD):
+    
+    def __init__(self,raw_value,valid_bits_field):
+        self.raw_value = raw_value
+        self.parsed_value = ""
+        self.valid = False
+        self.Parse(valid_bits_field)
+
+    def Parse(self,valid_bits_field):
+        if(valid_bits_field.TimestampValid()):
+            self.parsed_value = str((self.raw_value >> 40) & int('0b11111111', 2)) + "/" + \
+                str((self.raw_value >> 32) & int('0b11111111', 2)) + "/" + \
+                str((((self.raw_value >> 56) & int('0b11111111', 2)) * 100)
+                    + ((self.raw_value >> 48) & int('0b11111111', 2))) + " " + \
+                format(str((self.raw_value >> 16) & int('0b11111111', 2)), "0>2") + ":" + \
+                format(str((self.raw_value >> 8) & int('0b11111111', 2)), "0>2") + ":" + \
+                format(str((self.raw_value >> 0) & int('0b11111111', 2)), "0>2")
+
+        self.parsed_value = "Invalid"
+        self.valid = True
+
+
+class PLATFORM_ID_FIELD(GENERIC_FIELD):
+
+    def __init__(self,raw_value, valid_bits_field):
+        self.raw_value = raw_value
+        self.parsed_value = ""
+        self.valid = False
+        self.Parse(valid_bits_field)
+
+    def Parse(self,valid_bits_field):
+        if(valid_bits_field.PlatformIdValid()):
+            self.parsed_value = AttemptGuidParse(self.raw_value)
+        
+        self.parsed_value = "Invalid"
+        self.valid = True
+
+
+class PARTITION_ID_FIELD(GENERIC_FIELD):
+
+    def __init__(self,raw_value, valid_bits_field):
+        self.raw_value = raw_value
+        self.parsed_value = ""
+        self.valid = False
+        self.Parse(valid_bits_field)
+
+    def Parse(self,valid_bits_field):
+        if(valid_bits_field.PartitionIdValid()):
+            self.parsed_value = AttemptGuidParse(self.raw_value)
+
+        self.parsed_value = "Invalid"
+        self.valid = True
+
+
+class CREATOR_ID_FIELD(GENERIC_FIELD):
+
+    def __init__(self,raw_value):
+        super().__init__(raw_value)
+
+    def Parse(self):
+        self.parsed_value = AttemptGuidParse(self.raw_value)
+        self.valid = True
+
+
+class NOTIFICATION_TYPE_FIELD(GENERIC_FIELD):
+    
+    def __init__(self,raw_value):
+        super().__init__(raw_value)
+
+
+class RECORD_ID_FIELD(GENERIC_FIELD):
+
+    def __init__(self,raw_value):
+        super().__init__(raw_value)
+
+
+class FLAGS_FIELD(GENERIC_FIELD):
+
+    def __init__(self,raw_value):
+        self.flags_list = []
+        super().__init__(raw_value)
+
+    def Parse(self):
+
+        # Check each bit for associated flag
+        if(self.raw_value & int('0b1', 2)):
+            self.flags_list.append("Recovered")
+        if(self.raw_value & int('0b10', 2)):
+            self.flags_list.append("Previous Error")
+        if(self.raw_value & int('0b100', 2)):
+            self.flags_list.append("Simulated")
+        if(self.raw_value & int('0b1000', 2)):
+            self.flags_list.append("Device Driver")
+        if(self.raw_value & int('0b10000', 2)):
+            self.flags_list.append("Critical")
+        if(self.raw_value & int('0b100000', 2)):
+            self.flags_list.append("Persist")
+
+        # If no flags were found
+        if(self.flags_list == []):
+            self.parsed_value = "None"
+
+        # Join the FlagsList elements separated by commas
+        self.parsed_value =  ", ".join(self.flags_list)
+
+        self.valid = True
+        
+    
+    def GetFlagsList(self):
+        return self.flags_list
+
+
+class PERSISTENCE_INFO_FIELD(GENERIC_FIELD):
+    
+    def __init__(self,raw_value):
+        super().__init__(raw_value)
+
+
+class SECTION_LENGTH_FIELD(GENERIC_FIELD):
+    
+    def __init__(self,raw_value):
+        super().__init__(raw_value)
+
+
+class SECTION_OFFSET_FIELD(GENERIC_FIELD):
+    
+    def __init__(self,raw_value):
+        super().__init__(raw_value)
+
+
+class SECTION_HEADER_VALIDATION_BITS_FIELD(GENERIC_FIELD):
+    '''
+        if bit 0: FruId contains valid info\n
+        if bit 1: FruId String contains valid info
+    '''
+    def __init__(self,raw_value):
+        self.raw_value = raw_value
+        self.parsed_value = ""
+        self.valid = True
+        self.fru_id = False
+        self.fru_string = False
+
+    def Parse(self):
+        
+        self.parsed_value = "Fru ID Valid?: "
+        if(self.raw_value & int('0b1', 2)):   # Check bit 0
+            self.platform_id_valid = True
+            self.parsed_value += "True\n"
+        else:
+            self.parsed_value += "False\n"
+        
+        self.parsed_value = "Fru String Valid?: "
+        if(self.raw_value & int('0b10', 2)):  # Check bit 1
+            self.timestamp_valid = True
+            self.parsed_value += "True\n"
+        else:
+            self.parsed_value += "False\n"
+
+    
+    def FruIdValid(self):
+        return self.FruIdValid
+    
+    def FruStringValid(self):
+        return self.FruStringValid
+    
+
+class SECTION_TYPE_FIELD(GENERIC_FIELD):
+
+    def __init__(self,raw_value):
+        super().__init__(raw_value)
+
+    def Parse(self,valid_bits_field):
+        if(valid_bits_field.PartitionIdValid()):
+            self.parsed_value = AttemptGuidParse(self.raw_value)
+
+        self.parsed_value = "Invalid"
+        self.valid = True
+
+
+class FRU_ID_FIELD(GENERIC_FIELD):
+    
+    def Parse(self,valid_bits_field):
+        if(valid_bits_field.FruIdValid()):
+            self.parsed_value = AttemptGuidParse(self.raw_value)
+
+        self.parsed_value = "Invalid"
+        self.valid = True
+
+
+class FRU_STRING_FIELD(GENERIC_FIELD):
+    
+    def Parse(self,valid_bits_field):
+        if(valid_bits_field.FruStringValid()):
+            self.parsed_value = AttemptGuidParse(self.raw_value)
+
+        self.parsed_value = "Invalid"
+        self.valid = True
+       
+
 class CPER(object):
     '''TODO: Fill in'''
 
     def __init__(self, input: str):
         self.rawData = bytearray.fromhex(input)
-        self.header = None
-        self.SetCperHeader()
+
+        self.header = CPER_HEADER(self.rawData[:CPER_HEADER_SIZE])
+        # self.SetCperHeader()
         self.sectionHeaders = []
         self.SetSectionHeaders()
 
@@ -116,11 +459,11 @@ class CPER(object):
         '''Set each of the section headers to CPER_SECTION_HEADER objects'''
 
         # Section of rawData containing the section headers
-        temp = self.rawData[CPER_HEADER_SIZE:CPER_HEADER_SIZE + (CPER_SECTION_HEADER_SIZE * self.header.sectionCount)]
+        temp = self.rawData[CPER_HEADER_SIZE:CPER_HEADER_SIZE + (CPER_SECTION_HEADER_SIZE * self.GetSectionCount())]
 
         # Go through each section header and attempt to create a
         # CPER_SECTION_HEADER object. Store each header in SectionHeaders list
-        for x in range(self.header.sectionCount):
+        for x in range(self.GetSectionCount()):
             try:  # Don't want to stop runtime if parsing fails
                 self.sectionHeaders.append(CPER_SECTION_HEADER(
                     temp[x * CPER_SECTION_HEADER_SIZE: (x + 1) * CPER_SECTION_HEADER_SIZE]))
@@ -157,7 +500,7 @@ class CPER(object):
         # Alert user that section count doesn't match sections being printed.
         # This could be because there was an error parsing a section, or the
         # section count is incorrect
-        if self.header.sectionCount != len(self.sectionHeaders):
+        if self.GetSectionCount() != len(self.sectionHeaders):
             print("Section Count of CPER header is incorrect!\n")
 
         # Print each section header followed by the correlated section
@@ -169,90 +512,87 @@ class CPER(object):
 
     def GetSectionCount(self) -> int:
         "Returns the number of sections in this record"
-        return self.header.sectionCount
+        return self.header.section_count.GetRaw()
 
     def GetErrorSeverity(self) -> str:
         "Returns the severity of this record"
-        return self.header.ErrorSeverityParse()
+        return self.header.error_severity.GetString()
 
     def GetRecordLength(self) -> int:
         "Returns the length in bytes of this record"
-        return self.header.recordLength
+        return self.header.record_length
 
     def GetTimestamp(self) -> str:
         "Returns the time at which this error occured"
-        return self.header.TimestampParse()
+        return self.header.timestamp.GetString()
 
     def GetPlatformId(self) -> str:
         "Returns the guid of the platform"
-        return self.header.PlatformIdParse()
+        return self.header.platform_id.GetString()
 
     def GetPartitionId(self) -> str:
         "Returns the guid of the software partition"
-        return self.header.PartitionIdParse()
+        return self.header.partition_id.GetString()
 
     def GetCreatorId(self) -> str:
         "Returns the guid of error creator"
-        return self.header.CreatorIdParse()
+        return self.header.creator_id.GetString()
 
     def GetRecordId(self) -> str:
         "Returns an 8 byte value which, when used with the creator id, identifies the record"
-        return self.header.RecordIdParse()
+        return self.header.record_id.GetString()
 
     def GetFlags(self) -> list:
         "Returns a list of all flags set in the record"
-        if self.header.FlagsParse() == "None":
-            return []
-
-        return self.header.FlagsParse().split(', ')
+        return self.header.flags.GetFlagsList()
 
     def GetSectionsLength(self) -> list:
         "Returns the length of each section as a list"
         temp = []
         for sec in self.sectionHeaders:
-            temp.append(sec.sectionLength)
+            temp.append(sec.section_length)
         return temp
 
     def GetSectionsOffset(self) -> list:
         "Returns the byte offset of each section as a list"
         temp = []
         for sec in self.sectionHeaders:
-            temp.append(sec.sectionOffset)
+            temp.append(sec.section_offset)
         return temp
 
     def GetSectionsFlags(self) -> list:
         "Returns the flags set in each error section as a list"
         temp = []
         for sec in self.sectionHeaders:
-            temp.append(sec.FlagsParse())
+            temp.append(sec.flags.GetString())
         return temp
 
     def GetSectionsType(self) -> list:
         "Returns the type of each section as a list"
         temp = []
         for sec in self.sectionHeaders:
-            temp.append(sec.SectionTypeParse())
+            temp.append(sec.section_type.GetString())
         return temp
 
     def GetSectionsFruId(self) -> list:
         "Returns the fru id of each section as a list"
         temp = []
         for sec in self.sectionHeaders:
-            temp.append(sec.FruIdParse())
+            temp.append(sec.fru_id.GetString())
         return temp
 
     def GetSectionsSeverity(self) -> list:
         "Returns the severity of each section error as a list"
         temp = []
         for sec in self.sectionHeaders:
-            temp.append(sec.SectionSeverityParse())
+            temp.append(sec.section_severity.GetString())
         return temp
 
     def GetSectionsFruString(self) -> list:
         "Returns the fru string of each section as a list"
         temp = []
         for sec in self.sectionHeaders:
-            temp.append(sec.FruStringParse())
+            temp.append(sec.fru_string.GetString())
         return temp
 
 
@@ -263,145 +603,41 @@ class CPER_HEADER(object):
 
     def __init__(self, input: str):
 
-        self.platformIdValid = False
-        self.timestampValid = False
-        self.partitionIdValid = False
+        try:
+            (self.signature_start,
+            self.revision,
+            self.signature_end,
+            self.section_count,
+            self.error_severity,
+            self.validation_bits,
+            self.record_length,
+            self.timestamp,
+            self.platform_id,
+            self.partition_id,
+            self.creator_id,
+            self.notification_type,
+            self.record_id,
+            self.flags,
+            self.persistence_info,
+            self.reserved) = struct.unpack_from(self.STRUCT_FORMAT, input)
+        except:
+            return None
 
-        (self.signatureStart,
-         self.revision,
-         self.signatureEnd,
-         self.sectionCount,
-         self.errorSeverity,
-         self.validationBits,
-         self.recordLength,
-         self.timestamp,
-         self.platformId,
-         self.partitionId,
-         self.creatorId,
-         self.notificationType,
-         self.recordId,
-         self.flags,
-         self.persistenceInfo,
-         self.reserved) = struct.unpack_from(self.STRUCT_FORMAT, input)
+        self.signature_start = SIGNATURE_FIELD(self.signature_start)
+        self.revision = REVISION_FIELD(self.revision)
+        self.section_count = SECTION_COUNT_FIELD(self.section_count)
+        self.error_severity = SEVERITY_FIELD(self.error_severity)
+        self.validation_bits = CPER_HEADER_VALIDATION_BITS_FIELD(self.validation_bits)
+        self.record_length = RECORD_LENGTH_FIELD(self.record_length)
+        self.timestamp = TIMESTAMP_FIELD(self.timestamp, self.validation_bits)
+        self.platform_id = PLATFORM_ID_FIELD(self.platform_id, self.validation_bits)
+        self.partition_id = PARTITION_ID_FIELD(self.partition_id, self.validation_bits)
+        self.creator_id = CREATOR_ID_FIELD(self.creator_id)
+        self.notification_type = NOTIFICATION_TYPE_FIELD(self.notification_type)
+        self.record_id = RECORD_ID_FIELD(self.record_id)
+        self.flags = FLAGS_FIELD(self.flags)
+        self.persistence_info = PERSISTENCE_INFO_FIELD(self.persistence_info)
 
-        self.ValidBitsParse()
-
-    def SignatureParse(self) -> str:
-        '''Signature should be ascii array (0x43,0x50,0x45,0x52) or "CPER"'''
-        return self.signatureStart.decode('utf-8')
-
-    def RevisionParse(self) -> str:
-        '''
-        Parse the major and minor version number of the Error Record definition
-
-        TODO: Actually parse out the zeroth and first byte which represent the minor and
-        major version numbers respectively
-        '''
-        return str(self.revision)
-
-    def ErrorSeverityParse(self) -> str:
-        '''Parse the error severity for 4 known values'''
-
-        if(self.errorSeverity == 0):
-            return "Recoverable"
-        elif(self.errorSeverity == 1):
-            return "Fatal"
-        elif(self.errorSeverity == 2):
-            return "Corrected"
-        elif(self.errorSeverity == 3):
-            return "Informational"
-
-        return "Unknown"
-
-    def ValidBitsParse(self) -> None:
-        '''
-        Parse validation bits from header
-
-        if bit 1: PlatformId contains valid info\n
-        if bit 2: Timestamp contains valid info\n
-        if bit 3: PartitionId contains valid info
-        '''
-        if(self.validationBits & int('0b1', 2)):  # Check bit 0
-            self.platformIdValid = True
-        if(self.validationBits & int('0b10', 2)):  # Check bit 1
-            self.timestampValid = True
-        if(self.validationBits & int('0b100', 2)):  # Check bit 2
-            self.partitionIdValid = True
-
-    def TimestampParse(self) -> str:
-        '''Convert the timestamp into a friendly version formatted to (M/D/YYYY Hours:Minutes:Seconds)'''
-        if(self.timestampValid):
-            return str((self.timestamp >> 40) & int('0b11111111', 2)) + "/" + \
-                str((self.timestamp >> 32) & int('0b11111111', 2)) + "/" + \
-                str((((self.timestamp >> 56) & int('0b11111111', 2)) * 100)
-                    + ((self.timestamp >> 48) & int('0b11111111', 2))) + " " + \
-                format(str((self.timestamp >> 16) & int('0b11111111', 2)), "0>2") + ":" + \
-                format(str((self.timestamp >> 8) & int('0b11111111', 2)), "0>2") + ":" + \
-                format(str((self.timestamp >> 0) & int('0b11111111', 2)), "0>2")
-
-        return "Invalid"
-
-    def PlatformIdParse(self) -> str:
-        '''Parse the Platform GUID (Typically, the Platform SMBIOS UUID)'''
-
-        # Only parse if data is valid
-        if(self.platformIdValid):
-            return AttemptGuidParse(self.platformId)
-
-        # Platform Id is invalid based on validation bits
-        return "Invalid"
-
-    def PartitionIdParse(self) -> str:
-        '''Parse the GUID for the Software Partition (if applicable)'''
-
-        # Only parse if data is valid
-        if(self.partitionIdValid):
-            return AttemptGuidParse(self.partitionId)
-
-        # Partition Id is invalid based on validation bits
-        return "Invalid"
-
-    def CreatorIdParse(self) -> str:
-        '''Parse the GUID for the GUID of the Error "Creator"'''
-        return AttemptGuidParse(self.creatorId)
-
-    def NotificationTypeParse(self) -> str:
-        '''Parse the pre-assigned GUID associated with the event (ex.Boot)'''
-        return AttemptGuidParse(self.notificationType)
-
-    def RecordIdParse(self) -> str:
-        '''When combined with the Creator Id, Record Id identifies the Error Record'''
-        return str(self.recordId)
-
-    def FlagsParse(self) -> str:
-        '''Check the flags field and populate list containing applicable flags'''
-
-        FlagList = []
-
-        # Check each bit for associated flag
-        if(self.flags & int('0b1', 2)):
-            FlagList.append("Recovered")
-        if(self.flags & int('0b10', 2)):
-            FlagList.append("Previous Error")
-        if(self.flags & int('0b100', 2)):
-            FlagList.append("Simulated")
-        if(self.flags & int('0b1000', 2)):
-            FlagList.append("Device Driver")
-        if(self.flags & int('0b10000', 2)):
-            FlagList.append("Critical")
-        if(self.flags & int('0b100000', 2)):
-            FlagList.append("Persist")
-
-        # If no flags were found
-        if(FlagList == []):
-            return "None"
-
-        # Join the FlagsList elements separated by commas
-        return ", ".join(FlagList)
-
-    def PersistenceInfoParse(self) -> str:
-        '''Parse the persistence info which is produced and consumed by the creator of the Error Record'''
-        return str(self.persistenceInfo)
 
     def PrettyPrint(self) -> str:
         '''Print relevant portions of the CPER header. Change to suit your needs'''
@@ -409,24 +645,24 @@ class CPER_HEADER(object):
         string = ""
         temp = ""
 
-        string += "Record Length:  " + str(self.recordLength) + '\n'
+        string += "Record Length:  " + self.record_length.GetString() + '\n'
 
-        temp = self.TimestampParse()
+        temp = self.timestamp.GetString()
         string += "Time of error:  " + temp + '\n'
 
-        temp = self.ErrorSeverityParse()
+        temp = self.error_severity.GetString()
         string += "Error severity: " + temp + '\n'
 
-        temp = self.FlagsParse()
-        string += "Flags Id:       " + temp + '\n'
+        temp = self.flags.GetString()
+        string += "Flags:       " + temp + '\n'
 
-        temp = self.PlatformIdParse()
+        temp = self.platform_id.GetString()
         string += "Platform Id:    " + temp + '\n'
 
-        temp = self.PartitionIdParse()
+        temp = self.partition_id.GetString()
         string += "Partition Id:   " + temp + '\n'
 
-        temp = self.CreatorIdParse()
+        temp = self.creator_id.GetString()
         string += "Creator Id:     " + temp + '\n'
 
         return string[0:-1]  # omit the last newline
