@@ -23,10 +23,10 @@ from io import StringIO
 
 project_config = {
     "site_name": "EDK2 Pytool Library",
-    "repo_url": "https://github.com/matthewfcarlson/edk2-pytool-library/",
-    "copyright": "Copyright (c) Microsoft.  All rights reserved",
+    "repo_url": "https://github.com/tianocore/edk2-pytool-library/",
+    "copyright": "Copyright (c) Microsoft. All rights reserved",
     "site_description": "Project Mu Documentation",
-    "site_url": 'https://matthewc.dev/edk2-pytool-library/master/',
+    "site_url": 'https://tianocore.org/edk2-pytool-library/master/',
     "plugins": ["search", ],  # "macros"],
 
     "theme": {
