@@ -115,54 +115,6 @@ def ConvertToFriendlyName(string):
     return newstring.capitalize()
 
 
-def parse_arguments(args=None):
-    parser = argparse.ArgumentParser(description="Generates the python documentation")
-    '''
-    Manual: A user manually queued the build.
-    IndividualCI: Continuous integration (CI) triggered by a Git push or a TFVC check-in.
-    BatchedCI: Continuous integration (CI) triggered by a Git push or a TFVC check-in, and the Batch changes was selected.
-    Schedule: Scheduled trigger.
-    ValidateShelveset: A user manually queued the build of a specific TFVC shelveset.
-    CheckInShelveset: Gated check-in trigger.
-    PullRequest: The build was triggered by a Git branch policy that requires a build.
-    BuildCompletion: The build was triggered by another build.
-    ResourceTrigger: The build was triggered by a resource trigger.
-    '''
-    parser.add_argument("--reason", "-r", type=str, dest="reason", default="Manual")
-    parser.add_argument("--workspace", "-ws", type=str, dest="ws", default=os.getcwd())
-    parser.add_argument("--output_dir", "-o", type=str, dest="output_dir", default="doc_output")
-    parser.add_argument("--module", "-m", type=str, dest="module")
-    parser.add_argument("--docs", "-d", type=str, dest="src_docs", action='append')
-    parser.add_argument("--serve", "-s", dest="serve", default=False, action='store_true')
-    parser.add_argument("--verbose", "-v", dest="verbose", action="store_true", default=False)
-    parser.add_argument("--deploy", "-deploy", dest="deploy", action="store_true", default=False)
-    parser.add_argument("--include-tests", dest="include_tests", action="store_true", default=False)
-    parser.add_argument("--version", dest="version", type=str, default=None)
-    options = validate_arguments(vars(parser.parse_args(args=args)))
-    return options
-
-def validate_arguments(options):
-    valid_reasons = ['Manual', 'IndividualCI', 'BatchedCI', 'Schedule', 'ValidateShelveset',
-                     'CheckInShelveset', 'PullRequest', 'BuildCompletion', 'ResourceTrigger', ]
-    if "reason" not in options or options["reason"] not in valid_reasons:
-        logging.error(f"{options['reason']} is not a valid reason")
-        sys.exit(1)
-    if options["module"] is None:
-        # TODO figure out what module we are in?
-        options["module"] = "edk2toollib"
-    ws = options["ws"]
-    if not os.path.isabs(options["output_dir"]):
-        options["output_dir"] = os.path.abspath(os.path.join(ws, options["output_dir"]))
-    options["html_dir"] = os.path.abspath(os.path.join(options["output_dir"], "html"))
-    options["docs_dir"] = os.path.abspath(os.path.join(options["output_dir"], "docs"))
-    if os.path.exists(options["output_dir"]):
-        shutil.rmtree(options["output_dir"], ignore_errors=False)
-    os.makedirs(options["output_dir"], exist_ok=True)
-    os.makedirs(options["html_dir"], exist_ok=True)
-    os.makedirs(options["docs_dir"], exist_ok=True)
-    return options
-
-
 def generate_config_file(options):
     config_path = os.path.join(options["output_dir"], "mkdocs.yml")
     project_config["docs_dir"] = options["docs_dir"]
@@ -170,24 +122,23 @@ def generate_config_file(options):
     with open(config_path, "w") as yaml_file:
         yaml.dump(project_config, yaml_file)  # , default_flow_style=False)
     if options["verbose"]:
-        print(f"Generating config file {config_path}")
+        logging.info(f"Generating config file {config_path}")
     mike_commands.install_extras(config_path, theme="material")
     return config_path
 
 
 def generate_pdoc_markdown(options):
     pdocs_as_markdown([options["module"], ], options["docs_dir"], overwrite=True)
-    print("Finished PDoc")
+    logging.info("Finished PDoc")
     if not options["include_tests"]:
         # if we aren't including any tests
-        print("Removing test documentation")
+        logging.info("Removing test documentation")
         search_paths = [os.path.join("**", "*_test.md"), os.path.join("**", "test_*.md"),
                         os.path.join("**", "test", "*.md")]
         for search_path in search_paths:
             docs = glob.iglob(os.path.join(options["docs_dir"], search_path), recursive=True)
             for doc in docs:
-                if options["verbose"]:
-                    print(f"Removing test documentation at {doc}")
+                logging.debug(f"Removing test documentation at {doc}")
                 os.remove(doc)
 
 
@@ -243,7 +194,46 @@ def copy_docs(options):
         handle_glob(docs, src_folder, options["docs_dir"])
 
 
+def is_doc_md_empty(path):
+    ''' Checks if a given md file is empty '''
+    if not os.path.exists(path):
+        raise FileNotFoundError(path)
+    with open(path, "r") as index:
+        found_code = False
+        code_lines = 0
+        for line in index:
+            line = line.rstrip()
+            if len(line) == 0:
+                continue
+            # look for the source code example
+            if line.lower().strip() == "??? example \"view source\"":
+                found_code = True
+            # if we're in a code section
+            elif found_code:
+                # strip the line
+                stripped_line = str(line).lstrip()
+                if len(stripped_line) < len(line):
+                    if not stripped_line.startswith("#"): # check if starts with a comment
+                        code_lines += 1
+                else:
+                    break
+        index.close()
+        logging.debug(f"{path} has {code_lines} lines of code")
+        if found_code and code_lines == 0:
+            return True
+    return False
+
+
 def collapse_docs(options):
+
+    # look for index.md files with not much in them
+    search_path = os.path.join(options["docs_dir"], "**", "index.md")
+    for index_file in glob.iglob(search_path, recursive=True):
+        logging.debug("Need to evaluate index_file: " + index_file)
+        if is_doc_md_empty(index_file):
+            logging.debug(f"Removing empty markdown file at {index_file}")
+            os.remove(os.path.join(index_file))
+
     # look for any directory that has both a index and a readme in it- merge them into index.md
     # index = index + readme (index comes first)
     for root, _, files in os.walk(options["docs_dir"]):
@@ -323,8 +313,8 @@ def generate_nav(options):
 def serve_docs(options):
     if options["serve"]:
         logging.critical("Serving")
-        print("Serving your project. Press Ctrl-C to exit")
-        print("Serving at http://localhost:3000")
+        logging.critical("Serving your project. Press Ctrl-C to exit")
+        logging.critical("Serving at http://localhost:3000")
         mkdocs_serve("localhost", 3000, options["html_dir"])
 
 
@@ -351,14 +341,16 @@ def get_version(options):
             return version
     except:
         pass
+    if not os.path.exists(location):
+        raise RuntimeError(f"Module location {location} does not exist")
     if version.count("+") == 1:
         # we've installed locally
         # figure out what branch we are on?
         out_stream = StringIO()
-        utility_functions.RunCmd("git", "describe --tags", workingdir=os.path.dirname(location), outstream=out_stream)
+        utility_functions.RunCmd("git", "describe --tags", workingdir=location, outstream=out_stream)
         out_stream.seek(0)
         line = out_stream.readline()
-        print(line)
+        logging.critical(f"Unknown version {line} at {location}")
         # Tag should be like v#.#.#
         raise RuntimeError()
         return "master"
@@ -368,16 +360,67 @@ def get_version(options):
 def deploy(options):
     if not options["deploy"]:
         return
-    remote = "personal"
+    remote = "origin"
     branch = "gh-pages"
     force_push = True
     version = get_version(options)
 
-    logging.critical(f"Deploying {version}")
+    logging.info(f"Deploying {version}")
     mike_commands.deploy(options["html_dir"], version, branch=branch)
     mike_commands.set_default("master", branch=branch)
     git_utils.push_branch(remote, branch, force_push)
-    print("Finished deployment")
+    logging.info("Finished deployment")
+
+
+def parse_arguments(args=None):
+    parser = argparse.ArgumentParser(description="Generates the python documentation")
+    '''
+    Manual: A user manually queued the build.
+    IndividualCI: Continuous integration (CI) triggered by a Git push or a TFVC check-in.
+    BatchedCI: Continuous integration (CI) triggered by a Git push or a TFVC check-in, and the Batch changes was selected.
+    Schedule: Scheduled trigger.
+    ValidateShelveset: A user manually queued the build of a specific TFVC shelveset.
+    CheckInShelveset: Gated check-in trigger.
+    PullRequest: The build was triggered by a Git branch policy that requires a build.
+    BuildCompletion: The build was triggered by another build.
+    ResourceTrigger: The build was triggered by a resource trigger.
+    '''
+    parser.add_argument("--reason", "-r", type=str, dest="reason", default="Manual")
+    parser.add_argument("--workspace", "-ws", type=str, dest="ws", default=os.getcwd())
+    parser.add_argument("--output_dir", "-o", type=str, dest="output_dir", default="doc_output")
+    parser.add_argument("--module", "-m", type=str, dest="module")
+    parser.add_argument("--docs", "-d", type=str, dest="src_docs", action='append')
+    parser.add_argument("--serve", "-s", dest="serve", default=False, action='store_true')
+    parser.add_argument("--verbose", "-v", dest="verbose", action="store_true", default=False)
+    parser.add_argument("--deploy", "-deploy", dest="deploy", action="store_true", default=False)
+    parser.add_argument("--include-tests", dest="include_tests", action="store_true", default=False)
+    parser.add_argument("--version", dest="version", type=str, default=None)
+    options = validate_arguments(vars(parser.parse_args(args=args)))
+    if options['verbose']:
+        logging.getLogger().setLevel(logging.DEBUG)
+    return options
+
+
+def validate_arguments(options):
+    valid_reasons = ['Manual', 'IndividualCI', 'BatchedCI', 'Schedule', 'ValidateShelveset',
+                     'CheckInShelveset', 'PullRequest', 'BuildCompletion', 'ResourceTrigger', ]
+    if "reason" not in options or options["reason"] not in valid_reasons:
+        logging.error(f"{options['reason']} is not a valid reason")
+        sys.exit(1)
+    if options["module"] is None:
+        # TODO figure out what module we are in?
+        options["module"] = "edk2toollib"
+    ws = options["ws"]
+    if not os.path.isabs(options["output_dir"]):
+        options["output_dir"] = os.path.abspath(os.path.join(ws, options["output_dir"]))
+    options["html_dir"] = os.path.abspath(os.path.join(options["output_dir"], "html"))
+    options["docs_dir"] = os.path.abspath(os.path.join(options["output_dir"], "docs"))
+    if os.path.exists(options["output_dir"]):
+        shutil.rmtree(options["output_dir"], ignore_errors=False)
+    os.makedirs(options["output_dir"], exist_ok=True)
+    os.makedirs(options["html_dir"], exist_ok=True)
+    os.makedirs(options["docs_dir"], exist_ok=True)
+    return options
 
 
 def main(options=None):
