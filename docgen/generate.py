@@ -213,7 +213,7 @@ def is_doc_md_empty(path):
                 # strip the line
                 stripped_line = str(line).lstrip()
                 if len(stripped_line) < len(line):
-                    if not stripped_line.startswith("#"): # check if starts with a comment
+                    if not stripped_line.startswith("#"):  # check if starts with a comment
                         code_lines += 1
                 else:
                     break
@@ -365,11 +365,11 @@ def deploy(options):
     force_push = True
     version = get_version(options)
 
-    logging.info(f"Deploying {version}")
+    logging.critical(f"Deploying {version}")
     mike_commands.deploy(options["html_dir"], version, branch=branch)
     mike_commands.set_default("master", branch=branch)
     git_utils.push_branch(remote, branch, force_push)
-    logging.info("Finished deployment")
+    logging.critical("Finished deployment")
 
 
 def parse_arguments(args=None):
@@ -396,8 +396,9 @@ def parse_arguments(args=None):
     parser.add_argument("--include-tests", dest="include_tests", action="store_true", default=False)
     parser.add_argument("--version", dest="version", type=str, default=None)
     options = validate_arguments(vars(parser.parse_args(args=args)))
-    if options['verbose']:
-        logging.getLogger().setLevel(logging.DEBUG)
+    # set the right logging level
+    logging.getLogger().setLevel(logging.DEBUG if options['verbose'] else logging.INFO)
+
     return options
 
 
