@@ -23,6 +23,7 @@ class DscParser(HashFileParser):
         self.ParsingInBuildOption = 0
         self.LibraryClassToInstanceDict = {}
         self.Pcds = []
+        self._no_fail_mode = False
         self._dsc_file_paths = set()  # This includes the full paths for every DSC that makes up the file
 
     def __ParseLine(self, Line, file_name=None, lineno=None):
@@ -46,9 +47,12 @@ class DscParser(HashFileParser):
         if(line_resolved.strip().lower().startswith("!include")):
             # include line.
             tokens = line_resolved.split()
-            self.Logger.debug("Opening Include File %s" % os.path.join(self.RootPath, tokens[1]))
-            sp = self.FindPath(tokens[1])
-            self._dsc_file_paths.add(sp)
+            include_file = tokens[1]
+            sp = self.FindPath(include_file)
+            if sp is None:
+                raise FileNotFoundError(include_file)
+            self.Logger.debug("Opening Include File %s" % sp)
+            self._PushTargetFile(sp)
             lf = open(sp, "r")
             loc = lf.readlines()
             lf.close()
@@ -181,8 +185,12 @@ class DscParser(HashFileParser):
         if(line_resolved.strip().lower().startswith("!include")):
             # include line.
             tokens = line_resolved.split()
-            self.Logger.debug("Opening Include File %s" % os.path.join(self.RootPath, tokens[1]))
-            sp = self.FindPath(tokens[1])
+            include_file = tokens[1]
+            self.Logger.debug("Opening Include File %s" % include_file)
+            sp = self.FindPath(include_file)
+            if sp is None:
+                raise FileNotFoundError(include_file)
+            self._PushTargetFile(sp)
             lf = open(sp, "r")
             loc = lf.readlines()
             lf.close()
@@ -235,18 +243,58 @@ class DscParser(HashFileParser):
         return line.strip().split()[0].rstrip("{")
 
     def __ProcessMore(self, lines, file_name=None):
-        if(len(lines) > 0):
-            for index in range(0, len(lines)):
-                (line, add, new_file) = self.__ParseLine(lines[index], file_name=file_name, lineno=index + 1)
+        '''
+        ProcessMore runs after ProcessDefines and does a full parsing of the DSC
+        Everything is resolved to a final state
+        '''
+        if(len(lines) == 0):
+            return
+        for index in range(0, len(lines)):
+            # we try here so that we can catch exceptions from individual lines
+            try:
+                raw_line = lines[index]
+                (line, add, new_file) = self.__ParseLine(raw_line, file_name=file_name, lineno=index + 1)
                 if(len(line) > 0):
                     self.Lines.append(line)
                 self.__ProcessMore(add, file_name=new_file)
+            except Exception as e:
+                # check if we're in no fail mode or not
+                if not self._no_fail_mode:  # if we are, fail
+                    raise
+                else:
+                    # otherwise, let the user know that we failed in the DSC
+                    self.Logger.warning(f"DSC Parser (No-Fail Mode): {raw_line}")
+                    self.Logger.warning(e)
 
     def __ProcessDefines(self, lines):
-        if(len(lines) > 0):
-            for l in lines:
-                (line, add) = self.__ParseDefineLine(l)
+        '''
+        ProcessDefines goes through a file once to look for [Define] sections.
+        Only Sections, DEFINE, X = Y, and !includes are resolved
+        This resolves all the defines since they can be anywhere in a file.
+        Ideally this should be run until we reach stable state but this parser is not
+        accurate and is more of an approximation of what the real parser does.
+        '''
+
+        if(len(lines) == 0):
+            return
+        for raw_line in lines:
+            # we want to catch exceptions here since we are doing includes as we potentially might blow up
+            # we want to catch on a line by line basis
+            try:
+                (line, add) = self.__ParseDefineLine(raw_line)
                 self.__ProcessDefines(add)
+            except Exception:
+                # Since we're going to do this in ProcessMore, don't warn people if there's an exception
+                # otherwise, raise the exception and act normally
+                if not self._no_fail_mode:
+                    raise
+
+    def SetNoFailMode(self, enabled=True):
+        '''
+        The parser won't throw exceptions when this is turned on
+        This can result in some weird behavior
+        '''
+        self._no_fail_mode = enabled
 
     def ResetParserState(self):
         #
@@ -256,19 +304,24 @@ class DscParser(HashFileParser):
 
     def ParseFile(self, filepath):
         self.Logger.debug("Parsing file: %s" % filepath)
-        self.TargetFile = os.path.abspath(filepath)
-        self.TargetFilePath = os.path.dirname(self.TargetFile)
-        sp = os.path.join(filepath)
-        self._dsc_file_paths.add(sp)
+        sp = self.FindPath(filepath)
+        if sp is None:
+            raise FileNotFoundError(filepath)
+        self._PushTargetFile(sp)
         f = open(sp, "r")
         # expand all the lines and include other files
         file_lines = f.readlines()
         self.__ProcessDefines(file_lines)
         # reset the parser state before processing more
         self.ResetParserState()
+        self._PushTargetFile(sp)
         self.__ProcessMore(file_lines, file_name=sp)
         f.close()
         self.Parsed = True
+
+    def _PushTargetFile(self, targetFile):
+        self.TargetFilePath = os.path.abspath(targetFile)
+        self._dsc_file_paths.add(self.TargetFilePath)
 
     def GetMods(self):
         return self.ThreeMods + self.SixMods

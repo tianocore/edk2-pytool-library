@@ -7,13 +7,14 @@
 ##
 import os
 import logging
+from edk2toollib.uefi.edk2 import path_utilities
 
 
 class BaseParser(object):
     """ """
     operators = ["OR", "AND", "IN", "==", "!=", ">", "<", "<=", ">="]
 
-    def __init__(self, log=""):
+    def __init__(self, log="BaseParser"):
         self.Logger = logging.getLogger(log)
         self.Lines = []
         self.LocalVars = {}
@@ -24,8 +25,8 @@ class BaseParser(object):
         self.ConditionalStack = []
         self.RootPath = ""
         self.PPs = []
-        self.TargetFile = None
-        self.TargetFilePath = None
+        self._Edk2PathUtil = None
+        self.TargetFilePath = None  # the abs path of the target file
         self.CurrentLine = -1
         self._MacroNotDefinedValue = "0"  # value to used for undefined macro
 
@@ -42,8 +43,13 @@ class BaseParser(object):
         Returns:
 
         """
-        self.RootPath = path
+        self.RootPath = os.path.abspath(path)
+        self._ConfigEdk2PathUtil()
         return self
+
+    def _ConfigEdk2PathUtil(self):
+        ''' creates the path utility object based on the root path and package paths '''
+        self._Edk2PathUtil = path_utilities.Edk2Path(self.RootPath, self.PPs, error_on_invalid_pp=False)
 
     def SetPackagePaths(self, pps=[]):
         """
@@ -51,10 +57,13 @@ class BaseParser(object):
         Args:
           pps:  (Default value = [])
 
+        This must be called after SetBaseAbsPath
+
         Returns:
 
         """
         self.PPs = pps
+        self._ConfigEdk2PathUtil()
         return self
 
     def SetInputVars(self, inputdict):
@@ -71,37 +80,43 @@ class BaseParser(object):
 
     def FindPath(self, *p):
         """
-
+        Given a path, it will find it relative to the root, the current target file, or the packages path
         Args:
-          *p:
+          *p: any number of strings or path like objects
 
-        Returns:
+        Returns: a full absolute path if the file exists, None on failure
 
         """
-        # NOTE: Some of this logic should be replaced
-        #       with the path resolution from Edk2Module code.
+        # check if we're getting a None
+        if p is None or (len(p) == 1 and p[0] is None):
+            return None
+
+        Path = os.path.join(*p)
+        # check if it it is absolute
+        if os.path.isabs(Path) and os.path.exists(Path):
+            return Path
 
         # If the absolute path exists, return it.
         Path = os.path.join(self.RootPath, *p)
         if os.path.exists(Path):
-            return Path
+            return os.path.abspath(Path)
 
         # If that fails, check a path relative to the target file.
         if self.TargetFilePath is not None:
-            Path = os.path.join(self.TargetFilePath, *p)
+            Path = os.path.abspath(os.path.join(os.path.dirname(self.TargetFilePath), *p))
             if os.path.exists(Path):
-                return Path
+                return os.path.abspath(Path)
 
         # If that fails, check in every possible Pkg path.
-        for Pkg in self.PPs:
-            Path = os.path.join(self.RootPath, Pkg, *p)
-            if os.path.exists(Path):
+        if self._Edk2PathUtil is not None:
+            target_path = os.path.join(*p)
+            Path = self._Edk2PathUtil.GetAbsolutePathOnThisSytemFromEdk2RelativePath(target_path, False)
+            if Path is not None:
                 return Path
 
         # log invalid file path
-        Path = os.path.join(self.RootPath, *p)
-        self.Logger.error("Invalid file path %s" % Path)
-        return Path
+        self.Logger.error(f"Invalid file path: {p}")
+        return None
 
     def WriteLinesToFile(self, filepath):
         """
@@ -113,10 +128,10 @@ class BaseParser(object):
 
         """
         self.Logger.debug("Writing all lines to file: %s" % filepath)
-        f = open(filepath, "w")
-        for l in self.Lines:
-            f.write(l + "\n")
-        f.close()
+        file_handle = open(filepath, "w")
+        for line in self.Lines:
+            file_handle.write(line + "\n")
+        file_handle.close()
     #
     # do logical comparisons
     #
@@ -376,13 +391,13 @@ class BaseParser(object):
         if not text.lower().startswith("!if "):
             raise RuntimeError(f"Invalid conditional cannot be validated: {text}")
         text = text[3:].strip()
-        logging.debug(f"STAGE 1: {text}")
+        self.Logger.debug(f"STAGE 1: {text}")
         text = self.ReplaceVariables(text)
-        logging.debug(f"STAGE 2: {text}")
+        self.Logger.debug(f"STAGE 2: {text}")
         tokens = self._TokenizeConditional(text)
-        logging.debug(f"STAGE 3: {tokens}")
+        self.Logger.debug(f"STAGE 3: {tokens}")
         expression = self._ConvertTokensToPostFix(tokens)
-        logging.debug(f"STAGE 4: {expression}")
+        self.Logger.debug(f"STAGE 4: {expression}")
 
         # Now we evaluate the post fix expression
         if len(expression) == 0:
@@ -432,7 +447,7 @@ class BaseParser(object):
                 expression = new_expression
 
         final = self.ConvertToInt(expression[0])
-        logging.debug(f" FINAL {expression} {final}")
+        self.Logger.debug(f" FINAL {expression} {final}")
 
         return bool(final)
 
@@ -598,21 +613,21 @@ class BaseParser(object):
 
         return ret
 
-    def IsGuidString(self, l):
+    def IsGuidString(self, line):
         """
         will return true if the the line has
         = { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
         Args:
-          l:
+          line:
 
         Returns:
 
         """
-        if(l.count("{") == 2 and l.count("}") == 2 and l.count(",") == 10 and l.count("=") == 1):
+        if(line.count("{") == 2 and line.count("}") == 2 and line.count(",") == 10 and line.count("=") == 1):
             return True
         return False
 
-    def ParseGuid(self, l):
+    def ParseGuid(self, line):
         """
         parse a guid into a different format
         Will throw exception if missing any of the 11 parts of isn't long enough
@@ -622,9 +637,10 @@ class BaseParser(object):
         Returns: a string of the guid. ex: D3B36F2C-D551-11D4-9A46-0090273FC14D
 
         """
-        entries = l.lstrip(' {').rstrip(' }').split(',')
+        entries = line.lstrip(' {').rstrip(' }').split(',')
         if len(entries) != 11:
-            raise RuntimeError(f"Invalid GUID found {l}. We are missing some parts since we only found: {len(entries)}")
+            raise RuntimeError(
+                f"Invalid GUID found {line}. We are missing some parts since we only found: {len(entries)}")
         gu = entries[0].lstrip(' 0').lstrip('x').strip()
         # pad front until 8 chars
         while(len(gu) < 8):
@@ -707,28 +723,28 @@ class HashFileParser(BaseParser):
     def __init__(self, log):
         BaseParser.__init__(self, log)
 
-    def StripComment(self, l):
+    def StripComment(self, line):
         """
 
         Args:
-          l:
+          line:
 
         Returns:
 
         """
-        return l.split('#')[0].strip()
+        return line.split('#')[0].strip()
 
-    def ParseNewSection(self, l):
+    def ParseNewSection(self, line):
         """
 
         Args:
-          l:
+          line:
 
         Returns:
 
         """
-        if(l.count("[") == 1 and l.count("]") == 1):  # new section
-            section = l.strip().lstrip("[").split(".")[0].split(",")[0].rstrip("]").strip()
-            self.CurrentFullSection = l.strip().lstrip("[").split(",")[0].rstrip("]").strip()
+        if(line.count("[") == 1 and line.count("]") == 1):  # new section
+            section = line.strip().lstrip("[").split(".")[0].split(",")[0].rstrip("]").strip()
+            self.CurrentFullSection = line.strip().lstrip("[").split(",")[0].rstrip("]").strip()
             return (True, section)
         return (False, "")
