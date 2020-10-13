@@ -6,14 +6,11 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-
 import struct
 import uuid
 import logging
-import edk2toolext.telem.decoders
-from edk2toollib.windows.telem.cper_section_data import SECTION_PARSER_PLUGIN
-from edk2toolext.telem.friendlynames import FriendlyNameDict
-from edk2toollib.windows.telem.cper_parser_tool_test import TestData
+import edk2toollib.windows.telem.decoders
+from edk2toollib.windows.telem.cper_section_data import SECTION_DATA_PARSER
 
 # TODO: Remove once done with development
 
@@ -88,13 +85,53 @@ P           void *                  integer
 CPER_HEADER_SIZE = 128          # CPER spec defines header as 128 bytes
 CPER_SECTION_HEADER_SIZE = 72   # CPER spec defines section header as 72 bytes
 
+predefined_guids = {"2dce8bb1-bdd7-450e-b9ad-9cf4ebd4f890": "CMC Notify Type",
+                    "4e292f96-d843-4a55-a8c2-d481f27ebeee": "CPE Notify Type",
+                    "e8f56ffe-919c-4cc5-ba88-65abe14913bb": "MCE Notify Type",
+                    "cf93c01f-1a16-4dfc-b8bc-9c4daf67c104": "PCIe Notify Type",
+                    "cc5263e8-9308-454a-89d0-340bd39bc98e": "INIT Notify Type",
+                    "5bad89ff-b7e6-42c9-814a-cf2485d6e98a": "NMI Notify Type",
+                    "3d61a466-ab40-409a-a698-f362d464b38f": "Boot Notify Type",
+                    "9a78788a-bbe8-11e4-809e-67611e5d46b0": "SEA Notify Type",
+                    "5c284c81-b0ae-4e87-a322-b04c85624323": "SEI Notify Type",
+                    "09a9d5ac-5204-4214-96e5-94992e752bcd": "PEI Notify Type",
+                    "487565ba-6494-4367-95ca-4eff893522f6": "BMC Notify Type",
+                    "e9d59197-94ee-4a4f-8ad8-9b7d8bd93d2e": "SCI Notify Type",
+                    "fe84086e-b557-43cf-ac1b-17982e078470": "EXTINT Notify Type",
+                    "0033f803-2e70-4e88-992c-6f26daf3db7a": "Device Driver Notify Type",
+                    "919448b2-3739-4b7f-a8f1-e0062805c2a3": "CMCI Notify Type",
+                    "9876ccad-47b4-4bdb-b65e-16f193c4f3db": "Processor Generic Error Section",
+                    "00000000-0000-0000-0000-000000000000": "Device Driver Error Section",
+                    "1c15b445-9b06-4667-ac25-33c056b88803": "IPMI MSR Dump Section",
+                    "dc3ea0b0-a144-4797-b95b-53fa242b6e1d": "XPF Processor Error",
+                    "e429faf1-3cb7-11d4-bca7-0080c73c8881": "IPF Processor Error",
+                    "e19e3d16-bc11-11e4-9caa-c2051d5d46b0": "ARM Processor Error",
+                    "a5bc1114-6f64-4ede-b863-3e83ed7c83b1": "Memory Error Section",
+                    "d995e954-bbc1-430f-ad91-b44dcb3c6f35": "PCIe Error Section",
+                    "c5753963-3b84-4095-bf78-eddad3f9c9dd": "PCIX Bus Error Section",
+                    "eb5e4685-ca66-4769-b6a2-26068b001326": "PCIX Device Error Section",
+                    "81212a96-09ed-4996-9471-8d729c8e69ed": "Firmware Error Record Reference",
+                    "81687003-dbfd-4728-9ffd-f0904f97597d": "PMEM Error Section",
+                    "a55701f5-e3ef-43de-ac72-249b573fad2c": "WHEA Cache Check",
+                    "fc06b535-5e1f-4562-9f25-0a3b9adb63c3": "WHEA TLB Check",
+                    "1cf3f8b3-c5b1-49a2-aa59-5eef92ffa63c": "WHEA Bus Check",
+                    "48ab7f57-dc34-4f6c-a7d3-b0b5b0a74314": "WHEA MS Check",
+                    "cf07c4bd-b789-4e18-b3c4-1f732cb57131": "WHEA Record Creator",
+                    "3e62a467-ab40-409a-a698-f362d464b38f": "Generic Notfiy Type",
+                    "6f3380d1-6eb0-497f-a578-4d4c65a71617": "IPF SAL Record Section",
+                    "8a1e1d01-42f9-4557-9c33-565e5cc3f7e8": "XPF MCA Section",
+                    "e71254e7-c1b9-4940-ab76-909703a4320f": "NMI Section",
+                    "e71254e8-c1b9-4940-ab76-909703a4320f": "Generic Section",
+                    "e71254e9-c1b9-4940-ab76-909703a4320f": "WHEA Error Packet Section",
+                    }
+
 # List of plugin classes which inherit from CPER_SECTION_DATA and are
 # therefore capable of parsing section data
-Parsers = SECTION_PARSER_PLUGIN.__subclasses__()
+Parsers = SECTION_DATA_PARSER.__subclasses__()
 
 
 class GENERIC_FIELD(object):
-
+    '''A super class for fields of CPER records'''
     def __init__(self, raw_value):
         self.raw_value = raw_value
         self.parsed_value = ""
@@ -110,58 +147,69 @@ class GENERIC_FIELD(object):
         ''''Returns true if this field is valid'''
         return self.valid
 
-    def GetString(self, parsed = True):
-        '''Returns a string version of this field. If parsed is true,
-        it will return a parsed version of the field if available'''
+    def GetString(self, parsed=True):
+        '''
+        Returns a string version of this field. If parsed is true, it will return a parsed
+        version of the field if available
+        '''
         if(parsed):
             return str(self.parsed_value)
-        
+
         return str(self.raw_value)
-    
-    def GetRaw(self):
+
+    def GetRawValue(self):
+        '''Returns the raw input value of this field'''
         return self.raw_value
 
 
 class SIGNATURE_FIELD(GENERIC_FIELD):
     '''Signature should be ascii array (0x43,0x50,0x45,0x52) or "CPER"'''
-    
-    def __init__(self,raw_value):
+
+    def __init__(self, raw_value):
         super().__init__(raw_value)
 
     def Parse(self):
         # TODO: Finish
         # self.parsed_value = self.raw_value.decode('ascii')
-        
+
         # if(self.parsed_value == "CPER"):
         #     self.valid = True
         self.valid = True
 
+
 class REVISION_FIELD(GENERIC_FIELD):
     '''
-        Parse the major and minor version number of the Error Record definition
+        This is a 2-byte field representing a major and minor version number for the error record
+        definition in BCD format.
 
         TODO: Actually parse out the zeroth and first byte which represent the minor and
         major version numbers respectively
-        '''
+    '''
 
-    def __init__(self,raw_value):
+    def __init__(self, raw_value):
         super().__init__(raw_value)
 
 
 class SECTION_COUNT_FIELD(GENERIC_FIELD):
-    '''The number of sections in this record'''
+    '''
+    This field indicates the number of valid sections associated with the record,
+    corresponding to each of the following section descriptors.
+    '''
 
-    def __init__(self,raw_value):
+    def __init__(self, raw_value):
         super().__init__(raw_value)
-        
+
 
 class SEVERITY_FIELD(GENERIC_FIELD):
     '''
-        The severity of this record or section. The severity of a record
-        corresponds to the most severe error section
-    '''
+        Indicates the severity of the error condition. The severity of the error record
+        corresponds to the most severe error section.
 
-    def __init__(self,raw_value):
+        NOTE: A severity of "Informational" indicates that the section contains extra information
+        that can be safely ignored
+        '''
+
+    def __init__(self, raw_value):
         super().__init__(raw_value)
 
     def Parse(self):
@@ -181,70 +229,85 @@ class SEVERITY_FIELD(GENERIC_FIELD):
 
 class CPER_HEADER_VALIDATION_BITS_FIELD(GENERIC_FIELD):
     '''
-        Capture the validation bits from CPER header
+        This field indicates the validity of the following fields:
 
         if bit 1: PlatformId contains valid info\n
         if bit 2: Timestamp contains valid info\n
         if bit 3: PartitionId contains valid info
         '''
-    def __init__(self,raw_value):
+    def __init__(self, raw_value):
         self.raw_value = raw_value
         self.parsed_value = ""
         self.valid = True
         self.platform_id_valid = False
         self.timestamp_valid = False
         self.partition_id_valid = False
+        self.Parse()
 
     def Parse(self):
-        
+        print("PARSING CPER HEADER VALID BITS")
         self.parsed_value = "Platform ID Valid?: "
         if(self.raw_value & int('0b1', 2)):   # Check bit 0
+            print("PLAT ID TRUE")
             self.platform_id_valid = True
             self.parsed_value += "True\n"
         else:
             self.parsed_value += "False\n"
-        
+
         self.parsed_value = "Timestamp Valid?: "
 
         if(self.raw_value & int('0b10', 2)):  # Check bit 1
+            print("TIMESTAMP TRUE")
             self.timestamp_valid = True
             self.parsed_value += "True\n"
         else:
             self.parsed_value += "False\n"
-        
+
         self.parsed_value = "Partition ID Valid?: "
-        
-        if(self.raw_value & int('0b100', 2)): # Check bit 2
+
+        if(self.raw_value & int('0b100', 2)):  # Check bit 2
+            print("PART ID TRUE")
             self.partition_id_valid = True
             self.parsed_value += "True\n"
         else:
             self.parsed_value += "False\n"
-    
+
     def PlatformIdValid(self):
-        return self.partition_id_valid
-    
+        return self.platform_id_valid
+
     def TimestampValid(self):
         return self.timestamp_valid
-    
+
     def PartitionIdValid(self):
         return self.partition_id_valid
 
 
 class RECORD_LENGTH_FIELD(GENERIC_FIELD):
-    
-    def __init__(self,raw_value):
+    '''
+    Indicates the size of the actual error record, including the size of the record header,
+    all section descriptors, and section bodies. The size may include extra buffer space to allow
+    for the dynamic addition of error sections descriptors and bodies.
+    '''
+
+    def __init__(self, raw_value):
         super().__init__(raw_value)
 
 
 class TIMESTAMP_FIELD(GENERIC_FIELD):
-    
-    def __init__(self,raw_value,valid_bits_field):
+    '''
+    The timestamp correlates to the time when the error information was collected by the system
+    software and may not necessarily represent the time of the error event. The timestamp contains
+    the local time in BCD format.
+    '''
+
+    def __init__(self, raw_value, valid_bits_field):
         self.raw_value = raw_value
         self.parsed_value = ""
         self.valid = False
         self.Parse(valid_bits_field)
 
-    def Parse(self,valid_bits_field):
+    def Parse(self, valid_bits_field):
+        '''Convert the timestamp into a friendly version formatted to (M/D/YYYY Hours:Minutes:Seconds)'''
         if(valid_bits_field.TimestampValid()):
             self.parsed_value = str((self.raw_value >> 40) & int('0b11111111', 2)) + "/" + \
                 str((self.raw_value >> 32) & int('0b11111111', 2)) + "/" + \
@@ -253,46 +316,56 @@ class TIMESTAMP_FIELD(GENERIC_FIELD):
                 format(str((self.raw_value >> 16) & int('0b11111111', 2)), "0>2") + ":" + \
                 format(str((self.raw_value >> 8) & int('0b11111111', 2)), "0>2") + ":" + \
                 format(str((self.raw_value >> 0) & int('0b11111111', 2)), "0>2")
-
-        self.parsed_value = "Invalid"
+        else:
+            self.parsed_value = "Invalid"
         self.valid = True
 
 
 class PLATFORM_ID_FIELD(GENERIC_FIELD):
+    '''
+    This field uniquely identifies the platform with a GUID. The platform’s SMBIOS UUID should
+    be used to populate this field. Error analysis software may use this value to uniquely identify
+    a platform.
+    '''
 
-    def __init__(self,raw_value, valid_bits_field):
+    def __init__(self, raw_value, valid_bits_field):
         self.raw_value = raw_value
         self.parsed_value = ""
         self.valid = False
         self.Parse(valid_bits_field)
 
-    def Parse(self,valid_bits_field):
+    def Parse(self, valid_bits_field):
         if(valid_bits_field.PlatformIdValid()):
             self.parsed_value = AttemptGuidParse(self.raw_value)
-        
-        self.parsed_value = "Invalid"
+        else:
+            self.parsed_value = "Invalid"
         self.valid = True
 
 
 class PARTITION_ID_FIELD(GENERIC_FIELD):
+    '''
+    If the platform has multiple software partitions, system software may associate a GUID
+    with the partition on which the error occurred.
+    '''
 
-    def __init__(self,raw_value, valid_bits_field):
+    def __init__(self, raw_value, valid_bits_field):
         self.raw_value = raw_value
         self.parsed_value = ""
         self.valid = False
         self.Parse(valid_bits_field)
 
-    def Parse(self,valid_bits_field):
+    def Parse(self, valid_bits_field):
         if(valid_bits_field.PartitionIdValid()):
             self.parsed_value = AttemptGuidParse(self.raw_value)
-
-        self.parsed_value = "Invalid"
+        else:
+            self.parsed_value = "Invalid"
         self.valid = True
 
 
 class CREATOR_ID_FIELD(GENERIC_FIELD):
-
-    def __init__(self,raw_value):
+    '''This field contains a GUID indicating the creator of the error record. This value may be
+    overwritten by subsequent owners of the record.'''
+    def __init__(self, raw_value):
         super().__init__(raw_value)
 
     def Parse(self):
@@ -301,20 +374,36 @@ class CREATOR_ID_FIELD(GENERIC_FIELD):
 
 
 class NOTIFICATION_TYPE_FIELD(GENERIC_FIELD):
-    
-    def __init__(self,raw_value):
+    '''This field holds a pre-assigned GUID value indicating the record association with an error
+    event notification type.'''
+
+    def __init__(self, raw_value):
         super().__init__(raw_value)
 
 
 class RECORD_ID_FIELD(GENERIC_FIELD):
+    '''
+    This value, when combined with the Creator ID, uniquely identifies the error record
+    across other error records on a given system.
+    '''
 
-    def __init__(self,raw_value):
+    def __init__(self, raw_value):
         super().__init__(raw_value)
 
 
-class FLAGS_FIELD(GENERIC_FIELD):
+class CPER_HEADER_FLAGS_FIELD(GENERIC_FIELD):
+    '''
+    Check the flags field and populate list containing applicable flags
 
-    def __init__(self,raw_value):
+    if bit 0: An error condition that has been recovered by system software\n
+    if bit 1: An error condition that occurred during a previous session\n
+    if bit 2: An error condition that was intentionally caused\n
+    if bit 3: An error condition caused by a device driver\n
+    if bit 4: An error condition critical to system operation\n
+    if bit 5: An error condition which should persist between boots
+    '''
+
+    def __init__(self, raw_value):
         self.flags_list = []
         super().__init__(raw_value)
 
@@ -339,75 +428,128 @@ class FLAGS_FIELD(GENERIC_FIELD):
             self.parsed_value = "None"
 
         # Join the FlagsList elements separated by commas
-        self.parsed_value =  ", ".join(self.flags_list)
+        self.parsed_value = ", ".join(self.flags_list)
 
         self.valid = True
-        
-    
+
+    def GetFlagsList(self):
+        return self.flags_list
+
+
+class SECTION_HEADER_FLAGS_FIELD(GENERIC_FIELD):
+    '''
+    Check the flags field and populate list containing applicable flags
+
+    if bit 0: This is the section to be associated with the error condition\n
+    if bit 1: The error was not contained within the processor or memery heirarchy\n
+    if bit 2: The component has been reset and must be reinitialized\n
+    if bit 3: Error threshold exceeded for this component\n
+    if bit 4: Resource could not be queried for additional information\n
+    if bit 5: Action has been taken to contain the error, but the error has not been corrected
+    '''
+
+    def __init__(self, raw_value):
+        self.flags_list = []
+        super().__init__(raw_value)
+
+    def Parse(self):
+
+        if(self.raw_value & int('0b1', 2)):  # Check bit 0
+            self.flags_list.append("Primary")
+        if(self.raw_value & int('0b10', 2)):  # Check bit 1
+            self.flags_list.append("Containment Warning")
+        if(self.raw_value & int('0b100', 2)):  # Check bit 2
+            self.flags_list.append("Reset")
+        if(self.raw_value & int('0b1000', 2)):  # Check bit 3
+            self.flags_list.append("Error Threshold Exceeded")
+        if(self.raw_value & int('0b10000', 2)):  # Check bit 4
+            self.flags_list.append("Resource Not Accessible")
+        if(self.raw_value & int('0b100000', 2)):  # Check bit 5
+            self.flags_list.append("Latent Error")
+
+        # If no flags were found
+        if(self.flags_list == []):
+            self.parsed_value = "None"
+
+        # Join the FlagsList elements separated by commas
+        self.parsed_value = ", ".join(self.flags_list)
+
+        self.valid = True
+
     def GetFlagsList(self):
         return self.flags_list
 
 
 class PERSISTENCE_INFO_FIELD(GENERIC_FIELD):
-    
-    def __init__(self,raw_value):
+    '''
+    This field is produced and consumed by the creator of the error record identified in the
+    Creator ID field. The format of this field is defined by the creator.
+    '''
+
+    def __init__(self, raw_value):
         super().__init__(raw_value)
 
 
 class SECTION_LENGTH_FIELD(GENERIC_FIELD):
-    
-    def __init__(self,raw_value):
+    '''The length in bytes of the section body.'''
+
+    def __init__(self, raw_value):
         super().__init__(raw_value)
 
 
 class SECTION_OFFSET_FIELD(GENERIC_FIELD):
-    
-    def __init__(self,raw_value):
+    '''Offset in bytes of the section body from the base of the record header.'''
+
+    def __init__(self, raw_value):
         super().__init__(raw_value)
 
 
 class SECTION_HEADER_VALIDATION_BITS_FIELD(GENERIC_FIELD):
     '''
-        if bit 0: FruId contains valid info\n
-        if bit 1: FruId String contains valid info
+    if bit 0: FruId contains valid info\n
+    if bit 1: FruId String contains valid info
     '''
-    def __init__(self,raw_value):
+    def __init__(self, raw_value):
         self.raw_value = raw_value
         self.parsed_value = ""
         self.valid = True
-        self.fru_id = False
-        self.fru_string = False
+        self.fru_id_valid = False
+        self.fru_string_valid = False
+        self.Parse()
 
     def Parse(self):
-        
+
         self.parsed_value = "Fru ID Valid?: "
         if(self.raw_value & int('0b1', 2)):   # Check bit 0
-            self.platform_id_valid = True
+            self.fru_id_valid = True
             self.parsed_value += "True\n"
         else:
             self.parsed_value += "False\n"
-        
+
         self.parsed_value = "Fru String Valid?: "
         if(self.raw_value & int('0b10', 2)):  # Check bit 1
-            self.timestamp_valid = True
+            self.fru_string_valid = True
             self.parsed_value += "True\n"
         else:
             self.parsed_value += "False\n"
 
-    
     def FruIdValid(self):
-        return self.FruIdValid
-    
+        return self.fru_id_valid
+
     def FruStringValid(self):
-        return self.FruStringValid
-    
+        return self.fru_string_valid
+
 
 class SECTION_TYPE_FIELD(GENERIC_FIELD):
+    '''
+    This field holds a pre-assigned GUID value indicating that it is a section of a
+    particular error.
+    '''
 
-    def __init__(self,raw_value):
+    def __init__(self, raw_value):
         super().__init__(raw_value)
 
-    def Parse(self,valid_bits_field):
+    def Parse(self, valid_bits_field):
         if(valid_bits_field.PartitionIdValid()):
             self.parsed_value = AttemptGuidParse(self.raw_value)
 
@@ -416,27 +558,49 @@ class SECTION_TYPE_FIELD(GENERIC_FIELD):
 
 
 class FRU_ID_FIELD(GENERIC_FIELD):
-    
-    def Parse(self,valid_bits_field):
+    '''
+    GUID representing the FRU ID, if it exists, for the section reporting the error.
+    The default value is zero indicating an invalid FRU ID. System software can use this
+    to uniquely identify a physical device for tracking purposes.
+    '''
+
+    def __init__(self, raw_value, valid_bits_field):
+        self.raw_value = raw_value
+        self.parsed_value = ""
+        self.valid = False
+        self.Parse(valid_bits_field)
+
+    def Parse(self, valid_bits_field):
         if(valid_bits_field.FruIdValid()):
             self.parsed_value = AttemptGuidParse(self.raw_value)
-
-        self.parsed_value = "Invalid"
+        else:
+            self.parsed_value = "Invalid"
         self.valid = True
 
 
 class FRU_STRING_FIELD(GENERIC_FIELD):
-    
-    def Parse(self,valid_bits_field):
+    '''Custom ASCII string identifying the FRU hardware.'''
+
+    def __init__(self, raw_value, valid_bits_field):
+        self.raw_value = raw_value
+        self.parsed_value = ""
+        self.valid = False
+        self.Parse(valid_bits_field)
+
+    def Parse(self, valid_bits_field):
         if(valid_bits_field.FruStringValid()):
             self.parsed_value = AttemptGuidParse(self.raw_value)
-
-        self.parsed_value = "Invalid"
+        else:
+            self.parsed_value = "Invalid"
         self.valid = True
-       
+
 
 class CPER(object):
-    '''TODO: Fill in'''
+    '''
+    A CPER (Common Platform Error Record) consists of a header; followed by one or more
+    section descriptors; and for each descriptor, an associated section which may contain
+    either error or informational data.
+    '''
 
     def __init__(self, input: str):
         self.rawData = bytearray.fromhex(input)
@@ -468,7 +632,8 @@ class CPER(object):
                 self.sectionHeaders.append(CPER_SECTION_HEADER(
                     temp[x * CPER_SECTION_HEADER_SIZE: (x + 1) * CPER_SECTION_HEADER_SIZE]))
             except:  # TODO: Add specific exception instructions
-                print("Error parsing section header %d" % x)
+                # print("Error parsing section header %d" % x)
+                pass
 
     def ParseSectionData(self, s: object) -> None:
         '''Get each of the actual section data pieces and either pass it to
@@ -512,7 +677,7 @@ class CPER(object):
 
     def GetSectionCount(self) -> int:
         "Returns the number of sections in this record"
-        return self.header.section_count.GetRaw()
+        return self.header.section_count.GetRawValue()
 
     def GetErrorSeverity(self) -> str:
         "Returns the severity of this record"
@@ -520,7 +685,7 @@ class CPER(object):
 
     def GetRecordLength(self) -> int:
         "Returns the length in bytes of this record"
-        return self.header.record_length
+        return self.header.record_length.GetRawValue()
 
     def GetTimestamp(self) -> str:
         "Returns the time at which this error occured"
@@ -597,7 +762,10 @@ class CPER(object):
 
 
 class CPER_HEADER(object):
-    '''TODO: Fill in'''
+    '''
+    The CPER header includes information which uniquely identifies a hardware error record
+    on a given system.
+    '''
 
     STRUCT_FORMAT = "=IHIHIIIQ16s16s16s16sQIQ12s"
 
@@ -605,21 +773,21 @@ class CPER_HEADER(object):
 
         try:
             (self.signature_start,
-            self.revision,
-            self.signature_end,
-            self.section_count,
-            self.error_severity,
-            self.validation_bits,
-            self.record_length,
-            self.timestamp,
-            self.platform_id,
-            self.partition_id,
-            self.creator_id,
-            self.notification_type,
-            self.record_id,
-            self.flags,
-            self.persistence_info,
-            self.reserved) = struct.unpack_from(self.STRUCT_FORMAT, input)
+                self.revision,
+                self.signature_end,
+                self.section_count,
+                self.error_severity,
+                self.validation_bits,
+                self.record_length,
+                self.timestamp,
+                self.platform_id,
+                self.partition_id,
+                self.creator_id,
+                self.notification_type,
+                self.record_id,
+                self.flags,
+                self.persistence_info,
+                self.reserved) = struct.unpack_from(self.STRUCT_FORMAT, input)
         except:
             return None
 
@@ -635,9 +803,8 @@ class CPER_HEADER(object):
         self.creator_id = CREATOR_ID_FIELD(self.creator_id)
         self.notification_type = NOTIFICATION_TYPE_FIELD(self.notification_type)
         self.record_id = RECORD_ID_FIELD(self.record_id)
-        self.flags = FLAGS_FIELD(self.flags)
+        self.flags = CPER_HEADER_FLAGS_FIELD(self.flags)
         self.persistence_info = PERSISTENCE_INFO_FIELD(self.persistence_info)
-
 
     def PrettyPrint(self) -> str:
         '''Print relevant portions of the CPER header. Change to suit your needs'''
@@ -669,131 +836,32 @@ class CPER_HEADER(object):
 
 
 class CPER_SECTION_HEADER(object):
-    '''TODO: Fill in'''
+    '''Describes the content of a CPER section'''
 
     STRUCT_FORMAT = "=IIHccI16s16sI20s"
 
     def __init__(self, input: str):
 
-        self.FlagList = []  # go to self.FlagsParse() to see description of this field
-        self.fruIdValid = False
-        self.fruStringValid = False
-
-        (self.sectionOffset,
-            self.sectionLength,
+        (self.section_offset,
+            self.section_length,
             self.revision,
-            self.validationBits,
+            self.validation_bits,
             self.reserved,
             self.flags,
-            self.sectionType,
-            self.fruId,
-            self.sectionSeverity,
-            self.fruString) = struct.unpack_from(self.STRUCT_FORMAT, input)
+            self.section_type,
+            self.fru_id,
+            self.section_severity,
+            self.fru_string) = struct.unpack_from(self.STRUCT_FORMAT, input)
 
-        self.FlagsParse()
-        self.ValidBitsParse()
-
-    def RevisionParse(self) -> str:
-        '''
-        Parse the major and minor version number of the Error Record definition
-
-        TODO: Actually parse the zeroth and first byte which represent the minor
-        and major version numbers respectively
-        '''
-
-        return str(self.revision)
-
-    def ValidBitsParse(self) -> None:
-        '''
-        if bit 0: FruId contains valid info\n
-        if bit 1: FruId String contains valid info
-        '''
-
-        if(ord(self.validationBits) & 0b1):  # check bit 0
-            self.fruIdValid = True
-        if(ord(self.validationBits) & 0b10):  # check bit 1
-            self.fruStringValid = True
-
-    def FlagsParse(self) -> None:
-        '''
-        Check the flags field and populate list containing applicable flags
-
-        if bit 0: This is the section to be associated with the error condition\n
-        if bit 1: The error was not contained within the processor or memery heirarchy\n
-        if bit 2: The component has been reset and must be reinitialized\n
-        if bit 3: Error threshold exceeded for this component\n
-        if bit 4: Resource could not be queried for additional information\n
-        if bit 5: Action has been taken to contain the error, but the error has not been corrected
-        '''
-
-        FlagList = []
-
-        if(self.flags & int('0b1', 2)):  # Check bit 0
-            FlagList.append("Primary")
-        if(self.flags & int('0b10', 2)):  # Check bit 1
-            FlagList.append("Containment Warning")
-        if(self.flags & int('0b100', 2)):  # Check bit 2
-            FlagList.append("Reset")
-        if(self.flags & int('0b1000', 2)):  # Check bit 3
-            FlagList.append("Error Threshold Exceeded")
-        if(self.flags & int('0b10000', 2)):  # Check bit 4
-            FlagList.append("Resource Not Accessible")
-        if(self.flags & int('0b100000', 2)):  # Check bit 5
-            FlagList.append("Latent Error")
-
-        # If no flags were found
-        if(FlagList == []):
-            return "None"
-
-        # Join the FlagsList elements separated by commas
-        return ' '.join(FlagList)
-
-    def SectionTypeParse(self) -> str:
-        '''Parse the Section Type which is a pre-defined GUID indicating that this section is from a particular error'''
-
-        return AttemptGuidParse(self.sectionType)
-
-    def FruIdParse(self) -> str:
-        '''TODO: Fill in - not detailed in CPER doc'''
-
-        # Only parse if data is valid
-        if(self.fruIdValid):
-            return AttemptGuidParse(self.fruId)
-
-        return "Invalid"
-
-    def SectionSeverityParse(self) -> str:
-        '''
-        Parse the error severity for 4 known values
-
-        NOTE: A severity of "Informational" indicates that the section contains extra information that
-        can be safely ignored
-        '''
-
-        if(self.sectionSeverity == 0):
-            return "Recoverable"
-        elif(self.sectionSeverity == 1):
-            return "Fatal"
-        elif(self.sectionSeverity == 2):
-            return "Corrected"
-        elif(self.sectionSeverity == 3):
-            return "Informational"
-
-        return ""
-
-    def FruStringParse(self) -> str:
-        '''Parse out the custom string identifying the Fru hardware'''
-
-        # Only parse if data is valid
-        if(self.fruStringValid):
-
-            # Convert the Fru string from bytes to a string
-            try:
-                return "".join([chr(x) for x in self.fruString])
-            except:
-                return "Unable to parse"
-
-        return "Invalid"
+        self.section_offset = SECTION_OFFSET_FIELD(self.section_offset)
+        self.section_length = SECTION_LENGTH_FIELD(self.section_length)
+        self.revision = REVISION_FIELD(self.revision)
+        self.validation_bits = SECTION_HEADER_VALIDATION_BITS_FIELD(self.validation_bits)
+        self.flags = SECTION_HEADER_FLAGS_FIELD(self.flags)
+        self.section_type = SECTION_TYPE_FIELD(self.section_type)
+        self.fru_id = FRU_ID_FIELD(self.fru_id, self.validation_bits)
+        self.section_severity = SEVERITY_FIELD(self.section_severity)
+        self.fru_string = FRU_STRING_FIELD(self.fru_string, self.validation_bits)
 
     def PrettyPrint(self) -> str:
         '''Print relevant portions of the section header. Change to suit your needs'''
@@ -801,21 +869,21 @@ class CPER_SECTION_HEADER(object):
         string = ""
         temp = ""
 
-        string += "Section Length:      " + str(self.sectionLength) + '\n'
+        string += "Section Length:      " + self.section_length.GetString() + '\n'
 
-        temp = self.FlagsParse()
+        temp = self.flags.GetString()
         string += "Flags:               " + temp + '\n'
 
-        temp = self.SectionSeverityParse()
+        temp = self.section_severity.GetString()
         string += "Section Severity:    " + temp + '\n'
 
-        temp = self.SectionTypeParse()
+        temp = self.section_type.GetString()
         string += "Section Type:        " + temp + '\n'
 
-        temp = self.FruIdParse()
+        temp = self.fru_id.GetString()
         string += "Fru Id:              " + temp + '\n'
 
-        temp = self.FruStringParse()
+        temp = self.fru_string.GetString()
         string += "Fru String:          " + temp + '\n'
 
         return string
@@ -859,16 +927,15 @@ def HexDump(input: bytes, bytesperline: int) -> str:
 
 
 def ValidateFriendlyNames() -> None:
-    '''Check the validity of each guid from the FriendlyNameDict in friendlynames.py'''
+    '''Check the validity of each guid from predefined_guids'''
 
-    for f in enumerate(FriendlyNameDict):
+    for f in enumerate(predefined_guids):
         try:
             # Try to convert each friendly name guid into a uuid
             uuid.UUID(f[1])
         except:
             # Alert user if a guid could not be parsed
-            logging.debug("Guid " + str(f[0]) + " of FriendlyName \
-                          in dictionary located in friendlyname.py file is invalid")
+            logging.debug("Guid " + str(f[0]) + " of predefined_guids dict is invalid")
 
 
 def AttemptGuidParse(g: bytes) -> str:
@@ -882,8 +949,8 @@ def AttemptGuidParse(g: bytes) -> str:
     except:
         return "Unable to parse"
 
-    if(FriendlyNameDict.get(str(guid))):
-        return FriendlyNameDict[str(guid)]
+    if(predefined_guids.get(str(guid))):
+        return predefined_guids[str(guid)]
 
     # Return the guid if a friendly name cannot be found
     return str(guid)
@@ -899,10 +966,10 @@ def CheckDecodersForGuid(guid: uuid):
     return None
 
 
-def TestParser() -> None:
-    "Loads all decoders and prints out a parse of items in testdata.py"
-    ValidateFriendlyNames()
-    counter = 0
-    for line in TestData:
-        CPER(line).PrettyPrint()
-        counter += 1
+# def TestParser() -> None:
+#     "Loads all decoders and prints out a parse of items in testdata.py"
+#     ValidateFriendlyNames()
+#     counter = 0
+#     for line in TestData:
+#         CPER(line).PrettyPrint()
+#         counter += 1

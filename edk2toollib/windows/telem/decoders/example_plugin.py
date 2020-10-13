@@ -1,5 +1,5 @@
-# @file cper_section_data.py
-# Base class for all parsing types
+# @file a_test_plugin.py
+# A testing plugin used to verify parsing
 #
 # Copyright (c) Microsoft Corporation
 #
@@ -7,33 +7,29 @@
 ##
 
 import uuid
+from edk2toollib.windows.telem.cper_section_data import SECTION_DATA_PARSER
 
 
-class SECTION_DATA_PARSER(object):
+class EXAMPLE_PLUGIN(SECTION_DATA_PARSER):
 
-    ##
-    # Instantiate this parser. Simply use a blank bytes object for data
-    # if the instantiator did not pass in data (use case: checking if this
-    # plugin can parse prior to storing an object version)
-    ##
     def __init__(self, data=b''):
-        self.raw_input = data
+        super.__init__(data)
 
     ##
     # Returns string representation of this parser
     ##
     def __str__(self) -> str:
-        return "UNNAMED PARSER"
+        return "EXAMPLE PLUGIN"
 
     ##
     # True if this parser recognizes the input guid
     ##
     def CanParse(self, guid: uuid) -> bool:
-        raise NotImplementedError
+        return False
 
     ##
     # Returns a string representation of the data passed in. It is assumed that
     # if this call runs, you are recieving section data you recognize
     ##
     def Parse(self, data: str) -> str:
-        raise NotImplementedError
+        return ""

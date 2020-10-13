@@ -107,121 +107,94 @@ TestDataParsed = [
 class cper_parser_tool_test(unittest.TestCase):
 
     def test_section_count(self):
-        counter = 1
-        for data in TestData:
-            rec = parser.CPER(data)
-            self.assertEqual(rec.GetSectionCount(), int(TestDataParsed[counter][0]))
-            counter += 1
-
+        for data in enumerate(TestData,1):
+            rec = parser.CPER(data[1])
+            self.assertEqual(rec.GetSectionCount(), int(TestDataParsed[data[0]][0]))
+            
     def test_severity(self):
-        counter = 1
-        for data in TestData:
-            rec = parser.CPER(data)
-            self.assertEqual(rec.GetErrorSeverity(), TestDataParsed[counter][1])
-            counter += 1
-
+        for data in enumerate(TestData,1):
+            rec = parser.CPER(data[1])
+            self.assertEqual(rec.GetErrorSeverity(), TestDataParsed[data[0]][1])
+            
     def test_record_length(self):
-        counter = 1
-        for data in TestData:
-            rec = parser.CPER(data)
-            self.assertEqual(rec.GetRecordLength(), int(TestDataParsed[counter][2]))
-            counter += 1
+        for data in enumerate(TestData,1):
+            rec = parser.CPER(data[1])
+            self.assertEqual(rec.GetRecordLength(), int(TestDataParsed[data[0]][2]))
 
     def test_timestamp(self):
-        counter = 1
-        for data in TestData:
-            rec = parser.CPER(data)
-            self.assertEqual(rec.GetTimestamp(), TestDataParsed[counter][3])
-            counter += 1
+        for data in enumerate(TestData,1):
+            rec = parser.CPER(data[1])
+            self.assertEqual(rec.GetTimestamp(), TestDataParsed[data[0]][3])
 
     def test_platform_id(self):
-        counter = 1
-        for data in TestData:
-            rec = parser.CPER(data)
-            self.assertEqual(rec.GetPlatformId(), TestDataParsed[counter][4])
-            counter += 1
+        for data in enumerate(TestData,1):
+            rec = parser.CPER(data[1])
+            self.assertEqual(rec.GetPlatformId(), TestDataParsed[data[0]][4])
 
     def test_partition_id(self):
-        counter = 1
-        for data in TestData:
-            rec = parser.CPER(data)
-            self.assertEqual(rec.GetPartitionId(), TestDataParsed[counter][5])
-            counter += 1
+        for data in enumerate(TestData,1):
+            rec = parser.CPER(data[1])
+            self.assertEqual(rec.GetPartitionId(), TestDataParsed[data[0]][5])
 
     def test_creator_id(self):
-        counter = 1
-        for data in TestData:
-            rec = parser.CPER(data)
-            self.assertEqual(rec.GetCreatorId(), TestDataParsed[counter][6])
-            counter += 1
-
+        for data in enumerate(TestData,1):
+            print(data[1])
+            rec = parser.CPER(data[1])
+            self.assertEqual(rec.GetCreatorId(), TestDataParsed[data[0]][6])
+            
     def test_record_id(self):
-        counter = 1
-        for data in TestData:
-            rec = parser.CPER(data)
-            self.assertEqual(rec.GetRecordId(), TestDataParsed[counter][7])
-            counter += 1
+        for data in enumerate(TestData,1):
+            rec = parser.CPER(data[1])
+            self.assertEqual(rec.GetRecordId(), TestDataParsed[data[0]][7])
 
     def test_flags(self):
-        counter = 1
-        for data in TestData:
-            rec = parser.CPER(data)
+        for data in enumerate(TestData,1):
+            rec = parser.CPER(data[1])
             flaglist = rec.GetFlags()
-            flaglisttestdata = TestDataParsed[counter][8].split(',')
+            flaglisttestdata = TestDataParsed[data[0]][8].split(',')
             for idx in range(len(flaglist)):
                 self.assertEqual(flaglist[idx], flaglisttestdata[idx])
-            counter += 1
 
     def test_sections_length(self):
-        counter = 1
-        for data in TestData:
-            rec = parser.CPER(data)
+        for data in enumerate(TestData,1):
+            rec = parser.CPER(data[1])
             sectionslength = rec.GetSectionsLength()
-            sectionslengthtestdata = TestDataParsed[counter][9].split(',')
+            sectionslengthtestdata = TestDataParsed[data[0]][9].split(',')
             for idx in range(len(sectionslength)):
                 self.assertEqual(sectionslength[idx], int(sectionslengthtestdata[idx]))
-            counter += 1
 
     def test_sections_type(self):
-        counter = 1
-        for data in TestData:
-            rec = parser.CPER(data)
+        for data in enumerate(TestData,1):
+            rec = parser.CPER(data[1])
             sectionstype = rec.GetSectionsType()
-            sectionstypetestdata = TestDataParsed[counter][11].split(',')
+            sectionstypetestdata = TestDataParsed[data[0]][11].split(',')
             for idx in range(len(sectionstype)):
                 self.assertEqual(sectionstype[idx], sectionstypetestdata[idx])
-            counter += 1
-
+            
     def test_sections_fru_id(self):
-        counter = 1
-        for data in TestData:
-            rec = parser.CPER(data)
+        for data in enumerate(TestData,1):
+            rec = parser.CPER(data[1])
             sectionsfruid = rec.GetSectionsFruId()
-            sectionsfruidtestdata = TestDataParsed[counter][12].split(',')
+            sectionsfruidtestdata = TestDataParsed[data[0]][12].split(',')
             for idx in range(len(sectionsfruid)):
                 self.assertEqual(sectionsfruid[idx], sectionsfruidtestdata[idx])
-            counter += 1
-
+            
     def test_sections_severity(self):
-        counter = 1
-        for data in TestData:
-            rec = parser.CPER(data)
+        for data in enumerate(TestData,1):
+            rec = parser.CPER(data[1])
             sectionsseverity = rec.GetSectionsSeverity()
-            sectionsseveritytestdata = TestDataParsed[counter][13].split(',')
+            sectionsseveritytestdata = TestDataParsed[data[0]][13].split(',')
             for idx in range(len(sectionsseverity)):
                 self.assertEqual(sectionsseverity[idx], sectionsseveritytestdata[idx])
-            counter += 1
 
     @unittest.skip("unimplemented")
     def test_sections_fru_text(self):
-        counter = 1
-        for data in TestData:
-            rec = parser.CPER(data)
+        for data in enumerate(TestData,1):
+            rec = parser.CPER(data[1])
             sectionsfrustring = rec.GetSectionsFruString()
-            sectionsfrustringtestdata = TestDataParsed[counter][14].split(',')
+            sectionsfrustringtestdata = TestDataParsed[data[0]][14].split(',')
             for idx in range(len(sectionsfrustring)):
                 self.assertEqual(sectionsfrustring[idx], sectionsfrustringtestdata[idx])
-            counter += 1
 
 
 if __name__ == '__main__':
