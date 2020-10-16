@@ -89,6 +89,7 @@
         "MDEPKG",
         "iommu",
         "smoosh",
-        "markdownlint"
+        "markdownlint",
+        "codecov"
     ]
 }
