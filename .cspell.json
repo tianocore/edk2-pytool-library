@@ -88,6 +88,8 @@
         "PCD's",
         "MDEPKG",
         "iommu",
-        "smoosh"
+        "smoosh",
+        "markdownlint",
+        "codecov"
     ]
 }

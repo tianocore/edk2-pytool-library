@@ -1,10 +1,14 @@
 # Utility Functions GetHostInfo()
 
-This document details the utility function called GetHostInfo. This function was written because tools needed a consistent way to determine attributes about the host system.
+This document details the utility function called GetHostInfo. This function was
+written because tools needed a consistent way to determine attributes about the
+host system.
 
 ## Purpose
 
-  Since there are multiple different ways one could derive these values, it is necessary provide a common implementation of that logic to ensure it is uniform.
+  Since there are multiple different ways one could derive these values, it is
+  necessary provide a common implementation of that logic to ensure it is
+  uniform.
 
 ## How to Use
 
@@ -16,7 +20,9 @@ host_info = GetHostInfo()
 
 ## Usage info
 
-GetHostInfo() will return a named tuple with 3 attributes describing the host machine. Below for each is the name of the field, description of the field and possible contents therein.
+GetHostInfo() will return a named tuple with 3 attributes describing the host
+machine. Below for each is the name of the field, description of the field and
+possible contents therein.
 
 ### 1. os - OS Name
 
