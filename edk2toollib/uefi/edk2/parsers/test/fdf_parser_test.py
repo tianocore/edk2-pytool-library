@@ -9,8 +9,6 @@
 
 import unittest
 import os
-import uuid
-import io
 from edk2toollib.uefi.edk2.parsers.fdf_parser import FdfParser
 
 TEST_PATH = os.path.realpath(os.path.dirname(__file__))
@@ -34,4 +32,3 @@ class TestBasicFdfParser(unittest.TestCase):
         # Make sure that we can read local variables out of the file.
         self.assertEqual(parser.LocalVars['BLOCK_SIZE'], '0x1000')
         self.assertEqual(parser.LocalVars['MEMFD_BASE_ADDRESS'], '0x800000')
-
