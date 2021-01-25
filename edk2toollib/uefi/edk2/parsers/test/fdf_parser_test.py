@@ -32,4 +32,4 @@ class TestBasicFdfParser(unittest.TestCase):
 
         # Make sure that we can read local variables out of the file.
         self.assertEqual(parser.LocalVars['BLOCK_SIZE'], '0x1000')
-        self.assertEqual(parser.LocalVars['MEMFD_BASE_ADDRESS'], '0x800000')
+        self.assertEqual(parser.LocalVars['MEMFD_BASE_ADDRESS'], '0x800000')        # cspell:disable-line
