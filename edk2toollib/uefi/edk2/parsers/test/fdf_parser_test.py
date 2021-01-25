@@ -13,6 +13,7 @@ from edk2toollib.uefi.edk2.parsers.fdf_parser import FdfParser
 
 TEST_PATH = os.path.realpath(os.path.dirname(__file__))
 
+
 class TestBasicFdfParser(unittest.TestCase):
 
     def test_primary_defines(self):
