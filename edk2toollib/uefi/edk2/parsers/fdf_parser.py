@@ -57,6 +57,7 @@ class FdfParser(HashFileParser):
         else:
             fp = filepath
         self.Path = fp
+        self.TargetFilePath = os.path.abspath(fp)
         self.CurrentLine = 0
         self._f = open(fp, "r")
         self.Lines = self._f.readlines()
