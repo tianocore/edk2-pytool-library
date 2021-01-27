@@ -44,6 +44,12 @@ class FdfParser(HashFileParser):
 
         return sline
 
+    def InsertLinesFromFile(self, file_path: str):
+        with open(file_path, 'r') as lines_file:
+            self.Lines += reversed(lines_file.readlines())
+            # Back off the line count to ignore the include line itself.
+            self.CurrentLine -= 1
+
     def ParseFile(self, filepath):
         self.Logger.debug("Parsing file: %s" % filepath)
         if(not os.path.isabs(filepath)):
@@ -51,6 +57,7 @@ class FdfParser(HashFileParser):
         else:
             fp = filepath
         self.Path = fp
+        self.TargetFilePath = os.path.abspath(fp)
         self.CurrentLine = 0
         self._f = open(fp, "r")
         self.Lines = self._f.readlines()
@@ -70,6 +77,16 @@ class FdfParser(HashFileParser):
 
             if sline is None:
                 break
+
+            if sline.lower().startswith('!include'):
+                tokens = sline.split()
+                include_file = tokens[1]
+                sp = self.FindPath(include_file)
+                if sp is None:
+                    raise FileNotFoundError(include_file)
+                self.Logger.debug("Opening Include File %s" % sp)
+                self.InsertLinesFromFile(sp)
+                continue
 
             if sline.strip().startswith("[") and sline.strip().endswith("]"):  # if we're starting a new section
                 # this basically gets what's after the . or if it doesn't have a period
