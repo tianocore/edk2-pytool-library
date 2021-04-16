@@ -86,7 +86,7 @@ def reader(filepath, outstream, stream, logging_level=logging.INFO):
         f = open(filepath, "w")
 
     while True:
-        s = stream.readline().decode()
+        s = stream.readline().decode(errors='ignore')
         if not s:
             break
         if(f is not None):
