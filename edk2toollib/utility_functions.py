@@ -79,14 +79,14 @@ class PropagatingThread(threading.Thread):
 #
 #  http://stackoverflow.com/questions/19423008/logged-subprocess-communicate
 ####
-def reader(filepath, outstream, stream, logging_level=logging.INFO):
+def reader(filepath, outstream, stream, logging_level=logging.INFO, encodingErrors='strict'):
     f = None
     # open file if caller provided path
     if(filepath):
         f = open(filepath, "w")
 
     while True:
-        s = stream.readline().decode(errors='ignore')
+        s = stream.readline().decode(errors=encodingErrors)
         if not s:
             break
         if(f is not None):
@@ -166,7 +166,7 @@ def timing(f):
 # @return returncode of called cmd
 ####
 def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstream=None, environ=None,
-           logging_level=logging.INFO, raise_exception_on_nonzero=False):
+           logging_level=logging.INFO, raise_exception_on_nonzero=False, encodingErrors='strict'):
     cmd = cmd.strip('"\'')
     if " " in cmd:
         cmd = '"' + cmd + '"'
@@ -180,7 +180,7 @@ def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstre
     logging.log(logging_level, "------------------------------------------------")
     c = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=workingdir, shell=True, env=environ)
     if(capture):
-        thread = PropagatingThread(target=reader, args=(outfile, outstream, c.stdout, logging_level))
+        thread = PropagatingThread(target=reader, args=(outfile, outstream, c.stdout, logging_level, encodingErrors))
         thread.start()
         c.wait()
         thread.join()
