@@ -162,6 +162,8 @@ def timing(f):
 # @param logging_level - log level to log output at.  Default is INFO
 # @param raise_exception_on_nonzero - Setting to true causes exception to be raised if the cmd
 #                                     return code is not zero.
+# @param encodingErrors - may be given to set the desired error handling for encoding errors decoding cmd output.
+#                         Default is 'strict'.
 #
 # @return returncode of called cmd
 ####
