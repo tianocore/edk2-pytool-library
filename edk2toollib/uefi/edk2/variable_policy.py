@@ -9,7 +9,7 @@
 
 import uuid
 import struct
-from edk2toollib.uefi.uefi_multi_phase import *
+from edk2toollib.uefi.uefi_multi_phase import EfiVariableAttributes
 
 
 class VariableLockOnVarStatePolicy(object):
@@ -101,7 +101,9 @@ class VariablePolicyEntry(object):
     def __str__(self):
         result = "VARIABLE_POLICY_ENTRY(%s, %s)\n" % (self.Namespace, self.Name)
 
-        if self.LockPolicyType in (VariablePolicyEntry.TYPE_NO_LOCK, VariablePolicyEntry.TYPE_LOCK_NOW, VariablePolicyEntry.TYPE_LOCK_ON_CREATE):
+        if self.LockPolicyType in (VariablePolicyEntry.TYPE_NO_LOCK,
+                                   VariablePolicyEntry.TYPE_LOCK_NOW,
+                                   VariablePolicyEntry.TYPE_LOCK_ON_CREATE):
             result += "\tLock        = %s\n" % VariablePolicyEntry.LOCK_POLICY_STRING_MAP[self.LockPolicyType]
         elif self.LockPolicyType is VariablePolicyEntry.TYPE_LOCK_ON_VAR_STATE:
             result += "\tLock        = %s\n" % self.LockPolicy
@@ -131,14 +133,18 @@ class VariablePolicyEntry(object):
         result = [guid_xref.get(self.Namespace, self.Namespace),
                   self.Name, VariablePolicyEntry.LOCK_POLICY_STRING_MAP[self.LockPolicyType]]
 
-        if self.LockPolicyType in (VariablePolicyEntry.TYPE_NO_LOCK, VariablePolicyEntry.TYPE_LOCK_NOW, VariablePolicyEntry.TYPE_LOCK_ON_CREATE):
+        if self.LockPolicyType in (VariablePolicyEntry.TYPE_NO_LOCK,
+                                   VariablePolicyEntry.TYPE_LOCK_NOW,
+                                   VariablePolicyEntry.TYPE_LOCK_ON_CREATE):
             result += ['N/A', 'N/A', 'N/A']
         elif self.LockPolicyType is VariablePolicyEntry.TYPE_LOCK_ON_VAR_STATE:
             result += [guid_xref.get(self.LockPolicy.Namespace, self.LockPolicy.Namespace),
                        self.LockPolicy.Name, self.LockPolicy.Value]
 
-        result += ["0x%08X" % self.MinSize, "0x%08X" % self.MaxSize,
-                   str(EfiVariableAttributes(self.AttributesMustHave)), str(EfiVariableAttributes(self.AttributesCantHave))]
+        result += ["0x%08X" % self.MinSize,
+                   "0x%08X" % self.MaxSize,
+                   str(EfiVariableAttributes(self.AttributesMustHave)),
+                   str(EfiVariableAttributes(self.AttributesCantHave))]
 
         return result
 
@@ -150,7 +156,8 @@ class VariablePolicyEntry(object):
         """
         (self.Version, self.Size, self.OffsetToName, _namespace,
             self.MinSize, self.MaxSize, self.AttributesMustHave,
-            self.AttributesCantHave, self.LockPolicyType, _) = struct.unpack(self._HdrStructFormat, buffer[:self._HdrStructSize])
+            self.AttributesCantHave, self.LockPolicyType, _) = struct.unpack(
+                self._HdrStructFormat, buffer[:self._HdrStructSize])
 
         self.Namespace = uuid.UUID(bytes_le=_namespace)
 
