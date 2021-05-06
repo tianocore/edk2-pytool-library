@@ -6,7 +6,9 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 import unittest
-from edk2toollib.uefi.uefi_multi_phase import *
+from edk2toollib.uefi.uefi_multi_phase import (EfiVariableAttributes,
+                                               EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_RUNTIME_ACCESS,
+                                               EFI_VARIABLE_BOOTSERVICE_ACCESS)
 
 
 class TestUefiMultiphase (unittest.TestCase):
