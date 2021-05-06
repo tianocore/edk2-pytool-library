@@ -63,7 +63,7 @@ class VariablePolicyEntry(object):
     #     // UINT8    LockPolicy[];     // Variable Length Field
     #     // CHAR16   Name[]            // Variable Length Field
     # } VARIABLE_POLICY_ENTRY;
-    _HdrStructFormat = "<IHH16sIIIIB3s"
+    _HdrStructFormat = "<IHH16sIIIIB3s"             # spell-checker:disable-line
     _HdrStructSize = struct.calcsize(_HdrStructFormat)
 
     ENTRY_REVISION = 0x0001_0000
