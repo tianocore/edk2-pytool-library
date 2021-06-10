@@ -58,7 +58,8 @@ class InfGeneratorTest(unittest.TestCase):
     def test_file(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             inffile_path = os.path.join(tmpdir, "InfFile.inf")
-            infgen = InfGenerator('TestName', 'TestProvider', InfGeneratorTest.VALID_GUID_STRING, "x64", "Test Description", "1.2.3.4", "0x01020304")
+            infgen = InfGenerator('TestName', 'TestProvider', InfGeneratorTest.VALID_GUID_STRING,
+                                  "x64", "Test Description", "1.2.3.4", "0x01020304")
             infgen.MakeInf(inffile_path, "TestFirmwareRom.bin", False)
 
             with open(inffile_path, "r") as inffile:
@@ -67,6 +68,24 @@ class InfGeneratorTest(unittest.TestCase):
                 file_contents = file_contents.replace("\n", "").replace("\t", "").replace(" ", "")
                 test_contents = TEST_FILE_CONTENTS.replace("\n", "").replace("\t", "").replace(" ", "")
                 self.assertEqual(test_contents, file_contents)
+
+    def test_integrity_file_entry(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            inffile_path = os.path.join(tmpdir, "InfFile.inf")
+            infgen = InfGenerator('TestName', 'TestProvider', InfGeneratorTest.VALID_GUID_STRING,
+                                  "x64", "Test Description", "1.2.3.4", "0x01020304")
+            infgen.MakeInf(inffile_path, "TestFirmwareRom.bin", False)
+            with open(inffile_path, "r") as inffile:
+                file_contents = inffile.read()
+                self.assertNotIn("SampleIntegrityFile.bin", file_contents)
+                self.assertNotIn("FirmwareIntegrityFilename", file_contents)
+
+            infgen.IntegrityFilename = "SampleIntegrityFile.bin"
+            infgen.MakeInf(inffile_path, "TestFirmwareRom.bin", False)
+            with open(inffile_path, "r") as inffile:
+                file_contents = inffile.read()
+                self.assertIn("SampleIntegrityFile.bin", file_contents)
+                self.assertIn("FirmwareIntegrityFilename", file_contents)
 
     def test_invalid_name_symbol(self):
 
@@ -151,7 +170,7 @@ HKR,,FirmwareFilename,,TestFirmwareRom.bin
 TestFirmwareRom.bin = 1
 
 [DestinationDirs]
-DefaultDestDir = %DIRID_WINDOWS%,Firmware ; %SystemRoot%\Firmware
+DefaultDestDir = %DIRID_WINDOWS%,Firmware ; %SystemRoot%\\Firmware
 
 [Strings]
 ; localizable
