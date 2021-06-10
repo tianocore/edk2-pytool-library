@@ -22,6 +22,7 @@ class InfSection(object):
     def __str__(self) -> str:
         return "\n".join(["[%s]" % self.Name] + self.Items)
 
+
 class InfGenerator(object):
 
     ### INF Template ###
