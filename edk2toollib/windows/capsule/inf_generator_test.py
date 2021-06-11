@@ -7,7 +7,26 @@
 ##
 
 import unittest
-from edk2toollib.windows.capsule.inf_generator import InfGenerator
+import tempfile
+import os
+from edk2toollib.windows.capsule.inf_generator import InfGenerator, InfSection
+
+
+class InfSectionTest(unittest.TestCase):
+    def test_empty(self):
+        section = InfSection('TestSection')
+        self.assertEqual(str(section), "[TestSection]")
+
+    def test_single(self):
+        section = InfSection("Test")
+        section.Items.append("Item")
+        self.assertEqual(str(section), "[Test]\nItem")
+
+    def test_multiple(self):
+        section = InfSection("Test")
+        section.Items.append("Item1")
+        section.Items.append("Item2")
+        self.assertEqual(str(section), "[Test]\nItem1\nItem2")
 
 
 class InfGeneratorTest(unittest.TestCase):
@@ -35,6 +54,38 @@ class InfGeneratorTest(unittest.TestCase):
         # set manufacturer
         o.Manufacturer = "manufacturer"
         self.assertEqual("manufacturer", o.Manufacturer)
+
+    def test_file(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            inffile_path = os.path.join(tmpdir, "InfFile.inf")
+            infgen = InfGenerator('TestName', 'TestProvider', InfGeneratorTest.VALID_GUID_STRING,
+                                  "x64", "Test Description", "1.2.3.4", "0x01020304")
+            infgen.MakeInf(inffile_path, "TestFirmwareRom.bin", False)
+
+            with open(inffile_path, "r") as inffile:
+                file_contents = inffile.read()
+                # Remove all whitespace, just in case.
+                file_contents = file_contents.replace("\n", "").replace("\t", "").replace(" ", "")
+                test_contents = TEST_FILE_CONTENTS.replace("\n", "").replace("\t", "").replace(" ", "")
+                self.assertEqual(test_contents, file_contents)
+
+    def test_integrity_file_entry(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            inffile_path = os.path.join(tmpdir, "InfFile.inf")
+            infgen = InfGenerator('TestName', 'TestProvider', InfGeneratorTest.VALID_GUID_STRING,
+                                  "x64", "Test Description", "1.2.3.4", "0x01020304")
+            infgen.MakeInf(inffile_path, "TestFirmwareRom.bin", False)
+            with open(inffile_path, "r") as inffile:
+                file_contents = inffile.read()
+                self.assertNotIn("SampleIntegrityFile.bin", file_contents)
+                self.assertNotIn("FirmwareIntegrityFilename", file_contents)
+
+            infgen.IntegrityFilename = "SampleIntegrityFile.bin"
+            infgen.MakeInf(inffile_path, "TestFirmwareRom.bin", False)
+            with open(inffile_path, "r") as inffile:
+                file_contents = inffile.read()
+                self.assertIn("SampleIntegrityFile.bin", file_contents)
+                self.assertIn("FirmwareIntegrityFilename", file_contents)
 
     def test_invalid_name_symbol(self):
 
@@ -76,3 +127,59 @@ class InfGeneratorTest(unittest.TestCase):
     def test_invalid_guid_format(self):
         with self.assertRaises(ValueError):
             InfGenerator("test_name", "provider", "NOT A VALID GUID", "x64", "description", "aa.bb", "0x1000000")
+
+
+TEST_FILE_CONTENTS = ''';
+; TestName.inf
+; 1.2.3.4
+; Copyright (C) 2019 Microsoft Corporation.  All Rights Reserved.
+;
+[Version]
+Signature="$WINDOWS NT$"
+Class=Firmware
+ClassGuid={f2e7dd72-6468-4e36-b6f1-6488f42c1b52}
+Provider=%Provider%
+DriverVer=06/10/2021,1.2.3.4
+PnpLockdown=1
+CatalogFile=TestName.cat
+
+[Manufacturer]
+%MfgName% = Firmware,NTamd64
+
+[Firmware.NTamd64]
+%FirmwareDesc% = Firmware_Install,UEFI\\RES_{3cad7a0c-d35b-4b75-96b1-03a9fb07b7fc}
+
+[Firmware_Install.NT]
+CopyFiles = Firmware_CopyFiles
+
+[Firmware_CopyFiles]
+TestFirmwareRom.bin
+
+[Firmware_Install.NT.Hw]
+AddReg = Firmware_AddReg
+
+[Firmware_AddReg]
+HKR,,FirmwareId,,{3cad7a0c-d35b-4b75-96b1-03a9fb07b7fc}
+HKR,,FirmwareVersion,%REG_DWORD%,0x1020304
+HKR,,FirmwareFilename,,TestFirmwareRom.bin
+
+[SourceDisksNames]
+1 = %DiskName%
+
+[SourceDisksFiles]
+TestFirmwareRom.bin = 1
+
+[DestinationDirs]
+DefaultDestDir = %DIRID_WINDOWS%,Firmware ; %SystemRoot%\\Firmware
+
+[Strings]
+; localizable
+Provider     = "TestProvider"
+MfgName      = "TestProvider"
+FirmwareDesc = "Test Description"
+DiskName     = "Firmware Update"
+
+; non-localizable
+DIRID_WINDOWS = 10
+REG_DWORD     = 0x00010001
+'''

@@ -14,6 +14,15 @@ import re
 import uuid
 
 
+class InfSection(object):
+    def __init__(self, name) -> None:
+        self.Name = name
+        self.Items = []
+
+    def __str__(self) -> str:
+        return "\n".join(["[%s]" % self.Name] + self.Items)
+
+
 class InfGenerator(object):
 
     ### INF Template ###
@@ -40,22 +49,17 @@ CatalogFile={Name}.cat
 [Firmware_Install.NT]
 CopyFiles = Firmware_CopyFiles
 {Rollback}
-[Firmware_CopyFiles]
-{FirmwareBinFile}
+{FirmwareCopyFilesSection}
 
 [Firmware_Install.NT.Hw]
 AddReg = Firmware_AddReg
 
-[Firmware_AddReg]
-HKR,,FirmwareId,,{{{EsrtGuid}}}
-HKR,,FirmwareVersion,%REG_DWORD%,{VersionHexString}
-HKR,,FirmwareFilename,,{FirmwareBinFile}
+{FirmwareAddRegSection}
 
 [SourceDisksNames]
 1 = %DiskName%
 
-[SourceDisksFiles]
-{FirmwareBinFile} = 1
+{SourceDisksFilesSection}
 
 [DestinationDirs]
 DefaultDestDir = %DIRID_WINDOWS%,Firmware ; %SystemRoot%\Firmware
@@ -74,10 +78,10 @@ REG_DWORD     = 0x00010001
 
     ROLLBACKTEMPLATE = r"""AddReg    = Firmware_DowngradePolicy_Addreg
 
-  ;override firmware resource update policy to allow downgrade to lower version
-  [Firmware_DowngradePolicy_Addreg]
-  HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%REG_DWORD%,1
-  """
+;override firmware resource update policy to allow downgrade to lower version
+[Firmware_DowngradePolicy_Addreg]
+HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%REG_DWORD%,1
+"""
 
     SUPPORTED_ARCH = {'amd64': 'amd64',
                       'x64': 'amd64',
@@ -96,6 +100,7 @@ REG_DWORD     = 0x00010001
         self.VersionHex = version_hex
         self._manufacturer = None  # default for optional feature
         self._date = datetime.date.today()
+        self._integrityfile = None
 
     @property
     def Name(self):
@@ -192,6 +197,14 @@ REG_DWORD     = 0x00010001
             raise ValueError("Date must be a datetime.date object")
         self._date = value
 
+    @property
+    def IntegrityFilename(self):
+        return str(self._integrityfile) if self._integrityfile is not None else ""
+
+    @IntegrityFilename.setter
+    def IntegrityFilename(self, value):
+        self._integrityfile = value
+
     def MakeInf(self, OutputInfFilePath, FirmwareBinFileName, Rollback=False):
         RollbackString = ""
         if(Rollback):
@@ -199,18 +212,36 @@ REG_DWORD     = 0x00010001
 
         binfilename = os.path.basename(FirmwareBinFileName)
 
+        copy_files = InfSection('Firmware_CopyFiles')
+        copy_files.Items.append(binfilename)
+
+        add_reg = InfSection('Firmware_AddReg')
+        add_reg.Items.append("HKR,,FirmwareId,,{{{guid}}}".format(guid=self.EsrtGuid))
+        add_reg.Items.append("HKR,,FirmwareVersion,%REG_DWORD%,{version}".format(
+            version=self.VersionHex))
+        add_reg.Items.append("HKR,,FirmwareFilename,,{file_name}".format(file_name=binfilename))
+
+        disks_files = InfSection('SourceDisksFiles')
+        disks_files.Items.append("{file_name} = 1".format(file_name=binfilename))
+
+        if self.IntegrityFilename != "":
+            copy_files.Items.append(self.IntegrityFilename)
+            add_reg.Items.append("HKR,,FirmwareIntegrityFilename,,{file_name}".format(file_name=self.IntegrityFilename))
+            disks_files.Items.append("{file_name} = 1".format(file_name=self.IntegrityFilename))
+
         Content = InfGenerator.TEMPLATE.format(
             Name=self.Name,
             Date=self.Date,
             Arch=self.Arch,
             DriverVersion=self.VersionString,
             EsrtGuid=self.EsrtGuid,
-            FirmwareBinFile=binfilename,
-            VersionHexString=self.VersionHex,
             Provider=self.Provider,
             MfgName=self.Manufacturer,
             Description=self.Description,
-            Rollback=RollbackString)
+            Rollback=RollbackString,
+            FirmwareCopyFilesSection=copy_files,
+            FirmwareAddRegSection=add_reg,
+            SourceDisksFilesSection=disks_files)
 
         with open(OutputInfFilePath, "w") as f:
             f.write(Content)
