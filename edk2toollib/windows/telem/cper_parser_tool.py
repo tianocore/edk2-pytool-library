@@ -8,11 +8,7 @@
 
 import struct
 import uuid
-import os
-import sys
 import logging
-import Evtx.Evtx as evtx
-from pathlib import Path
 import edk2toollib.windows.telem.decoders
 from edk2toollib.windows.telem.cper_section_data import SECTION_DATA_PARSER
 
@@ -240,7 +236,7 @@ class CPER_HEADER_VALIDATION_BITS_FIELD(GENERIC_FIELD):
         else:
             self.parsed_value += "False\n"
 
-        self.parsed_value = "Timestamp Valid?: "
+        self.parsed_value += "Timestamp Valid?: "
 
         if(self.raw_value & int('0b10', 2)):  # Check bit 1
             self.timestamp_valid = True
@@ -248,7 +244,7 @@ class CPER_HEADER_VALIDATION_BITS_FIELD(GENERIC_FIELD):
         else:
             self.parsed_value += "False\n"
 
-        self.parsed_value = "Partition ID Valid?: "
+        self.parsed_value += "Partition ID Valid?: "
 
         if(self.raw_value & int('0b100', 2)):  # Check bit 2
             self.partition_id_valid = True
@@ -335,6 +331,7 @@ class PARTITION_ID_FIELD(GENERIC_FIELD):
             self.parsed_value = self.AttemptGuidParse(self.raw_value)
         else:
             self.parsed_value = "Invalid"
+
 
 class CREATOR_ID_FIELD(GENERIC_FIELD):
     '''This field contains a GUID indicating the creator of the error record. This value may be
@@ -995,70 +992,10 @@ def ValidateFriendlyNames() -> None:
             # Alert user if a guid could not be parsed
             logging.debug("Guid " + str(f[0]) + " of predefined_guids dict is invalid")
 
+
 def AttemptPrettyUuid(g:bytes) -> str:
     '''Attempt to convert bytes into uuid string'''
     try:
         return str(uuid.UUID(bytes_le=g))
     except:
         return str(g)
-
-def main(Friendly=True, Source='', Output='', Print=False):
-
-    ValidateFriendlyNames()
-
-    hex_list = []
-
-    if Source != '':
-        if Source.endswith(".txt"):
-            if not os.path.isabs(Source):
-                Source = os.path.join(str(Path(__file__).parents[4]), Source)
-            try:
-                with open(Source, "r") as f:
-                    for line in f:
-                        hex_list.append(line)
-            except:
-                print("Unable to open txt source file:")
-                print(Source)
-                return
-
-        elif Source.endswith(".evtx"):
-            if not os.path.isabs(Source):
-                Source = os.path.join(str(Path(__file__).parents[4]), Source)
-            try:
-                with evtx.Evtx(Source) as log:
-                    for rec in log.records():
-                        start_of_cper = rec.data().index("CPER".encode(encoding='utf_8'))
-                        x = struct.unpack("<I", rec.data()[start_of_cper + 20:start_of_cper + 20 + 4])
-                        y = rec.data()[start_of_cper:start_of_cper + x[0]]
-                        hex_list.append(y.hex())
-            except:
-                print("Unable to open evtx source file:")
-                print(Source)
-                return
-
-        if Output != '':
-            if not os.path.isabs(Output):
-                Output = os.path.join(str(Path(__file__).parents[4]), Output)
-            try:
-                with open(Output, "w") as w:
-                    for line in hex_list:
-                        p = CPER(line).PrettyPrint(Friendly)
-                        w.write(p)
-                        w.write("\n")
-                    w.close()
-            except:
-                print("Unable to write to output file:")
-                print(Output)
-                return
-
-        if Print:
-            for line in hex_list:
-                print(CPER(line).PrettyPrint(Friendly))
-            
-        if not Print and Output == '':
-            print("Must specify --Print or a file via --Output followed by a file name")
-            return
-    else:
-        print("Must specify a source file via --Source followed by a file name which can be either .txt or .evtx")
-
-        
