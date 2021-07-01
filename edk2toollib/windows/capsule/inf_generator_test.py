@@ -16,6 +16,7 @@ from edk2toollib.windows.capsule.inf_generator import InfGenerator, InfSection
 def _get_test_file():
     return TEST_FILE_CONTENTS.replace("<DATESUB>", datetime.date.today().strftime("%m/%d/%Y"))
 
+
 class InfSectionTest(unittest.TestCase):
     def test_empty(self):
         section = InfSection('TestSection')
