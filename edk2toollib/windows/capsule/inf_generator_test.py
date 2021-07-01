@@ -9,8 +9,12 @@
 import unittest
 import tempfile
 import os
+import datetime
 from edk2toollib.windows.capsule.inf_generator import InfGenerator, InfSection
 
+
+def _get_test_file():
+    return TEST_FILE_CONTENTS.replace("<DATESUB>", datetime.date.today().strftime("%m/%d/%Y"))
 
 class InfSectionTest(unittest.TestCase):
     def test_empty(self):
@@ -66,7 +70,7 @@ class InfGeneratorTest(unittest.TestCase):
                 file_contents = inffile.read()
                 # Remove all whitespace, just in case.
                 file_contents = file_contents.replace("\n", "").replace("\t", "").replace(" ", "")
-                test_contents = TEST_FILE_CONTENTS.replace("\n", "").replace("\t", "").replace(" ", "")
+                test_contents = _get_test_file().replace("\n", "").replace("\t", "").replace(" ", "")
                 self.assertEqual(test_contents, file_contents)
 
     def test_integrity_file_entry(self):
@@ -129,6 +133,8 @@ class InfGeneratorTest(unittest.TestCase):
             InfGenerator("test_name", "provider", "NOT A VALID GUID", "x64", "description", "aa.bb", "0x1000000")
 
 
+# NOTE: Below are the expected contents of a a valid INF file.
+#       Some fields will need to be generated (like the date).
 TEST_FILE_CONTENTS = ''';
 ; TestName.inf
 ; 1.2.3.4
@@ -139,7 +145,7 @@ Signature="$WINDOWS NT$"
 Class=Firmware
 ClassGuid={f2e7dd72-6468-4e36-b6f1-6488f42c1b52}
 Provider=%Provider%
-DriverVer=06/10/2021,1.2.3.4
+DriverVer=<DATESUB>,1.2.3.4
 PnpLockdown=1
 CatalogFile=TestName.cat
 
