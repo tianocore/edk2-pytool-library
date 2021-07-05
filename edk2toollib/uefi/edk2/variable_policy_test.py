@@ -98,3 +98,8 @@ class TestVariablePolicyEntry(unittest.TestCase):
         self.assertEqual(test_vp.LockPolicyType, VariablePolicyEntry.TYPE_LOCK_ON_VAR_STATE)
         self.assertEqual(test_vp.Name, "LastAttemptStatus")
         self.assertEqual(test_vp.LockPolicy.Name, "EOD")
+
+        to_string = str(test_vp)
+        self.assertIn("VAR_STATE", to_string)
+        self.assertIn("EOD", to_string)
+        self.assertIn("LastAttemptStatus", to_string)
