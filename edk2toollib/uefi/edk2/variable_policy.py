@@ -41,11 +41,23 @@ class VariableLockOnVarStatePolicy(object):
 
         self.Namespace = uuid.UUID(bytes_le=_namespace)
 
-        if len(buffer) > self._HdrStructSize:
-            self.Name = buffer[self._HdrStructSize:].decode(
-                'utf-16').strip('\x00')
+        # Scan the rest of the buffer for a \x00\x00 to terminate the string.
+        buffer = buffer[self._HdrStructSize:]
+        if len(buffer) < 4:
+            raise ValueError("Buffer too short!")
 
-        return b''
+        string_end = None
+        for i in range(0, len(buffer), 2):
+            if buffer[i] == 0 and buffer[i+1] == 0:
+                string_end = i + 2
+                break
+
+        if string_end is None:
+            raise ValueError("String end not detected!")
+
+        self.Name = buffer[:string_end].decode('utf-16').strip('\x00')
+
+        return buffer[string_end:]
 
 
 class VariablePolicyEntry(object):
