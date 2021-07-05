@@ -48,7 +48,7 @@ class VariableLockOnVarStatePolicy(object):
 
         string_end = None
         for i in range(0, len(buffer), 2):
-            if buffer[i] == 0 and buffer[i+1] == 0:
+            if buffer[i] == 0 and buffer[i + 1] == 0:
                 string_end = i + 2
                 break
 
