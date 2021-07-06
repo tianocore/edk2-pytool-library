@@ -9,7 +9,7 @@
 import uuid
 
 
-class SECTION_DATA_PARSER(object):
+class SectionDataParser(object):
 
     ##
     # Instantiate this parser. Simply use a blank bytes object for data

@@ -7,10 +7,10 @@
 ##
 
 import uuid
-from edk2toollib.windows.telem.cper_section_data import SECTION_DATA_PARSER
+from edk2toollib.windows.telem.cper_section_data import SectionDataParser
 
 
-class EXAMPLE_PLUGIN(SECTION_DATA_PARSER):
+class EXAMPLE_PLUGIN(SectionDataParser):
 
     def __init__(self, data=b''):
         super.__init__(data)

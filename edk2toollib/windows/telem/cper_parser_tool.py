@@ -10,7 +10,7 @@ import struct
 import uuid
 import logging
 import edk2toollib.windows.telem.decoders
-from edk2toollib.windows.telem.cper_section_data import SECTION_DATA_PARSER
+from edk2toollib.windows.telem.cper_section_data import SectionDataParser
 
 """
 CPER: Common Platform Error Record
@@ -80,7 +80,7 @@ p           char[]                  bytes
 P           void *                  integer
 """
 
-CPER_HEADER_SIZE = 128          # CPER spec defines header as 128 bytes
+CperHeader_SIZE = 128          # CPER spec defines header as 128 bytes
 CPER_SECTION_HEADER_SIZE = 72   # CPER spec defines section header as 72 bytes
 
 predefined_guids = {"2dce8bb1-bdd7-450e-b9ad-9cf4ebd4f890": "CMC Notify Type",
@@ -125,10 +125,10 @@ predefined_guids = {"2dce8bb1-bdd7-450e-b9ad-9cf4ebd4f890": "CMC Notify Type",
 
 # List of plugin classes which inherit from CPER_SECTION_DATA and are
 # therefore capable of parsing section data
-Parsers = SECTION_DATA_PARSER.__subclasses__()
+PARSERS = SectionDataParser.__subclasses__()
 
 
-class GENERIC_FIELD(object):
+class GenericField(object):
     '''A super class for fields of CPER records'''
 
     def __init__(self, raw_value):
@@ -163,7 +163,7 @@ class GENERIC_FIELD(object):
         return str(guid)
 
 
-class SIGNATURE_FIELD(GENERIC_FIELD):
+class SignatureField(GenericField):
     '''Signature should be ascii array (0x43,0x50,0x45,0x52) or "CPER"'''
 
     # def Parse(self):
@@ -171,7 +171,7 @@ class SIGNATURE_FIELD(GENERIC_FIELD):
     #     self.parsed_value = self.raw_value.decode('ascii')
 
 
-class REVISION_FIELD(GENERIC_FIELD):
+class RevisionField(GenericField):
     '''
     This is a 2-byte field representing a major and minor version number for the error record
     definition in BCD format.
@@ -181,14 +181,14 @@ class REVISION_FIELD(GENERIC_FIELD):
     '''
 
 
-class SECTION_COUNT_FIELD(GENERIC_FIELD):
+class SectionCountField(GenericField):
     '''
     This field indicates the number of valid sections associated with the record,
     corresponding to each of the following section descriptors.
     '''
 
 
-class SEVERITY_FIELD(GENERIC_FIELD):
+class SeverityField(GenericField):
     '''
     Indicates the severity of the error condition. The severity of the error record
     corresponds to the most severe error section.
@@ -212,7 +212,7 @@ class SEVERITY_FIELD(GENERIC_FIELD):
             self.parsed_value = "Unknown"
 
 
-class CPER_HEADER_VALIDATION_BITS_FIELD(GENERIC_FIELD):
+class CperHeaderValidationBitsField(GenericField):
     '''
         This field indicates the validity of the following fields:
 
@@ -262,7 +262,7 @@ class CPER_HEADER_VALIDATION_BITS_FIELD(GENERIC_FIELD):
         return self.partition_id_valid
 
 
-class RECORD_LENGTH_FIELD(GENERIC_FIELD):
+class RecordLengthField(GenericField):
     '''
     Indicates the size of the actual error record, including the size of the record header,
     all section descriptors, and section bodies. The size may include extra buffer space to allow
@@ -270,7 +270,7 @@ class RECORD_LENGTH_FIELD(GENERIC_FIELD):
     '''
 
 
-class TIMESTAMP_FIELD(GENERIC_FIELD):
+class TimestampField(GenericField):
     '''
     The timestamp correlates to the time when the error information was collected by the system
     software and may not necessarily represent the time of the error event. The timestamp contains
@@ -296,7 +296,7 @@ class TIMESTAMP_FIELD(GENERIC_FIELD):
             self.parsed_value = "Invalid"
 
 
-class PLATFORM_ID_FIELD(GENERIC_FIELD):
+class PlatformIdField(GenericField):
     '''
     This field uniquely identifies the platform with a GUID. The platform’s SMBIOS UUID should
     be used to populate this field. Error analysis software may use this value to uniquely identify
@@ -315,7 +315,7 @@ class PLATFORM_ID_FIELD(GENERIC_FIELD):
             self.parsed_value = "Invalid"
 
 
-class PARTITION_ID_FIELD(GENERIC_FIELD):
+class PartitionIdField(GenericField):
     '''
     If the platform has multiple software partitions, system software may associate a GUID
     with the partition on which the error occurred.
@@ -333,7 +333,7 @@ class PARTITION_ID_FIELD(GENERIC_FIELD):
             self.parsed_value = "Invalid"
 
 
-class CREATOR_ID_FIELD(GENERIC_FIELD):
+class CreatorIdField(GenericField):
     '''This field contains a GUID indicating the creator of the error record. This value may be
     overwritten by subsequent owners of the record.'''
 
@@ -341,19 +341,19 @@ class CREATOR_ID_FIELD(GENERIC_FIELD):
         self.parsed_value = self.AttemptGuidParse(self.raw_value)
 
 
-class NOTIFICATION_TYPE_FIELD(GENERIC_FIELD):
+class NotificationTypeField(GenericField):
     '''This field holds a pre-assigned GUID value indicating the record association with an error
     event notification type.'''
 
 
-class RECORD_ID_FIELD(GENERIC_FIELD):
+class RecordIdField(GenericField):
     '''
     This value, when combined with the Creator ID, uniquely identifies the error record
     across other error records on a given system.
     '''
 
 
-class CPER_HEADER_FLAGS_FIELD(GENERIC_FIELD):
+class CperHeaderFlagsField(GenericField):
     '''
     Check the flags field and populate list containing applicable flags
 
@@ -397,7 +397,7 @@ class CPER_HEADER_FLAGS_FIELD(GENERIC_FIELD):
         return self.flags_list
 
 
-class SECTION_HEADER_FLAGS_FIELD(GENERIC_FIELD):
+class SectionHeaderFlagsField(GenericField):
     '''
     Check the flags field and populate list containing applicable flags
 
@@ -440,22 +440,22 @@ class SECTION_HEADER_FLAGS_FIELD(GENERIC_FIELD):
         return self.flags_list
 
 
-class PERSISTENCE_INFO_FIELD(GENERIC_FIELD):
+class PersistenceInfoField(GenericField):
     '''
     This field is produced and consumed by the creator of the error record identified in the
     Creator ID field. The format of this field is defined by the creator.
     '''
 
 
-class SECTION_LENGTH_FIELD(GENERIC_FIELD):
+class SectionLengthField(GenericField):
     '''The length in bytes of the section body.'''
 
 
-class SECTION_OFFSET_FIELD(GENERIC_FIELD):
+class SectionOffsetField(GenericField):
     '''Offset in bytes of the section body from the base of the record header.'''
 
 
-class SECTION_HEADER_VALIDATION_BITS_FIELD(GENERIC_FIELD):
+class SectionHeaderValidationBitsField(GenericField):
     '''
     if bit 0: FruId contains valid info\n
     if bit 1: FruId String contains valid info
@@ -490,7 +490,7 @@ class SECTION_HEADER_VALIDATION_BITS_FIELD(GENERIC_FIELD):
         return self.fru_string_valid
 
 
-class SECTION_TYPE_FIELD(GENERIC_FIELD):
+class SectionTypeField(GenericField):
     '''
     This field holds a pre-assigned GUID value indicating that it is a section of a
     particular error.
@@ -500,7 +500,7 @@ class SECTION_TYPE_FIELD(GENERIC_FIELD):
         self.parsed_value = self.AttemptGuidParse(self.raw_value)
 
 
-class FRU_ID_FIELD(GENERIC_FIELD):
+class FruIdField(GenericField):
     '''
     GUID representing the FRU ID, if it exists, for the section reporting the error.
     The default value is zero indicating an invalid FRU ID. System software can use this
@@ -519,7 +519,7 @@ class FRU_ID_FIELD(GENERIC_FIELD):
             self.parsed_value = "Invalid"
 
 
-class FRU_STRING_FIELD(GENERIC_FIELD):
+class FruStringField(GenericField):
     '''Custom ASCII string identifying the FRU hardware.'''
 
     def __init__(self, raw_value, valid_bits_field):
@@ -534,7 +534,7 @@ class FRU_STRING_FIELD(GENERIC_FIELD):
             self.parsed_value = "Invalid"
 
 
-class CPER(object):
+class Cper(object):
     '''
     A CPER (Common Platform Error Record) consists of a header; followed by one or more
     section descriptors; and for each descriptor, an associated section which may contain
@@ -545,30 +545,30 @@ class CPER(object):
         self.raw_data = bytearray.fromhex(input)
         
         
-        self.header = CPER_HEADER(self.raw_data[:CPER_HEADER_SIZE])
+        self.header = CperHeader(self.raw_data[:CperHeader_SIZE])
         self.section_headers = []
         self.SetSectionHeaders()
 
     def SetCperHeader(self) -> None:
         '''Turn the portion of the raw input associated with the CPER head into a CPER_HEAD object'''
 
-        temp = self.raw_data[:CPER_HEADER_SIZE]
+        temp = self.raw_data[:CperHeader_SIZE]
         try:
-            self.header = CPER_HEADER(temp)
+            self.header = CperHeader(temp)
         except:
             print("Unable to parse record")
 
     def SetSectionHeaders(self) -> None:
-        '''Set each of the section headers to CPER_SECTION_HEADER objects'''
+        '''Set each of the section headers to CperSectionHeader objects'''
 
         # Section of raw_data containing the section headers
-        temp = self.raw_data[CPER_HEADER_SIZE:CPER_HEADER_SIZE + (CPER_SECTION_HEADER_SIZE * self.GetSectionCount())]
+        temp = self.raw_data[CperHeader_SIZE:CperHeader_SIZE + (CPER_SECTION_HEADER_SIZE * self.GetSectionCount())]
 
         # Go through each section header and attempt to create a
-        # CPER_SECTION_HEADER object. Store each header in section_headers list
+        # CperSectionHeader object. Store each header in section_headers list
         for x in range(self.GetSectionCount()):
             try:  # Don't want to stop runtime if parsing fails
-                self.section_headers.append(CPER_SECTION_HEADER(
+                self.section_headers.append(CperSectionHeader(
                     temp[x * CPER_SECTION_HEADER_SIZE: (x + 1) * CPER_SECTION_HEADER_SIZE]))
             except:  # TODO: Add specific exception instructions
                 print("Error parsing section header %d" % x)
@@ -654,7 +654,7 @@ class CPER(object):
     def CheckDecodersForGuid(self, guid: uuid):
         '''Run each decoders CanParse() method to see if it can parse the input guid'''
 
-        for p in Parsers:
+        for p in PARSERS:
             # CanParse() returns true if it recognizes the guid
             if p.CanParse(guid):
                 return p
@@ -746,7 +746,7 @@ class CPER(object):
         return temp
 
 
-class CPER_HEADER(object):
+class CperHeader(object):
     '''
     The CPER header includes information which uniquely identifies a hardware error record
     on a given system.
@@ -777,20 +777,20 @@ class CPER_HEADER(object):
             logging.error("Could not parse cper!")
             return None
 
-        self.signature_start = SIGNATURE_FIELD(self.signature_start)
-        self.revision = REVISION_FIELD(self.revision)
-        self.section_count = SECTION_COUNT_FIELD(self.section_count)
-        self.error_severity = SEVERITY_FIELD(self.error_severity)
-        self.validation_bits = CPER_HEADER_VALIDATION_BITS_FIELD(self.validation_bits)
-        self.record_length = RECORD_LENGTH_FIELD(self.record_length)
-        self.timestamp = TIMESTAMP_FIELD(self.timestamp, self.validation_bits)
-        self.platform_id = PLATFORM_ID_FIELD(self.platform_id, self.validation_bits)
-        self.partition_id = PARTITION_ID_FIELD(self.partition_id, self.validation_bits)
-        self.creator_id = CREATOR_ID_FIELD(self.creator_id)
-        self.notification_type = NOTIFICATION_TYPE_FIELD(self.notification_type)
-        self.record_id = RECORD_ID_FIELD(self.record_id)
-        self.flags = CPER_HEADER_FLAGS_FIELD(self.flags)
-        self.persistence_info = PERSISTENCE_INFO_FIELD(self.persistence_info)
+        self.signature_start = SignatureField(self.signature_start)
+        self.revision = RevisionField(self.revision)
+        self.section_count = SectionCountField(self.section_count)
+        self.error_severity = SeverityField(self.error_severity)
+        self.validation_bits = CperHeaderValidationBitsField(self.validation_bits)
+        self.record_length = RecordLengthField(self.record_length)
+        self.timestamp = TimestampField(self.timestamp, self.validation_bits)
+        self.platform_id = PlatformIdField(self.platform_id, self.validation_bits)
+        self.partition_id = PartitionIdField(self.partition_id, self.validation_bits)
+        self.creator_id = CreatorIdField(self.creator_id)
+        self.notification_type = NotificationTypeField(self.notification_type)
+        self.record_id = RecordIdField(self.record_id)
+        self.flags = CperHeaderFlagsField(self.flags)
+        self.persistence_info = PersistenceInfoField(self.persistence_info)
 
     def GetSignatureStart(self, raw=True):
         return self.signature_start.GetValue(raw)
@@ -879,7 +879,7 @@ class CPER_HEADER(object):
         return string 
 
 
-class CPER_SECTION_HEADER(object):
+class CperSectionHeader(object):
     '''Describes the content of a CPER section'''
 
     STRUCT_FORMAT = "=IIHccI16s16sI20s"
@@ -897,15 +897,15 @@ class CPER_SECTION_HEADER(object):
             self.section_severity,
             self.fru_string) = struct.unpack_from(self.STRUCT_FORMAT, input)
 
-        self.section_offset = SECTION_OFFSET_FIELD(self.section_offset)
-        self.section_length = SECTION_LENGTH_FIELD(self.section_length)
-        self.revision = REVISION_FIELD(self.revision)
-        self.validation_bits = SECTION_HEADER_VALIDATION_BITS_FIELD(self.validation_bits)
-        self.flags = SECTION_HEADER_FLAGS_FIELD(self.flags)
-        self.section_type = SECTION_TYPE_FIELD(self.section_type)
-        self.fru_id = FRU_ID_FIELD(self.fru_id, self.validation_bits)
-        self.section_severity = SEVERITY_FIELD(self.section_severity)
-        self.fru_string = FRU_STRING_FIELD(self.fru_string, self.validation_bits)
+        self.section_offset = SectionOffsetField(self.section_offset)
+        self.section_length = SectionLengthField(self.section_length)
+        self.revision = RevisionField(self.revision)
+        self.validation_bits = SectionHeaderValidationBitsField(self.validation_bits)
+        self.flags = SectionHeaderFlagsField(self.flags)
+        self.section_type = SectionTypeField(self.section_type)
+        self.fru_id = FruIdField(self.fru_id, self.validation_bits)
+        self.section_severity = SeverityField(self.section_severity)
+        self.fru_string = FruStringField(self.fru_string, self.validation_bits)
 
     def GetSectionLength(self,raw=True):
         '''Return the Sections Length as raw value if raw == True and as a str otherwise'''
