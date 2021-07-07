@@ -171,12 +171,17 @@ class VariablePolicyEntry(object):
             self.AttributesCantHave, self.LockPolicyType, _) = struct.unpack(
                 self._HdrStructFormat, buffer[:self._HdrStructSize])
 
+        if self.Version != VariablePolicyEntry.ENTRY_REVISION:
+            raise ValueError("Unknown structure version!")
+        if self.LockPolicyType not in VariablePolicyEntry.LOCK_POLICY_STRING_MAP:
+            raise ValueError("Unknown LockPolicyType!")
+
         self.Namespace = uuid.UUID(bytes_le=_namespace)
 
         if self.OffsetToName != self.Size:
             self.Name = buffer[self.OffsetToName:self.Size].decode('utf-16').strip('\x00')
 
-        if self.LockPolicyType is VariablePolicyEntry.TYPE_LOCK_ON_VAR_STATE:
+        if self.LockPolicyType == VariablePolicyEntry.TYPE_LOCK_ON_VAR_STATE:
             self.LockPolicy = VariableLockOnVarStatePolicy()
             self.LockPolicy.decode(buffer[self._HdrStructSize:self.OffsetToName])
 
