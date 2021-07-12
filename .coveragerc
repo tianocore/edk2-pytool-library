@@ -3,4 +3,4 @@ omit =
     # test files should all be named *_test.py
     */*_test.py
     */cper_section_data.py
-    */example_plugin.py"
+    */example_plugin.py
