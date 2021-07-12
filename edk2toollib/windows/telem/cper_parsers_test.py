@@ -1,4 +1,4 @@
-# @file tcper_parser_tool_test.py
+# @file cper_parsers_test.py
 # This contains unit tests for the cper parser
 ##
 # Copyright (c) Microsoft Corporation
@@ -7,7 +7,7 @@
 ##
 
 import unittest
-from edk2toollib.windows.telem import cper_parser_tool as parser
+from edk2toollib.windows.telem import cper_parsers as parser
 
 # flake8: noqa
 
@@ -104,7 +104,7 @@ TestDataParsed = [
 ["4",               "Corrected",    "1015",             "3/23/2020 21:20:15",   "Invalid",                                  "Invalid",                                  "WHEA Record Creator",                      "132292199630895393",   "Recovered,Persist",                "80,192,289,38",    "416,496,688,977",  "Memory Error Section,Processor Generic Error Section,XPF MCA Section,c34832a1-02c3-4c52-a9f1-9f1d5d7723fc",                                            "Invalid,Invalid,Invalid,Invalid",  "Recoverable,Recoverable,Recoverable,Informational",    "Invalid,Invalid,Invalid,Invalid"]
 ]
 
-class cper_parser_tool_test(unittest.TestCase):
+class cper_parsers_test(unittest.TestCase):
 
     def test_section_count(self):
         for data in enumerate(TestData,1):
@@ -186,15 +186,6 @@ class cper_parser_tool_test(unittest.TestCase):
             sectionsseveritytestdata = TestDataParsed[data[0]][13].split(',')
             for idx in range(len(sectionsseverity)):
                 self.assertEqual(sectionsseverity[idx], sectionsseveritytestdata[idx])
-
-    @unittest.skip("unimplemented")
-    def test_sections_fru_text(self):
-        for data in enumerate(TestData,1):
-            rec = parser.Cper(data[1])
-            sectionsfrustring = rec.GetSectionsFruStringList()
-            sectionsfrustringtestdata = TestDataParsed[data[0]][14].split(',')
-            for idx in range(len(sectionsfrustring)):
-                self.assertEqual(sectionsfrustring[idx], sectionsfrustringtestdata[idx])
 
 
 if __name__ == '__main__':

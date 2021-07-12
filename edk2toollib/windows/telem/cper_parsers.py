@@ -1,5 +1,4 @@
 # @file cper_parser.py
-# TODO: Write Readme and short description
 #
 # Copyright (c) Microsoft Corporation
 #
@@ -134,10 +133,10 @@ class GenericField(object):
     def __init__(self, raw_value):
         self.raw_value = raw_value
         self.parsed_value = ""
-        self.Parse()
+        self.Decode()
 
-    def Parse(self):
-        '''Parse this field'''
+    def Decode(self):
+        '''Decode this field'''
         self.parsed_value = str(self.raw_value)
     
     def GetValue(self, raw=True):
@@ -166,18 +165,11 @@ class GenericField(object):
 class SignatureField(GenericField):
     '''Signature should be ascii array (0x43,0x50,0x45,0x52) or "CPER"'''
 
-    # def Parse(self):
-    #     # TODO: Finish
-    #     self.parsed_value = self.raw_value.decode('ascii')
-
 
 class RevisionField(GenericField):
     '''
     This is a 2-byte field representing a major and minor version number for the error record
     definition in BCD format.
-
-    TODO: Actually parse out the zeroth and first byte which represent the minor and
-    major version numbers respectively
     '''
 
 
@@ -197,8 +189,8 @@ class SeverityField(GenericField):
     that can be safely ignored
     '''
 
-    def Parse(self):
-        '''Parse the error severity for 4 known values'''
+    def Decode(self):
+        '''Decode the error severity for 4 known values'''
 
         if(self.raw_value == 0):
             self.parsed_value = "Recoverable"
@@ -226,9 +218,9 @@ class CperHeaderValidationBitsField(GenericField):
         self.platform_id_valid = False
         self.timestamp_valid = False
         self.partition_id_valid = False
-        self.Parse()
+        self.Decode()
 
-    def Parse(self):
+    def Decode(self):
         self.parsed_value = "Platform ID Valid?: "
         if(self.raw_value & int('0b1', 2)):   # Check bit 0
             self.platform_id_valid = True
@@ -280,9 +272,9 @@ class TimestampField(GenericField):
     def __init__(self, raw_value, valid_bits_field):
         self.raw_value = raw_value
         self.parsed_value = ""
-        self.Parse(valid_bits_field)
+        self.Decode(valid_bits_field)
 
-    def Parse(self, valid_bits_field):
+    def Decode(self, valid_bits_field):
         '''Convert the timestamp into a friendly version formatted to (M/D/YYYY Hours:Minutes:Seconds)'''
         if(valid_bits_field.TimestampValid()):
             self.parsed_value = str((self.raw_value >> 40) & int('0b11111111', 2)) + "/" + \
@@ -306,9 +298,9 @@ class PlatformIdField(GenericField):
     def __init__(self, raw_value, valid_bits_field):
         self.raw_value = raw_value
         self.parsed_value = ""
-        self.Parse(valid_bits_field)
+        self.Decode(valid_bits_field)
 
-    def Parse(self, valid_bits_field):
+    def Decode(self, valid_bits_field):
         if(valid_bits_field.PlatformIdValid()):
             self.parsed_value = self.AttemptGuidParse(self.raw_value)
         else:
@@ -324,9 +316,9 @@ class PartitionIdField(GenericField):
     def __init__(self, raw_value, valid_bits_field):
         self.raw_value = raw_value
         self.parsed_value = ""
-        self.Parse(valid_bits_field)
+        self.Decode(valid_bits_field)
 
-    def Parse(self, valid_bits_field):
+    def Decode(self, valid_bits_field):
         if(valid_bits_field.PartitionIdValid()):
             self.parsed_value = self.AttemptGuidParse(self.raw_value)
         else:
@@ -337,7 +329,7 @@ class CreatorIdField(GenericField):
     '''This field contains a GUID indicating the creator of the error record. This value may be
     overwritten by subsequent owners of the record.'''
 
-    def Parse(self):
+    def Decode(self):
         self.parsed_value = self.AttemptGuidParse(self.raw_value)
 
 
@@ -369,7 +361,7 @@ class CperHeaderFlagsField(GenericField):
         self.flags_list = []
         super().__init__(raw_value)
 
-    def Parse(self):
+    def Decode(self):
 
         # Check each bit for associated flag
         if(self.raw_value & int('0b1', 2)):
@@ -413,7 +405,7 @@ class SectionHeaderFlagsField(GenericField):
         self.flags_list = []
         super().__init__(raw_value)
 
-    def Parse(self):
+    def Decode(self):
 
         if(self.raw_value & int('0b1', 2)):  # Check bit 0
             self.flags_list.append("Primary")
@@ -465,9 +457,9 @@ class SectionHeaderValidationBitsField(GenericField):
         self.parsed_value = ""
         self.fru_id_valid = False
         self.fru_string_valid = False
-        self.Parse()
+        self.Decode()
 
-    def Parse(self):
+    def Decode(self):
 
         self.parsed_value = "Fru ID Valid?: "
         if(self.raw_value[0] & int('0b1', 2)):   # Check bit 0
@@ -496,7 +488,7 @@ class SectionTypeField(GenericField):
     particular error.
     '''
 
-    def Parse(self):
+    def Decode(self):
         self.parsed_value = self.AttemptGuidParse(self.raw_value)
 
 
@@ -510,9 +502,9 @@ class FruIdField(GenericField):
     def __init__(self, raw_value, valid_bits_field):
         self.raw_value = raw_value
         self.parsed_value = ""
-        self.Parse(valid_bits_field)
+        self.Decode(valid_bits_field)
 
-    def Parse(self, valid_bits_field):
+    def Decode(self, valid_bits_field):
         if(valid_bits_field.FruIdValid()):
             self.parsed_value = self.AttemptGuidParse(self.raw_value)
         else:
@@ -525,9 +517,9 @@ class FruStringField(GenericField):
     def __init__(self, raw_value, valid_bits_field):
         self.raw_value = raw_value
         self.parsed_value = ""
-        self.Parse(valid_bits_field)
+        self.Decode(valid_bits_field)
 
-    def Parse(self, valid_bits_field):
+    def Decode(self, valid_bits_field):
         if(valid_bits_field.FruStringValid()):
             self.parsed_value = "UNIMPLEMENTED"
         else:
@@ -561,7 +553,7 @@ class Cper(object):
             try:  # Don't want to stop runtime if parsing fails
                 self.section_headers.append(CperSectionHeader(
                     temp[x * CPER_SECTION_HEADER_SIZE: (x + 1) * CPER_SECTION_HEADER_SIZE]))
-            except:  # TODO: Add specific exception instructions
+            except:
                 print("Error parsing section header %d" % x)
                 pass
 
@@ -579,8 +571,8 @@ class Cper(object):
         if p is not None:
             try:
                 # pass the data to that parser which should return a string of the data parsed/formatted
-                return p.Parse(self.raw_data[secoff: secoff + seclen])
-            except:  # TODO: Add specific exception instructions
+                return p.Decode(self.raw_data[secoff: secoff + seclen])
+            except:
                 logging.debug("Unable to apply plugin " + str(p) + " on section data!")
 
         # If no plugin can parse the section data, do a simple hex dump
