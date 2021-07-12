@@ -549,15 +549,6 @@ class Cper(object):
         self.section_headers = []
         self.SetSectionHeaders()
 
-    def SetCperHeader(self) -> None:
-        '''Turn the portion of the raw input associated with the CPER head into a CPER_HEAD object'''
-
-        temp = self.raw_data[:CperHeader_SIZE]
-        try:
-            self.header = CperHeader(temp)
-        except:
-            print("Unable to parse record")
-
     def SetSectionHeaders(self) -> None:
         '''Set each of the section headers to CperSectionHeader objects'''
 
