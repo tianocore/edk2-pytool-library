@@ -108,48 +108,48 @@ class cper_parser_tool_test(unittest.TestCase):
 
     def test_section_count(self):
         for data in enumerate(TestData,1):
-            rec = parser.CPER(data[1])
+            rec = parser.Cper(data[1])
             self.assertEqual(rec.GetSectionCount(), int(TestDataParsed[data[0]][0]))
             
     def test_severity(self):
         for data in enumerate(TestData,1):
-            rec = parser.CPER(data[1])
+            rec = parser.Cper(data[1])
             self.assertEqual(rec.GetErrorSeverity(), TestDataParsed[data[0]][1])
             
     def test_record_length(self):
         for data in enumerate(TestData,1):
-            rec = parser.CPER(data[1])
+            rec = parser.Cper(data[1])
             self.assertEqual(rec.GetRecordLength(), int(TestDataParsed[data[0]][2]))
 
     def test_timestamp(self):
         for data in enumerate(TestData,1):
-            rec = parser.CPER(data[1])
+            rec = parser.Cper(data[1])
             self.assertEqual(rec.GetTimestamp(), TestDataParsed[data[0]][3])
 
     def test_platform_id(self):
         for data in enumerate(TestData,1):
-            rec = parser.CPER(data[1])
+            rec = parser.Cper(data[1])
             self.assertEqual(rec.GetPlatformId(), TestDataParsed[data[0]][4])
 
     def test_partition_id(self):
         for data in enumerate(TestData,1):
-            rec = parser.CPER(data[1])
+            rec = parser.Cper(data[1])
             self.assertEqual(rec.GetPartitionId(), TestDataParsed[data[0]][5])
 
     def test_creator_id(self):
         for data in enumerate(TestData,1):
             print(data[1])
-            rec = parser.CPER(data[1])
+            rec = parser.Cper(data[1])
             self.assertEqual(rec.GetCreatorId(), TestDataParsed[data[0]][6])
             
     def test_record_id(self):
         for data in enumerate(TestData,1):
-            rec = parser.CPER(data[1])
-            self.assertEqual(rec.GetRecordId(), TestDataParsed[data[0]][7])
+            rec = parser.Cper(data[1])
+            self.assertEqual(rec.GetRecordId(), int(TestDataParsed[data[0]][7]))
 
     def test_flags(self):
         for data in enumerate(TestData,1):
-            rec = parser.CPER(data[1])
+            rec = parser.Cper(data[1])
             flaglist = rec.GetFlagList()
             flaglisttestdata = TestDataParsed[data[0]][8].split(',')
             for idx in range(len(flaglist)):
@@ -157,15 +157,15 @@ class cper_parser_tool_test(unittest.TestCase):
 
     def test_sections_length(self):
         for data in enumerate(TestData,1):
-            rec = parser.CPER(data[1])
+            rec = parser.Cper(data[1])
             sectionslength = rec.GetSectionLengthList()
             sectionslengthtestdata = TestDataParsed[data[0]][9].split(',')
             for idx in range(len(sectionslength)):
-                self.assertEqual(sectionslength[idx], int(sectionslengthtestdata[idx]))
+                self.assertEqual(int(sectionslength[idx]), int(sectionslengthtestdata[idx]))
 
     def test_sections_type(self):
         for data in enumerate(TestData,1):
-            rec = parser.CPER(data[1])
+            rec = parser.Cper(data[1])
             sectionstype = rec.GetSectionTypeList()
             sectionstypetestdata = TestDataParsed[data[0]][11].split(',')
             for idx in range(len(sectionstype)):
@@ -173,7 +173,7 @@ class cper_parser_tool_test(unittest.TestCase):
             
     def test_sections_fru_id(self):
         for data in enumerate(TestData,1):
-            rec = parser.CPER(data[1])
+            rec = parser.Cper(data[1])
             sectionsfruid = rec.GetSectionsFruIdList()
             sectionsfruidtestdata = TestDataParsed[data[0]][12].split(',')
             for idx in range(len(sectionsfruid)):
@@ -181,7 +181,7 @@ class cper_parser_tool_test(unittest.TestCase):
             
     def test_sections_severity(self):
         for data in enumerate(TestData,1):
-            rec = parser.CPER(data[1])
+            rec = parser.Cper(data[1])
             sectionsseverity = rec.GetSectionSeverityList()
             sectionsseveritytestdata = TestDataParsed[data[0]][13].split(',')
             for idx in range(len(sectionsseverity)):
@@ -190,7 +190,7 @@ class cper_parser_tool_test(unittest.TestCase):
     @unittest.skip("unimplemented")
     def test_sections_fru_text(self):
         for data in enumerate(TestData,1):
-            rec = parser.CPER(data[1])
+            rec = parser.Cper(data[1])
             sectionsfrustring = rec.GetSectionsFruStringList()
             sectionsfrustringtestdata = TestDataParsed[data[0]][14].split(',')
             for idx in range(len(sectionsfrustring)):
