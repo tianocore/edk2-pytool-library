@@ -20,7 +20,7 @@ import platform
 import importlib
 from collections import namedtuple
 from enum import Enum as StdEnum
-
+import locale
 
 def Enum(*args):
     items = []
@@ -85,8 +85,9 @@ def reader(filepath, outstream, stream, logging_level=logging.INFO, encodingErro
     if(filepath):
         f = open(filepath, "w")
 
+    (_, encoding) = locale.getdefaultlocale()
     while True:
-        s = stream.readline().decode(errors=encodingErrors)
+        s = stream.readline().decode(encoding, errors=encodingErrors)
         if not s:
             break
         if(f is not None):
