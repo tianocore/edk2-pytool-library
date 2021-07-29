@@ -22,6 +22,7 @@ from collections import namedtuple
 from enum import Enum as StdEnum
 import locale
 
+
 def Enum(*args):
     items = []
     if len(args) == 1:
