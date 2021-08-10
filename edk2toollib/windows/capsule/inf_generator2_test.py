@@ -21,7 +21,7 @@ class InfHeaderTest(unittest.TestCase):
             ;
             ; InfTest
             ; 1.0.0.1
-            ; Copyright (C) Microsoft Corporation. All rights Reserved.
+            ; Copyright (C) Microsoft Corporation. All Rights Reserved.
             ;
             [Version]
             Signature="$WINDOWS NT$"
@@ -361,7 +361,7 @@ class InfFileTest(unittest.TestCase):
             ;
             ; CapsuleName
             ; 1.0.0.1
-            ; Copyright (C) Microsoft Corporation. All rights Reserved.
+            ; Copyright (C) Microsoft Corporation. All Rights Reserved.
             ;
             [Version]
             Signature="$WINDOWS NT$"
@@ -455,7 +455,7 @@ class InfFileTest(unittest.TestCase):
             ;
             ; CapsuleName
             ; 1.0.0.1
-            ; Copyright (C) Microsoft Corporation. All rights Reserved.
+            ; Copyright (C) Microsoft Corporation. All Rights Reserved.
             ;
             [Version]
             Signature="$WINDOWS NT$"
@@ -560,7 +560,7 @@ class InfFileTest(unittest.TestCase):
             ;
             ; CapsuleName
             ; 1.0.0.1
-            ; Copyright (C) Microsoft Corporation. All rights Reserved.
+            ; Copyright (C) Microsoft Corporation. All Rights Reserved.
             ;
             [Version]
             Signature="$WINDOWS NT$"

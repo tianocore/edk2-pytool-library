@@ -24,7 +24,7 @@ class InfHeader(object):
             ;
             ; {self.name}
             ; {self.versionStr}
-            ; Copyright (C) Microsoft Corporation. All rights Reserved.
+            ; Copyright (C) Microsoft Corporation. All Rights Reserved.
             ;
             [Version]
             Signature="$WINDOWS NT$"
