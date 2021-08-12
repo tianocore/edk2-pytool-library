@@ -37,10 +37,10 @@ class InfHeaderTest(unittest.TestCase):
 
             """)
         self.assertEqual(expectedStr, str(infHeader))
-        self.assertIn("Provider", infStrings.localizableStrings)
-        self.assertEqual("testprovider", infStrings.localizableStrings['Provider'])
-        self.assertIn("MfgName", infStrings.localizableStrings)
-        self.assertEqual("testmfr", infStrings.localizableStrings['MfgName'])
+        self.assertIn("Provider", infStrings.LocalizableStrings)
+        self.assertEqual("testprovider", infStrings.LocalizableStrings['Provider'])
+        self.assertIn("MfgName", infStrings.LocalizableStrings)
+        self.assertEqual("testmfr", infStrings.LocalizableStrings['MfgName'])
 
 
 class InfFirmwareTest(unittest.TestCase):
@@ -75,10 +75,10 @@ class InfFirmwareTest(unittest.TestCase):
             """)
 
         self.assertEqual(expectedStr, str(infFirmware))
-        self.assertEqual(infFirmware.desc, "desc")
-        self.assertIn("REG_DWORD", infStrings.nonlocalizableStrings)
-        self.assertEqual("0x00010001", infStrings.nonlocalizableStrings['REG_DWORD'])
-        self.assertIn("test.bin", infSourceFiles.files)
+        self.assertEqual(infFirmware.Description, "desc")
+        self.assertIn("REG_DWORD", infStrings.NonLocalizableStrings)
+        self.assertEqual("0x00010001", infStrings.NonLocalizableStrings['REG_DWORD'])
+        self.assertIn("test.bin", infSourceFiles.Files)
 
     def test_rollback_firmware(self):
         infStrings = InfStrings()
@@ -92,7 +92,7 @@ class InfFirmwareTest(unittest.TestCase):
             "test.bin",
             infStrings,
             infSourceFiles,
-            rollback=True)
+            Rollback=True)
 
         expectedStr = textwrap.dedent("""\
             [tag_Install.NT]
@@ -116,10 +116,10 @@ class InfFirmwareTest(unittest.TestCase):
             """)
 
         self.assertEqual(expectedStr, str(infFirmware))
-        self.assertEqual(infFirmware.desc, "desc")
-        self.assertIn("REG_DWORD", infStrings.nonlocalizableStrings)
-        self.assertEqual("0x00010001", infStrings.nonlocalizableStrings['REG_DWORD'])
-        self.assertIn("test.bin", infSourceFiles.files)
+        self.assertEqual(infFirmware.Description, "desc")
+        self.assertIn("REG_DWORD", infStrings.NonLocalizableStrings)
+        self.assertEqual("0x00010001", infStrings.NonLocalizableStrings['REG_DWORD'])
+        self.assertIn("test.bin", infSourceFiles.Files)
 
     def test_rollback_firmware_integrity(self):
         infStrings = InfStrings()
@@ -133,8 +133,8 @@ class InfFirmwareTest(unittest.TestCase):
             "test.bin",
             infStrings,
             infSourceFiles,
-            rollback=True,
-            integrityFile="test2.bin")
+            Rollback=True,
+            IntegrityFile="test2.bin")
 
         expectedStr = textwrap.dedent("""\
             [tag_Install.NT]
@@ -160,11 +160,11 @@ class InfFirmwareTest(unittest.TestCase):
             """)
 
         self.assertEqual(expectedStr, str(infFirmware))
-        self.assertEqual(infFirmware.desc, "desc")
-        self.assertIn("REG_DWORD", infStrings.nonlocalizableStrings)
-        self.assertEqual("0x00010001", infStrings.nonlocalizableStrings['REG_DWORD'])
-        self.assertIn("test.bin", infSourceFiles.files)
-        self.assertIn("test2.bin", infSourceFiles.files)
+        self.assertEqual(infFirmware.Description, "desc")
+        self.assertIn("REG_DWORD", infStrings.NonLocalizableStrings)
+        self.assertEqual("0x00010001", infStrings.NonLocalizableStrings['REG_DWORD'])
+        self.assertIn("test.bin", infSourceFiles.Files)
+        self.assertIn("test2.bin", infSourceFiles.Files)
 
 
 class InfFirmwareSectionsTest(unittest.TestCase):
@@ -205,12 +205,12 @@ class InfFirmwareSectionsTest(unittest.TestCase):
             """)
 
         self.assertEqual(expectedStr, str(infSections))
-        self.assertIn("tagDesc", infStrings.localizableStrings)
-        self.assertEqual("desc", infStrings.localizableStrings['tagDesc'])
-        self.assertIn("test.bin", infSourceFiles.files)
+        self.assertIn("tagDesc", infStrings.LocalizableStrings)
+        self.assertEqual("desc", infStrings.LocalizableStrings['tagDesc'])
+        self.assertIn("test.bin", infSourceFiles.Files)
 
-        self.assertIn("REG_DWORD", infStrings.nonlocalizableStrings)
-        self.assertEqual("0x00010001", infStrings.nonlocalizableStrings['REG_DWORD'])
+        self.assertIn("REG_DWORD", infStrings.NonLocalizableStrings)
+        self.assertEqual("0x00010001", infStrings.NonLocalizableStrings['REG_DWORD'])
 
     def test_two_sections(self):
         infStrings = InfStrings()
@@ -274,15 +274,15 @@ class InfFirmwareSectionsTest(unittest.TestCase):
             """)
 
         self.assertEqual(expectedStr, str(infSections))
-        self.assertIn("tag1Desc", infStrings.localizableStrings)
-        self.assertEqual("desc1", infStrings.localizableStrings['tag1Desc'])
-        self.assertIn("test1.bin", infSourceFiles.files)
-        self.assertIn("tag2Desc", infStrings.localizableStrings)
-        self.assertEqual("desc2", infStrings.localizableStrings['tag2Desc'])
-        self.assertIn("test2.bin", infSourceFiles.files)
+        self.assertIn("tag1Desc", infStrings.LocalizableStrings)
+        self.assertEqual("desc1", infStrings.LocalizableStrings['tag1Desc'])
+        self.assertIn("test1.bin", infSourceFiles.Files)
+        self.assertIn("tag2Desc", infStrings.LocalizableStrings)
+        self.assertEqual("desc2", infStrings.LocalizableStrings['tag2Desc'])
+        self.assertIn("test2.bin", infSourceFiles.Files)
 
-        self.assertIn("REG_DWORD", infStrings.nonlocalizableStrings)
-        self.assertEqual("0x00010001", infStrings.nonlocalizableStrings['REG_DWORD'])
+        self.assertIn("REG_DWORD", infStrings.NonLocalizableStrings)
+        self.assertEqual("0x00010001", infStrings.NonLocalizableStrings['REG_DWORD'])
 
 
 class InfSourceFilesTest(unittest.TestCase):
@@ -308,10 +308,10 @@ class InfSourceFilesTest(unittest.TestCase):
             """)
 
         self.assertEqual(expectedStr, str(infSourceFiles))
-        self.assertIn("DiskName", infStrings.localizableStrings)
-        self.assertEqual("diskname", infStrings.localizableStrings['DiskName'])
-        self.assertIn("DIRID_WINDOWS", infStrings.nonlocalizableStrings)
-        self.assertEqual("10", infStrings.nonlocalizableStrings['DIRID_WINDOWS'])
+        self.assertIn("DiskName", infStrings.LocalizableStrings)
+        self.assertEqual("diskname", infStrings.LocalizableStrings['DiskName'])
+        self.assertIn("DIRID_WINDOWS", infStrings.NonLocalizableStrings)
+        self.assertEqual("10", infStrings.NonLocalizableStrings['DIRID_WINDOWS'])
 
 
 class InfStringsTest(unittest.TestCase):
@@ -321,8 +321,8 @@ class InfStringsTest(unittest.TestCase):
         infStrings.addLocalizableString("Provider", "Test Provider")
         infStrings.addLocalizableString("Tag1Desc", "Test Firmware")
 
-        infStrings.addNonlocalizableString("DIRID_WINDOWS", "10")
-        infStrings.addNonlocalizableString("REG_DWORD", "0x00010001")
+        infStrings.addNonLocalizableString("DIRID_WINDOWS", "10")
+        infStrings.addNonLocalizableString("REG_DWORD", "0x00010001")
 
         expectedStr = textwrap.dedent("""\
             [Strings]
@@ -441,7 +441,7 @@ class InfFileTest(unittest.TestCase):
             "34e094e9-4079-44cd-9450-3f2cb7824c97",
             "0x01000001",
             "test1.bin",
-            rollback=True)
+            Rollback=True)
 
         infFile.addFirmware(
             "tag2",
@@ -449,7 +449,7 @@ class InfFileTest(unittest.TestCase):
             "bec9124f-9934-4ec0-a6ed-b8bc1c91d276",
             "0x01000002",
             "test2.bin",
-            rollback=True)
+            Rollback=True)
 
         expectedStr = textwrap.dedent("""\
             ;
@@ -544,8 +544,8 @@ class InfFileTest(unittest.TestCase):
             "34e094e9-4079-44cd-9450-3f2cb7824c97",
             "0x01000001",
             "test1.bin",
-            rollback=True,
-            integrityFile="integrity1.bin")
+            Rollback=True,
+            IntegrityFile="integrity1.bin")
 
         infFile.addFirmware(
             "tag2",
@@ -553,8 +553,8 @@ class InfFileTest(unittest.TestCase):
             "bec9124f-9934-4ec0-a6ed-b8bc1c91d276",
             "0x01000002",
             "test2.bin",
-            rollback=True,
-            integrityFile="integrity2.bin")
+            Rollback=True,
+            IntegrityFile="integrity2.bin")
 
         expectedStr = textwrap.dedent("""\
             ;

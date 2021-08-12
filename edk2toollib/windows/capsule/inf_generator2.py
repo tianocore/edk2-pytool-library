@@ -11,19 +11,31 @@ import textwrap
 
 
 class InfHeader(object):
-    def __init__(self, name, versionStr, date, arch, provider, mfgname, infstrings):
-        self.name = name
-        self.versionStr = versionStr
-        self.date = date
-        self.arch = arch
-        infstrings.addLocalizableString("Provider", provider)
-        infstrings.addLocalizableString("MfgName", mfgname)
+    def __init__(self, Name, VersionStr, CreationDate, Arch, Provider, Manufacturer, InfStrings):
+        '''Instantiate an INF header object.
+        This object represents the INF header at the start of the INF file.
+
+        Name         - specifies the name for the INF package
+        VersionStr   - specifies the version as string in dot-tuple format (e.g. "4.15.80.0")
+        CreationDate - specifies the INF date as a string in MM/DD/YYYY format (e.g "01/01/2021")
+        Arch         - specifies the architecture as a string (e.g. "amd64")
+        Provider     - specifies the provider as a string (e.g. "Firmware Provider")
+        Manufacturer - Specifies the manufacturer as a string (e.g. "Firmware Manufacturer")
+        InfStrings   - An InfStrings object representing the "Strings" section of this INF file.
+        '''
+        self.Name = Name
+        self.VersionStr = VersionStr
+        self.Date = CreationDate
+        self.Arch = Arch
+        InfStrings.addLocalizableString("Provider", Provider)
+        InfStrings.addLocalizableString("MfgName", Manufacturer)
 
     def __str__(self):
+        '''Return the string representation of this InfHeader object'''
         return textwrap.dedent(f"""\
             ;
-            ; {self.name}
-            ; {self.versionStr}
+            ; {self.Name}
+            ; {self.VersionStr}
             ; Copyright (C) Microsoft Corporation. All Rights Reserved.
             ;
             [Version]
@@ -31,114 +43,152 @@ class InfHeader(object):
             Class=Firmware
             ClassGuid={{f2e7dd72-6468-4e36-b6f1-6488f42c1b52}}
             Provider=%Provider%
-            DriverVer={self.date},{self.versionStr}
+            DriverVer={self.Date},{self.VersionStr}
             PnpLockdown=1
-            CatalogFile={self.name}.cat
+            CatalogFile={self.Name}.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NT{self.arch}
+            %MfgName% = Firmware,NT{self.Arch}
 
             """)
 
 
 class InfFirmware(object):
-    def __init__(self, tag, desc, esrtGuid, versionInt, firmwareFile, infStrings, infSourceFiles,
-                 rollback=False, integrityFile=None):
-        self.tag = tag
-        self.desc = desc
-        self.esrtGuid = esrtGuid
-        self.versionInt = int(versionInt, base=0)
-        self.firmwareFile = firmwareFile
-        infSourceFiles.addFile(firmwareFile)
-        self.rollback = rollback
-        self.integrityFile = integrityFile
-        if (self.integrityFile is not None):
-            infSourceFiles.addFile(integrityFile)
-        infStrings.addNonlocalizableString("REG_DWORD", "0x00010001")
+    def __init__(self, Tag, Description, EsrtGuid, VersionInt, FirmwareFile, InfStrings, InfSourceFiles,
+                 Rollback=False, IntegrityFile=None):
+        '''Instantiate an INF firmware object.
+        This object represents individual firmware sections within the INF.
+
+        Tag             - A string that uniquely identifies this firmware (e.g. "Firmware0")
+        Description     - A description of the firmware (e.g. "UEFI Firmware")
+        EsrtGuid        - ESRT GUID for this firmware in string format. (e.g. "34e094e9-4079-44cd-9450-3f2cb7824c97")
+        VersionInt      - Version as an integer in string format (e.g. "1234" or "0x04158000")
+        FirmwareFile    - Filename (basename only) of the firmware payload file (e.g. "Firmware1234.bin")
+        InfStrings      - An InfStrings object representing the "Strings" section of this INF file.
+        InfSourceFiles  - An InfSourceFIles object representing the "SourceDisks*" sections of this INF file.
+        Rollback        - Specifies whether this firmware should be enabled for rollback (optional, default: False)
+        IntegrityFile   - Filename (basename only) of the integrity file associated with this firmware (e.g.
+                          "integrity123.bin"). Optional - if not specified, no integrity file will be included.
+        '''
+        self.Tag = Tag
+        self.Description = Description
+        self.EsrtGuid = EsrtGuid
+        self.VersionInt = int(VersionInt, base=0)
+        self.FirmwareFile = FirmwareFile
+        InfSourceFiles.addFile(FirmwareFile)
+        self.Rollback = Rollback
+        self.IntegrityFile = IntegrityFile
+        if (self.IntegrityFile is not None):
+            InfSourceFiles.addFile(IntegrityFile)
+        InfStrings.addNonLocalizableString("REG_DWORD", "0x00010001")
 
     def __str__(self):
+        '''Return the string representation of this InfFirmware object'''
         # build rollback string, if required.
-        if (self.rollback):
-            rollbackStr = textwrap.dedent(f"""\
-                AddReg = {self.tag}_DowngradePolicy_AddReg
+        if (self.Rollback):
+            RollbackStr = textwrap.dedent(f"""\
+                AddReg = {self.Tag}_DowngradePolicy_AddReg
 
-                [{self.tag}_DowngradePolicy_AddReg]
-                HKLM,SYSTEM\\CurrentControlSet\\Control\\FirmwareResources\\{{{self.esrtGuid}}},Policy,%REG_DWORD%,1
+                [{self.Tag}_DowngradePolicy_AddReg]
+                HKLM,SYSTEM\\CurrentControlSet\\Control\\FirmwareResources\\{{{self.EsrtGuid}}},Policy,%REG_DWORD%,1
                 """)
         else:
-            rollbackStr = ""
+            RollbackStr = ""
 
         # build integrity file string, if required.
-        if (self.integrityFile is not None):
-            integrityFile = f"{self.integrityFile}\n"
-            integrityFileReg = f"HKR,,FirmwareIntegrityFilename,,{self.integrityFile}\n"
+        if (self.IntegrityFile is not None):
+            IntegrityFile = f"{self.IntegrityFile}\n"
+            IntegrityFileReg = f"HKR,,FirmwareIntegrityFilename,,{self.IntegrityFile}\n"
         else:
-            integrityFile = ""
-            integrityFileReg = ""
+            IntegrityFile = ""
+            IntegrityFileReg = ""
 
         outstr = textwrap.dedent(f"""\
-            [{self.tag}_Install.NT]
-            CopyFiles = {self.tag}_CopyFiles
+            [{self.Tag}_Install.NT]
+            CopyFiles = {self.Tag}_CopyFiles
             """)
-        outstr += rollbackStr
+        outstr += RollbackStr
         outstr += textwrap.dedent(f"""
-            [{self.tag}_CopyFiles]
-            {self.firmwareFile}
+            [{self.Tag}_CopyFiles]
+            {self.FirmwareFile}
             """)
-        outstr += integrityFile
+        outstr += IntegrityFile
         outstr += textwrap.dedent(f"""
-            [{self.tag}_Install.NT.Hw]
-            AddReg = {self.tag}_AddReg
+            [{self.Tag}_Install.NT.Hw]
+            AddReg = {self.Tag}_AddReg
 
-            [{self.tag}_AddReg]
-            HKR,,FirmwareId,,{{{self.esrtGuid}}}
-            HKR,,FirmwareVersion,%REG_DWORD%,0x{self.versionInt:X}
-            HKR,,FirmwareFilename,,{self.firmwareFile}
+            [{self.Tag}_AddReg]
+            HKR,,FirmwareId,,{{{self.EsrtGuid}}}
+            HKR,,FirmwareVersion,%REG_DWORD%,0x{self.VersionInt:X}
+            HKR,,FirmwareFilename,,{self.FirmwareFile}
             """)
-        outstr += integrityFileReg + "\n"
+        outstr += IntegrityFileReg + "\n"
         return outstr
 
 
 class InfFirmwareSections(object):
-    def __init__(self, arch, infstrings):
-        self.arch = arch
-        self.sections = {}
-        self.infstrings = infstrings
+    def __init__(self, Arch, InfStrings):
+        '''Instantiate an INF firmware sections object.
+        This object represents a collection of firmware sections and associated common metadata.
 
-    def AddSection(self, infFirmware):
-        self.sections[infFirmware.tag] = infFirmware
-        self.infstrings.addLocalizableString(f"{infFirmware.tag}Desc", infFirmware.desc)
+        Arch        - specifies the architecture as a string (e.g. "amd64")
+        InfStrings  - An InfStrings object representing the "Strings" section of this INF file.
+        '''
+        self.Arch = Arch
+        self.Sections = {}
+        self.InfStrings = InfStrings
+
+    def AddSection(self, InfFirmware):
+        '''Adds an InfFirmware section object to the set of firmware sections in this InfFirmwareSections object.
+
+        InfFirmware - an InfFirmware object representing a firmware section to be added to this collection of sections.
+        '''
+        self.Sections[InfFirmware.Tag] = InfFirmware
+        self.InfStrings.addLocalizableString(f"{InfFirmware.Tag}Desc", InfFirmware.Description)
 
     def __str__(self):
-        firmwareStr = f"[Firmware.NT{self.arch}]\n"
-        for (infFirmware) in self.sections.values():
-            firmwareStr += f"%{infFirmware.tag}Desc% = {infFirmware.tag}_Install,UEFI\\RES_{{{infFirmware.esrtGuid}}}\n"
+        '''
+        Return the string representation of this InfFirmwareSections object (including any InfFirmware objects in it)
+        '''
+        firmwareStr = f"[Firmware.NT{self.Arch}]\n"
+        for InfFirmware in self.Sections.values():
+            firmwareStr += f"%{InfFirmware.Tag}Desc% = {InfFirmware.Tag}_Install,UEFI\\RES_{{{InfFirmware.EsrtGuid}}}\n"
         firmwareStr += "\n"
-        for (infFirmware) in self.sections.values():
-            firmwareStr += str(infFirmware)
-
+        for InfFirmware in self.Sections.values():
+            firmwareStr += str(InfFirmware)
         return firmwareStr
 
 
 class InfSourceFiles(object):
-    def __init__(self, diskname, infstrings):
-        self.files = []
-        infstrings.addLocalizableString('DiskName', diskname)
-        infstrings.addNonlocalizableString('DIRID_WINDOWS', "10")
+    def __init__(self, DiskName, InfStrings):
+        '''Instantiate an INF source files object.
+        This object represents the collection of source files that are referenced by other sections of the INF.
 
-    def addFile(self, filename):
-        if (filename not in self.files):
-            self.files.append(filename)
+        DiskName    - Specifies the DiskName as a string (e.g. "FirmwareUpdate")
+        InfStrings  - An InfStrings object representing the "Strings" section of this INF file.
+        '''
+        self.Files = []
+        InfStrings.addLocalizableString('DiskName', DiskName)
+        InfStrings.addNonLocalizableString('DIRID_WINDOWS', "10")
+
+    def addFile(self, Filename):
+        '''Adds a new file to this InfSourceFiles object
+
+        Filename - Filename (basename only) of the file to be added. (e.g. "Firmware1234.bin")
+        '''
+        if (Filename not in self.Files):
+            self.Files.append(Filename)
 
     def __str__(self):
-        files = ''.join("{0} = 1\n".format(file) for file in self.files)
+        '''Return the string representation of this InfSourceFIles object'''
+        Files = ''.join("{0} = 1\n".format(file) for file in self.Files)
         outstr = textwrap.dedent("""\
             [SourceDisksNames]
             1 = %DiskName%
 
             [SourceDisksFiles]
             """)
-        outstr += files
+        outstr += Files
         outstr += textwrap.dedent("""
             [DestinationDirs]
             DefaultDestDir = %DIRID_WINDOWS%,Firmware ; %SystemRoot%\\Firmware
@@ -149,49 +199,96 @@ class InfSourceFiles(object):
 
 class InfStrings(object):
     def __init__(self):
-        self.localizableStrings = {}
-        self.nonlocalizableStrings = {}
+        '''Instantiate an INF strings object.
+        This object represents the collection of strings (localizable or non-localizable) that are referenced by other
+        sections of the INF.
+        '''
+        self.LocalizableStrings = {}
+        self.NonLocalizableStrings = {}
 
-    def addLocalizableString(self, key, value):
-        self.localizableStrings[key] = value
+    def addLocalizableString(self, Key, Value):
+        '''Add a Localizable string to the collection of strings for this INF.
 
-    def addNonlocalizableString(self, key, value):
-        self.nonlocalizableStrings[key] = value
+        Key     - the name of this string as it is used in the INF (e.g. "MfgName"). Note: the INF will typically
+                  reference this string using % as delimiters (e.g. "%MfgName%"). Do not include the % characters
+                  when calling this routine.
+        Value   - the value of the localizable string as a string (e.g. "Firmware Manufacturer")
+        '''
+        self.LocalizableStrings[Key] = Value
+
+    def addNonLocalizableString(self, Key, Value):
+        '''Add a Non-Localizable string to the collection of strings for this INF.
+
+        Key     - the name of this string as it is used in the INF (e.g. "REG_DWORD"). Note: the INF will typically
+                  reference this string using % as delimiters (e.g. "%REG_DWORD%"). Do not include the % characters
+                  when calling this routine.
+        Value   - the value of the non-localizable string as a string (e.g. "0x00010001")
+        '''
+        self.NonLocalizableStrings[Key] = Value
 
     def __str__(self):
-        localizedStrings = ""
-        longestKey = max(len(key) for key in self.localizableStrings.keys())
-        for (key, value) in self.localizableStrings.items():
-            localizedStrings += '{0:{width}} = "{1}"\n'.format(key, value, width=longestKey)
+        '''Return the string representation of this InfStrings object'''
+        LocalizedStrings = ""
+        LongestKey = max(len(Key) for Key in self.LocalizableStrings.keys())
+        for (Key, Value) in self.LocalizableStrings.items():
+            LocalizedStrings += '{0:{width}} = "{1}"\n'.format(Key, Value, width=LongestKey)
 
-        nonlocalizedStrings = ""
-        longestKey = max(len(key) for key in self.nonlocalizableStrings.keys())
-        for (key, value) in self.nonlocalizableStrings.items():
-            nonlocalizedStrings += "{0:{width}} = {1}\n".format(key, value, width=longestKey)
+        NonLocalizedStrings = ""
+        LongestKey = max(len(Key) for Key in self.NonLocalizableStrings.keys())
+        for (Key, Value) in self.NonLocalizableStrings.items():
+            NonLocalizedStrings += "{0:{width}} = {1}\n".format(Key, Value, width=LongestKey)
 
         outstr = textwrap.dedent("""\
             [Strings]
             ; localizable
             """)
-        outstr += localizedStrings
+        outstr += LocalizedStrings
         outstr += textwrap.dedent("""
             ; non-localizable
             """)
-        outstr += nonlocalizedStrings
+        outstr += NonLocalizedStrings
         return outstr
 
 
 class InfFile(object):
-    def __init__(self, name, versionStr, date, provider, mfgname, arch='amd64', diskname="Firmware Update"):
-        self.infStrings = InfStrings()
-        self.infSourceFiles = InfSourceFiles(diskname, self.infStrings)
-        self.infHeader = InfHeader(name, versionStr, date, arch, provider, mfgname, self.infStrings)
-        self.infFirmwareSections = InfFirmwareSections(arch, self.infStrings)
+    def __init__(self, Name, VersionStr, CreationDate, Provider, ManufacturerName, Arch='amd64',
+                 DiskName="Firmware Update"):
+        '''Instantiate an INF file object.
+        This object represents the entire INF file.
 
-    def addFirmware(self, tag, desc, esrtGuid, versionInt, firmwareFile, rollback=False, integrityFile=None):
-        firmwareSection = InfFirmware(tag, desc, esrtGuid, versionInt, firmwareFile,
-                                      self.infStrings, self.infSourceFiles, rollback, integrityFile)
-        self.infFirmwareSections.AddSection(firmwareSection)
+        Users of this implementation are primarily expected to interact with instances of this class.
+
+        Name         - specifies the name for the INF package
+        VersionStr   - specifies the version as string in dot-tuple format (e.g. "4.15.80.0")
+        CreationDate - specifies the INF date as a string in MM/DD/YYYY format (e.g "01/01/2021")
+        Provider     - specifies the provider as a string (e.g. "Firmware Provider")
+        Manufacturer - Specifies the manufacturer as a string (e.g. "Firmware Manufacturer")
+        Arch         - specifies the architecture as a string. Optional, defaults to "amd64".
+        DiskName     - specifies the "Disk Name" for this update. Optional, defaults to "Firmware Update".
+        '''
+        self.InfStrings = InfStrings()
+        self.InfSourceFiles = InfSourceFiles(DiskName, self.InfStrings)
+        self.InfHeader = InfHeader(Name, VersionStr, CreationDate, Arch, Provider, ManufacturerName, self.InfStrings)
+        self.InfFirmwareSections = InfFirmwareSections(Arch, self.InfStrings)
+
+    def addFirmware(self, Tag, Description, EsrtGuid, VersionInt, FirmwareFile, Rollback=False, IntegrityFile=None):
+        '''Adds a firmware target to the INF.
+
+        Tag             - A string that uniquely identifies this firmware (e.g. "Firmware0")
+        Description     - A description of the firmware (e.g. "UEFI Firmware")
+        EsrtGuid        - ESRT GUID for this firmware in string format. (e.g. "34e094e9-4079-44cd-9450-3f2cb7824c97")
+        VersionInt      - Version as an integer in string format (e.g. "1234" or "0x04158000")
+        FirmwareFile    - Filename (basename only) of the firmware payload file (e.g. "Firmware1234.bin")
+        Rollback        - Specifies whether this firmware should be enabled for rollback (optional, default: False)
+        IntegrityFile   - Filename (basename only) of the integrity file associated with this firmware (e.g.
+                          "integrity123.bin"). Optional - if not specified, no integrity file will be included.
+        '''
+        firmwareSection = InfFirmware(Tag, Description, EsrtGuid, VersionInt, FirmwareFile,
+                                      self.InfStrings, self.InfSourceFiles, Rollback, IntegrityFile)
+        self.InfFirmwareSections.AddSection(firmwareSection)
 
     def __str__(self):
-        return str(self.infHeader) + str(self.infFirmwareSections) + str(self.infSourceFiles) + str(self.infStrings)
+        '''
+        Returns the string representation of this InfFile object. The resulting string is suitable for writing to an
+        INF file for inclusion in a capsule package.'''
+        return str(self.InfHeader) + str(self.InfFirmwareSections) + str(self.InfSourceFiles) + str(self.InfStrings)
