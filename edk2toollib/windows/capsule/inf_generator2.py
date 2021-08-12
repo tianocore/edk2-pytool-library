@@ -11,7 +11,8 @@ import textwrap
 
 
 class InfHeader(object):
-    def __init__(self, Name, VersionStr, CreationDate, Arch, Provider, Manufacturer, InfStrings):
+    def __init__(self, Name: str, VersionStr: str, CreationDate: str, Arch: str, Provider: str, Manufacturer: str,
+                 InfStrings: 'InfStrings') -> None:
         '''Instantiate an INF header object.
         This object represents the INF header at the start of the INF file.
 
@@ -30,7 +31,7 @@ class InfHeader(object):
         InfStrings.addLocalizableString("Provider", Provider)
         InfStrings.addLocalizableString("MfgName", Manufacturer)
 
-    def __str__(self):
+    def __str__(self) -> str:
         '''Return the string representation of this InfHeader object'''
         return textwrap.dedent(f"""\
             ;
@@ -54,8 +55,9 @@ class InfHeader(object):
 
 
 class InfFirmware(object):
-    def __init__(self, Tag, Description, EsrtGuid, VersionInt, FirmwareFile, InfStrings, InfSourceFiles,
-                 Rollback=False, IntegrityFile=None):
+    def __init__(self, Tag: str, Description: str, EsrtGuid: str, VersionInt: str, FirmwareFile: str,
+                 InfStrings: 'InfStrings', InfSourceFiles: 'InfSourceFiles', Rollback=False,
+                 IntegrityFile=None) -> None:
         '''Instantiate an INF firmware object.
         This object represents individual firmware sections within the INF.
 
@@ -82,7 +84,7 @@ class InfFirmware(object):
             InfSourceFiles.addFile(IntegrityFile)
         InfStrings.addNonLocalizableString("REG_DWORD", "0x00010001")
 
-    def __str__(self):
+    def __str__(self) -> str:
         '''Return the string representation of this InfFirmware object'''
         # build rollback string, if required.
         if (self.Rollback):
@@ -127,7 +129,7 @@ class InfFirmware(object):
 
 
 class InfFirmwareSections(object):
-    def __init__(self, Arch, InfStrings):
+    def __init__(self, Arch: str, InfStrings: 'InfStrings') -> None:
         '''Instantiate an INF firmware sections object.
         This object represents a collection of firmware sections and associated common metadata.
 
@@ -138,7 +140,7 @@ class InfFirmwareSections(object):
         self.Sections = {}
         self.InfStrings = InfStrings
 
-    def AddSection(self, InfFirmware):
+    def AddSection(self, InfFirmware: InfFirmware) -> None:
         '''Adds an InfFirmware section object to the set of firmware sections in this InfFirmwareSections object.
 
         InfFirmware - an InfFirmware object representing a firmware section to be added to this collection of sections.
@@ -146,7 +148,7 @@ class InfFirmwareSections(object):
         self.Sections[InfFirmware.Tag] = InfFirmware
         self.InfStrings.addLocalizableString(f"{InfFirmware.Tag}Desc", InfFirmware.Description)
 
-    def __str__(self):
+    def __str__(self) -> str:
         '''
         Return the string representation of this InfFirmwareSections object (including any InfFirmware objects in it)
         '''
@@ -160,7 +162,7 @@ class InfFirmwareSections(object):
 
 
 class InfSourceFiles(object):
-    def __init__(self, DiskName, InfStrings):
+    def __init__(self, DiskName: str, InfStrings: 'InfStrings') -> None:
         '''Instantiate an INF source files object.
         This object represents the collection of source files that are referenced by other sections of the INF.
 
@@ -171,7 +173,7 @@ class InfSourceFiles(object):
         InfStrings.addLocalizableString('DiskName', DiskName)
         InfStrings.addNonLocalizableString('DIRID_WINDOWS', "10")
 
-    def addFile(self, Filename):
+    def addFile(self, Filename: str) -> None:
         '''Adds a new file to this InfSourceFiles object
 
         Filename - Filename (basename only) of the file to be added. (e.g. "Firmware1234.bin")
@@ -179,7 +181,7 @@ class InfSourceFiles(object):
         if (Filename not in self.Files):
             self.Files.append(Filename)
 
-    def __str__(self):
+    def __str__(self) -> str:
         '''Return the string representation of this InfSourceFIles object'''
         Files = ''.join("{0} = 1\n".format(file) for file in self.Files)
         outstr = textwrap.dedent("""\
@@ -198,7 +200,7 @@ class InfSourceFiles(object):
 
 
 class InfStrings(object):
-    def __init__(self):
+    def __init__(self) -> None:
         '''Instantiate an INF strings object.
         This object represents the collection of strings (localizable or non-localizable) that are referenced by other
         sections of the INF.
@@ -206,7 +208,7 @@ class InfStrings(object):
         self.LocalizableStrings = {}
         self.NonLocalizableStrings = {}
 
-    def addLocalizableString(self, Key, Value):
+    def addLocalizableString(self, Key: str, Value: str) -> None:
         '''Add a Localizable string to the collection of strings for this INF.
 
         Key     - the name of this string as it is used in the INF (e.g. "MfgName"). Note: the INF will typically
@@ -216,7 +218,7 @@ class InfStrings(object):
         '''
         self.LocalizableStrings[Key] = Value
 
-    def addNonLocalizableString(self, Key, Value):
+    def addNonLocalizableString(self, Key: str, Value: str) -> None:
         '''Add a Non-Localizable string to the collection of strings for this INF.
 
         Key     - the name of this string as it is used in the INF (e.g. "REG_DWORD"). Note: the INF will typically
@@ -226,7 +228,7 @@ class InfStrings(object):
         '''
         self.NonLocalizableStrings[Key] = Value
 
-    def __str__(self):
+    def __str__(self) -> str:
         '''Return the string representation of this InfStrings object'''
         LocalizedStrings = ""
         LongestKey = max(len(Key) for Key in self.LocalizableStrings.keys())
@@ -251,8 +253,8 @@ class InfStrings(object):
 
 
 class InfFile(object):
-    def __init__(self, Name, VersionStr, CreationDate, Provider, ManufacturerName, Arch='amd64',
-                 DiskName="Firmware Update"):
+    def __init__(self, Name: str, VersionStr: str, CreationDate: str, Provider: str, ManufacturerName: str,
+                 Arch: str = 'amd64', DiskName: str = "Firmware Update") -> None:
         '''Instantiate an INF file object.
         This object represents the entire INF file.
 
@@ -271,7 +273,8 @@ class InfFile(object):
         self.InfHeader = InfHeader(Name, VersionStr, CreationDate, Arch, Provider, ManufacturerName, self.InfStrings)
         self.InfFirmwareSections = InfFirmwareSections(Arch, self.InfStrings)
 
-    def addFirmware(self, Tag, Description, EsrtGuid, VersionInt, FirmwareFile, Rollback=False, IntegrityFile=None):
+    def addFirmware(self, Tag: str, Description: str, EsrtGuid: str, VersionInt: str, FirmwareFile: str,
+                    Rollback: bool = False, IntegrityFile: str = None) -> None:
         '''Adds a firmware target to the INF.
 
         Tag             - A string that uniquely identifies this firmware (e.g. "Firmware0")
@@ -287,7 +290,7 @@ class InfFile(object):
                                       self.InfStrings, self.InfSourceFiles, Rollback, IntegrityFile)
         self.InfFirmwareSections.AddSection(firmwareSection)
 
-    def __str__(self):
+    def __str__(self) -> str:
         '''
         Returns the string representation of this InfFile object. The resulting string is suitable for writing to an
         INF file for inclusion in a capsule package.'''
