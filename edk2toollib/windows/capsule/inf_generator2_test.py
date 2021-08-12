@@ -42,6 +42,27 @@ class InfHeaderTest(unittest.TestCase):
         self.assertIn("MfgName", infStrings.LocalizableStrings)
         self.assertEqual("testmfr", infStrings.LocalizableStrings['MfgName'])
 
+    def test_header_should_throw_for_bad_input(self):
+        infStrings = InfStrings()
+
+        with self.assertRaises(ValueError):
+            InfHeader("InfTest ?? bad", "1.0.0.1", "01/01/2021", "amd64", "testprovider", "testmfr", infStrings)
+
+        with self.assertRaises(ValueError):
+            InfHeader("InfTest", "this is not good", "01/01/2021", "amd64", "testprovider", "testmfr", infStrings)
+
+        with self.assertRaises(ValueError):
+            InfHeader("InfTest", "1.0.0.1", "foobar", "amd64", "testprovider", "testmfr", infStrings)
+
+        with self.assertRaises(ValueError):
+            InfHeader("InfTest", "1.0.0.1", "01/01/2021", "foobar", "testprovider", "testmfr", infStrings)
+
+        with self.assertRaises(TypeError):
+            InfHeader(1, "1.0.0.1", "01/01/2021", "amd64", "testprovider", "testmfr", infStrings)
+
+        with self.assertRaises(AttributeError):
+            InfHeader("InfTest", "1.0.0.1", "01/01/2021", "amd64", "testprovider", "testmfr", None)
+
 
 class InfFirmwareTest(unittest.TestCase):
     def test_firmware(self):
@@ -166,6 +187,58 @@ class InfFirmwareTest(unittest.TestCase):
         self.assertIn("test.bin", infSourceFiles.Files)
         self.assertIn("test2.bin", infSourceFiles.Files)
 
+    def test_firmware_should_throw_for_bad_input(self):
+        infStrings = InfStrings()
+        infSourceFiles = InfSourceFiles("diskname", infStrings)
+
+        with self.assertRaises(ValueError):
+            InfFirmware(
+                "This is not a valid tag name",
+                "desc",
+                "34e094e9-4079-44cd-9450-3f2cb7824c97",
+                "0x01000001",
+                "test.bin",
+                infStrings,
+                infSourceFiles,
+                Rollback=True,
+                IntegrityFile="test2.bin")
+
+        with self.assertRaises(ValueError):
+            InfFirmware(
+                "Tag",
+                "desc",
+                "This is not a valid UUID.",
+                "0x01000001",
+                "test.bin",
+                infStrings,
+                infSourceFiles,
+                Rollback=True,
+                IntegrityFile="test2.bin")
+
+        with self.assertRaises(ValueError):
+            InfFirmware(
+                "Tag",
+                "desc",
+                "4e094e9-4079-44cd-9450-3f2cb7824c97",  # a more subtle not-valid UUID.
+                "0x01000001",
+                "test.bin",
+                infStrings,
+                infSourceFiles,
+                Rollback=True,
+                IntegrityFile="test2.bin")
+
+        with self.assertRaises(ValueError):
+            InfFirmware(
+                "tag",
+                "desc",
+                "34e094e9-4079-44cd-9450-3f2cb7824c97",
+                "foobar",
+                "test.bin",
+                infStrings,
+                infSourceFiles,
+                Rollback=True,
+                IntegrityFile="test2.bin")
+
 
 class InfFirmwareSectionsTest(unittest.TestCase):
     def test_one_section(self):
@@ -284,6 +357,12 @@ class InfFirmwareSectionsTest(unittest.TestCase):
         self.assertIn("REG_DWORD", infStrings.NonLocalizableStrings)
         self.assertEqual("0x00010001", infStrings.NonLocalizableStrings['REG_DWORD'])
 
+    def test_firmware_sections_should_throw_for_bad_input(self):
+        infStrings = InfStrings()
+
+        with self.assertRaises(ValueError):
+            InfFirmwareSections('foobar', infStrings)
+
 
 class InfSourceFilesTest(unittest.TestCase):
     def test_source_files(self):
@@ -313,6 +392,13 @@ class InfSourceFilesTest(unittest.TestCase):
         self.assertIn("DIRID_WINDOWS", infStrings.NonLocalizableStrings)
         self.assertEqual("10", infStrings.NonLocalizableStrings['DIRID_WINDOWS'])
 
+    def test_source_files_should_throw_on_bad_input(self):
+        infStrings = InfStrings()
+        infSourceFiles = InfSourceFiles("diskname", infStrings)
+
+        with self.assertRaises(ValueError):
+            infSourceFiles.addFile("Who Names Files Like This?.bin")
+
 
 class InfStringsTest(unittest.TestCase):
     def test_inf_strings(self):
@@ -337,6 +423,27 @@ class InfStringsTest(unittest.TestCase):
             """)
 
         self.assertEqual(expectedStr, str(infStrings))
+
+    def test_inf_strings_should_throw_on_bad_input(self):
+        infStrings = InfStrings()
+
+        with self.assertRaises(TypeError):
+            infStrings.addLocalizableString(1, 2)
+
+        with self.assertRaises(ValueError):
+            infStrings.addLocalizableString("foo bar", "value")
+
+        with self.assertRaises(ValueError):
+            infStrings.addLocalizableString("ThisIsNotAllowed;", "value")
+
+        with self.assertRaises(TypeError):
+            infStrings.addNonLocalizableString(1, 2)
+
+        with self.assertRaises(ValueError):
+            infStrings.addNonLocalizableString("foo bar", "value")
+
+        with self.assertRaises(ValueError):
+            infStrings.addNonLocalizableString("ThisIsNotAllowed;", "value")
 
 
 class InfFileTest(unittest.TestCase):
