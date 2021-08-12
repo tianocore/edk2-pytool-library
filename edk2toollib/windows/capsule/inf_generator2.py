@@ -8,6 +8,16 @@
 ##
 
 import textwrap
+import re
+import uuid
+from datetime import datetime
+
+SUPPORTED_ARCH = {'amd64': 'amd64',
+                  'x64': 'amd64',
+                  'arm': 'arm',
+                  'arm64': 'ARM64',
+                  'aarch64': 'ARM64'
+                  }
 
 
 class InfHeader(object):
@@ -30,6 +40,47 @@ class InfHeader(object):
         self.Arch = Arch
         InfStrings.addLocalizableString("Provider", Provider)
         InfStrings.addLocalizableString("MfgName", Manufacturer)
+
+    @property
+    def Name(self):
+        return self._name
+
+    @Name.setter
+    def Name(self, value):
+        # test here for invalid chars
+        if not (re.compile(r'[\w-]*$')).match(value):
+            raise ValueError("Name has invalid chars.")
+        self._name = value
+
+    @property
+    def VersionStr(self):
+        return self._versionstr
+
+    @VersionStr.setter
+    def VersionStr(self, value):
+        c = value.count(".")
+        if(c < 1) or (c > 3):
+            raise ValueError("VersionString must be in format of xx.xx -> xx.xx.xx.xx")
+        self._versionstr = value
+
+    @property
+    def Date(self):
+        return self._date
+
+    @Date.setter
+    def Date(self, value):
+        self._date = datetime.strptime(value, "%m/%d/%Y").strftime("%m/%d/%Y")
+
+    @property
+    def Arch(self):
+        return self._arch
+
+    @Arch.setter
+    def Arch(self, value):
+        key = value.lower()
+        if(key not in SUPPORTED_ARCH.keys()):
+            raise ValueError("Unsupported Architecture")
+        self._arch = SUPPORTED_ARCH[key]
 
     def __str__(self) -> str:
         '''Return the string representation of this InfHeader object'''
@@ -75,7 +126,7 @@ class InfFirmware(object):
         self.Tag = Tag
         self.Description = Description
         self.EsrtGuid = EsrtGuid
-        self.VersionInt = int(VersionInt, base=0)
+        self.VersionInt = VersionInt
         self.FirmwareFile = FirmwareFile
         InfSourceFiles.addFile(FirmwareFile)
         self.Rollback = Rollback
@@ -83,6 +134,34 @@ class InfFirmware(object):
         if (self.IntegrityFile is not None):
             InfSourceFiles.addFile(IntegrityFile)
         InfStrings.addNonLocalizableString("REG_DWORD", "0x00010001")
+
+    @property
+    def Tag(self):
+        return self._tag
+
+    @Tag.setter
+    def Tag(self, value):
+        # test here for invalid chars
+        if not (re.compile(r'[\w-]*$')).match(value):
+            raise ValueError("Tag has invalid chars.")
+        self._tag = value
+
+    @property
+    def EsrtGuid(self):
+        return self._esrt_guid
+
+    @EsrtGuid.setter
+    def EsrtGuid(self, value):
+        uuid.UUID(value)
+        self._esrt_guid = value
+
+    @property
+    def VersionInt(self):
+        return self._version_int
+
+    @VersionInt.setter
+    def VersionInt(self, value):
+        self._version_int = int(value, base=0)
 
     def __str__(self) -> str:
         '''Return the string representation of this InfFirmware object'''
@@ -140,6 +219,17 @@ class InfFirmwareSections(object):
         self.Sections = {}
         self.InfStrings = InfStrings
 
+    @property
+    def Arch(self):
+        return self._arch
+
+    @Arch.setter
+    def Arch(self, value):
+        key = value.lower()
+        if(key not in SUPPORTED_ARCH.keys()):
+            raise ValueError("Unsupported Architecture")
+        self._arch = SUPPORTED_ARCH[key]
+
     def AddSection(self, InfFirmware: InfFirmware) -> None:
         '''Adds an InfFirmware section object to the set of firmware sections in this InfFirmwareSections object.
 
@@ -178,6 +268,10 @@ class InfSourceFiles(object):
 
         Filename - Filename (basename only) of the file to be added. (e.g. "Firmware1234.bin")
         '''
+        # test here for invalid chars. For filenames, this permits a-z, A-Z, 0-9, _, -, and . characters.
+        if not (re.compile(r'[\.\w-]*$')).match(Filename):
+            raise ValueError("Filename has invalid chars.")
+
         if (Filename not in self.Files):
             self.Files.append(Filename)
 
@@ -216,6 +310,10 @@ class InfStrings(object):
                   when calling this routine.
         Value   - the value of the localizable string as a string (e.g. "Firmware Manufacturer")
         '''
+        # The inf spec says keys here should be "letters, digits, and/or other explicitly visible characters".
+        # for simplicity, this just enforces that it must be a string that matches \w+
+        if not (re.compile(r'\w+$')).match(Key):
+            raise ValueError("Key has invalid chars.")
         self.LocalizableStrings[Key] = Value
 
     def addNonLocalizableString(self, Key: str, Value: str) -> None:
@@ -226,6 +324,10 @@ class InfStrings(object):
                   when calling this routine.
         Value   - the value of the non-localizable string as a string (e.g. "0x00010001")
         '''
+        # The inf spec says keys here should be "letters, digits, and/or other explicitly visible characters".
+        # for simplicity, this just enforces that it must be a string that matches \w+
+        if not (re.compile(r'\w+$')).match(Key):
+            raise ValueError("Key has invalid chars.")
         self.NonLocalizableStrings[Key] = Value
 
     def __str__(self) -> str:
