@@ -38,8 +38,8 @@ class InfHeader(object):
         self.VersionStr = VersionStr
         self.Date = CreationDate
         self.Arch = Arch
-        InfStrings.addLocalizableString("Provider", Provider)
-        InfStrings.addLocalizableString("MfgName", Manufacturer)
+        InfStrings.AddLocalizableString("Provider", Provider)
+        InfStrings.AddLocalizableString("MfgName", Manufacturer)
 
     @property
     def Name(self):
@@ -128,12 +128,12 @@ class InfFirmware(object):
         self.EsrtGuid = EsrtGuid
         self.VersionInt = VersionInt
         self.FirmwareFile = FirmwareFile
-        InfSourceFiles.addFile(FirmwareFile)
+        InfSourceFiles.AddFile(FirmwareFile)
         self.Rollback = Rollback
         self.IntegrityFile = IntegrityFile
         if (self.IntegrityFile is not None):
-            InfSourceFiles.addFile(IntegrityFile)
-        InfStrings.addNonLocalizableString("REG_DWORD", "0x00010001")
+            InfSourceFiles.AddFile(IntegrityFile)
+        InfStrings.AddNonLocalizableString("REG_DWORD", "0x00010001")
 
     @property
     def Tag(self):
@@ -236,7 +236,7 @@ class InfFirmwareSections(object):
         InfFirmware - an InfFirmware object representing a firmware section to be added to this collection of sections.
         '''
         self.Sections[InfFirmware.Tag] = InfFirmware
-        self.InfStrings.addLocalizableString(f"{InfFirmware.Tag}Desc", InfFirmware.Description)
+        self.InfStrings.AddLocalizableString(f"{InfFirmware.Tag}Desc", InfFirmware.Description)
 
     def __str__(self) -> str:
         '''
@@ -260,10 +260,10 @@ class InfSourceFiles(object):
         InfStrings  - An InfStrings object representing the "Strings" section of this INF file.
         '''
         self.Files = []
-        InfStrings.addLocalizableString('DiskName', DiskName)
-        InfStrings.addNonLocalizableString('DIRID_WINDOWS', "10")
+        InfStrings.AddLocalizableString('DiskName', DiskName)
+        InfStrings.AddNonLocalizableString('DIRID_WINDOWS', "10")
 
-    def addFile(self, Filename: str) -> None:
+    def AddFile(self, Filename: str) -> None:
         '''Adds a new file to this InfSourceFiles object
 
         Filename - Filename (basename only) of the file to be added. (e.g. "Firmware1234.bin")
@@ -302,7 +302,7 @@ class InfStrings(object):
         self.LocalizableStrings = {}
         self.NonLocalizableStrings = {}
 
-    def addLocalizableString(self, Key: str, Value: str) -> None:
+    def AddLocalizableString(self, Key: str, Value: str) -> None:
         '''Add a Localizable string to the collection of strings for this INF.
 
         Key     - the name of this string as it is used in the INF (e.g. "MfgName"). Note: the INF will typically
@@ -316,7 +316,7 @@ class InfStrings(object):
             raise ValueError("Key has invalid chars.")
         self.LocalizableStrings[Key] = Value
 
-    def addNonLocalizableString(self, Key: str, Value: str) -> None:
+    def AddNonLocalizableString(self, Key: str, Value: str) -> None:
         '''Add a Non-Localizable string to the collection of strings for this INF.
 
         Key     - the name of this string as it is used in the INF (e.g. "REG_DWORD"). Note: the INF will typically
@@ -375,7 +375,7 @@ class InfFile(object):
         self.InfHeader = InfHeader(Name, VersionStr, CreationDate, Arch, Provider, ManufacturerName, self.InfStrings)
         self.InfFirmwareSections = InfFirmwareSections(Arch, self.InfStrings)
 
-    def addFirmware(self, Tag: str, Description: str, EsrtGuid: str, VersionInt: str, FirmwareFile: str,
+    def AddFirmware(self, Tag: str, Description: str, EsrtGuid: str, VersionInt: str, FirmwareFile: str,
                     Rollback: bool = False, IntegrityFile: str = None) -> None:
         '''Adds a firmware target to the INF.
 

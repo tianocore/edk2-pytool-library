@@ -368,9 +368,9 @@ class InfSourceFilesTest(unittest.TestCase):
     def test_source_files(self):
         Strings = InfStrings()
         SourceFiles = InfSourceFiles("diskname", Strings)
-        SourceFiles.addFile("test.bin")
-        SourceFiles.addFile("test2.bin")
-        SourceFiles.addFile("test3.bin")
+        SourceFiles.AddFile("test.bin")
+        SourceFiles.AddFile("test2.bin")
+        SourceFiles.AddFile("test3.bin")
 
         ExpectedStr = textwrap.dedent("""\
             [SourceDisksNames]
@@ -397,18 +397,18 @@ class InfSourceFilesTest(unittest.TestCase):
         SourceFiles = InfSourceFiles("diskname", Strings)
 
         with self.assertRaises(ValueError):
-            SourceFiles.addFile("Who Names Files Like This?.bin")
+            SourceFiles.AddFile("Who Names Files Like This?.bin")
 
 
 class InfStringsTest(unittest.TestCase):
     def test_inf_strings(self):
         Strings = InfStrings()
-        Strings.addLocalizableString("DiskName", "Firmware Update")
-        Strings.addLocalizableString("Provider", "Test Provider")
-        Strings.addLocalizableString("Tag1Desc", "Test Firmware")
+        Strings.AddLocalizableString("DiskName", "Firmware Update")
+        Strings.AddLocalizableString("Provider", "Test Provider")
+        Strings.AddLocalizableString("Tag1Desc", "Test Firmware")
 
-        Strings.addNonLocalizableString("DIRID_WINDOWS", "10")
-        Strings.addNonLocalizableString("REG_DWORD", "0x00010001")
+        Strings.AddNonLocalizableString("DIRID_WINDOWS", "10")
+        Strings.AddNonLocalizableString("REG_DWORD", "0x00010001")
 
         ExpectedStr = textwrap.dedent("""\
             [Strings]
@@ -428,36 +428,36 @@ class InfStringsTest(unittest.TestCase):
         Strings = InfStrings()
 
         with self.assertRaises(TypeError):
-            Strings.addLocalizableString(1, 2)
+            Strings.AddLocalizableString(1, 2)
 
         with self.assertRaises(ValueError):
-            Strings.addLocalizableString("foo bar", "value")
+            Strings.AddLocalizableString("foo bar", "value")
 
         with self.assertRaises(ValueError):
-            Strings.addLocalizableString("ThisIsNotAllowed;", "value")
+            Strings.AddLocalizableString("ThisIsNotAllowed;", "value")
 
         with self.assertRaises(TypeError):
-            Strings.addNonLocalizableString(1, 2)
+            Strings.AddNonLocalizableString(1, 2)
 
         with self.assertRaises(ValueError):
-            Strings.addNonLocalizableString("foo bar", "value")
+            Strings.AddNonLocalizableString("foo bar", "value")
 
         with self.assertRaises(ValueError):
-            Strings.addNonLocalizableString("ThisIsNotAllowed;", "value")
+            Strings.AddNonLocalizableString("ThisIsNotAllowed;", "value")
 
 
 class InfFileTest(unittest.TestCase):
     def test_inf_file(self):
         File = InfFile("CapsuleName", "1.0.0.1", "01/01/2021", "Test Provider", "Test Manufacturer")
 
-        File.addFirmware(
+        File.AddFirmware(
             "tag1",
             "desc1",
             "34e094e9-4079-44cd-9450-3f2cb7824c97",
             "0x01000001",
             "test1.bin")
 
-        File.addFirmware(
+        File.AddFirmware(
             "tag2",
             "desc2",
             "bec9124f-9934-4ec0-a6ed-b8bc1c91d276",
@@ -542,7 +542,7 @@ class InfFileTest(unittest.TestCase):
     def test_inf_file_rollback(self):
         File = InfFile("CapsuleName", "1.0.0.1", "01/01/2021", "Test Provider", "Test Manufacturer")
 
-        File.addFirmware(
+        File.AddFirmware(
             "tag1",
             "desc1",
             "34e094e9-4079-44cd-9450-3f2cb7824c97",
@@ -550,7 +550,7 @@ class InfFileTest(unittest.TestCase):
             "test1.bin",
             Rollback=True)
 
-        File.addFirmware(
+        File.AddFirmware(
             "tag2",
             "desc2",
             "bec9124f-9934-4ec0-a6ed-b8bc1c91d276",
@@ -644,7 +644,7 @@ class InfFileTest(unittest.TestCase):
     def test_inf_file_rollback_integrity(self):
         File = InfFile("CapsuleName", "1.0.0.1", "01/01/2021", "Test Provider", "Test Manufacturer")
 
-        File.addFirmware(
+        File.AddFirmware(
             "tag1",
             "desc1",
             "34e094e9-4079-44cd-9450-3f2cb7824c97",
@@ -653,7 +653,7 @@ class InfFileTest(unittest.TestCase):
             Rollback=True,
             IntegrityFile="integrity1.bin")
 
-        File.addFirmware(
+        File.AddFirmware(
             "tag2",
             "desc2",
             "bec9124f-9934-4ec0-a6ed-b8bc1c91d276",
