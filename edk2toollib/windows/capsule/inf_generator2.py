@@ -107,8 +107,8 @@ class InfHeader(object):
 
 class InfFirmware(object):
     def __init__(self, Tag: str, Description: str, EsrtGuid: str, VersionInt: str, FirmwareFile: str,
-                 InfStrings: 'InfStrings', InfSourceFiles: 'InfSourceFiles', Rollback=False,
-                 IntegrityFile=None) -> None:
+                 InfStrings: 'InfStrings', InfSourceFiles: 'InfSourceFiles', Rollback: bool = False,
+                 IntegrityFile: str = None) -> None:
         '''Instantiate an INF firmware object.
         This object represents individual firmware sections within the INF.
 
