@@ -110,7 +110,7 @@ class BaseParser(object):
         # If that fails, check in every possible Pkg path.
         if self._Edk2PathUtil is not None:
             target_path = os.path.join(*p)
-            Path = self._Edk2PathUtil.GetAbsolutePathOnThisSytemFromEdk2RelativePath(target_path, False)
+            Path = self._Edk2PathUtil.GetAbsolutePathOnThisSystemFromEdk2RelativePath(target_path, False)
             if Path is not None:
                 return Path
 
