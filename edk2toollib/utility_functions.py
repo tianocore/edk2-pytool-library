@@ -8,6 +8,7 @@
 ##
 import re
 import os
+import stat
 import logging
 import datetime
 import time
@@ -436,12 +437,29 @@ def locate_class_in_module(Module, DesiredClass):
     return DesiredClassInstance
 
 
-if __name__ == '__main__':
-    pass
-    # Test code for printing a byte buffer
-    # a = [0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d]
-    # index = 0x55
-    # while(index < 0x65):
-    #     a.append(index)
-    #     PrintByteList(a)
-    #     index += 1
+def RemoveTree(dir_path: str, ignore_errors: bool = False) -> None:
+    '''
+    Helper for removing a directory.  Over time there have been
+    many private implementations of this due to reliability issues in the
+    shutil implementations.  To consolidate on a single function this helper is added.
+
+    On error try to change file attributes.  Also add retry logic.
+
+    dir_path: Path to directory to remove.
+    ignore_errors: ignore errors during removal
+    '''
+
+    def remove_readonly(func, path, _):
+        ''' private function to attempt to change permissions on file/folder being deleted'''
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+
+    for _ in range(3):  # retry up to 3 times
+        try:
+            shutil.rmtree(dir_path, ignore_errors=ignore_errors, onerror=remove_readonly)
+        except OSError as err:
+            logging.warning(f"Failed to fully remove {dir_path}: {err}")
+        else:
+            break
+    else:
+        raise RuntimeError(f"Failed to remove {dir_path}")
