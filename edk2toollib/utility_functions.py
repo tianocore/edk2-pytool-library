@@ -434,7 +434,7 @@ def locate_class_in_module(Module, DesiredClass):
     return DesiredClassInstance
 
 
-def RemoveTree(dir_path: PathLike, ignore_errors: bool =False) -> None:
+def RemoveTree(dir_path: str, ignore_errors: bool =False) -> None:
     '''
     Helper for removing a directory.  Over time there have been
     many private implementations of this due to reliability issues in the
