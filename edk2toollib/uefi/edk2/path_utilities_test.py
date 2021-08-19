@@ -550,7 +550,7 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertIsNone(pathobj.GetEdk2RelativePathFromAbsolutePath(p))
 
     def test_get_absolute_path_on_this_system_from_edk2_relative_path(self):
-        ''' test basic usage of GetAbsolutePathOnThisSytemFromEdk2RelativePath with packages path nested
+        ''' test basic usage of GetAbsolutePathOnThisSystemFromEdk2RelativePath with packages path nested
         inside the workspace
 
         File layout:
@@ -590,16 +590,16 @@ class PathUtilitiesTest(unittest.TestCase):
         # file in packages path
         ep = os.path.join(pp_pkg_abs, "module1", "module1.INF")
         rp = f"{pp_p_name}/module1/module1.INF"
-        self.assertEqual(pathobj.GetAbsolutePathOnThisSytemFromEdk2RelativePath(rp), ep)
+        self.assertEqual(pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(rp), ep)
 
         # file in workspace
         ep = os.path.join(ws_pkg_abs, "module2", "X64", "TestFile.c")
         rp = f"{ws_p_name}/module2/X64/TestFile.c"
-        self.assertEqual(pathobj.GetAbsolutePathOnThisSytemFromEdk2RelativePath(rp), ep)
+        self.assertEqual(pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(rp), ep)
 
         # file not in workspace
         rp = "DoesNotExistPkg/module2/X64/TestFile.c"
-        self.assertIsNone(pathobj.GetAbsolutePathOnThisSytemFromEdk2RelativePath(rp))
+        self.assertIsNone(pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(rp))
 
         # pass in bad parameter
-        self.assertIsNone(pathobj.GetAbsolutePathOnThisSytemFromEdk2RelativePath(None))
+        self.assertIsNone(pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(None))

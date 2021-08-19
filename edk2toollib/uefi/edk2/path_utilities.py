@@ -103,7 +103,7 @@ class Edk2Path(object):
         self.logger.error("AbsolutePath: %s" % abspath)
         return None
 
-    def GetAbsolutePathOnThisSytemFromEdk2RelativePath(self, relpath, log_errors=True):
+    def GetAbsolutePathOnThisSystemFromEdk2RelativePath(self, relpath, log_errors=True):
         ''' Given a edk2 relative path return an absolute path to the file
         in this workspace.
 
