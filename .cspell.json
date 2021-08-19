@@ -90,6 +90,7 @@
         "iommu",
         "smoosh",
         "markdownlint",
-        "codecov"
+        "codecov",
+        "nonlocalizable"
     ]
 }
