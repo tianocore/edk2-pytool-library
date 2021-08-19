@@ -11,6 +11,7 @@ import textwrap
 import re
 import uuid
 from datetime import datetime
+from typing import Optional
 
 SUPPORTED_ARCH = {'amd64': 'amd64',
                   'x64': 'amd64',
@@ -107,8 +108,8 @@ class InfHeader(object):
 
 class InfFirmware(object):
     def __init__(self, Tag: str, Description: str, EsrtGuid: str, VersionInt: str, FirmwareFile: str,
-                 InfStrings: 'InfStrings', InfSourceFiles: 'InfSourceFiles', Rollback: bool = False,
-                 IntegrityFile: str = None) -> None:
+                 InfStrings: 'InfStrings', InfSourceFiles: 'InfSourceFiles', Rollback: Optional[bool] = False,
+                 IntegrityFile: Optional[str] = None) -> None:
         '''Instantiate an INF firmware object.
         This object represents individual firmware sections within the INF.
 
@@ -118,7 +119,7 @@ class InfFirmware(object):
         VersionInt      - Version as an integer in string format (e.g. "1234" or "0x04158000")
         FirmwareFile    - Filename (basename only) of the firmware payload file (e.g. "Firmware1234.bin")
         InfStrings      - An InfStrings object representing the "Strings" section of this INF file.
-        InfSourceFiles  - An InfSourceFIles object representing the "SourceDisks*" sections of this INF file.
+        InfSourceFiles  - An InfSourceFiles object representing the "SourceDisks*" sections of this INF file.
         Rollback        - Specifies whether this firmware should be enabled for rollback (optional, default: False)
         IntegrityFile   - Filename (basename only) of the integrity file associated with this firmware (e.g.
                           "integrity123.bin"). Optional - if not specified, no integrity file will be included.
@@ -356,7 +357,7 @@ class InfStrings(object):
 
 class InfFile(object):
     def __init__(self, Name: str, VersionStr: str, CreationDate: str, Provider: str, ManufacturerName: str,
-                 Arch: str = 'amd64', DiskName: str = "Firmware Update") -> None:
+                 Arch: Optional[str] = 'amd64', DiskName: Optional[str] = "Firmware Update") -> None:
         '''Instantiate an INF file object.
         This object represents the entire INF file.
 
@@ -376,7 +377,7 @@ class InfFile(object):
         self.InfFirmwareSections = InfFirmwareSections(Arch, self.InfStrings)
 
     def AddFirmware(self, Tag: str, Description: str, EsrtGuid: str, VersionInt: str, FirmwareFile: str,
-                    Rollback: bool = False, IntegrityFile: str = None) -> None:
+                    Rollback: Optional[bool] = False, IntegrityFile: Optional[str] = None) -> None:
         '''Adds a firmware target to the INF.
 
         Tag             - A string that uniquely identifies this firmware (e.g. "Firmware0")
