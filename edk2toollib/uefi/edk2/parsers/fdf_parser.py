@@ -143,7 +143,6 @@ class FdfParser(HashFileParser):
                             if sline.upper().startswith("SECTION GUIDED"):  # get the guided section
                                 section_def = sline[14:].strip().split("=", 1)
                                 sectionType = section_def[0].strip()  # UI in this example
-                                sectionValue = section_def[1].strip()
                                 if sectionType not in self.FVs[section]["Files"][currentName]:
                                     self.FVs[section]["Files"][currentName][sectionType] = {}
                                 # TODO support guided sections
