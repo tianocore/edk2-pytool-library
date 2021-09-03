@@ -79,6 +79,7 @@ class TestBasicFdfParser(unittest.TestCase):
 def test_section_guided():
     """Check that SECTION GUIDED can be added."""
     # Given
+    # cSpell:ignore MAINFV
     SAMPLE_FDF_FILE = textwrap.dedent("""\
         [FV.MAINFV]
         FILE PEIM = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa{
