@@ -75,6 +75,7 @@ class TestBasicFdfParser(unittest.TestCase):
         self.assertEqual(parser.Dict['NUM_BLOCKS'], '0x410')
         self.assertEqual(parser.Dict['CONDITIONAL_VALUE'], '121')
 
+
 def test_section_guided():
     """Check that SECTION GUIDED can be added."""
     # Given
@@ -96,4 +97,5 @@ def test_section_guided():
         os.remove(fdf_path)
 
     # Then
-    assert "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" in parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
+    assert "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" in \
+        parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
