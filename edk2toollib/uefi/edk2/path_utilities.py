@@ -79,6 +79,9 @@ class Edk2Path(object):
                 # found our path...now use original strings to avoid
                 # change in case
                 relpath = abspath[len(a):]
+                if (relpath.startswith('_')):
+                    # some members of PackagePathList are substrings of others with '_', which we must account for
+                    continue
                 found = True
                 self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using PackagePath")
                 self.logger.debug("AbsolutePath: %s found in PackagePath: %s" % (abspath, a))
