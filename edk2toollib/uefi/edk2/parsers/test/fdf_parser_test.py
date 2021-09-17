@@ -9,6 +9,8 @@
 
 import unittest
 import os
+import textwrap
+import tempfile
 from edk2toollib.uefi.edk2.parsers.fdf_parser import FdfParser
 
 TEST_PATH = os.path.realpath(os.path.dirname(__file__))
@@ -72,3 +74,29 @@ class TestBasicFdfParser(unittest.TestCase):
         self.assertEqual(parser.Dict['INTERNAL_VALUE'], '104')
         self.assertEqual(parser.Dict['NUM_BLOCKS'], '0x410')
         self.assertEqual(parser.Dict['CONDITIONAL_VALUE'], '121')
+
+
+def test_section_guided():
+    """Check that SECTION GUIDED can be added."""
+    # Given
+    # cSpell:ignore MAINFV
+    SAMPLE_FDF_FILE = textwrap.dedent("""\
+        [FV.MAINFV]
+        FILE PEIM = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa{
+            SECTION GUIDED bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
+        }
+    """)
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False) as f:
+            f.write(SAMPLE_FDF_FILE)
+            fdf_path = f.name
+
+        # When
+        parser = FdfParser()
+        parser.ParseFile(fdf_path)
+    finally:
+        os.remove(fdf_path)
+
+    # Then
+    assert "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" in \
+        parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
