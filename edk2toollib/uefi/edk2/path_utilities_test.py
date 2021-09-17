@@ -549,6 +549,44 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_rel, ws_p_name, "module2", "X64", "TestFile.c")
         self.assertIsNone(pathobj.GetEdk2RelativePathFromAbsolutePath(p))
 
+    def test_get_relative_path_when_packages_path_list_contains_substrings(self):
+        ''' test usage of GetEdk2RelativePathFromAbsolutePath when members of PackagePathList contain
+        substrings of themselves, for example "MU" and "MU_TIANO"
+        File layout:
+         root/                    <-- current working directory (self.tmp)
+            folder_ws/            <-- workspace root
+                folder_pp/        <-- packages path
+                    PPTestPkg1/   <-- A edk2 package
+                        PPTestPkg1.DEC
+                        module1/
+                            module1.INF
+                            X64/
+                                TestFile1.c
+                folder_pp_suffix/ <-- packages path
+                    PPTestPkg2/   <-- A edk2 package
+                        PPTestPkg2.DEC
+                        module2/
+                            module2.INF
+                            X64/
+                                TestFile2.c
+        '''
+        ws_rel = "folder_ws"
+        ws_abs = os.path.join(self.tmp, ws_rel)
+        os.mkdir(ws_abs)
+        folder_pp1_rel = "folder_pp"
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp1_rel)
+        os.mkdir(folder_pp1_abs)
+        folder_pp2_rel = "folder_pp_suffix"
+        folder_pp2_abs = os.path.join(ws_abs, folder_pp2_rel)
+        os.mkdir(folder_pp2_abs)
+        ws_p_name = "PPTestPkg2"
+        ws_pkg_abs = self._make_edk2_package_helper(folder_pp2_abs, ws_p_name)
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs, folder_pp2_abs])
+
+        # file in workspace
+        p = os.path.join(ws_pkg_abs, "module2", "X64", "TestFile2.c")
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{ws_p_name}/module2/X64/TestFile2.c")
+
     def test_get_absolute_path_on_this_system_from_edk2_relative_path(self):
         ''' test basic usage of GetAbsolutePathOnThisSystemFromEdk2RelativePath with packages path nested
         inside the workspace
