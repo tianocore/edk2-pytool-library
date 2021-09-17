@@ -75,6 +75,10 @@ class Edk2Path(object):
         if abspath is None:
             return None
         for a in (os.path.normcase(p) for p in self.PackagePathList):
+            a = a if a.endswith(os.sep) else a + os.sep  # add sep if no trailing separater
+
+            # iterate over a normalized case of packages path including trailing separater
+            # to ensure match is of full directory path.
             if os.path.normcase(abspath).startswith(a):
                 # found our path...now use original strings to avoid
                 # change in case
@@ -85,11 +89,12 @@ class Edk2Path(object):
                 break
 
         if(not found):
-            # Does path start with workspace
-            if os.path.normcase(abspath).startswith(os.path.normcase(self.WorkspacePath)):
+            # Does path start with workspace path
+            wsp = self.WorkspacePath if self.WorkspacePath.endswith(os.sep) else self.WorkspacePath + os.sep
+            if os.path.normcase(abspath).startswith(os.path.normcase(wsp)):
                 # found our path...now use original strings to avoid
                 # change in case
-                relpath = abspath[len(self.WorkspacePath):]
+                relpath = abspath[len(wsp):]
                 found = True
                 self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using WorkspacePath")
                 self.logger.debug("AbsolutePath: %s found in Workspace: %s" % (abspath, self.WorkspacePath))
