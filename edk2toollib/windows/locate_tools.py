@@ -41,7 +41,7 @@ __SHA256 = "e50a14767c27477f634a4c19709d35c27a72f541fb2ba5c3a446c80998a86419"
 # Supported Versions that can be queried with vswhere
 # Use lower case for key as all comparisons will be lower case
 #
-supported_vs_versions = {"vs2017": "15.0,16.0", "vs2019": "16.0,17.0"}
+supported_vs_versions = {"vs2017": "15.0,16.0", "vs2019": "16.0,17.0", "vs2022": "17.0,18.0"}
 
 
 # Downloads VSWhere
