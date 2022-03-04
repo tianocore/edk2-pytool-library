@@ -290,7 +290,7 @@ class BuildReport(object):
 
                 # Take absolute path and convert to EDK build path
                 RelativePath = self.PathConverter.GetEdk2RelativePathFromAbsolutePath(i)
-                if(RelativePath is not None):
+                if (RelativePath is not None) and ("Binaries" not in RelativePath):
                     comp = self.FindComponentByInfPath(RelativePath)
                     if comp is not None:
                         comp.FvName = FvName
