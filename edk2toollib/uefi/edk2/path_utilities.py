@@ -63,6 +63,17 @@ class Edk2Path(object):
         if(error and error_on_invalid_pp):
             raise Exception("Invalid package path directory(s)")
 
+        # Temporarily sort, remove duplicates, and match os specific
+        # separators to simplify finding any nested packages.
+        paths = sorted(set([os.path.abspath(path.lower()) for path in self.PackagePathList]), key=len, reverse=True)
+        for i in range(len(paths)):
+            for j in range(i + 1, len(paths)):
+                if paths[i].startswith(paths[j]):
+                    if paths[i][len(paths[j])] == os.sep:
+                        logging.error(f'Cannot have nested packages. {paths[j]} in {paths[i]}')
+                        raise Exception(f'Cannot have nested packages. {paths[j]} in {paths[i]}')
+
+
     def GetEdk2RelativePathFromAbsolutePath(self, abspath):
         ''' Given an absolute path return a edk2 path relative
         to workspace or packagespath.
