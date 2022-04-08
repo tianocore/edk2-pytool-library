@@ -70,8 +70,8 @@ class Edk2Path(object):
             for j in range(i + 1, len(paths)):
                 if paths[i].startswith(paths[j]):
                     if paths[i][len(paths[j])] == os.sep:
-                        logging.error(f'Cannot have nested packages. {paths[j]} in {paths[i]}')
-                        raise Exception(f'Cannot have nested packages. {paths[j]} in {paths[i]}')
+                        logging.error(f'Cannot have nested packages. {paths[i]} is nested in {paths[j]}')
+                        raise Exception(f'Cannot have nested packages. {paths[i]} is nested in {paths[j]}')
 
 
     def GetEdk2RelativePathFromAbsolutePath(self, abspath):
