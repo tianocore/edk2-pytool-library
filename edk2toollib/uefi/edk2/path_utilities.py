@@ -73,7 +73,6 @@ class Edk2Path(object):
                         logging.error(f'Cannot have nested packages. {paths[i]} is nested in {paths[j]}')
                         raise Exception(f'Cannot have nested packages. {paths[i]} is nested in {paths[j]}')
 
-
     def GetEdk2RelativePathFromAbsolutePath(self, abspath):
         ''' Given an absolute path return a edk2 path relative
         to workspace or packagespath.
