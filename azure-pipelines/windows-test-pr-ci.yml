@@ -22,7 +22,7 @@ pr:
 jobs:
 - template: azure-pipelines/templates/build-test-job.yml@pytool_extensions
   parameters:
-    vm_image: 'windows-latest'
+    vm_image: 'windows-2019'
     root_package_folder: "edk2toollib"
     name: 'windows'
     codecov_enabled: true
