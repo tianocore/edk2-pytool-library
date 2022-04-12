@@ -81,9 +81,8 @@ class Edk2Path(object):
                         f' Detected Nested Packages. {package_path} is a package path, however a package DEC file was found \
                             at: {p}')
 
-                # Catch if package_path is not in workspace path
+                # Catch a situation where the workspace path is the root of a filesystem (D:\, etc)
                 if p == p.parent:
-                    logging.warning(f' Package Path {package_path} not in workspace path: {self.WorkspacePath}')
                     break
                 p = p.parent
 
