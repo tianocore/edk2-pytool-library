@@ -73,7 +73,7 @@ class Edk2Path(object):
             ws = self.WorkspacePath
 
             while ws in str(p):
-                if len(glob.glob("*dec", root_dir=p)) != 0:
+                if len(glob.glob(f'{p}/*dec')) != 0:
                     logging.error(
                         f' Detected Nested Packages. {package_path} is a package path, however a package DEC file was found \
                             at: {p}')
