@@ -98,7 +98,7 @@ class Edk2Path(object):
         if package is not None:
             relpath = abspath[abspath.find(package):]
             relpath = relpath.replace(os.sep, "/")
-            return relpath
+            return relpath.lstrip("/")
         else:
             self.logger.error("Failed to convert AbsPath to Edk2Relative Path")
             self.logger.error("AbsolutePath: %s" % abspath)
