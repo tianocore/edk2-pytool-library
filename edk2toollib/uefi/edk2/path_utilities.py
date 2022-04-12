@@ -8,7 +8,9 @@
 import os
 import logging
 import fnmatch
+import glob
 from typing import Iterable
+from pathlib import Path
 
 #
 # Class to help convert from absolute path to EDK2 build path
@@ -63,15 +65,27 @@ class Edk2Path(object):
         if(error and error_on_invalid_pp):
             raise Exception("Invalid package path directory(s)")
 
-        # Temporarily sort, remove duplicates, and match os specific
-        # separators to simplify finding any nested packages.
-        paths = sorted(set([os.path.abspath(path.lower()) for path in self.PackagePathList]), key=len, reverse=True)
-        for i in range(len(paths)):
-            for j in range(i + 1, len(paths)):
-                if paths[i].startswith(paths[j]):
-                    if paths[i][len(paths[j])] == os.sep:
-                        logging.error(f'Cannot have nested packages. {paths[i]} is nested in {paths[j]}')
-                        raise Exception(f'Cannot have nested packages. {paths[i]} is nested in {paths[j]}')
+        # for each package path, trace from packagepath to the
+        # workspace root and verify no *.DEC file exists.
+        # This would signify a nested package
+        for package_path in self.PackagePathList:
+            p = Path(package_path)
+            ws = self.WorkspacePath
+
+            while ws in str(p):
+                if len(glob.glob("*dec", root_dir=p)) != 0:
+                    logging.error(
+                        f' Detected Nested Packages. {package_path} is a package path, however a package DEC file was found \
+                            at: {p}')
+                    raise Exception(
+                        f' Detected Nested Packages. {package_path} is a package path, however a package DEC file was found \
+                            at: {p}')
+
+                # Catch if package_path is not in workspace path
+                if p == p.parent:
+                    logging.warning(f' Package Path {package_path} not in workspace path: {self.WorkspacePath}')
+                    break
+                p = p.parent
 
     def GetEdk2RelativePathFromAbsolutePath(self, abspath):
         ''' Given an absolute path return a edk2 path relative
@@ -79,44 +93,17 @@ class Edk2Path(object):
 
         If not valid return None
         '''
-
-        relpath = None
-        found = False
         if abspath is None:
             return None
-        for a in (os.path.normcase(p) for p in self.PackagePathList):
-            a = a if a.endswith(os.sep) else a + os.sep  # add sep if no trailing separater
-
-            # iterate over a normalized case of packages path including trailing separater
-            # to ensure match is of full directory path.
-            if os.path.normcase(abspath).startswith(a):
-                # found our path...now use original strings to avoid
-                # change in case
-                relpath = abspath[len(a):]
-                found = True
-                self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using PackagePath")
-                self.logger.debug("AbsolutePath: %s found in PackagePath: %s" % (abspath, a))
-                break
-
-        if(not found):
-            # Does path start with workspace path
-            wsp = self.WorkspacePath if self.WorkspacePath.endswith(os.sep) else self.WorkspacePath + os.sep
-            if os.path.normcase(abspath).startswith(os.path.normcase(wsp)):
-                # found our path...now use original strings to avoid
-                # change in case
-                relpath = abspath[len(wsp):]
-                found = True
-                self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using WorkspacePath")
-                self.logger.debug("AbsolutePath: %s found in Workspace: %s" % (abspath, self.WorkspacePath))
-
-        if(found):
+        package = self.GetContainingPackage(abspath)
+        if package is not None:
+            relpath = abspath[abspath.find(package):]
             relpath = relpath.replace(os.sep, "/")
-            return relpath.lstrip("/")
-
-        # didn't find the path for conversion.
-        self.logger.error("Failed to convert AbsPath to Edk2Relative Path")
-        self.logger.error("AbsolutePath: %s" % abspath)
-        return None
+            return relpath
+        else:
+            self.logger.error("Failed to convert AbsPath to Edk2Relative Path")
+            self.logger.error("AbsolutePath: %s" % abspath)
+            return None
 
     def GetAbsolutePathOnThisSystemFromEdk2RelativePath(self, relpath, log_errors=True):
         ''' Given a edk2 relative path return an absolute path to the file
