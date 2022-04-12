@@ -65,26 +65,15 @@ class Edk2Path(object):
         if(error and error_on_invalid_pp):
             raise Exception("Invalid package path directory(s)")
 
-        # for each package path, trace from packagepath to the
-        # workspace root and verify no *.DEC file exists.
-        # This would signify a nested package
+        # Iterate through all package paths to see if the path is inside another package. This
+        # indicates nested packages.
+        allowed_paths = [os.path.basename(packagepath).lower() for packagepath in self.PackagePathList]
+        allowed_paths.append(os.path.basename(self.WorkspacePath).lower())
         for package_path in self.PackagePathList:
-            p = Path(package_path)
-            ws = self.WorkspacePath
+            containing_package = self.GetContainingPackage(package_path)
 
-            while ws in str(p):
-                if len(glob.glob(f'{p}/*dec')) != 0:
-                    logging.error(
-                        f' Detected Nested Packages. {package_path} is a package path, however a package DEC file was found \
-                            at: {p}')
-                    raise Exception(
-                        f' Detected Nested Packages. {package_path} is a package path, however a package DEC file was found \
-                            at: {p}')
-
-                # Catch a situation where the workspace path is the root of a filesystem (D:\, etc)
-                if p == p.parent:
-                    break
-                p = p.parent
+            if containing_package is not None and containing_package.lower() not in allowed_paths:
+                raise Exception(f'Package path [{package_path}] is nested inside of the package {containing_package}')
 
     def GetEdk2RelativePathFromAbsolutePath(self, abspath):
         ''' Given an absolute path return a edk2 path relative
