@@ -24,7 +24,7 @@ pr: none  # not a pr target
 jobs:
 - template: azure-pipelines/templates/build-test-job.yml@pytool_extensions
   parameters:
-    vm_image: 'windows-latest'
+    vm_image: 'windows-2019'
     pypi_auth_feed: 'Pypi-edk2-pytool-library'
     root_package_folder: "edk2toollib"
     name: 'windows'
