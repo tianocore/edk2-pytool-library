@@ -108,15 +108,16 @@ class Edk2Path(object):
 
         if relpath is None:
             return None
-        relpath = relpath.replace("/", os.sep)
-        abspath = os.path.join(self.WorkspacePath, relpath)
-        if os.path.exists(abspath):
-            return abspath
+        relpath = Path(relpath)
+        abspath = Path(self.WorkspacePath) / relpath
+        if abspath.exists():
+            return str(abspath)
 
-        for a in self.PackagePathList:
-            abspath = os.path.join(a, relpath)
-            if(os.path.exists(abspath)):
-                return abspath
+        for package_path in self.PackagePathList:
+            package_path = Path(package_path)
+            abspath = package_path / relpath
+            if abspath.exists():
+                return str(abspath)
         if log_errors:
             self.logger.error("Failed to convert Edk2Relative Path to an Absolute Path on this system.")
             self.logger.error("Relative Path: %s" % relpath)
