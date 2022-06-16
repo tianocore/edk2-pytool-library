@@ -86,9 +86,9 @@ class Edk2Path(object):
         '''
         if abspath is None:
             return None
-        
-        # Path does not need to exist; therefore find the first parent 
-        # directory that exists and use that to generate the relative path. 
+
+        # Path does not need to exist; therefore find the first parent
+        # directory that exists and use that to generate the relative path.
         temp_path = Path(abspath)
         while not temp_path.exists():
             if temp_path is temp_path.parent:
