@@ -86,9 +86,18 @@ class Edk2Path(object):
         '''
         if abspath is None:
             return None
+        
+        # Path does not need to exist; therefore find the first parent 
+        # directory that exists and use that to generate the relative path. 
+        temp_path = Path(abspath)
+        while not temp_path.exists():
+            if temp_path is temp_path.parent:
+                return None
+            temp_path = temp_path.parent
+
         package = self.GetContainingPackage(abspath)
         if package is not None:
-            relpath = abspath[abspath.find(package):]
+            relpath = abspath[str(temp_path).find(package):]
             relpath = relpath.replace(os.sep, "/")
             return relpath.lstrip("/")
         else:
