@@ -139,11 +139,11 @@ class FdfParser(HashFileParser):
 
                         while self._BracketCount > 0:  # go until we get our bracket back
                             sline = self.GetNextLine().strip("}{ ")
-                            # SECTION GUIDED EE4E5898-3914-4259-9D6E-DC7BD79403CF PROCESSING_REQUIRED = TRUE
+                            # SECTION GUIDED EE4E5898-3914-4259-9D6E-DC7BD79403CF
                             if sline.upper().startswith("SECTION GUIDED"):  # get the guided section
                                 section_def = sline[14:].strip().split("=", 1)
-                                sectionType = section_def[0].strip()  # UI in this example
-                                sectionValue = section_def[1].strip()
+                                # EE4E5898-3914-4259-9D6E-DC7BD79403CF in this example
+                                sectionType = section_def[0].strip()
                                 if sectionType not in self.FVs[section]["Files"][currentName]:
                                     self.FVs[section]["Files"][currentName][sectionType] = {}
                                 # TODO support guided sections

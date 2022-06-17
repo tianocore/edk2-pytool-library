@@ -549,6 +549,106 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_rel, ws_p_name, "module2", "X64", "TestFile.c")
         self.assertIsNone(pathobj.GetEdk2RelativePathFromAbsolutePath(p))
 
+    def test_get_relative_path_when_packages_path_list_contains_substrings(self):
+        ''' test usage of GetEdk2RelativePathFromAbsolutePath when members of PackagePathList contain
+        substrings of themselves, for example "MU" and "MU_TIANO"
+        File layout:
+         root/                    <-- current working directory (self.tmp)
+            folder_ws/            <-- workspace root
+                folder_pp/        <-- packages path
+                    PPTestPkg1/   <-- A edk2 package
+                        PPTestPkg1.DEC
+                        module1/
+                            module1.INF
+                            X64/
+                                TestFile1.c
+                folder_pp_suffix/ <-- packages path
+                    PPTestPkg2/   <-- A edk2 package
+                        PPTestPkg2.DEC
+                        module2/
+                            module2.INF
+                            X64/
+                                TestFile2.c
+        '''
+        ws_rel = "folder_ws"
+        ws_abs = os.path.join(self.tmp, ws_rel)
+        os.mkdir(ws_abs)
+        folder_pp1_rel = "folder_pp"
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp1_rel)
+        os.mkdir(folder_pp1_abs)
+        folder_pp2_rel = "folder_pp_suffix"
+        folder_pp2_abs = os.path.join(ws_abs, folder_pp2_rel)
+        os.mkdir(folder_pp2_abs)
+        ws_p_name = "PPTestPkg2"
+        ws_pkg_abs = self._make_edk2_package_helper(folder_pp2_abs, ws_p_name)
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs, folder_pp2_abs])
+
+        # file in workspace
+        p = os.path.join(ws_pkg_abs, "module2", "X64", "TestFile2.c")
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{ws_p_name}/module2/X64/TestFile2.c")
+
+    def test_get_relative_path_when_package_path_inside_package(self):
+        ''' test usage of GetEdk2RelativePathFromAbsolutePath when a package_path directory is
+        inside the subfolders of a package. Should raise an exception.
+        file layout:
+        root/                           <-- Current working diretory
+            folder_ws/                  <-- Workspace Root
+                folder_pp1/             <-- A Package Path
+                    PPTestPkg1/         <-- A Package
+                            folder_pp2/ <-- A Package Path
+        '''
+        folder_ws_rel = "folder_ws"
+        folder_ws_abs = os.path.join(self.tmp, folder_ws_rel)
+        os.mkdir(folder_ws_abs)
+
+        folder_pp1_rel = "folder_pp1"
+        folder_pp1_abs = os.path.join(folder_ws_abs, folder_pp1_rel)
+        os.mkdir(folder_pp1_abs)
+
+        pp1_name = "PPTestPkg1"
+        pp1_abs = self._make_edk2_package_helper(folder_pp1_abs, pp1_name)
+
+        folder_pp2_rel = "folder_pp2"
+        folder_pp2_abs = os.path.join(pp1_abs, folder_pp2_rel)
+        os.mkdir(folder_pp2_abs)
+
+        self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
+
+    def test_get_relative_path_when_folder_is_next_to_package(self):
+        ''' test usage of GetEdk2RelativePathFromAbsolutePath when a folder containing a package is
+        in the same directory as a different package.
+        file layout:
+        root/                      <-- Current working directory
+            folder_ws/             <-- Workspace Root
+                folder_pp1/        <-- A Package Path
+                    PPTestPkg1     <-- A Package
+                    folder_pp2/    <-- A Package Path
+                        PPTestPkg2 <-- A Package
+        '''
+        folder_ws_rel = "folder_ws"
+        folder_ws_abs = os.path.join(self.tmp, folder_ws_rel)
+        os.mkdir(folder_ws_abs)
+
+        folder_pp1_rel = "folder_pp1"
+        folder_pp1_abs = os.path.join(folder_ws_abs, folder_pp1_rel)
+        os.mkdir(folder_pp1_abs)
+
+        pp1_name = "PPTestPkg1"
+        pp1_abs = self._make_edk2_package_helper(folder_pp1_abs, pp1_name)
+        p1 = os.path.join(pp1_abs, "module2", "X64", "TestFile2.c")
+
+        folder_pp2_rel = "folder_pp2"
+        folder_pp2_abs = os.path.join(folder_pp1_abs, folder_pp2_rel)
+        os.mkdir(folder_pp2_abs)
+
+        pp2_name = "PPTestPkg2"
+        pp2_abs = self._make_edk2_package_helper(folder_pp2_abs, pp2_name)
+        p2 = os.path.join(pp2_abs, "module2", "X64", "TestFile2.c")
+
+        pathobj = Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p1), f'{pp1_name}/module2/X64/TestFile2.c')
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p2), f'{pp2_name}/module2/X64/TestFile2.c')
+
     def test_get_absolute_path_on_this_system_from_edk2_relative_path(self):
         ''' test basic usage of GetAbsolutePathOnThisSystemFromEdk2RelativePath with packages path nested
         inside the workspace

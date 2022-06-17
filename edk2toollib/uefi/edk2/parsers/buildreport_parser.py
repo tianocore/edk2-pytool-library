@@ -115,7 +115,10 @@ class ModuleSummary(object):
                                 line += " " + self._RawContent[i].rstrip()
 
                             token = line.partition('=')[2]
-                            token2 = line.partition(':')[0].split()[-1]
+                            if(line.partition(':')[0].split() == []):
+                                token2 = ""
+                            else:
+                                token2 = line.partition(':')[0].split()[-1]
                             self.PCDs[tokenspace + "." + token2] = token.strip()
 
                         # this is the secondary lines of PCD values showing Defaults
@@ -140,6 +143,9 @@ class ModuleSummary(object):
                                 logging.debug("Parsing Mod: %s" % value)
                                 self.Name = value
                             elif(key == "module inf path"):
+                                while(".inf" not in value.lower()):
+                                    i += 1
+                                    value += self._RawContent[i].strip()
                                 self.InfPath = value.replace("\\", "/")
                             elif(key == "file guid"):
                                 self.Guid = value
