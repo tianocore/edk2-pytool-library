@@ -655,10 +655,10 @@ class PathUtilitiesTest(unittest.TestCase):
 
         File layout:
 
-         root/                  <-- current working directory (self.tmp)
-            folder_ws/           <-- workspace root
-                folder_pp/       <-- packages path
-                    PPTestPkg/   <-- A edk2 package
+         root/                             <-- current working directory (self.tmp)
+            folder_ws/                     <-- workspace root
+                folder_pp1/                <-- packages path
+                    PPTestPkg/             <-- A edk2 package
                         PPTestPkg.DEC
                         module1/
                             module1.INF
@@ -666,7 +666,16 @@ class PathUtilitiesTest(unittest.TestCase):
                             module2.INF
                             X64/
                                 TestFile.c
-                WSTestPkg/   <-- A edk2 package
+                folder_pp2/                <-- packages path
+                    PP2TestPkg/            <-- A edk2 package
+                        PP2TestPkg.dec
+                        module1/
+                            module1.inf
+                        module2/
+                            module2.inf
+                            X64/
+                                TestFile.c
+                WSTestPkg/                 <-- A edk2 package
                     WSTestPkg.dec
                     module1/
                         module1.inf
@@ -678,18 +687,29 @@ class PathUtilitiesTest(unittest.TestCase):
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
-        folder_pp_rel = "pp1"
-        folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
+        folder_pp1_rel = "pp1"
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp1_rel)
         os.mkdir(folder_pp1_abs)
+        folder_pp2_rel = "pp2"
+        wrong_separator = '\\' if '/' == os.sep else '/'
+        folder_pp2_abs = wrong_separator.join([ws_abs, folder_pp2_rel])
+        os.mkdir(folder_pp2_abs)
         ws_p_name = "WSTestPkg"
         ws_pkg_abs = self._make_edk2_package_helper(ws_abs, ws_p_name)
         pp_p_name = "PPTestPkg"
         pp_pkg_abs = self._make_edk2_package_helper(folder_pp1_abs, pp_p_name, extension_case_lower=False)
-        pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
+        pp2_p_name = "PP2TestPkg"
+        self._make_edk2_package_helper(folder_pp2_abs, pp2_p_name)
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs, folder_pp2_abs])
 
         # file in packages path
         ep = os.path.join(pp_pkg_abs, "module1", "module1.INF")
         rp = f"{pp_p_name}/module1/module1.INF"
+        self.assertEqual(pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(rp), ep)
+
+        # separators are normalized
+        ep = os.path.join(ws_abs, folder_pp2_rel, pp2_p_name, "module1", "module1.inf")
+        rp = f"{pp2_p_name}/module1/module1.inf"
         self.assertEqual(pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(rp), ep)
 
         # file in workspace
