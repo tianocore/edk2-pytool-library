@@ -29,7 +29,7 @@ class Edk2Path(object):
                 Entries can be Absolute path, workspace relative path, or CWD relative.
             error_on_invalid_pp: default value is True. If packages path value is invalid raise exception
         """
-
+        ws = ws.replace("/", os.sep).replace('\\', os.sep)
         self.WorkspacePath = ws
         self.logger = logging.getLogger("Edk2Path")
         if(not os.path.isabs(ws)):
@@ -42,6 +42,7 @@ class Edk2Path(object):
         # Set PackagePath
         self.PackagePathList = list()
         for a in packagepathlist:
+            a = a.replace("/", os.sep).replace('\\', os.sep)
             if(os.path.isabs(a)):
                 self.PackagePathList.append(a)
             else:
@@ -55,6 +56,7 @@ class Edk2Path(object):
 
         error = False
         for a in self.PackagePathList[:]:
+            a = a.replace("/", os.sep).replace('\\', os.sep)
             if(not os.path.isdir(a)):
                 self.logger.log(logging.ERROR if error_on_invalid_pp else logging.WARNING,
                                 "Invalid package path entry {0}".format(a))
@@ -121,7 +123,6 @@ class Edk2Path(object):
         if log_errors:
             self.logger.error("Failed to convert Edk2Relative Path to an Absolute Path on this system.")
             self.logger.error("Relative Path: %s" % relpath)
-
         return None
 
     # Find the package this path belongs to using

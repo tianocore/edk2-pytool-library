@@ -692,7 +692,8 @@ class PathUtilitiesTest(unittest.TestCase):
         os.mkdir(folder_pp1_abs)
         folder_pp2_rel = "pp2"
         wrong_separator = '\\' if '/' == os.sep else '/'
-        folder_pp2_abs = wrong_separator.join([ws_abs, folder_pp2_rel])
+        folder_pp2_abs_wrong_separator = wrong_separator.join([ws_abs, folder_pp2_rel])
+        folder_pp2_abs = os.path.join(ws_abs, folder_pp2_rel)
         os.mkdir(folder_pp2_abs)
         ws_p_name = "WSTestPkg"
         ws_pkg_abs = self._make_edk2_package_helper(ws_abs, ws_p_name)
@@ -700,7 +701,7 @@ class PathUtilitiesTest(unittest.TestCase):
         pp_pkg_abs = self._make_edk2_package_helper(folder_pp1_abs, pp_p_name, extension_case_lower=False)
         pp2_p_name = "PP2TestPkg"
         self._make_edk2_package_helper(folder_pp2_abs, pp2_p_name)
-        pathobj = Edk2Path(ws_abs, [folder_pp1_abs, folder_pp2_abs])
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs, folder_pp2_abs_wrong_separator])
 
         # file in packages path
         ep = os.path.join(pp_pkg_abs, "module1", "module1.INF")
