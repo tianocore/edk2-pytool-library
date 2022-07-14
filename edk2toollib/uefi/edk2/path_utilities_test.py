@@ -649,6 +649,64 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p1), f'{pp1_name}/module2/X64/TestFile2.c')
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p2), f'{pp2_name}/module2/X64/TestFile2.c')
 
+    def test_get_relative_path_when_path_does_not_exist(self):
+        ''' test basic usage of GetEdk2RelativePathFromAbsolutePath with packages path nested
+        inside the workspace, but the absolute path is not a real path
+
+        File layout:
+
+         root/                  <-- current working directory (self.tmp)
+            folder_ws/           <-- workspace root
+                folder_pp/       <-- packages path
+                    PPTestPkg/   <-- A edk2 package
+                        PPTestPkg.DEC
+                        module1/
+                            module1.INF
+                        module2/
+                            module2.INF
+                            X64/
+                                TestFile.c
+                WSTestPkg/   <-- A edk2 package
+                    WSTestPkg.dec
+                    module1/
+                        module1.inf
+                    module2/
+                        module2.inf
+                        X64/
+                            TestFile.c
+        '''
+        ws_rel = "folder_ws"
+        ws_abs = os.path.join(self.tmp, ws_rel)
+        os.mkdir(ws_abs)
+        folder_pp_rel = "pp1"
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
+        os.mkdir(folder_pp1_abs)
+        ws_p_name = "WSTestPkg"
+        ws_pkg_abs = self._make_edk2_package_helper(ws_abs, ws_p_name)
+        pp_p_name = "PPTestPkg"
+        pp_pkg_abs = self._make_edk2_package_helper(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
+
+        # not existant file in packages path
+        p = os.path.join(pp_pkg_abs, "module1", "FAKE.INF")
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{pp_p_name}/module1/FAKE.INF")
+
+        # not existant file in workspace
+        p = os.path.join(ws_pkg_abs, "module2", "X64", "FAKE.c")
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{ws_p_name}/module2/X64/FAKE.c")
+
+        # not existant file not in workspace
+        p = os.path.join(self.tmp, "module2", "X64", "FAKE.c")
+        self.assertIsNone(pathobj.GetEdk2RelativePathFromAbsolutePath(p))
+
+        # not existant file is outside of code tree and not absolute path
+        p = os.path.join("module2", "X64", "FAKE.c")
+        self.assertIsNone(pathobj.GetEdk2RelativePathFromAbsolutePath(p))
+
+        # not existant file is cwd relative but not absolute path
+        p = os.path.join(ws_rel, ws_p_name, "module2", "X64", "FAKE.c")
+        self.assertIsNone(pathobj.GetEdk2RelativePathFromAbsolutePath(p))
+
     def test_get_absolute_path_on_this_system_from_edk2_relative_path(self):
         ''' test basic usage of GetAbsolutePathOnThisSystemFromEdk2RelativePath with packages path nested
         inside the workspace
