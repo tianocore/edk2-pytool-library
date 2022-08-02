@@ -101,12 +101,12 @@ def x509_esl_builder(initList: []):
 
     listSize = len(initList)
 
-    if(listSize > 1):
+    if (listSize > 1):
         raise Exception("initList length > 1, unsupported by type")
 
     Esl = EfiSignatureList(typeguid=EfiSignatureDataFactory.EFI_CERT_X509_GUID)
 
-    if(listSize == 0):
+    if (listSize == 0):
         Esl.AddSignatureHeader(SigHeader=None, SigSize=0)
     else:
         (certHexStr, ownerGuidStr) = initList[0]

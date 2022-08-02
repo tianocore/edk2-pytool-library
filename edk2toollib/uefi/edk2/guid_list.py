@@ -44,13 +44,13 @@ class GuidList():
         for root, dirs, files in os.walk(folder):
             for d in dirs[:]:
                 fullpath = os.path.join(root, d)
-                if(ignore(fullpath)):
+                if (ignore(fullpath)):
                     logging.debug(f"Ignore folder: {fullpath}")
                     dirs.remove(d)
 
             for name in files:
                 fullpath = os.path.join(root, name)
-                if(ignore(fullpath)):
+                if (ignore(fullpath)):
                     logging.debug(f"Ignore file: {fullpath}")
                     continue
 
@@ -64,10 +64,10 @@ class GuidList():
 
         filename: abspath to dec file
         """
-        if(filename.lower().endswith(".dec")):
+        if (filename.lower().endswith(".dec")):
             with open(filename, "r") as f:
                 return GuidList.parse_guids_from_dec(f, filename)
-        elif(filename.lower().endswith(".inf")):
+        elif (filename.lower().endswith(".inf")):
             return GuidList.parse_guids_from_inf(filename)
         else:
             return []

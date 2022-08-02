@@ -49,7 +49,7 @@ class GuidedDeclarationEntry():
         self.guidstring = ""
         self.guid = None
         self.package_name = packagename
-        if(rawtext is not None):
+        if (rawtext is not None):
             self._parse(rawtext)
 
     def _parse(self, rawtext: str) -> None:
@@ -65,7 +65,7 @@ class GuidedDeclarationEntry():
         self.name = t[0].strip()
         self.guidstring = t[2].strip()
         self.guid = GuidParser.uuid_from_guidstring(self.guidstring)
-        if(self.guid is None):
+        if (self.guid is None):
             raise ValueError("Could not parse guid")
 
 
@@ -119,15 +119,15 @@ class PcdDeclarationEntry():
         self.token_space_name = sp[0].strip()
         op = sp[2].split("|")
         # if it's 2 long, we need to check that it's a structured PCD
-        if(len(op) == 2 and op[0].count(".") > 0):
+        if (len(op) == 2 and op[0].count(".") > 0):
             pass
         # otherwise it needs at least 4 parts
-        elif(len(op) < 4):
+        elif (len(op) < 4):
             raise Exception(f"Too few parts: {op}")
         # but also less than 5
-        elif(len(op) > 5):
+        elif (len(op) > 5):
             raise Exception(f"Too many parts: {rawtext}")
-        elif(len(op) == 5 and op[4].strip() != '{'):
+        elif (len(op) == 5 and op[4].strip() != '{'):
             raise Exception(f"Too many parts: {rawtext}")
 
         self.name = op[0].strip()
@@ -168,7 +168,7 @@ class DecParser(HashFileParser):
         for line in self.Lines:
             sline = self.StripComment(line)
 
-            if(sline is None or len(sline) < 1):
+            if (sline is None or len(sline) < 1):
                 continue
 
             if InDefinesSection:
@@ -178,7 +178,7 @@ class DecParser(HashFileParser):
                     if sline.count("=") == 1:
                         tokens = sline.split('=', 1)
                         self.Dict[tokens[0].strip()] = tokens[1].strip()
-                        if(self.PackageName is None and tokens[0].strip() == "PACKAGE_NAME"):
+                        if (self.PackageName is None and tokens[0].strip() == "PACKAGE_NAME"):
                             self.PackageName = self.Dict["PACKAGE_NAME"]
                         continue
 
@@ -285,7 +285,7 @@ class DecParser(HashFileParser):
 
         """
         self.Logger.debug("Parsing file: %s" % filepath)
-        if(not os.path.isabs(filepath)):
+        if (not os.path.isabs(filepath)):
             fp = self.FindPath(filepath)
         else:
             fp = filepath

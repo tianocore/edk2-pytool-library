@@ -166,7 +166,7 @@ class BaseParser(object):
         except ValueError:
             pass
         try:
-            if(cond.lower() == "in"):
+            if (cond.lower() == "in"):
                 ivalue2 = set(ivalue2.split())
             else:
                 ivalue2 = self.ConvertToInt(ivalue2)
@@ -180,7 +180,7 @@ class BaseParser(object):
             return ivalue and ivalue2
 
         # check our truthyness
-        if(cond == "=="):
+        if (cond == "=="):
             # equal
             return (ivalue == ivalue2) or (value == value2)
 
@@ -259,7 +259,7 @@ class BaseParser(object):
 
     def PopConditional(self):
         """ """
-        if(len(self.ConditionalStack) > 0):
+        if (len(self.ConditionalStack) > 0):
             return self.ConditionalStack.pop()
         else:
             self.Logger.critical("Tried to pop an empty conditional stack.  Line Number %d" % self.CurrentLine)
@@ -269,19 +269,19 @@ class BaseParser(object):
 
         v = self.LocalVars.get(token)
 
-        if(v is None):
+        if (v is None):
             v = self.InputVars.get(token)
 
-        if(v is None and replace_if_not_found):
+        if (v is None and replace_if_not_found):
             v = self._MacroNotDefinedValue
 
-        elif(v is None):
+        elif (v is None):
             return None
 
         if (type(v) is bool):
             v = "true" if v else "false"
 
-        if(type(v) is str and (v.upper() == "TRUE" or v.upper() == "FALSE")):
+        if (type(v) is str and (v.upper() == "TRUE" or v.upper() == "FALSE")):
             v = v.upper()
 
         return str(v)
@@ -314,7 +314,7 @@ class BaseParser(object):
         # use line to avoid change by handling above
         rep = line.count("$")
         index = 0
-        while(rep > 0):
+        while (rep > 0):
             start = line.find("$(", index)
             end = line.find(")", start)
 
@@ -349,25 +349,25 @@ class BaseParser(object):
             tokens = tokens[0].split() + [tokens[1]] + tokens[2].split()
         else:
             tokens = text.split()
-        if(tokens[0].lower() == "!if"):
+        if (tokens[0].lower() == "!if"):
             self.PushConditional(self.EvaluateConditional(text))
             return True
 
-        elif(tokens[0].lower() == "!ifdef"):
+        elif (tokens[0].lower() == "!ifdef"):
             if len(tokens) != 2:
                 self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
                 raise RuntimeError("Invalid conditional", text)
             self.PushConditional((tokens[1] != self._MacroNotDefinedValue))
             return True
 
-        elif(tokens[0].lower() == "!ifndef"):
+        elif (tokens[0].lower() == "!ifndef"):
             if len(tokens) != 2:
                 self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
                 raise RuntimeError("Invalid conditional", text)
             self.PushConditional((tokens[1] == self._MacroNotDefinedValue))
             return True
 
-        elif(tokens[0].lower() == "!else"):
+        elif (tokens[0].lower() == "!else"):
             if len(tokens) != 1:
                 self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
                 raise RuntimeError("Invalid conditional", text)
@@ -376,7 +376,7 @@ class BaseParser(object):
             self.PushConditional(not v)
             return True
 
-        elif(tokens[0].lower() == "!endif"):
+        elif (tokens[0].lower() == "!endif"):
             if len(tokens) != 1:
                 self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
                 raise RuntimeError("Invalid conditional", text)
@@ -623,7 +623,7 @@ class BaseParser(object):
         Returns:
 
         """
-        if(line.count("{") == 2 and line.count("}") == 2 and line.count(",") == 10 and line.count("=") == 1):
+        if (line.count("{") == 2 and line.count("}") == 2 and line.count(",") == 10 and line.count("=") == 1):
             return True
         return False
 
@@ -643,57 +643,57 @@ class BaseParser(object):
                 f"Invalid GUID found {line}. We are missing some parts since we only found: {len(entries)}")
         gu = entries[0].lstrip(' 0').lstrip('x').strip()
         # pad front until 8 chars
-        while(len(gu) < 8):
+        while (len(gu) < 8):
             gu = "0" + gu
 
         gut = entries[1].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 4):
+        while (len(gut) < 4):
             gut = "0" + gut
         gu = gu + "-" + gut
 
         gut = entries[2].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 4):
+        while (len(gut) < 4):
             gut = "0" + gut
         gu = gu + "-" + gut
 
         # strip off extra {
         gut = entries[3].lstrip(' { 0').lstrip('x').strip()
-        while(len(gut) < 2):
+        while (len(gut) < 2):
             gut = "0" + gut
         gu = gu + "-" + gut
 
         gut = entries[4].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 2):
+        while (len(gut) < 2):
             gut = "0" + gut
         gu = gu + gut
 
         gut = entries[5].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 2):
+        while (len(gut) < 2):
             gut = "0" + gut
         gu = gu + "-" + gut
 
         gut = entries[6].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 2):
+        while (len(gut) < 2):
             gut = "0" + gut
         gu = gu + gut
 
         gut = entries[7].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 2):
+        while (len(gut) < 2):
             gut = "0" + gut
         gu = gu + gut
 
         gut = entries[8].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 2):
+        while (len(gut) < 2):
             gut = "0" + gut
         gu = gu + gut
 
         gut = entries[9].lstrip(' 0').lstrip('x').strip()
-        while(len(gut) < 2):
+        while (len(gut) < 2):
             gut = "0" + gut
         gu = gu + gut
 
         gut = entries[10].split()[0].lstrip(' 0').lstrip('x').rstrip(' } ').strip()
-        while(len(gut) < 2):
+        while (len(gut) < 2):
             gut = "0" + gut
         gu = gu + gut
 
@@ -743,7 +743,7 @@ class HashFileParser(BaseParser):
         Returns:
 
         """
-        if(line.count("[") == 1 and line.count("]") == 1):  # new section
+        if (line.count("[") == 1 and line.count("]") == 1):  # new section
             section = line.strip().lstrip("[").split(".")[0].split(",")[0].rstrip("]").strip()
             self.CurrentFullSection = line.strip().lstrip("[").split(",")[0].rstrip("]").strip()
             return (True, section)
