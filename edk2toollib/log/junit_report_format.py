@@ -51,27 +51,27 @@ class JunitReportTestCase(object):
         self._StartTime = time.time()
 
     def SetFailed(self, Msg, Type):
-        if(self.Status != JunitReportTestCase.NEW):
+        if (self.Status != JunitReportTestCase.NEW):
             raise Exception("Can't Set to failed.  State must be in NEW")
         self.Time = time.time() - self._StartTime
         self.Status = JunitReportTestCase.FAILED
         self.FailureMsg = JunitReportFailure(Type, Msg)
 
     def SetError(self, Msg, Type):
-        if(self.Status != JunitReportTestCase.NEW):
+        if (self.Status != JunitReportTestCase.NEW):
             raise Exception("Can't Set to error.  State must be in NEW")
         self.Time = time.time() - self._StartTime
         self.Status = JunitReportTestCase.ERROR
         self.ErrorMsg = JunitReportError(Type, Msg)
 
     def SetSuccess(self):
-        if(self.Status != JunitReportTestCase.NEW):
+        if (self.Status != JunitReportTestCase.NEW):
             raise Exception("Can't Set to success.  State must be in NEW")
         self.Status = JunitReportTestCase.SUCCESS
         self.Time = time.time() - self._StartTime
 
     def SetSkipped(self):
-        if(self.Status != JunitReportTestCase.NEW):
+        if (self.Status != JunitReportTestCase.NEW):
             raise Exception("Can't Set to skipped.  State must be in NEW")
         self.Status = JunitReportTestCase.SKIPPED
         self.Time = time.time() - self._StartTime
@@ -127,11 +127,11 @@ class JunitReportTestSuite(object):
         Tests = len(self.TestCases)
 
         for a in self.TestCases:
-            if(a.Status == JunitReportTestCase.FAILED):
+            if (a.Status == JunitReportTestCase.FAILED):
                 Failures += 1
-            elif(a.Status == JunitReportTestCase.ERROR):
+            elif (a.Status == JunitReportTestCase.ERROR):
                 Errors += 1
-            elif(a.Status == JunitReportTestCase.SKIPPED):
+            elif (a.Status == JunitReportTestCase.SKIPPED):
                 Skipped += 1
 
         outstream.write('<testsuite id="{0}" name="{1}" package="{2}" errors="{3}" tests="{4}" '

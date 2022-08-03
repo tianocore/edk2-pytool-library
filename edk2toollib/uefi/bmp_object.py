@@ -120,11 +120,11 @@ class BmpObject(object):
             self.PopulateFromFileStream(filestream)
 
     def ExpectedColorMapEntires(self):
-        if(self.BitPerPixel == 1):
+        if (self.BitPerPixel == 1):
             return 2
-        elif(self.BitPerPixel == 4):
+        elif (self.BitPerPixel == 4):
             return 16
-        elif(self.BitPerPixel == 8):
+        elif (self.BitPerPixel == 8):
             return 256
         else:
             return 0
@@ -145,7 +145,7 @@ class BmpObject(object):
         self.logger.debug("Bmp File size as determined by file is: 0x%X (%d)" % (
             end - offset, end - offset))
 
-        if((end - offset) < BmpObject.STATIC_FILE_HEADER_SIZE):  # size of the static file header data
+        if ((end - offset) < BmpObject.STATIC_FILE_HEADER_SIZE):  # size of the static file header data
             raise Exception(
                 "Invalid file stream size.  %d < File Header Size" % (end - offset))
 
@@ -157,7 +157,7 @@ class BmpObject(object):
         self.Rsvd16_2 = struct.unpack("=H", fs.read(2))[0]
         self.ImageOffset = struct.unpack("=I", fs.read(4))[0]
 
-        if((end - fs.tell()) < BmpObject.STATIC_IMAGE_HEADER_SIZE):
+        if ((end - fs.tell()) < BmpObject.STATIC_IMAGE_HEADER_SIZE):
             raise Exception(
                 "Invalid file stream size.  %d < Img Header Size" % (end - fs.tell()))
 
@@ -174,26 +174,26 @@ class BmpObject(object):
         self.NumberOfColors = struct.unpack("=I", fs.read(4))[0]
         self.ImportantColors = struct.unpack("=I", fs.read(4))[0]
 
-        if(self.Size < self.HeaderSize):
+        if (self.Size < self.HeaderSize):
             raise Exception("Size can't be smaller than HeaderSize")
 
-        if((end - fs.tell()) < (self.Size - self.HeaderSize - BmpObject.STATIC_FILE_HEADER_SIZE)):
+        if ((end - fs.tell()) < (self.Size - self.HeaderSize - BmpObject.STATIC_FILE_HEADER_SIZE)):
             raise Exception("Invalid file stream size (Size) 0x%X Less Than 0x%X" % (
                 (end - fs.tell()), (self.Size - self.HeaderSize - BmpObject.STATIC_FILE_HEADER_SIZE)))
 
         StartOfImageData = offset + self.ImageOffset
-        if(fs.tell() < StartOfImageData):
+        if (fs.tell() < StartOfImageData):
 
             # Handle any color maps
-            if(self.ExpectedColorMapEntires() > 0):
+            if (self.ExpectedColorMapEntires() > 0):
                 ColorMapCount = self.ExpectedColorMapEntires()
-                if(self.NumberOfColors > 0) and (self.NumberOfColors != ColorMapCount):
+                if (self.NumberOfColors > 0) and (self.NumberOfColors != ColorMapCount):
                     self.logger.info("Current Code has untested support for limited color map, Good Luck. ")
                     self.logger.info("Expected Color Map Entries %d" % (ColorMapCount))
                     self.logger.info("Actual Color Map Entries %d" % (self.NumberOfColors))
                     ColorMapCount = self.NumberOfColors
 
-                if((StartOfImageData - fs.tell()) < (ColorMapCount * BmpColorMap.STATIC_SIZE)):
+                if ((StartOfImageData - fs.tell()) < (ColorMapCount * BmpColorMap.STATIC_SIZE)):
                     raise Exception("Color Map not as expected")
 
                 # read all the color maps and append to the list
@@ -206,7 +206,7 @@ class BmpObject(object):
 
         self.ImageData = fs.read(self.Size - self.ImageOffset)
 
-        if((end - fs.tell()) > 0):
+        if ((end - fs.tell()) > 0):
             raise Exception(
                 "Extra Data at the end of BMP file - 0x%X bytes" % (end - fs.tell()))
 
@@ -236,18 +236,18 @@ class BmpObject(object):
         self.logger.info("    NumberOfColors:  %d" % self.NumberOfColors)
         self.logger.info("    ImportantColors: %d" % self.ImportantColors)
         # print color maps
-        if(PrintColorMapData):
+        if (PrintColorMapData):
             for cm in self.ColorMapList:
                 cm.Print()
 
-        if(self._PaddingLength > 0):
+        if (self._PaddingLength > 0):
             self.logger.info("  BMP Padding (0x%X bytes)" % self._PaddingLength)
             ndbl = memoryview(self._Padding).tolist()
             for index in range(len(ndbl)):
-                if(index % 16 == 0):
+                if (index % 16 == 0):
                     self.logger.info("0x%04X -" % index),
                 self.logger.info(" %02X" % ndbl[index]),
-                if(index % 16 == 15):
+                if (index % 16 == 15):
                     self.logger.info("")
             self.logger.info("")
 
@@ -255,10 +255,10 @@ class BmpObject(object):
             self.logger.info("  Bmp Image Data:    ")
             ndbl = memoryview(self.ImageData).tolist()
             for index in range(len(ndbl)):
-                if(index % 16 == 0):
+                if (index % 16 == 0):
                     self.logger.info("0x%04X -" % index),
                 self.logger.info(" %02X" % ndbl[index]),
-                if(index % 16 == 15):
+                if (index % 16 == 15):
                     self.logger.info("")
             self.logger.info("")
 
@@ -289,9 +289,9 @@ class BmpObject(object):
             cm.Write(fs)
 
         # padding
-        if(self._PaddingLength > 0):
+        if (self._PaddingLength > 0):
             fs.write(self.Padding)
 
         # Pixel data
-        if(self.ImageData):
+        if (self.ImageData):
             fs.write(self.ImageData)

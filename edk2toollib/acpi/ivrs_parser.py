@@ -44,9 +44,9 @@ class IVRS_TABLE(object):
             remapping_header = self.REMAPPING_STRUCT_HEADER(t_data)
 
             # Parse remapping struct
-            if(remapping_header.Type == IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE.TYPE_10H) or\
-              (remapping_header.Type == IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE.TYPE_11H) or\
-              (remapping_header.Type == IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE.TYPE_40H):
+            if (remapping_header.Type == IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE.TYPE_10H) or\
+               (remapping_header.Type == IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE.TYPE_11H) or\
+               (remapping_header.Type == IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE.TYPE_40H):
                 remapping_header = self.IVHD_STRUCT(t_data)
                 self.addIVHDEntry(remapping_header)
             elif (remapping_header.Type == IVRS_TABLE.IVMD_STRUCT.IVMD_TYPE.TYPE_20H) or\
@@ -446,31 +446,31 @@ class IVRS_TABLE(object):
         #
         @staticmethod
         def Factory(data):
-            if(data is None):
+            if (data is None):
                 raise Exception("Invalid File stream")
 
             RemapHeader = IVRS_TABLE.REMAPPING_STRUCT_HEADER(data)
             Type = RemapHeader.Type
 
-            if(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RESERVED):
+            if (Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RESERVED):
                 return IVRS_TABLE.DEVICE_TABLE_ENTRY_RESERVED(data)
-            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALL):
+            elif (Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALL):
                 return IVRS_TABLE.DEVICE_TABLE_ENTRY_ALL(data)
-            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SELECT):
+            elif (Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SELECT):
                 return IVRS_TABLE.DEVICE_TABLE_ENTRY_SELECT(data)
-            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_START):
+            elif (Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.RANGE_START):
                 return IVRS_TABLE.DEVICE_TABLE_ENTRY_RANGE_START(data)
-            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT):
+            elif (Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_SELECT):
                 return IVRS_TABLE.DEVICE_TABLE_ENTRY_ALIAS_SELECT(data)
-            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START):
+            elif (Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ALIAS_RANGE_START):
                 return IVRS_TABLE.DEVICE_TABLE_ENTRY_ALIAS_RANGE_START(data)
-            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT):
+            elif (Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_SELECT):
                 return IVRS_TABLE.DEVICE_TABLE_ENTRY_EX_SELECT(data)
-            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START):
+            elif (Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.EX_RANGE_START):
                 return IVRS_TABLE.DEVICE_TABLE_ENTRY_EX_RANGE_START(data)
-            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL):
+            elif (Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.SPECIAL):
                 return IVRS_TABLE.DEVICE_TABLE_ENTRY_SPECIAL(data)
-            elif(Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI):
+            elif (Type == IVRS_TABLE.DEVICE_TABLE_ENTRY.DTE_TYPE.ACPI):
                 return IVRS_TABLE.DEVICE_TABLE_ENTRY_ACPI(data)
             else:
                 return None

@@ -51,9 +51,9 @@ class EfiSignatureDataEfiCertX509(object):
                  createfs: BinaryIO = None,
                  cert: bytes = None,
                  sigowner: uuid = None):
-        if(decodefs is not None):
+        if (decodefs is not None):
             self.PopulateFromFileStream(decodefs, decodesize)
-        elif(createfs is not None):
+        elif (createfs is not None):
             # create a new one
             self.SignatureOwner = sigowner
             start = createfs.tell()  # should be 0 but maybe this filestream has other things at the head
@@ -61,10 +61,10 @@ class EfiSignatureDataEfiCertX509(object):
             end = createfs.tell()
             createfs.seek(start)
             self.SignatureDataSize = end - start
-            if(self.SignatureDataSize < 0):
+            if (self.SignatureDataSize < 0):
                 raise Exception("Create File Stream has invalid size")
             self.SignatureData = (createfs.read(self.SignatureDataSize))
-        elif(cert is not None):
+        elif (cert is not None):
             self.SignatureOwner = sigowner
             self.SignatureDataSize = len(cert)
             self.SignatureData = cert
@@ -77,10 +77,10 @@ class EfiSignatureDataEfiCertX509(object):
         return self.SignatureData < other.SignatureData
 
     def PopulateFromFileStream(self, fs: BinaryIO, decodesize):
-        if(fs is None):
+        if (fs is None):
             raise Exception("Invalid File Steam")
 
-        if(decodesize == 0):
+        if (decodesize == 0):
             raise Exception("Invalid Decode Size")
 
         # only populate from file stream those parts that are complete in the file stream
@@ -89,10 +89,10 @@ class EfiSignatureDataEfiCertX509(object):
         end = fs.tell()
         fs.seek(offset)
 
-        if((end - offset) < EfiSignatureDataEfiCertX509.STATIC_STRUCT_SIZE):  # size of the  guid
+        if ((end - offset) < EfiSignatureDataEfiCertX509.STATIC_STRUCT_SIZE):  # size of the  guid
             raise Exception("Invalid file stream size")
 
-        if((end - offset) < decodesize):  # size requested is too big
+        if ((end - offset) < decodesize):  # size requested is too big
             raise Exception("Invalid file stream size vs decodesize")
 
         self.SignatureOwner = uuid.UUID(bytes_le=fs.read(16))
@@ -106,17 +106,17 @@ class EfiSignatureDataEfiCertX509(object):
             print("EfiSignatureData - EfiSignatureDataEfiCertX509")
             print("  Signature Owner:      %s" % str(self.SignatureOwner))
             print("  Signature Data: ")
-            if(self.SignatureData is None):
+            if (self.SignatureData is None):
                 print("    NONE")
             else:
                 sdl = self.SignatureData
-                if(self.SignatureDataSize != len(sdl)):
+                if (self.SignatureDataSize != len(sdl)):
                     raise Exception("Invalid Signature Data Size vs Length of data")
                 PrintByteList(sdl)
         else:
             s = "ESD:EFI_CERT_X509,"
             s += "%s," % str(self.SignatureOwner)
-            if(self.SignatureData is None):
+            if (self.SignatureData is None):
                 s += 'NONE'
             else:
                 sdl = self.SignatureData
@@ -125,9 +125,9 @@ class EfiSignatureDataEfiCertX509(object):
             print(s)
 
     def Write(self, fs):
-        if(fs is None):
+        if (fs is None):
             raise Exception("Invalid File Output Stream")
-        if(self.SignatureData is None):
+        if (self.SignatureData is None):
             raise Exception("Invalid object")
 
         fs.write(self.SignatureOwner.bytes_le)
@@ -160,15 +160,15 @@ class EfiSignatureDataEfiCertSha256(object):
                  createfs: BinaryIO = None,
                  digest: bytes = None,
                  sigowner: uuid = None):
-        if(decodefs is not None):
+        if (decodefs is not None):
             self.PopulateFromFileStream(decodefs)
-        elif(createfs is not None):
+        elif (createfs is not None):
             # create a new one
             self.SignatureOwner = sigowner
             self.SignatureData = (hashlib.sha256(createfs.read()).digest())
-        elif(digest is not None):
+        elif (digest is not None):
             digest_length = len(digest)
-            if(digest_length != hashlib.sha256().digest_size):
+            if (digest_length != hashlib.sha256().digest_size):
                 raise Exception("Invalid digest length (found / expected): (%d / %d)",
                                 digest_length, hashlib.sha256().digest_size)
             self.SignatureOwner = sigowner
@@ -177,7 +177,7 @@ class EfiSignatureDataEfiCertSha256(object):
             raise Exception("Invalid Parameters - Not Supported")
 
     def PopulateFromFileStream(self, fs):
-        if(fs is None):
+        if (fs is None):
             raise Exception("Invalid File Steam")
 
         # only populate from file stream those parts that are complete in the file stream
@@ -186,7 +186,7 @@ class EfiSignatureDataEfiCertSha256(object):
         end = fs.tell()
         fs.seek(offset)
 
-        if((end - offset) < EfiSignatureDataEfiCertSha256.STATIC_STRUCT_SIZE):  # size of the  data
+        if ((end - offset) < EfiSignatureDataEfiCertSha256.STATIC_STRUCT_SIZE):  # size of the  data
             raise Exception("Invalid file stream size")
 
         self.SignatureOwner = uuid.UUID(bytes_le=fs.read(16))
@@ -198,7 +198,7 @@ class EfiSignatureDataEfiCertSha256(object):
             print("EfiSignatureData - EfiSignatureDataEfiCertSha256")
             print("  Signature Owner:      %s" % str(self.SignatureOwner))
             print("  Signature Data: ", end="")
-            if(self.SignatureData is None):
+            if (self.SignatureData is None):
                 print(" NONE")
             else:
                 sdl = self.SignatureData
@@ -208,7 +208,7 @@ class EfiSignatureDataEfiCertSha256(object):
         else:
             s = 'ESD:EFI_CERT_SHA256,'
             s += "%s," % str(self.SignatureOwner)
-            if(self.SignatureData is None):
+            if (self.SignatureData is None):
                 s += 'NONE'
             else:
                 sdl = self.SignatureData
@@ -217,9 +217,9 @@ class EfiSignatureDataEfiCertSha256(object):
             print(s)
 
     def Write(self, fs):
-        if(fs is None):
+        if (fs is None):
             raise Exception("Invalid File Output Stream")
-        if(self.SignatureData is None):
+        if (self.SignatureData is None):
             raise Exception("Invalid object")
 
         fs.write(self.SignatureOwner.bytes_le)
@@ -261,15 +261,15 @@ class EfiSignatureDataFactory(object):
     #
     @staticmethod
     def Factory(fs: BinaryIO, type, size):
-        if(fs is None):
+        if (fs is None):
             raise Exception("Invalid File stream")
 
-        if(type == EfiSignatureDataFactory.EFI_CERT_SHA256_GUID):
-            if(size != EfiSignatureDataEfiCertSha256.STATIC_STRUCT_SIZE):
+        if (type == EfiSignatureDataFactory.EFI_CERT_SHA256_GUID):
+            if (size != EfiSignatureDataEfiCertSha256.STATIC_STRUCT_SIZE):
                 raise Exception("Invalid Size 0x%x" % size)
             return EfiSignatureDataEfiCertSha256(decodefs=fs)
 
-        elif(type == EfiSignatureDataFactory.EFI_CERT_X509_GUID):
+        elif (type == EfiSignatureDataFactory.EFI_CERT_X509_GUID):
             return EfiSignatureDataEfiCertX509(decodefs=fs, decodesize=size)
 
         else:
@@ -284,12 +284,12 @@ class EfiSignatureDataFactory(object):
     #   sigowner is the UUID object for the signature owner guid
     @staticmethod
     def Create(type, ContentFileStream, sigowner):
-        if(ContentFileStream is None):
+        if (ContentFileStream is None):
             raise Exception("Invalid Content File Stream")
 
-        if(type == EfiSignatureDataFactory.EFI_CERT_SHA256_GUID):
+        if (type == EfiSignatureDataFactory.EFI_CERT_SHA256_GUID):
             return EfiSignatureDataEfiCertSha256(createfs=ContentFileStream, sigowner=sigowner)
-        elif(type == EfiSignatureDataFactory.EFI_CERT_X509_GUID):
+        elif (type == EfiSignatureDataFactory.EFI_CERT_X509_GUID):
             return EfiSignatureDataEfiCertX509(createfs=ContentFileStream, sigowner=sigowner)
         else:
             raise Exception("Not Supported")
@@ -303,7 +303,7 @@ class EfiSignatureList(object):
     STATIC_STRUCT_SIZE = 16 + 4 + 4 + 4
 
     def __init__(self, filestream: BinaryIO = None, typeguid: uuid = None):
-        if(filestream is None):
+        if (filestream is None):
 
             # Type of the signature. GUID signature types are defined in below.
             self.SignatureType = typeguid
@@ -327,7 +327,7 @@ class EfiSignatureList(object):
             self.PopulateFromFileStream(filestream)
 
     def PopulateFromFileStream(self, fs: BinaryIO):
-        if(fs is None):
+        if (fs is None):
             raise Exception("Invalid File Steam")
 
         # only populate from file stream those parts that are complete in the file stream
@@ -336,7 +336,7 @@ class EfiSignatureList(object):
         end = fs.tell()
         fs.seek(start)
 
-        if((end - start) < EfiSignatureList.STATIC_STRUCT_SIZE):  # size of the static header data
+        if ((end - start) < EfiSignatureList.STATIC_STRUCT_SIZE):  # size of the static header data
             raise Exception("Invalid file stream size")
 
         self.SignatureType = uuid.UUID(bytes_le=fs.read(16))
@@ -345,28 +345,28 @@ class EfiSignatureList(object):
         self.SignatureSize = struct.unpack("<I", fs.read(4))[0]
 
         # check the total size of this is within the File
-        if((end - start) < self.SignatureListSize):
+        if ((end - start) < self.SignatureListSize):
             logging.debug("SignatureListSize 0x%x" % self.SignatureListSize)
             logging.debug("End - Start is 0x%x" % (end - start))
             raise Exception("Invalid File Stream.  Not enough file content to cover the Sig List Size")
 
         # check that structure is built correctly and there is room within the structure total size to read the header
-        if((self.SignatureListSize - (fs.tell() - start)) < self.SignatureHeaderSize):
+        if ((self.SignatureListSize - (fs.tell() - start)) < self.SignatureHeaderSize):
             raise Exception("Invalid Sig List.  Sizes not correct.  "
                             "SignatureHeaderSize extends beyond end of structure")
 
         # Signature Header is allowed to be nothing (size 0)
         self.SignatureHeader = None
-        if(self.SignatureHeaderSize > 0):
+        if (self.SignatureHeaderSize > 0):
             self.SignatureHeader = EfiSignatureHeader(fs, self.SignatureHeaderSize)
 
-        if(((self.SignatureListSize - (fs.tell() - start)) % self.SignatureSize) != 0):
+        if (((self.SignatureListSize - (fs.tell() - start)) % self.SignatureSize) != 0):
             raise Exception("Invalid Sig List.  Signature Data Array is not a valid size")
 
         self.SignatureData_List = []
-        while((start + self.SignatureListSize) > fs.tell()):
+        while ((start + self.SignatureListSize) > fs.tell()):
             # double check that everything is adding up correctly.
-            if((start + self.SignatureListSize - fs.tell() - self.SignatureSize) < 0):
+            if ((start + self.SignatureListSize - fs.tell() - self.SignatureSize) < 0):
                 raise Exception("Invalid Signature List Processing.  Signature Data not correctly parsed!!")
             a = EfiSignatureDataFactory.Factory(fs, self.SignatureType, self.SignatureSize)
             self.SignatureData_List.append(a)
@@ -378,7 +378,7 @@ class EfiSignatureList(object):
             print("  Signature List Size:   0x%x" % self.SignatureListSize)
             print("  Signature Header Size: 0x%x" % self.SignatureHeaderSize)
             print("  Signature Size:        0x%x" % self.SignatureSize)
-            if(self.SignatureHeader is not None):
+            if (self.SignatureHeader is not None):
                 self.SignatureHeader.Print(compact=compact)
             else:
                 print("  Signature Header:      NONE")
@@ -388,30 +388,30 @@ class EfiSignatureList(object):
             csv += ",0x%x" % self.SignatureListSize
             csv += ",0x%x" % self.SignatureHeaderSize
             csv += ",0x%x" % self.SignatureSize
-            if(self.SignatureHeader is not None):
+            if (self.SignatureHeader is not None):
                 csv += self.SignatureHeader.Print(compact=compact)
             else:
                 csv += ",NONE"
             print(csv)
 
-        if(self.SignatureData_List is not None):
+        if (self.SignatureData_List is not None):
             for a in self.SignatureData_List:
                 a.Print(compact=compact)
 
     def Write(self, fs):
-        if(fs is None):
+        if (fs is None):
             raise Exception("Invalid File Output Stream")
-        if((self.SignatureHeader is None) and (self.SignatureHeaderSize == -1)):
+        if ((self.SignatureHeader is None) and (self.SignatureHeaderSize == -1)):
             raise Exception("Invalid object.  Uninitialized Sig Header")
 
         fs.write(self.SignatureType.bytes_le)
         fs.write(struct.pack("<I", self.SignatureListSize))
         fs.write(struct.pack("<I", self.SignatureHeaderSize))
         fs.write(struct.pack("<I", self.SignatureSize))
-        if(self.SignatureHeader is not None):
+        if (self.SignatureHeader is not None):
             self.SignatureHeader.Write(fs)
 
-        if(self.SignatureData_List is not None):
+        if (self.SignatureData_List is not None):
             for a in self.SignatureData_List:
                 a.Write(fs)
 
@@ -422,20 +422,20 @@ class EfiSignatureList(object):
             return fs.getvalue()
 
     def AddSignatureHeader(self, SigHeader, SigSize=0):
-        if(self.SignatureHeader is not None):
+        if (self.SignatureHeader is not None):
             raise Exception("Signature Header already set")
 
-        if(self.SignatureHeaderSize != -1):
+        if (self.SignatureHeaderSize != -1):
             raise Exception("Signature Header already set (size)")
 
-        if(self.SignatureSize != 0):
+        if (self.SignatureSize != 0):
             raise Exception("Signature Size already set")
 
-        if(self.SignatureData_List is not None):
+        if (self.SignatureData_List is not None):
             raise Exception("Signature Data List is already initialized")
 
         self.SignatureHeader = SigHeader
-        if(SigHeader is None):
+        if (SigHeader is None):
             self.SignatureHeaderSize = 0
             self.SignatureSize = SigSize
         else:
@@ -444,13 +444,13 @@ class EfiSignatureList(object):
             self.SignatureListSize += self.SignatureHeaderSize
 
     def AddSignatureData(self, SigDataObject):
-        if(self.SignatureSize == 0):
+        if (self.SignatureSize == 0):
             raise Exception("Before adding Signature Data you must have set the Signature Size")
 
-        if(self.SignatureSize != SigDataObject.GetTotalSize()):
+        if (self.SignatureSize != SigDataObject.GetTotalSize()):
             raise Exception("Can't add Signature Data of different size")
 
-        if(self.SignatureData_List is None):
+        if (self.SignatureData_List is None):
             self.SignatureData_List = []
 
         self.SignatureData_List.append(SigDataObject)
@@ -466,15 +466,15 @@ class EfiSignatureList(object):
         if not isinstance(esl, EfiSignatureList):
             raise Exception("Parameter 1 'esl' must be of type EfiSignatureList")
 
-        if(self.SignatureType != esl.SignatureType):
+        if (self.SignatureType != esl.SignatureType):
             raise Exception("Signature Types must match")
 
-        if(self.SignatureHeaderSize > 0
+        if (self.SignatureHeaderSize > 0
            or esl.SignatureHeaderSize > 0):
             raise Exception("Merge does not support Signature Headers")
         self.SignatureHeaderSize = 0
 
-        if(esl.SignatureListSize == EfiSignatureList.STATIC_STRUCT_SIZE):
+        if (esl.SignatureListSize == EfiSignatureList.STATIC_STRUCT_SIZE):
             # supplied EfiSignatureList is empty, return
             return
 
@@ -482,7 +482,7 @@ class EfiSignatureList(object):
         if not FixedSizeData:
             raise Exception("Can only merge EfiSignatureLists with fixed-size data elements")
 
-        if(self.SignatureData_List is None):
+        if (self.SignatureData_List is None):
             self.SignatureData_List = []
             self.SignatureSize = esl.SignatureSize
 
@@ -508,13 +508,13 @@ class EfiSignatureList(object):
         dupes.SignatureData_List = []
 
         # if nothing to sort, return the empty dupe list
-        if(self.SignatureData_List is None
+        if (self.SignatureData_List is None
            or len(self.SignatureData_List) == 1):
             return dupes
 
         self.SignatureData_List.sort(key=attrgetter('SignatureData'))
 
-        if(deduplicate is False):
+        if (deduplicate is False):
             return dupes  # return empty dupe list without performing deduplicate
 
         # perform deduplicate on self
@@ -530,7 +530,7 @@ class EfiSignatureList(object):
                 last = i
 
         # only initialize dupes.SignatureSize if duplicate elements are present
-        if(len(dupes.SignatureData_List) > 0):
+        if (len(dupes.SignatureData_List) > 0):
             dupes.SignatureSize = self.SignatureSize
 
         return dupes
@@ -551,7 +551,7 @@ class EfiSignatureDatabase(object):
             self.EslList = [] if EslList is None else EslList
 
     def PopulateFromFileStream(self, fs: BinaryIO):
-        if(fs is None):
+        if (fs is None):
             raise Exception("Invalid File Stream")
         self.EslList = []
         begin = fs.tell()
@@ -567,7 +567,7 @@ class EfiSignatureDatabase(object):
             Esl.Print(compact=compact)
 
     def Write(self, fs):
-        if(fs is None):
+        if (fs is None):
             raise Exception("Invalid File Output Stream")
         for Esl in self.EslList:
             Esl.Write(fs)
@@ -596,15 +596,15 @@ class EfiSignatureDatabase(object):
         x509eslList = None
 
         for Esl in self.EslList:
-            if(Esl.SignatureData_List is None):  # discard empty EfiSignatureLists
+            if (Esl.SignatureData_List is None):  # discard empty EfiSignatureLists
                 continue
-            if(Esl.SignatureType == EfiSignatureDataFactory.EFI_CERT_SHA256_GUID):
-                if(sha256esl is None):
+            if (Esl.SignatureType == EfiSignatureDataFactory.EFI_CERT_SHA256_GUID):
+                if (sha256esl is None):
                     sha256esl = Esl  # initialize it
                 else:
                     sha256esl.MergeSignatureList(Esl)
-            elif(Esl.SignatureType == EfiSignatureDataFactory.EFI_CERT_X509_GUID):
-                if(x509eslList is None):
+            elif (Esl.SignatureType == EfiSignatureDataFactory.EFI_CERT_X509_GUID):
+                if (x509eslList is None):
                     x509eslList = [Esl]  # initialize it
                 else:
                     x509eslList.append(Esl)
@@ -619,12 +619,12 @@ class EfiSignatureDatabase(object):
         canonicalDb = EfiSignatureDatabase()
         duplicatesDb = EfiSignatureDatabase()
 
-        if(sha256esl is not None):
+        if (sha256esl is not None):
             dupes = sha256esl.SortBySignatureDataValue(deduplicate=True)
             canonicalDb.EslList.append(sha256esl)
             duplicatesDb.EslList.append(dupes)
 
-        if(x509eslList is not None):
+        if (x509eslList is not None):
             x509eslList.sort(key=attrgetter('SignatureData_List'))
             for esl in x509eslList:
                 if not canonicalDb.EslList:
@@ -652,13 +652,13 @@ class EfiTime(object):
 
     def __init__(self, Time=datetime.datetime.now(), decodefs=None):
 
-        if(decodefs is None):
+        if (decodefs is None):
             self.Time = Time
         else:
             self.PopulateFromFileStream(decodefs)
 
     def PopulateFromFileStream(self, fs):
-        if(fs is None):
+        if (fs is None):
             raise Exception("Invalid File Steam")
 
         # only populate from file stream those parts that are complete in the file stream
@@ -667,7 +667,7 @@ class EfiTime(object):
         end = fs.tell()
         fs.seek(start)
 
-        if((end - start) < EfiTime.STATIC_STRUCT_SIZE):  # size of the static structure data
+        if ((end - start) < EfiTime.STATIC_STRUCT_SIZE):  # size of the static structure data
             raise Exception("Invalid file stream size")
 
         Year = struct.unpack("<H", fs.read(2))[0]
@@ -691,7 +691,7 @@ class EfiTime(object):
         print("EfiTime: %s" % datetime.datetime.strftime(self.Time, "%A, %B %d, %Y %I:%M%p"))
 
     def Write(self, fs):
-        if(fs is None):
+        if (fs is None):
             raise Exception("Invalid File Output Stream")
 
         fs.write(struct.pack("<H", self.Time.year))
@@ -710,7 +710,7 @@ class EfiTime(object):
 class EFiVariableAuthentication2(object):
 
     def __init__(self, Time=datetime.datetime.now(), decodefs=None):
-        if(decodefs is None):
+        if (decodefs is None):
             self.EfiTime = EfiTime(Time=Time)
             self.AuthInfo = WinCertUefiGuid()
             self.Payload = None
@@ -720,7 +720,7 @@ class EFiVariableAuthentication2(object):
             self.PopulateFromFileStream(decodefs)
 
     def PopulateFromFileStream(self, fs):
-        if(fs is None):
+        if (fs is None):
             raise Exception("Invalid File Steam")
         self.EfiTime = EfiTime(decodefs=fs)
         self.AuthInfo = WinCert.Factory(fs)
@@ -734,27 +734,27 @@ class EFiVariableAuthentication2(object):
         self.EfiTime.Print()
         self.AuthInfo.Print()
         print("-------------------- VARIABLE PAYLOAD --------------------")
-        if(self.SigListPayload is not None):
+        if (self.SigListPayload is not None):
             self.SigListPayload.Print()
 
-        elif(self.Payload is not None):
+        elif (self.Payload is not None):
             print("Raw Data: ")
             sdl = self.Payload.tolist()
-            if(self.PayloadSize != len(sdl)):
+            if (self.PayloadSize != len(sdl)):
                 raise Exception("Invalid Payload Data Size vs Length of data")
             PrintByteList(sdl)
 
     def Write(self, fs):
-        if(fs is None):
+        if (fs is None):
             raise Exception("Invalid File Output Stream")
 
         self.EfiTime.Write(fs)
         self.AuthInfo.Write(fs)
-        if(self.Payload is not None):
+        if (self.Payload is not None):
             fs.write(self.Payload)
 
     def SetPayload(self, fs):
-        if(fs is None):
+        if (fs is None):
             raise Exception("Invalid File Input Stream")
 
         # Find the payload size
@@ -763,7 +763,7 @@ class EFiVariableAuthentication2(object):
         end = fs.tell()
         fs.seek(start)
         self.PayloadSize = end - start
-        if(self.PayloadSize == 0):
+        if (self.PayloadSize == 0):
             logging.debug("No Payload for this EfiVariableAuthenticated2 Object")
             return
 
