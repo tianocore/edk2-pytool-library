@@ -38,11 +38,11 @@ class CatGenerator(object):
     @Arch.setter
     def Arch(self, value):
         value = value.lower()
-        if(value == "x64") or (value == "amd64"):  # support amd64 value so INF and CAT tools can use same arch value
+        if (value == "x64") or (value == "amd64"):  # support amd64 value so INF and CAT tools can use same arch value
             self._arch = "X64"
-        elif(value == "arm"):
+        elif (value == "arm"):
             self._arch = "ARM"
-        elif(value == "arm64") or (value == "aarch64"):  # support UEFI defined aarch64 value as well
+        elif (value == "arm64") or (value == "aarch64"):  # support UEFI defined aarch64 value as well
             self._arch = "ARM64"
         else:
             logging.critical("Unsupported Architecture: %s", value)
@@ -55,14 +55,14 @@ class CatGenerator(object):
     @OperatingSystem.setter
     def OperatingSystem(self, value):
         key = value.lower()
-        if(key not in CatGenerator.SUPPORTED_OS.keys()):
+        if (key not in CatGenerator.SUPPORTED_OS.keys()):
             logging.critical("Unsupported Operating System: %s", key)
             raise ValueError("Unsupported Operating System")
         self._operatingsystem = CatGenerator.SUPPORTED_OS[key]
 
     def MakeCat(self, OutputCatFile, PathToInf2CatTool=None):
         # Find Inf2Cat tool
-        if(PathToInf2CatTool is None):
+        if (PathToInf2CatTool is None):
             PathToInf2CatTool = FindToolInWinSdk("Inf2Cat.exe")
         # check if exists
         if PathToInf2CatTool is None or not os.path.exists(PathToInf2CatTool):
@@ -73,9 +73,9 @@ class CatGenerator(object):
         # Make Cat file
         cmd = "/driver:. /os:" + self.OperatingSystem + "_" + self.Arch + " /verbose /uselocaltime"
         ret = RunCmd(PathToInf2CatTool, cmd, workingdir=OutputFolder)
-        if(ret != 0):
+        if (ret != 0):
             raise Exception("Creating Cat file Failed with errorcode %d" % ret)
-        if(not os.path.isfile(OutputCatFile)):
+        if (not os.path.isfile(OutputCatFile)):
             raise Exception("CAT file (%s) not created" % OutputCatFile)
 
         return 0

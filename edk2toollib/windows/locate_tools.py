@@ -124,9 +124,9 @@ def FindWithVsWhere(products: str = "*", vs_version: str = None):
     if vs_where_path is None:
         logging.warning("We weren't able to find VSWhere")
         return (1, None)
-    if(products is not None):
+    if (products is not None):
         cmd += " -products " + products
-    if(vs_version is not None):
+    if (vs_version is not None):
         vs_version = vs_version.lower()
         if vs_version in supported_vs_versions.keys():
             cmd += " -version " + supported_vs_versions[vs_version]
@@ -135,12 +135,12 @@ def FindWithVsWhere(products: str = "*", vs_version: str = None):
             return (2, None)
     a = StringIO()
     ret = RunCmd(vs_where_path, cmd, outstream=a)
-    if(ret != 0):
+    if (ret != 0):
         a.close()
         return (ret, None)
     p1 = a.getvalue().strip()
     a.close()
-    if(len(p1.strip()) > 0):
+    if (len(p1.strip()) > 0):
         return (0, p1)
     return (ret, None)
 

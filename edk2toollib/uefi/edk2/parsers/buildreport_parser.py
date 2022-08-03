@@ -55,17 +55,17 @@ class ModuleSummary(object):
                     nextLineSection = False
 
                 # parse section header
-                elif(nextLineSection):
+                elif (nextLineSection):
                     nextLineSection = False
-                    if(line == "Library"):
+                    if (line == "Library"):
                         inLibSection = True
                         i += 1  # add additional line to skip the dashed line
 
-                    elif(line == "PCD"):
+                    elif (line == "PCD"):
                         inPcdSection = True
                         i += 1  # add additional line to skip the dashed line
 
-                    elif(line == "Final Dependency Expression (DEPEX) Instructions"):
+                    elif (line == "Final Dependency Expression (DEPEX) Instructions"):
                         inDepSection = True
                         i += 1  # add additional line to skip the dashed line
                     else:
@@ -76,11 +76,11 @@ class ModuleSummary(object):
 
                 # Normal section parsing
                 else:
-                    if(inLibSection):
+                    if (inLibSection):
                         logging.debug("InLibSection: %s" % line)
                         # get the whole statement library class statement
                         templine = line.strip()
-                        while('}' not in templine):
+                        while ('}' not in templine):
                             i += 1
                             templine += self._RawContent[i].strip()
 
@@ -93,29 +93,29 @@ class ModuleSummary(object):
 
                         # Take absolute path and convert to EDK build path
                         RelativePath = pathConverter.GetEdk2RelativePathFromAbsolutePath(lib_instance)
-                        if(RelativePath is not None):
+                        if (RelativePath is not None):
                             self.Libraries[lib_class] = RelativePath
                         else:
                             self.Libraries[lib_class] = lib_instance
                         i += 1
                         continue
 
-                    elif(inPcdSection):
+                    elif (inPcdSection):
                         # this is the namespace token line
-                        if(len(line.split()) == 1):
+                        if (len(line.split()) == 1):
                             tokenspace = line
 
                         # this is the main line of the PCD value
-                        elif(line.count("=") == 1 and line.count(":") == 1):
-                            while(line.count("\"") % 2) != 0:
+                        elif (line.count("=") == 1 and line.count(":") == 1):
+                            while (line.count("\"") % 2) != 0:
                                 i += 1
                                 line += " " + self._RawContent[i].rstrip()
-                            while(line.count('{') != line.count('}')):
+                            while (line.count('{') != line.count('}')):
                                 i += 1
                                 line += " " + self._RawContent[i].rstrip()
 
                             token = line.partition('=')[2]
-                            if(line.partition(':')[0].split() == []):
+                            if (line.partition(':')[0].split() == []):
                                 token2 = ""
                             else:
                                 token2 = line.partition(':')[0].split()[-1]
@@ -123,33 +123,33 @@ class ModuleSummary(object):
 
                         # this is the secondary lines of PCD values showing Defaults
                         elif line.count(":") == 0 and line.count("=") == 1:
-                            while(line.count("\"") % 2) != 0:
+                            while (line.count("\"") % 2) != 0:
                                 i += 1
                                 line += self._RawContent[i].rstrip()
 
-                    elif(inDepSection):
+                    elif (inDepSection):
                         pass
                         # not implemented right now
 
                     else:
                         # not in section...Must be header section
                         line_partitioned = line.partition(':')
-                        if(line_partitioned[2] == ""):
+                        if (line_partitioned[2] == ""):
                             pass  # not a name: value pair
                         else:
                             key = line_partitioned[0].strip().lower()
                             value = line_partitioned[2].strip()
-                            if(key == "module name"):
+                            if (key == "module name"):
                                 logging.debug("Parsing Mod: %s" % value)
                                 self.Name = value
-                            elif(key == "module inf path"):
-                                while(".inf" not in value.lower()):
+                            elif (key == "module inf path"):
+                                while (".inf" not in value.lower()):
                                     i += 1
                                     value += self._RawContent[i].strip()
                                 self.InfPath = value.replace("\\", "/")
-                            elif(key == "file guid"):
+                            elif (key == "file guid"):
                                 self.Guid = value
-                            elif(key == "driver type"):
+                            elif (key == "driver type"):
                                 value = value.strip()
                                 self.Type = value[value.index('(') + 1:-1]
 
@@ -187,7 +187,7 @@ class BuildReport(object):
         self.PackagePathList = []
         for a in packagepathcsv.split(","):
             a = a.strip()
-            if(len(a) > 0):
+            if (len(a) > 0):
                 self.PackagePathList.append(a)
         self.ProtectedWords = protectedWordsDict
         self.PathConverter = pu.Edk2Path(self.Workspace, self.PackagePathList)
@@ -197,7 +197,7 @@ class BuildReport(object):
     # to get the layout, lists, and dictionaries setup.
     #
     def BasicParse(self):
-        if(not os.path.isfile(self.ReportFile)):
+        if (not os.path.isfile(self.ReportFile)):
             raise Exception("Report File path invalid!")
 
         # read report
@@ -219,7 +219,7 @@ class BuildReport(object):
         # fail but it doesn't seem critical
         #
         linenum = self._GetNextRegionStart(0)
-        while(linenum is not None):
+        while (linenum is not None):
             start = linenum
             end = self._GetEndOfRegion(start)
             type = self._GetRegionType(start)
@@ -235,24 +235,24 @@ class BuildReport(object):
         for n in range(0, self._Regions[0][1]):  # loop thru from 0 to start of first region
             line = self._ReportContents[n].strip()
             line_partitioned = line.partition(':')
-            if(line_partitioned[2] == ""):
+            if (line_partitioned[2] == ""):
                 continue
 
             key = line_partitioned[0].strip().lower()
             value = line_partitioned[2].strip()
 
-            if(key == "platform name"):
+            if (key == "platform name"):
                 self.PlatformName = value
-            elif(key == "platform dsc path"):
+            elif (key == "platform dsc path"):
                 self.DscPath = value
-            elif(key == "output path"):
+            elif (key == "output path"):
                 self.BuildOutputDir = value
 
         #
         # now for each module summary
         # parse it
         for r in self._Regions:
-            if(r[0] == BuildReport.RegionTypes.MODULE):
+            if (r[0] == BuildReport.RegionTypes.MODULE):
                 mod = ModuleSummary(self._ReportContents[r[1]:r[2]], self.Workspace, self.PackagePathList)
                 mod.Parse()
                 self.Modules[mod.Guid] = mod
@@ -260,12 +260,12 @@ class BuildReport(object):
         # now that all modules are parsed lets parse the FD region so we can get the FV name for each module
         for r in self._Regions:
             # if FD region parse out all INFs in the all of the flash
-            if(r[0] == BuildReport.RegionTypes.FD):
+            if (r[0] == BuildReport.RegionTypes.FD):
                 self._ParseFdRegionForModules(self._ReportContents[r[1]:r[2]])
 
     def FindComponentByInfPath(self, InfPath):
         for (k, v) in self.Modules.items():
-            if(v.InfPath.lower() == InfPath.lower()):
+            if (v.InfPath.lower() == InfPath.lower()):
                 logging.debug("Found Module by InfPath: %s" % InfPath)
                 return v
 
@@ -293,7 +293,7 @@ class BuildReport(object):
 
                 # Take absolute path and convert to EDK build path
                 RelativePath = self.PathConverter.GetEdk2RelativePathFromAbsolutePath(i)
-                if(RelativePath is not None):
+                if (RelativePath is not None):
                     comp = self.FindComponentByInfPath(RelativePath)
                     if comp is not None:
                         comp.FvName = FvName
@@ -315,7 +315,7 @@ class BuildReport(object):
     #
     def _GetNextRegionStart(self, number):
         lineNumber = number
-        while(lineNumber < len(self._ReportContents)):
+        while (lineNumber < len(self._ReportContents)):
             if self._ReportContents[lineNumber] == ">======================================================================================================================<":  # noqa: E501
                 return lineNumber + 1
             lineNumber += 1
@@ -328,7 +328,7 @@ class BuildReport(object):
     #
     def _GetEndOfRegion(self, number):
         lineNumber = number
-        while(lineNumber < len(self._ReportContents)):
+        while (lineNumber < len(self._ReportContents)):
             if self._ReportContents[lineNumber] == "<======================================================================================================================>":  # noqa: E501
                 return lineNumber - 1
             lineNumber += 1
@@ -339,11 +339,11 @@ class BuildReport(object):
 
     def _GetRegionType(self, lineNumber):
         line = self._ReportContents[lineNumber].strip()
-        if(line == "Firmware Device (FD)"):
+        if (line == "Firmware Device (FD)"):
             return BuildReport.RegionTypes.FD
-        elif(line == "Platform Configuration Database Report"):
+        elif (line == "Platform Configuration Database Report"):
             return BuildReport.RegionTypes.PCD
-        elif(line == "Module Summary"):
+        elif (line == "Module Summary"):
             return BuildReport.RegionTypes.MODULE
         else:
             return BuildReport.RegionTypes.UNKNOWN

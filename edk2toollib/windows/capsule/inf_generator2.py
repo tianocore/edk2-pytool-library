@@ -60,7 +60,7 @@ class InfHeader(object):
     @VersionStr.setter
     def VersionStr(self, value):
         c = value.count(".")
-        if(c < 1) or (c > 3):
+        if (c < 1) or (c > 3):
             raise ValueError("VersionString must be in format of xx.xx -> xx.xx.xx.xx")
         self._versionstr = value
 
@@ -79,7 +79,7 @@ class InfHeader(object):
     @Arch.setter
     def Arch(self, value):
         key = value.lower()
-        if(key not in SUPPORTED_ARCH.keys()):
+        if (key not in SUPPORTED_ARCH.keys()):
             raise ValueError("Unsupported Architecture")
         self._arch = SUPPORTED_ARCH[key]
 
@@ -227,7 +227,7 @@ class InfFirmwareSections(object):
     @Arch.setter
     def Arch(self, value):
         key = value.lower()
-        if(key not in SUPPORTED_ARCH.keys()):
+        if (key not in SUPPORTED_ARCH.keys()):
             raise ValueError("Unsupported Architecture")
         self._arch = SUPPORTED_ARCH[key]
 

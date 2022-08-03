@@ -110,7 +110,7 @@ class GuidParser():
           Failure: empty string ''
         """
         guidstring = guidstring.strip().strip('} {')
-        if(not cls.is_guid_in_reg_format(guidstring)):
+        if (not cls.is_guid_in_reg_format(guidstring)):
             return ''
 
         GuidList = guidstring.split('-')
@@ -127,9 +127,9 @@ class GuidParser():
     def uuid_from_guidstring(cls, guidstring: str) -> uuid.UUID:
         """ create a uuid object from the supplied guidstring"""
 
-        if(cls.is_guid_in_c_format(guidstring)):
+        if (cls.is_guid_in_c_format(guidstring)):
             return uuid.UUID(cls.reg_guid_from_c_format(guidstring))
-        elif(cls.is_guid_in_reg_format(guidstring)):
+        elif (cls.is_guid_in_reg_format(guidstring)):
             guidstring = guidstring.strip().strip('} {')
             return uuid.UUID(guidstring)
         else:
