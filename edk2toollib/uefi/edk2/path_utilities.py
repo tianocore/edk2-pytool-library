@@ -94,10 +94,9 @@ class Edk2Path(object):
             if temp_path is temp_path.parent:
                 return None
             temp_path = temp_path.parent
-
-        package = self.GetContainingPackage(abspath)
+        package = self.GetContainingPackage(temp_path)
         if package is not None:
-            relpath = abspath[str(temp_path).find(package):]
+            relpath = abspath[str(abspath).find(package):]
             relpath = relpath.replace(os.sep, "/")
             return relpath.lstrip("/")
         else:
@@ -161,9 +160,12 @@ class Edk2Path(object):
                 return None
 
         # InputPath is in workspace or PackagesPath for worst case scenario.
-
-        dirpathprevious = os.path.dirname(InputPath)
-        dirpath = os.path.dirname(InputPath)
+        if os.path.isdir(InputPath):
+            dirpathprevious = str(InputPath)
+            dirpath = str(InputPath)
+        else:
+            dirpathprevious = os.path.dirname(InputPath)
+            dirpath = os.path.dirname(InputPath)
         for _ in range(100):  # 100 is just a counter to avoid infinite loops.  Path nodes are unlikely to exceed 100
             #
             # Check for a DEC file in this folder
