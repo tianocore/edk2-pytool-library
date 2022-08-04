@@ -534,6 +534,14 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_pkg_abs, "module2", "X64", "TestFile.c")
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{ws_p_name}/module2/X64/TestFile.c")
 
+        # Folder in packages path
+        p = os.path.join(pp_pkg_abs, "module2", "X64")
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{pp_p_name}/module2/X64")
+
+        # Folder in workspace
+        p = os.path.join(ws_pkg_abs, "module2", "X64")
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{ws_p_name}/module2/X64")
+
         # file not in workspace
         p = os.path.join(self.tmp, "module2", "X64", "TestFile.c")
         self.assertIsNone(pathobj.GetEdk2RelativePathFromAbsolutePath(p))
@@ -690,6 +698,10 @@ class PathUtilitiesTest(unittest.TestCase):
         # not existant file in packages path
         p = os.path.join(pp_pkg_abs, "module1", "FAKE.INF")
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{pp_p_name}/module1/FAKE.INF")
+
+        # non existant file in non existant directory in packages path
+        p = os.path.join(ws_pkg_abs, "module2", "X64", "FAKE", "FAKE.c")
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{ws_p_name}/module2/X64/FAKE/FAKE.c")
 
         # not existant file in workspace
         p = os.path.join(ws_pkg_abs, "module2", "X64", "FAKE.c")

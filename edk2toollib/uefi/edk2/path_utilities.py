@@ -82,19 +82,39 @@ class Edk2Path(object):
         ''' Given an absolute path return a edk2 path relative
         to workspace or packagespath.
 
-        If not valid return None
+        Note: absolute path must be in the OS specific path form
+        Note: the relative path will be in POSIX-like path form
+
+        @param abspath: absolute path to a file or directory. Path must
+            contain OS specific separator.
+
+        @ret POSIX-like relative path to workspace or packagespath
+        @ret None if path is not valid
         '''
         if abspath is None:
             return None
-
-        # Path does not need to exist; therefore find the first parent
-        # directory that exists and use that to generate the relative path.
+        print(f'JAVA: EDK2RELFROMABS: {abspath}')
+        # If the path does not exist, continue to check the parent directory
+        # until either the path does exist, or we are at the root directory.
+        # This enables path conversion for deleted files
         temp_path = Path(abspath)
         while not temp_path.exists():
             if temp_path is temp_path.parent:
                 return None
             temp_path = temp_path.parent
+
+        print(f'JAVA: TMPPATH: {temp_path}')
         package = self.GetContainingPackage(temp_path)
+        print(f'JAVA: PACKAGE: {package}')
+
+        # The below simply finds the containing package name index in the
+        # filepath and returns everything to the right of that index.
+        #
+        # As an example, take the following:
+        # absolute path C:/root/workspaceroot/packagespath/MyPkg/MyPkg.dec
+        # GetContainingPackage returns MyPkg
+        # The below code finds the index of MyPkg and returns everything
+        # To the right, returning "MyPkg/MyPkg.dec" as the relative path
         if package is not None:
             relpath = abspath[str(abspath).find(package):]
             relpath = relpath.replace(os.sep, "/")
@@ -105,9 +125,11 @@ class Edk2Path(object):
             return None
 
     def GetAbsolutePathOnThisSystemFromEdk2RelativePath(self, relpath, log_errors=True):
-        ''' Given a edk2 relative path return an absolute path to the file
-        in this workspace.
+        ''' Given a edk2 relative path return an absolute path to the file or
+        directory in this workspace.
 
+        Note: The relative path must be in POSIX-like path form
+        Note: The absolute path will return the OS specific path form
         Note: For case insensitive operating systems the case of the input
         relpath will be used for the return value even if it doesn't match
         the case in the filesystem.
@@ -131,16 +153,17 @@ class Edk2Path(object):
 
         return None
 
-    # Find the package this path belongs to using
-    # some Heuristic.  This isn't perfect but at least
-    # identifies the directory consistently
-    #
-    # @param InputPath:  absolute path to a file, directory, or module. Supports both Windows and Linux like paths
-    #
-    # @ret Name of Package that the module is in.
     def GetContainingPackage(self, InputPath):
-        self.logger.debug("GetContainingPackage: %s" % InputPath)
+        ''' Find the package this path belongs to using some Heuristic.  This isn't
+        perfect but at least identifies the directory consistently.
 
+        Note: The inputPath must be in the OS specific path form
+
+        @param InputPath:  absolute path to a file, directory, or module. Supports both Windows and Linux like paths
+
+        @ret Name of Package that the module is in.
+        '''
+        self.logger.debug("GetContainingPackage: %s" % InputPath)
         # Make a list that has the path case normalized for comparison.
         # This only does anything on Windows
         NormCasePackagesPathList = [os.path.normcase(x) for x in self.PackagePathList]
@@ -167,7 +190,7 @@ class Edk2Path(object):
         else:
             dirpathprevious = os.path.dirname(InputPath)
             dirpath = os.path.dirname(InputPath)
-  
+
         # InputPath is in workspace or PackagesPath for worst case scenario.
         for _ in range(100):  # 100 is just a counter to avoid infinite loops.  Path nodes are unlikely to exceed 100
             #
@@ -206,17 +229,20 @@ class Edk2Path(object):
         self.logger.info("Workspace path is : %s" % self.WorkspacePath)
         return None
 
-    # Find the list of modules (infs) that file path is in
-    #
-    # for now just assume any inf in the same dir or if none
-    # then check parent dir.  If InputPath is not in the filesystem
-    # this function will try to return the likely containing module
-    # but if the entire module has been deleted this isn't possible.
-    #
-    # @param InputPath:  absolute path to file
-    #
-    # @ret list of abs path file paths for module infs
     def GetContainingModules(self, InputPath: str) -> list:
+        '''Find the list of modules (infs) that file path is in
+        for now just assume any inf in the same dir or if none
+        then check parent dir.  If InputPath is not in the filesystem
+        this function will try to return the likely containing module
+        but if the entire module has been deleted this isn't possible.
+
+        Note: The inputPath must be in the OS specific path form
+
+        @param InputPath:  absolute path to file
+
+        @ret list of abs path file paths for module infs
+        '''
+
         self.logger.debug("GetContainingModules: %s" % InputPath)
 
         # if INF return self
