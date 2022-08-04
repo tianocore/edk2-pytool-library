@@ -135,7 +135,7 @@ class Edk2Path(object):
     # some Heuristic.  This isn't perfect but at least
     # identifies the directory consistently
     #
-    # @param InputPath:  absolute path to module
+    # @param InputPath:  absolute path to a file, directory, or module. Supports both Windows and Linux like paths
     #
     # @ret Name of Package that the module is in.
     def GetContainingPackage(self, InputPath):
@@ -159,13 +159,16 @@ class Edk2Path(object):
                 self.logger.info("Workspace path is : %s" % self.WorkspacePath)
                 return None
 
-        # InputPath is in workspace or PackagesPath for worst case scenario.
+        # Start the search within the first available directory. If provided InputPath is a directory, start there,
+        # else (if InputPath is a file) move to it's parent directory and start there.
         if os.path.isdir(InputPath):
             dirpathprevious = str(InputPath)
             dirpath = str(InputPath)
         else:
             dirpathprevious = os.path.dirname(InputPath)
             dirpath = os.path.dirname(InputPath)
+  
+        # InputPath is in workspace or PackagesPath for worst case scenario.
         for _ in range(100):  # 100 is just a counter to avoid infinite loops.  Path nodes are unlikely to exceed 100
             #
             # Check for a DEC file in this folder
