@@ -84,7 +84,7 @@ class PropagatingThread(threading.Thread):
 def reader(filepath, outstream, stream, logging_level=logging.INFO, encodingErrors='strict'):
     f = None
     # open file if caller provided path
-    if(filepath):
+    if (filepath):
         f = open(filepath, "w")
 
     (_, encoding) = locale.getdefaultlocale()
@@ -92,15 +92,15 @@ def reader(filepath, outstream, stream, logging_level=logging.INFO, encodingErro
         s = stream.readline().decode(encoding, errors=encodingErrors)
         if not s:
             break
-        if(f is not None):
+        if (f is not None):
             # write to file if caller provided file
             f.write(s)
-        if(outstream is not None):
+        if (outstream is not None):
             # write to stream object if caller provided object
             outstream.write(s)
         logging.log(logging_level, s.rstrip())
     stream.close()
-    if(f is not None):
+    if (f is not None):
         f.close()
 
 
@@ -188,7 +188,7 @@ def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstre
     logging.log(logging_level, "------------------------------------------------")
     c = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                          cwd=workingdir, shell=True, env=environ, close_fds=close_fds)
-    if(capture):
+    if (capture):
         thread = PropagatingThread(target=reader, args=(outfile, outstream, c.stdout, logging_level, encodingErrors))
         thread.start()
         c.wait()
@@ -235,9 +235,9 @@ def RunPythonScript(pythonfile, params, capture=True, workingdir=None, outfile=N
         pythonfile = '"' + pythonfile + '"'
     params.strip()
     logging.debug("RunPythonScript: {0} {1}".format(pythonfile, params))
-    if(os.path.isabs(pythonfile)):
+    if (os.path.isabs(pythonfile)):
         logging.debug("Python Script was given as absolute path: %s" % pythonfile)
-    elif(os.path.isfile(os.path.join(os.getcwd(), pythonfile))):
+    elif (os.path.isfile(os.path.join(os.getcwd(), pythonfile))):
         pythonfile = os.path.join(os.getcwd(), pythonfile)
         logging.debug("Python Script was given as relative path: %s" % pythonfile)
     else:
@@ -287,11 +287,11 @@ def DetachedSignWithSignTool(SignToolPath, ToSignFilePath, SignatureOutputFile, 
         params = params + ' /p ' + PfxPass
     params = params + ' /debug /v "' + ToSignFilePath + '" '
     ret = RunCmd(SignToolPath, params)
-    if(ret != 0):
+    if (ret != 0):
         logging.error("Signtool failed %d" % ret)
         return ret
     signedfile = os.path.join(OutputDir, os.path.basename(ToSignFilePath) + ".p7")
-    if(not os.path.isfile(signedfile)):
+    if (not os.path.isfile(signedfile)):
         raise Exception("Output file doesn't exist %s" % signedfile)
 
     shutil.move(signedfile, SignatureOutputFile)
@@ -326,7 +326,7 @@ def CatalogSignWithSignTool(SignToolPath, ToSignFilePath, PfxFilePath, PfxPass=N
         params = params + ' /p ' + PfxPass
     params = params + ' /debug /v "' + ToSignFilePath + '" '
     ret = RunCmd(SignToolPath, params, workingdir=OutputDir)
-    if(ret != 0):
+    if (ret != 0):
         logging.error("Signtool failed %d" % ret)
     return ret
 
@@ -339,41 +339,41 @@ def PrintByteList(ByteList, IncludeAscii=True, IncludeOffset=True, IncludeHexSep
     Ascii = ""
     for index in range(len(ByteList)):
         # Start of New Line
-        if(index % 16 == 0):
-            if(IncludeOffset):
+        if (index % 16 == 0):
+            if (IncludeOffset):
                 print("0x%04X -" % (index + OffsetStart), end='')
 
         # Midpoint of a Line
-        if(index % 16 == 8):
-            if(IncludeHexSep):
+        if (index % 16 == 8):
+            if (IncludeHexSep):
                 print(" -", end='')
 
         # Print As Hex Byte
         print(" 0x%02X" % ByteList[index], end='')
 
         # Prepare to Print As Ascii
-        if(ByteList[index] < 0x20) or (ByteList[index] > 0x7E):
+        if (ByteList[index] < 0x20) or (ByteList[index] > 0x7E):
             Ascii += "."
         else:
             Ascii += ("%c" % ByteList[index])
 
         # End of Line
-        if(index % 16 == 15):
-            if(IncludeAscii):
+        if (index % 16 == 15):
+            if (IncludeAscii):
                 print(" %s" % Ascii, end='')
             Ascii = ""
             print("")
 
     # Done - Lets check if we have partial
-    if(index % 16 != 15):
+    if (index % 16 != 15):
         # Lets print any partial line of ascii
-        if(IncludeAscii) and (Ascii != ""):
+        if (IncludeAscii) and (Ascii != ""):
             # Pad out to the correct spot
 
-            while(index % 16 != 15):
+            while (index % 16 != 15):
                 print("     ", end='')
-                if(index % 16 == 7):  # account for the - symbol in the hex dump
-                    if(IncludeOffset):
+                if (index % 16 == 7):  # account for the - symbol in the hex dump
+                    if (IncludeOffset):
                         print("  ", end='')
                 index += 1
             # print the ascii partial line

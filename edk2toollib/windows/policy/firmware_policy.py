@@ -570,11 +570,11 @@ class FirmwarePolicy(object):
         fs.seek(begin)
         size = end - begin
 
-        if(size < self.POLICY_BLOB_MIN_SIZE):
+        if (size < self.POLICY_BLOB_MIN_SIZE):
             raise Exception('Policy is too small')
 
         self.FormatVersion = struct.unpack('<H', fs.read(2))[0]
-        if(self.FormatVersion > self.POLICY_FORMAT_VERSION):
+        if (self.FormatVersion > self.POLICY_FORMAT_VERSION):
             print("Policy Format Version %x is not supported" %
                   self.FormatVersion)
             raise Exception('Policy Format Version is newer than supported')

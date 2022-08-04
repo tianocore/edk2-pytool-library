@@ -29,7 +29,7 @@ class FdfParser(HashFileParser):
         self.CurrentLine += 1
         sline = self.StripComment(line)
 
-        if(sline is None or len(sline) < 1):
+        if (sline is None or len(sline) < 1):
             return self.GetNextLine()
 
         sline = self.ReplaceVariables(sline)
@@ -52,7 +52,7 @@ class FdfParser(HashFileParser):
 
     def ParseFile(self, filepath):
         self.Logger.debug("Parsing file: %s" % filepath)
-        if(not os.path.isabs(filepath)):
+        if (not os.path.isabs(filepath)):
             fp = self.FindPath(filepath)
         else:
             fp = filepath

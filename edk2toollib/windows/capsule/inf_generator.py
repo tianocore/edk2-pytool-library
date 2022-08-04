@@ -124,7 +124,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
 
     @property
     def Manufacturer(self):
-        if(self._manufacturer is None):
+        if (self._manufacturer is None):
             return self.Provider
 
         return self._manufacturer
@@ -158,7 +158,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
     @VersionString.setter
     def VersionString(self, value):
         c = value.count(".")
-        if(c < 1) or (c > 3):
+        if (c < 1) or (c > 3):
             logging.critical("Version string in invalid format.")
             raise ValueError("VersionString must be in format of xx.xx -> xx.xx.xx.xx")
         self._versionstring = value
@@ -170,7 +170,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
     @VersionHex.setter
     def VersionHex(self, value):
         a = int(value, 0)
-        if(a > 0xFFFFFFFF):
+        if (a > 0xFFFFFFFF):
             logging.critical("VersionHex invalid: '%s'", value)
             raise ValueError("VersionHex must fit within 32bit value range for unsigned integer")
         self._versionhex = a
@@ -182,7 +182,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
     @Arch.setter
     def Arch(self, value):
         key = value.lower()
-        if(key not in InfGenerator.SUPPORTED_ARCH.keys()):
+        if (key not in InfGenerator.SUPPORTED_ARCH.keys()):
             logging.critical("Arch invalid: '%s'", value)
             raise ValueError("Unsupported Architecture")
         self._arch = InfGenerator.SUPPORTED_ARCH[key]
@@ -193,7 +193,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
 
     @Date.setter
     def Date(self, value):
-        if(not isinstance(value, datetime.date)):
+        if (not isinstance(value, datetime.date)):
             raise ValueError("Date must be a datetime.date object")
         self._date = value
 
@@ -207,7 +207,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
 
     def MakeInf(self, OutputInfFilePath, FirmwareBinFileName, Rollback=False):
         RollbackString = ""
-        if(Rollback):
+        if (Rollback):
             RollbackString = InfGenerator.ROLLBACKTEMPLATE.format(EsrtGuid=self.EsrtGuid)
 
         binfilename = os.path.basename(FirmwareBinFileName)

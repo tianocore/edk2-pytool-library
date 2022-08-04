@@ -32,22 +32,22 @@ class Edk2Path(object):
 
         self.WorkspacePath = ws
         self.logger = logging.getLogger("Edk2Path")
-        if(not os.path.isabs(ws)):
+        if (not os.path.isabs(ws)):
             self.WorkspacePath = os.path.abspath(os.path.join(os.getcwd(), ws))
 
-        if(not os.path.isdir(self.WorkspacePath)):
+        if (not os.path.isdir(self.WorkspacePath)):
             self.logger.error("Workspace path invalid.  {0}".format(ws))
             raise Exception("Workspace path invalid.  {0}".format(ws))
 
         # Set PackagePath
         self.PackagePathList = list()
         for a in packagepathlist:
-            if(os.path.isabs(a)):
+            if (os.path.isabs(a)):
                 self.PackagePathList.append(a)
             else:
                 # see if workspace relative
                 wsr = os.path.join(ws, a)
-                if(os.path.isdir(wsr)):
+                if (os.path.isdir(wsr)):
                     self.PackagePathList.append(wsr)
                 else:
                     # assume current working dir relative.  Will catch invalid dir when checking whole list
@@ -55,14 +55,14 @@ class Edk2Path(object):
 
         error = False
         for a in self.PackagePathList[:]:
-            if(not os.path.isdir(a)):
+            if (not os.path.isdir(a)):
                 self.logger.log(logging.ERROR if error_on_invalid_pp else logging.WARNING,
                                 "Invalid package path entry {0}".format(a))
                 self.PackagePathList.remove(a)  # remove invalid path
                 error = True
 
         # report error
-        if(error and error_on_invalid_pp):
+        if (error and error_on_invalid_pp):
             raise Exception("Invalid package path directory(s)")
 
         # for each package path, trace from packagepath to the
@@ -123,7 +123,7 @@ class Edk2Path(object):
 
         for a in self.PackagePathList:
             abspath = os.path.join(a, relpath)
-            if(os.path.exists(abspath)):
+            if (os.path.exists(abspath)):
                 return abspath
         if log_errors:
             self.logger.error("Failed to convert Edk2Relative Path to an Absolute Path on this system.")
@@ -153,7 +153,7 @@ class Edk2Path(object):
                 if p in os.path.normcase(InputPath):
                     found_in_pp = True
                     break
-            if(not found_in_pp):
+            if (not found_in_pp):
                 self.logger.error(f"{InputPath} not in code tree")
                 self.logger.info("PackagePath is: %s" % os.pathsep.join(self.PackagePathList))
                 self.logger.info("Workspace path is : %s" % self.WorkspacePath)
@@ -244,7 +244,7 @@ class Edk2Path(object):
         #   x64/
         #     file.c
         #
-        if(len(modules) == 0):
+        if (len(modules) == 0):
             dirpath = os.path.dirname(dirpath)
             if os.path.isdir(dirpath):
                 for f in os.listdir(dirpath):
