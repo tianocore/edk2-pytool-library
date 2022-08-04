@@ -93,7 +93,6 @@ class Edk2Path(object):
         '''
         if abspath is None:
             return None
-        print(f'JAVA: EDK2RELFROMABS: {abspath}')
         # If the path does not exist, continue to check the parent directory
         # until either the path does exist, or we are at the root directory.
         # This enables path conversion for deleted files
@@ -103,9 +102,7 @@ class Edk2Path(object):
                 return None
             temp_path = temp_path.parent
 
-        print(f'JAVA: TMPPATH: {temp_path}')
         package = self.GetContainingPackage(temp_path)
-        print(f'JAVA: PACKAGE: {package}')
 
         # The below simply finds the containing package name index in the
         # filepath and returns everything to the right of that index.
