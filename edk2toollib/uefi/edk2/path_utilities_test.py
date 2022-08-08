@@ -653,7 +653,7 @@ class PathUtilitiesTest(unittest.TestCase):
         pp2_abs = self._make_edk2_package_helper(folder_pp2_abs, pp2_name)
         p2 = os.path.join(pp2_abs, "module2", "X64", "TestFile2.c")
 
-        pathobj = Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
+        pathobj = Edk2Path(folder_ws_abs, [folder_pp2_abs, folder_pp1_abs])
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p1), f'{pp1_name}/module2/X64/TestFile2.c')
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p2), f'{pp2_name}/module2/X64/TestFile2.c')
 
@@ -718,6 +718,40 @@ class PathUtilitiesTest(unittest.TestCase):
         # not existant file is cwd relative but not absolute path
         p = os.path.join(ws_rel, ws_p_name, "module2", "X64", "FAKE.c")
         self.assertIsNone(pathobj.GetEdk2RelativePathFromAbsolutePath(p))
+
+    def test_get_relative_path_when_package_is_not_directly_inside_packages_path(self):
+        ''' test basic usage of GetEdk2RelativePathFromAbsolutePath when the
+        package is not a direct subfolder of a packagespath, but atleast one
+        folder away.
+
+        File layout:
+
+         root/                  <-- current working directory (self.tmp)
+            folder_ws/           <-- workspace root
+                folder_pp/       <-- packages path
+                    folder_extra/
+                        PPTestPkg/   <-- A edk2 package
+                            PPTestPkg.DEC
+        '''
+        ws_rel = "folder_ws"
+        ws_abs = os.path.join(self.tmp, ws_rel)
+        os.mkdir(ws_abs)
+
+        folder_pp_rel = "folder_pp"
+        folder_pp_abs = os.path.join(ws_abs, folder_pp_rel)
+        os.mkdir(folder_pp_abs)
+
+        folder_extra_rel = "folder_extra"
+        folder_extra_abs = os.path.join(folder_pp_abs, folder_extra_rel)
+        os.mkdir(folder_extra_abs)
+
+        ws_p_name = "PPTestPkg"
+        ws_pkg_abs = self._make_edk2_package_helper(folder_extra_abs, ws_p_name)
+        pathobj = Edk2Path(ws_abs, [folder_pp_abs])
+
+        # not existant file in packages path
+        p = os.path.join(ws_pkg_abs, "PPTestPkg.dec")
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{folder_extra_rel}/{ws_p_name}/{ws_p_name}.dec")
 
     def test_get_absolute_path_on_this_system_from_edk2_relative_path(self):
         ''' test basic usage of GetAbsolutePathOnThisSystemFromEdk2RelativePath with packages path nested

@@ -5,6 +5,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+from operator import truediv
 import os
 import logging
 import fnmatch
@@ -77,8 +78,44 @@ class Edk2Path(object):
                 if len(glob.glob(f'{p}/*dec')) != 0:
                     raise Exception(f'Nested packages not allowed. Pkg path [{package_path}] nested in Package [{p}]')
                 p = p.parent
-
     def GetEdk2RelativePathFromAbsolutePath(self, abspath):
+        if abspath is None:
+            return None
+    
+        relpath = None
+        found = False
+
+        for packagepath in sorted((os.path.normcase(p) for p in self.PackagePathList)):
+        # Search each package path for a match to determine relative path
+        # Multiple matches can occur when a package and package path are in the same directory:
+        # *See path_utilities_test test_get_relative_path_when_folder_is_next_to_package
+        # Due to this we temporarily sort the package path list so that we return the shortest match
+        # The shortest match means the relative path is based off the closest package_path
+            if os.path.normcase(abspath).startswith(packagepath):
+                # found our path... now use original strings to avoid change in case
+                self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using PackagePath")
+                relpath = abspath[len(packagepath):]
+                found = True
+
+
+        if not found and os.path.normcase(abspath).startswith(os.path.normcase(self.WorkspacePath)):
+        # If we didn't find a match, check if path is based on the workspace root
+            self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using WorkspacePath")
+            relpath = abspath[len(self.WorkspacePath):]
+            found = True
+        
+        if found:
+            
+            relpath = relpath.replace(os.sep, "/")
+            self.logger.debug(f'[{abspath}] -> [{relpath.strip("/")}]')
+            return relpath.strip("/")
+        
+        self.logger.error("Failed to convert AbsPath to Edk2Relative Path")
+        self.logger.error(f'AbsolutePath: {abspath}')
+        return None
+
+    #TODO: REMOVE
+    def GetEdk2RelativePathFromAbsolutePath2(self, abspath):
         ''' Given an absolute path return a edk2 path relative
         to workspace or packagespath.
 
