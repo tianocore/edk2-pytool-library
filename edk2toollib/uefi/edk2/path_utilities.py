@@ -101,13 +101,14 @@ class Edk2Path(object):
         # Sort the package paths from from longest to shortest. This handles the case where a package and a package
         # path are in the same directory. See the following path_utilities_test for a detailed explanation of the
         # scenario: test_get_relative_path_when_folder_is_next_to_package
-        for packagepath in sorted((os.path.normcase(p) for p in self.PackagePathList)):
+        for packagepath in sorted((os.path.normcase(p) for p in self.PackagePathList), reverse=True):
 
             # If a match is found, use the original string to avoid change in case
             if os.path.normcase(abspath).startswith(packagepath):
                 self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using PackagePath")
                 relpath = abspath[len(packagepath):]
                 found = True
+                break
 
         # If a match was not found, check if absolute path is based on the workspace root.
         if not found and os.path.normcase(abspath).startswith(os.path.normcase(self.WorkspacePath)):

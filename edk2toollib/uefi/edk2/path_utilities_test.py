@@ -557,6 +557,10 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_rel, ws_p_name, "module2", "X64", "TestFile.c")
         self.assertIsNone(pathobj.GetEdk2RelativePathFromAbsolutePath(p))
 
+        # ensure converted path keeps original capitalization
+        p = os.path.join(ws_pkg_abs, "Module2", "x64", "TESTFILE.C")
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{ws_p_name}/Module2/x64/TESTFILE.C")
+
     def test_get_relative_path_when_packages_path_list_contains_substrings(self):
         ''' test usage of GetEdk2RelativePathFromAbsolutePath when members of PackagePathList contain
         substrings of themselves, for example "MU" and "MU_TIANO"
@@ -623,8 +627,9 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
 
     def test_get_relative_path_when_folder_is_next_to_package(self):
-        ''' test usage of GetEdk2RelativePathFromAbsolutePath when a folder containing a package is
-        in the same directory as a different package.
+        ''' test usage of GetEdk2RelativePathFromAbsolutePath when a folder containing a package is in the same
+        directory as a different package. This test ensures the correct value is returned regardless the order of
+        the package paths.
         file layout:
         root/                      <-- Current working directory
             folder_ws/             <-- Workspace Root
@@ -652,6 +657,10 @@ class PathUtilitiesTest(unittest.TestCase):
         pp2_name = "PPTestPkg2"
         pp2_abs = self._make_edk2_package_helper(folder_pp2_abs, pp2_name)
         p2 = os.path.join(pp2_abs, "module2", "X64", "TestFile2.c")
+
+        pathobj = Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p1), f'{pp1_name}/module2/X64/TestFile2.c')
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p2), f'{pp2_name}/module2/X64/TestFile2.c')
 
         pathobj = Edk2Path(folder_ws_abs, [folder_pp2_abs, folder_pp1_abs])
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p1), f'{pp1_name}/module2/X64/TestFile2.c')
@@ -749,7 +758,6 @@ class PathUtilitiesTest(unittest.TestCase):
         ws_pkg_abs = self._make_edk2_package_helper(folder_extra_abs, ws_p_name)
         pathobj = Edk2Path(ws_abs, [folder_pp_abs])
 
-        # not existant file in packages path
         p = os.path.join(ws_pkg_abs, "PPTestPkg.dec")
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{folder_extra_rel}/{ws_p_name}/{ws_p_name}.dec")
 
