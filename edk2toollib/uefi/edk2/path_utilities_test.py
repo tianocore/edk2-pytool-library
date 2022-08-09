@@ -215,6 +215,13 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_pkg_abs, "testfile.c")
         self.assertEqual(pathobj.GetContainingPackage(p), ws_p_name)
 
+        # directory in WSTestPkg
+        p = os.path.join(ws_pkg_abs, "X64")
+        self.assertEqual(pathobj.GetContainingPackage(p), ws_p_name)
+
+        # WSTestPkg directory itself
+        self.assertEqual(pathobj.GetContainingPackage(ws_pkg_abs), ws_p_name)
+
         # file in module in WSTestPkg
         p = os.path.join(ws_pkg_abs, "module1", "testfile.c")
         self.assertEqual(pathobj.GetContainingPackage(p), ws_p_name)
