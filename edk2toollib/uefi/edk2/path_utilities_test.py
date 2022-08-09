@@ -766,7 +766,8 @@ class PathUtilitiesTest(unittest.TestCase):
         pathobj = Edk2Path(ws_abs, [folder_pp_abs])
 
         p = os.path.join(ws_pkg_abs, "PPTestPkg.dec")
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{folder_extra_rel}/{ws_p_name}/{ws_p_name}.dec")
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p),
+                         f"{folder_extra_rel}/{ws_p_name}/{ws_p_name}.dec")
 
     def test_get_absolute_path_on_this_system_from_edk2_relative_path(self):
         ''' test basic usage of GetAbsolutePathOnThisSystemFromEdk2RelativePath with packages path nested
