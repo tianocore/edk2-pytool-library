@@ -5,7 +5,6 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-from operator import truediv
 import os
 import logging
 import fnmatch
@@ -78,85 +77,53 @@ class Edk2Path(object):
                 if len(glob.glob(f'{p}/*dec')) != 0:
                     raise Exception(f'Nested packages not allowed. Pkg path [{package_path}] nested in Package [{p}]')
                 p = p.parent
+
     def GetEdk2RelativePathFromAbsolutePath(self, abspath):
-        if abspath is None:
-            return None
-    
-        relpath = None
-        found = False
-
-        for packagepath in sorted((os.path.normcase(p) for p in self.PackagePathList)):
-        # Search each package path for a match to determine relative path
-        # Multiple matches can occur when a package and package path are in the same directory:
-        # *See path_utilities_test test_get_relative_path_when_folder_is_next_to_package
-        # Due to this we temporarily sort the package path list so that we return the shortest match
-        # The shortest match means the relative path is based off the closest package_path
-            if os.path.normcase(abspath).startswith(packagepath):
-                # found our path... now use original strings to avoid change in case
-                self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using PackagePath")
-                relpath = abspath[len(packagepath):]
-                found = True
-
-
-        if not found and os.path.normcase(abspath).startswith(os.path.normcase(self.WorkspacePath)):
-        # If we didn't find a match, check if path is based on the workspace root
-            self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using WorkspacePath")
-            relpath = abspath[len(self.WorkspacePath):]
-            found = True
-        
-        if found:
-            
-            relpath = relpath.replace(os.sep, "/")
-            self.logger.debug(f'[{abspath}] -> [{relpath.strip("/")}]')
-            return relpath.strip("/")
-        
-        self.logger.error("Failed to convert AbsPath to Edk2Relative Path")
-        self.logger.error(f'AbsolutePath: {abspath}')
-        return None
-
-    #TODO: REMOVE
-    def GetEdk2RelativePathFromAbsolutePath2(self, abspath):
-        ''' Given an absolute path return a edk2 path relative
-        to workspace or packagespath.
+        ''' Given an absolute path return a edk2 path relative to workspace or packagespath.
 
         Note: absolute path must be in the OS specific path form
         Note: the relative path will be in POSIX-like path form
 
-        @param abspath: absolute path to a file or directory. Path must
-            contain OS specific separator.
+        @param abspath: absolute path to a file or directory. Path must contain OS specific separator.
 
         @ret POSIX-like relative path to workspace or packagespath
         @ret None if path is not valid
         '''
         if abspath is None:
             return None
-        # If the path does not exist, continue to check the parent directory
-        # until either the path does exist, or we are at the root directory.
-        # This enables path conversion for deleted files
-        temp_path = Path(abspath)
-        while not temp_path.exists():
-            if temp_path is temp_path.parent:
-                return None
-            temp_path = temp_path.parent
 
-        package = self.GetContainingPackage(temp_path)
+        relpath = None
+        found = False
 
-        # The below simply finds the containing package name index in the
-        # filepath and returns everything to the right of that index.
+        # Check if the Absolute path starts with any of the package paths. If a match is found, build the relative
+        # path based off that package.
         #
-        # As an example, take the following:
-        # absolute path C:/root/workspaceroot/packagespath/MyPkg/MyPkg.dec
-        # GetContainingPackage returns MyPkg
-        # The below code finds the index of MyPkg and returns everything
-        # To the right, returning "MyPkg/MyPkg.dec" as the relative path
-        if package is not None:
-            relpath = abspath[str(abspath).find(package):]
+        # Sort the package paths from from longest to shortest. This handles the case where a package and a package
+        # path are in the same directory. See the following path_utilities_test for a detailed explanation of the
+        # scenario: test_get_relative_path_when_folder_is_next_to_package
+        for packagepath in sorted((os.path.normcase(p) for p in self.PackagePathList)):
+
+            # If a match is found, use the original string to avoid change in case
+            if os.path.normcase(abspath).startswith(packagepath):
+                self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using PackagePath")
+                relpath = abspath[len(packagepath):]
+                found = True
+
+        # If a match was not found, check if absolute path is based on the workspace root.
+        if not found and os.path.normcase(abspath).startswith(os.path.normcase(self.WorkspacePath)):
+            self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using WorkspacePath")
+            relpath = abspath[len(self.WorkspacePath):]
+            found = True
+
+        if found:
             relpath = relpath.replace(os.sep, "/")
-            return relpath.lstrip("/")
-        else:
-            self.logger.error("Failed to convert AbsPath to Edk2Relative Path")
-            self.logger.error("AbsolutePath: %s" % abspath)
-            return None
+            self.logger.debug(f'[{abspath}] -> [{relpath.strip("/")}]')
+            return relpath.strip("/")
+
+        # Absolute path was not in reference to a package path or the workspace root.
+        self.logger.error("Failed to convert AbsPath to Edk2Relative Path")
+        self.logger.error(f'AbsolutePath: {abspath}')
+        return None
 
     def GetAbsolutePathOnThisSystemFromEdk2RelativePath(self, relpath, log_errors=True):
         ''' Given a edk2 relative path return an absolute path to the file or
