@@ -117,9 +117,9 @@ class Edk2Path(object):
             found = True
 
         if found:
-            relpath = relpath.replace(os.sep, "/")
-            self.logger.debug(f'[{abspath}] -> [{relpath.strip("/")}]')
-            return relpath.strip("/")
+            relpath = relpath.replace(os.sep, "/").strip("/")
+            self.logger.debug(f'[{abspath}] -> [{relpath}]')
+            return relpath
 
         # Absolute path was not in reference to a package path or the workspace root.
         self.logger.error("Failed to convert AbsPath to Edk2Relative Path")
