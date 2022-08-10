@@ -127,11 +127,10 @@ class Edk2Path(object):
         return None
 
     def GetAbsolutePathOnThisSystemFromEdk2RelativePath(self, relpath, log_errors=True):
-        ''' Given a edk2 relative path return an absolute path to the file or
-        directory in this workspace.
+        ''' Given a edk2 relative path return an absolute path to the file in this workspace.
 
         Note: The relative path must be in POSIX-like path form
-        Note: The absolute path will return the OS specific path form
+        Note: The absolute path will be returned as an OS specific path form
         Note: For case insensitive operating systems the case of the input
         relpath will be used for the return value even if it doesn't match
         the case in the filesystem.
