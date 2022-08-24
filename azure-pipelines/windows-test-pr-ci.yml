@@ -1,7 +1,7 @@
 ##
 # Azure Pipeline CI build and PR build
 
-# Copyright (c) 2019, Microsoft Corporation
+# Copyright (c) 2022, Microsoft Corporation
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 resources:
@@ -22,7 +22,7 @@ pr:
 jobs:
 - template: azure-pipelines/templates/build-test-job.yml@pytool_extensions
   parameters:
-    vm_image: 'windows-2019'
+    vm_image: 'windows-2022'
     root_package_folder: "edk2toollib"
     name: 'windows'
     codecov_enabled: true
