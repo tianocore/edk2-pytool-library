@@ -823,11 +823,7 @@ class PathUtilitiesTest(unittest.TestCase):
 
         # pass in bad parameter
         self.assertIsNone(pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(None))
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> bc9f31b (Initial update)
     def test_get_absolute_path_then_relative_path_when_path_contains_repeated_packagepath_name(self):
         ''' Test the back and forth between GetAbsolutePath and GetRelativeFromAbsolute when the
         path structure has multiple instances of a package path
