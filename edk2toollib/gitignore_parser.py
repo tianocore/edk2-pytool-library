@@ -3,6 +3,7 @@ from os.path import dirname, abspath
 import re
 import os
 import collections
+import pprint
 """
 gitignore parser configured to work for edk2-pytool-library
 """
@@ -123,7 +124,13 @@ def rule_from_pattern(pattern, base_path=None, source=None):
         pattern
     )
     if anchored:
-        regex = ''.join(['^', regex])
+        # DeprecationWarning: Flags not at the start of the expression
+        # Must ensure (?ms) is at the front of the regex, so we can no
+        # longer put ^ at the fron.
+        # OLD example: ^(?ms)\.eggs$
+        # NEW Example: (?ms)^\.eggs$
+        # regex = ''.join(['^', regex])
+        regex = regex[:5] + '^' + regex[5:]
     return IgnoreRule(
         pattern=orig_pattern,
         regex=regex,
@@ -177,8 +184,8 @@ def fnmatch_pathname_to_regex(pattern):
     seps = [re.escape(os.sep)]
     if os.altsep is not None:
         seps.append(re.escape(os.altsep))
-    seps_group = '[' + '|'.join(seps) + ']'
-    nonsep = r'[^{}]'.format('|'.join(seps))
+    seps_group = r'[{}]'.format(''.join(seps))
+    nonsep = r'[^{}]'.format(''.join(seps))
 
     res = []
     while i < n:
