@@ -33,82 +33,41 @@ def BuildGitIgnore(root):
 
 class GitIgnoreParserTest(unittest.TestCase):
 
-    def test_filter_directory_at_base(self):
+    def test_gitignoreparser_filter(self):
         '''
-        Ensure the gitignore parser works properly when a rule specifies that
-        a folder at the base of the directory is filtered.
-
-        Example: /Build/
+        Ensure the gitignore parser filters files and folders correctly per
+        what is specified in the parsed .gitignore file.
         '''
         with tempfile.TemporaryDirectory() as root:
 
             gitignore_path = BuildGitIgnore(root)
             rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path)
 
-            # Windows
-            self.assertTrue(rule_tester(f'{root}\\Build'))
-            self.assertFalse(rule_tester(f'{root}\\T\\Build'))
+            # Test a rule which specifies that a specific folder at root is
+            # correctly filtered:
 
-            # Linux
-            self.assertTrue(rule_tester(f'{root}/Build'))
-            self.assertFalse(rule_tester(f'{root}/T\\Build'))
+            # Example line in a .gitignore
+            # /Build/
+            self.assertTrue(rule_tester(os.path.join(root, "Build")))
+            self.assertFalse(rule_tester(os.path.join(root, "T", "Build")))
 
-    def test_filter_directory_at_any_level(self):
-        '''
-        Ensure the gitignore parser works properly when a rule specifies that
-        a folder at any depth from the root directory is filtered.
+            # Test a rule which specifies that a folder at any depth from the
+            # root is correclty filtered:
 
-        Example: **/Test/
-        '''
-        with tempfile.TemporaryDirectory() as root:
+            # Example line in a .gitignore
+            # **/Test/
+            self.assertTrue(rule_tester(os.path.join(root, "Test")))
+            self.assertTrue(rule_tester(os.path.join(root, "T", "Test")))
 
-            gitignore_path = BuildGitIgnore(root)
-            rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path)
+            # Test a rule which specifies that a folder containing a specific
+            # string at any depth is correctly filtered:
 
-            # Windows
-            self.assertTrue(rule_tester(f'{root}\\Test'))
-            self.assertTrue(rule_tester(f'{root}\\T\\Test'))
+            # Example line in a .gitignore
+            # *_extdep
+            self.assertTrue(rule_tester(os.path.join(root, 'test_extdep')))
+            self.assertTrue(rule_tester(os.path.join(root, 'T', 'test_extdep')))
 
-            # Linux
-            self.assertTrue(rule_tester(f'{root}/Test'))
-            self.assertTrue(rule_tester(f'{root}/T/Test'))
-
-    def test_filter_specific_folder_name(self):
-        '''
-        Ensure the gitignore parser works properly when a rule specifies that
-        a folder that contains a certain string be filtered
-
-        Example: *_extdep
-        '''
-        with tempfile.TemporaryDirectory() as root:
-
-            gitignore_path = BuildGitIgnore(root)
-            rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path)
-
-            # Windows
-            self.assertTrue(rule_tester(f'{root}\\test_extdep'))
-            self.assertTrue(rule_tester(f'{root}\\T\\test_extdep'))
-
-            # Linux
-            self.assertTrue(rule_tester(f'{root}/test_extdep'))
-            self.assertTrue(rule_tester(f'{root}/T/test_extdep'))
-
-    def test_filter_specific_file_type(self):
-        '''
-        Ensure the gitignore parser works properly when a rule specifies that
-        a file of a specific type  be filtered
-
-        Example: *.DS_Store
-        '''
-        with tempfile.TemporaryDirectory() as root:
-
-            gitignore_path = BuildGitIgnore(root)
-            rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path)
-
-            # Windows
-            self.assertTrue(rule_tester(f'{root}\\file.DS_Store'))
-            self.assertTrue(rule_tester(f'{root}\\T\\file.DS_Store'))
-
-            # Linux
-            self.assertTrue(rule_tester(f'{root}/file.DS_Store'))
-            self.assertTrue(rule_tester(f'{root}/T/file.DS_Store'))
+            # Test a rule which specifies that a file of a specific type at any
+            # depth is correctly filtered:
+            self.assertTrue(rule_tester(os.path.join(root, "file.DS_Store")))
+            self.assertTrue(rule_tester(os.path.join(root, "T", "file.DS_Store")))

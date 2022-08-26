@@ -3,7 +3,7 @@ from os.path import dirname, abspath
 import re
 import os
 import collections
-import pprint
+
 """
 gitignore parser configured to work for edk2-pytool-library
 """
