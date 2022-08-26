@@ -17,6 +17,7 @@ def BuildGitIgnore(root):
     path = os.path.join(root, ".gitignore")
     with open(path, "w") as gitignore:
         gitignore.write("/Build/\n")
+        gitignore.write("./Logs/\n")
         gitignore.write("**/Test/\n")
         gitignore.write(".DS_Store\n")
         gitignore.write("*_extdep/\n")
@@ -34,6 +35,7 @@ def BuildGitIgnore(root):
         gitignore.write("/reader/*\n")
         gitignore.write("out?.log\n")
         gitignore.write("log[0-9].txt\n")
+        gitignore.write("log0[!a-z].txt\n")
     return path
 
 
@@ -125,7 +127,10 @@ class GitIgnoreParserTest(unittest.TestCase):
             self.assertFalse(rule_tester(os.path.join(root, 'logF.txt')))
             self.assertFalse(rule_tester(os.path.join(root, 'log11.txt')))
 
-            # logged[!F]
+            # log0[!a-z].txt
+            self.assertTrue(rule_tester(os.path.join(root, 'log01.txt')))
+            self.assertFalse(rule_tester(os.path.join(root, 'log0a.txt')))
+            self.assertTrue(rule_tester(os.path.join(root, 'log0A.txt')))
 
     def test_rule_from_pattern(self):
 
