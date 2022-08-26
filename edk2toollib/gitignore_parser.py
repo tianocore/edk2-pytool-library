@@ -3,7 +3,6 @@ from os.path import dirname, abspath
 import re
 import os
 import collections
-
 """
 gitignore parser configured to work for edk2-pytool-library
 """
@@ -141,7 +140,7 @@ def rule_from_pattern(pattern, base_path=None, source=None):
     if anchored:
         # DeprecationWarning: Flags not at the start of the expression
         # Must ensure (?ms) is at the front of the regex, so we can no
-        # longer put ^ at the fron.
+        # longer put ^ in the beggining of a regex string.
         # OLD example: ^(?ms)\.eggs$
         # NEW Example: (?ms)^\.eggs$
         # regex = ''.join(['^', regex])

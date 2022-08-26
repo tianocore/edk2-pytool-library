@@ -90,8 +90,8 @@ class GitIgnoreParserTest(unittest.TestCase):
 
     def test_rule_from_pattern(self):
 
-        # Test to verify basepath must be an absolute path
-        self.assertRaises(ValueError, gitignore_parser.rule_from_pattern, "", "/Test")
+        # Test to bad basepath
+        self.assertRaises(ValueError, gitignore_parser.rule_from_pattern, "", "Test")
 
         # Test ignoring comments, line separators, and incorrect astrick count
         with tempfile.TemporaryDirectory() as root:
