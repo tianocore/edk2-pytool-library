@@ -44,6 +44,21 @@ SOFTWARE.
 '''
 
 
+def handle_negation(file_path, rules):
+    """ allows `matched` value override if negation is true, otherwise
+    it matched will stay true. Used for ensuring rules with ! will override
+    the value back to false.
+    """
+    matched = False
+    for rule in rules:
+        if rule.match(file_path):
+            if rule.negation:
+                matched = False
+            else:
+                matched = True
+    return matched
+
+
 def parse_gitignore_file(full_path, base_dir=None):
     """ parse a gitignore file
     """
@@ -66,7 +81,7 @@ def parse_gitignore_lines(lines: list, full_path: str, base_dir: str):
                                  source=(full_path, counter))
         if rule:
             rules.append(rule)
-    return lambda file_path: any(r.match(file_path) for r in rules)
+    return lambda file_path: handle_negation(file_path, rules)
 
 
 def rule_from_pattern(pattern, base_path=None, source=None):

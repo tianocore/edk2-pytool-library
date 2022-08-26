@@ -26,8 +26,10 @@ def BuildGitIgnore(root):
         gitignore.write(".vscode/\n")
         gitignore.write("*.bak\n")
         gitignore.write("BuildConfig.conf\n")
+        gitignore.write(" \n")
+        gitignore.write("*.exe\n")
+        gitignore.write("!important.exe\n")
         gitignore.write("/BaseTools/BaseToolsBuild/\n")
-        gitignore.write("*.exe")
     return path
 
 
@@ -44,7 +46,7 @@ class GitIgnoreParserTest(unittest.TestCase):
             rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path)
 
             # Test a rule which specifies that a specific folder at root is
-            # correctly filtered:
+            # correctly filtered.
 
             # Example line in a .gitignore
             # /Build/
@@ -52,7 +54,7 @@ class GitIgnoreParserTest(unittest.TestCase):
             self.assertFalse(rule_tester(os.path.join(root, "T", "Build")))
 
             # Test a rule which specifies that a folder at any depth from the
-            # root is correclty filtered:
+            # root is correclty filtered.
 
             # Example line in a .gitignore
             # **/Test/
@@ -60,7 +62,7 @@ class GitIgnoreParserTest(unittest.TestCase):
             self.assertTrue(rule_tester(os.path.join(root, "T", "Test")))
 
             # Test a rule which specifies that a folder containing a specific
-            # string at any depth is correctly filtered:
+            # string at any depth is correctly filtered.
 
             # Example line in a .gitignore
             # *_extdep
@@ -68,6 +70,31 @@ class GitIgnoreParserTest(unittest.TestCase):
             self.assertTrue(rule_tester(os.path.join(root, 'T', 'test_extdep')))
 
             # Test a rule which specifies that a file of a specific type at any
-            # depth is correctly filtered:
+            # depth is correctly filtered.
+
+            # Example line in a .gitignore
+            # .DS_Store
             self.assertTrue(rule_tester(os.path.join(root, "file.DS_Store")))
             self.assertTrue(rule_tester(os.path.join(root, "T", "file.DS_Store")))
+
+            # Test a rule which specifies an exception for a previous rule is
+            # correctly filtered.
+
+            # Example line in a .gitignore
+            # *.exe
+            # !important.exe
+            self.assertTrue(rule_tester(os.path.join(root, 'test.exe')))
+            self.assertTrue(rule_tester(os.path.join(root, 'T', 'test.exe')))
+            self.assertFalse(rule_tester(os.path.join(root, 'important.exe')))
+            self.assertFalse(rule_tester(os.path.join(root, 'T', 'important.exe')))
+
+    def test_rule_from_pattern(self):
+
+        # Test to verify basepath must be an absolute path
+        self.assertRaises(ValueError, gitignore_parser.rule_from_pattern, "", "/Test")
+
+        # Test ignoring comments, line separators, and incorrect astrick count
+        with tempfile.TemporaryDirectory() as root:
+            self.assertIsNone(gitignore_parser.rule_from_pattern("# Comment", root))
+            self.assertIsNone(gitignore_parser.rule_from_pattern(" ", root))
+            self.assertIsNone(gitignore_parser.rule_from_pattern("***", root))
