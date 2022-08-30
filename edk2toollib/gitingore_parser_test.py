@@ -1,4 +1,4 @@
-# @file gitignore_parser.py
+# @file gitignore_parser_test.py
 # unit test for gitignore_parser module.
 #
 #
@@ -134,7 +134,7 @@ class GitIgnoreParserTest(unittest.TestCase):
 
     def test_rule_from_pattern(self):
 
-        # Test to bad basepath
+        # Test bad basepath
         self.assertRaises(ValueError, gitignore_parser.rule_from_pattern, "", "Test")
 
         # Test ignoring comments, line separators, and incorrect astrick count
