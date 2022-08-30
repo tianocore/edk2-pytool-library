@@ -45,8 +45,8 @@ SOFTWARE.
 
 def handle_negation(file_path, rules):
     """ allows `matched` value override if negation is true, otherwise
-    it matched will stay true. Used for ensuring rules with ! will override
-    the value back to false.
+    `matched` cannot be overwritten with an exception. Used for ensuring rules
+    with ! will override a previous true result back to false.
     """
     matched = False
     for rule in rules:
