@@ -823,3 +823,43 @@ class PathUtilitiesTest(unittest.TestCase):
 
         # pass in bad parameter
         self.assertIsNone(pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(None))
+
+    def test_get_absolute_path_then_relative_path_when_path_contains_repeated_packagepath_name(self):
+        ''' Test the back and forth between GetAbsolutePath and GetRelativeFromAbsolute when the
+        path structure has multiple instances of a package path
+        File layout:
+         root/                  <-- current working directory (self.tmp)
+            PlatformClientPkg/           <-- workspace root
+                CLIENT_PKG/       <-- packages path
+                    ClientPkg/   <-- A edk2 package
+                        ClientPkg.DEC
+                        module1/
+                            module1.INF
+                        module2/
+                            module2.INF
+                            x64/
+                               TestFile.c
+        '''
+        ws_rel = "PlatformClientPkg"
+        ws_abs = os.path.join(self.tmp, ws_rel)
+        os.mkdir(ws_abs)
+
+        folder_pp1_rel = "CLIENT_PKG"
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp1_rel)
+        os.mkdir(folder_pp1_abs)
+
+        ws_pkg_name = "ClientPkg"
+        ws_pkg_abs = self._make_edk2_package_helper(folder_pp1_abs, ws_pkg_name)
+
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
+
+        # Check getting absolute path from relative path
+        abspath = pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(
+            os.path.join(ws_pkg_name, ws_pkg_name + ".dec"))
+
+        self.assertEqual(abspath, os.path.join(ws_pkg_abs, "ClientPkg.dec"))
+
+        # check get relative path from abs path
+        expectedpath = f"{ws_pkg_name}/ClientPkg.dec"
+
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(abspath), expectedpath)
