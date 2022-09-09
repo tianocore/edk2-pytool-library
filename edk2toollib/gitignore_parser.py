@@ -43,6 +43,21 @@ SOFTWARE.
 '''
 
 
+def handle_negation(file_path, rules):
+    """ allows `matched` value override if negation is true, otherwise
+    `matched` cannot be overwritten with an exception. Used for ensuring rules
+    with ! will override a previous true result back to false.
+    """
+    matched = False
+    for rule in rules:
+        if rule.match(file_path):
+            if rule.negation:
+                matched = False
+            else:
+                matched = True
+    return matched
+
+
 def parse_gitignore_file(full_path, base_dir=None):
     """ parse a gitignore file
     """
@@ -65,7 +80,7 @@ def parse_gitignore_lines(lines: list, full_path: str, base_dir: str):
                                  source=(full_path, counter))
         if rule:
             rules.append(rule)
-    return lambda file_path: any(r.match(file_path) for r in rules)
+    return lambda file_path: handle_negation(file_path, rules)
 
 
 def rule_from_pattern(pattern, base_path=None, source=None):
@@ -123,7 +138,13 @@ def rule_from_pattern(pattern, base_path=None, source=None):
         pattern
     )
     if anchored:
-        regex = ''.join(['^', regex])
+        # DeprecationWarning: Flags not at the start of the expression
+        # Must ensure (?ms) is at the front of the regex, so we can no
+        # longer put ^ in the beginning of a regex string.
+        # OLD example: ^(?ms)\.eggs$
+        # NEW Example: (?ms)^\.eggs$
+        # regex = ''.join(['^', regex])
+        regex = regex[:5] + '^' + regex[5:]
     return IgnoreRule(
         pattern=orig_pattern,
         regex=regex,
@@ -177,8 +198,8 @@ def fnmatch_pathname_to_regex(pattern):
     seps = [re.escape(os.sep)]
     if os.altsep is not None:
         seps.append(re.escape(os.altsep))
-    seps_group = '[' + '|'.join(seps) + ']'
-    nonsep = r'[^{}]'.format('|'.join(seps))
+    seps_group = r'[{}]'.format(''.join(seps))
+    nonsep = r'[^{}]'.format(''.join(seps))
 
     res = []
     while i < n:
