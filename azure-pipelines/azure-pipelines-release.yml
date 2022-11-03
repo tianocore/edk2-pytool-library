@@ -1,7 +1,7 @@
 ##
 # Azure Pipeline build file for a releasing to pypi
 
-# Copyright (c) 2019, Microsoft Corporation
+# Copyright (c), Microsoft Corporation
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
@@ -24,7 +24,7 @@ pr: none  # not a pr target
 jobs:
 - template: azure-pipelines/templates/build-test-job.yml@pytool_extensions
   parameters:
-    vm_image: 'windows-2019'
+    vm_image: 'windows-2022'
     pypi_auth_feed: 'Pypi-edk2-pytool-library'
     root_package_folder: "edk2toollib"
     name: 'windows'
