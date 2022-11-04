@@ -5,6 +5,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Code to help parse EDK2 INF files."""
 from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 import os
 
@@ -14,8 +15,28 @@ AllPhases = ["SEC", "PEIM", "PEI_CORE", "DXE_DRIVER", "DXE_CORE", "DXE_RUNTIME_D
 
 
 class InfParser(HashFileParser):
+    """Object representing a parsed INF with capabilities to parse an INF.
 
+    Attributes:
+        Parsed (bool): Whether the object contains a parsed INF
+        Lines (list[str]): ordered list of all lines in the INF
+        Dict (dict): Key / Value pairs found in the INF.
+        LibraryClass (str): library class of the INF
+        SupportedPhases (list[str]): list of supported phases (i.e. "SEC", "PEIM", etc.)
+        PackagesUsed (list[str]): list of packages used
+        LibrariesUsed (list[str]): list of libraries used
+        ProtocolsUsed (list[str]): list of protocols used
+        GuidsUsed (list[str]): list of guids used
+        PpisUsed (list[str]): list of Ppis used
+        PcdsUsed (list[str]): list of Pcds used
+        Sources (list[str]): list of source files used
+        Binaries (list[str]): list of binaries used
+        Path (str): Path to the INF file
+
+    NOTE: Key / Value pairs determined by lines that contain a single =
+    """
     def __init__(self):
+        """Inits an empty parser."""
         HashFileParser.__init__(self, 'ModuleInfParser')
         self.Lines = []
         self.Parsed = False
@@ -33,6 +54,7 @@ class InfParser(HashFileParser):
         self.Path = ""
 
     def ParseFile(self, filepath):
+        """Parses the INF file provided."""
         self.Logger.debug("Parsing file: %s" % filepath)
         if (not os.path.isabs(filepath)):
             fp = self.FindPath(filepath)

@@ -6,6 +6,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Module containing helper classes and functions for working with UEFI Fvs."""
 
 import uuid
 import struct
@@ -23,25 +24,27 @@ EfiSystemNvDataFvGuid = uuid.UUID(fields=(0xFFF12B8D, 0x7696, 0x4C8B, 0xA9, 0x85
 EFI_FVH_SIGNATURE = b"_FVH"
 
 
-#
-# EFI_FIRMWARE_VOLUME_HEADER
-# Can parse or produce an EFI_FIRMWARE_VOLUME_HEADER structure/byte buffer.
-#
-# typedef struct {
-#   UINT8                     ZeroVector[16];
-#   EFI_GUID                  FileSystemGuid;
-#   UINT64                    FvLength;
-#   UINT32                    Signature;
-#   EFI_FVB_ATTRIBUTES_2      Attributes;
-#   UINT16                    HeaderLength;
-#   UINT16                    Checksum;
-#   UINT16                    ExtHeaderOffset;
-#   UINT8                     Reserved[1];
-#   UINT8                     Revision;
-#   EFI_FV_BLOCK_MAP_ENTRY    BlockMap[1];
-# } EFI_FIRMWARE_VOLUME_HEADER;
 class EfiFirmwareVolumeHeader(object):
+    """An object representing an EFI_FIRMWARE_VOLUME_HEADER.
+
+    Can parse or produce an EFI_FIRMWARE_VOLUME_HEADER structure/byte buffer.
+
+    typedef struct {
+        UINT8                     ZeroVector[16];
+        EFI_GUID                  FileSystemGuid;
+        UINT64                    FvLength;
+        UINT32                    Signature;
+        EFI_FVB_ATTRIBUTES_2      Attributes;
+        UINT16                    HeaderLength;
+        UINT16                    Checksum;
+        UINT16                    ExtHeaderOffset;
+        UINT8                     Reserved[1];
+        UINT8                     Revision;
+        EFI_FV_BLOCK_MAP_ENTRY    BlockMap[1];
+    } EFI_FIRMWARE_VOLUME_HEADER;
+    """
     def __init__(self):
+        """Inits an empty object."""
         self.StructString = "=16s16sQ4sLHHHBBQQ"  # spell-checker: disable-line
         self.ZeroVector = None
         self.FileSystemGuid = None
@@ -56,6 +59,17 @@ class EfiFirmwareVolumeHeader(object):
         self.Blockmap1 = None
 
     def load_from_file(self, file):
+        """Loads data into the object from a filestream.
+
+        Args:
+            file (obj): An open file that has been seeked to the correct location.
+
+        Returns:
+            (EfiFirmwareVolumeHeader): self
+
+        Raises:
+            (Exception): Invalid signature in fs
+        """
         # This function assumes that the file has been seeked
         # to the correct starting location.
         orig_seek = file.tell()
@@ -80,27 +94,42 @@ class EfiFirmwareVolumeHeader(object):
         return self
 
     def serialize(self):
+        r"""Serializes the object.
+
+        Returns:
+            (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
+        """
         file_system_guid_bin = self.FileSystemGuid.bytes if sys.byteorder == 'big' else self.FileSystemGuid.bytes_le
         return struct.pack(self.StructString, self.ZeroVector, file_system_guid_bin, self.FvLength, self.Signature,
                            self.Attributes, self.HeaderLength, self.Checksum, self.ExtHeaderOffset, self.Reserved,
                            self.Revision, self.Blockmap0, self.Blockmap1)
-#
-# EFI_FIRMWARE_VOLUME_EXT_HEADER
-# Can parse or produce an EFI_FIRMWARE_VOLUME_EXT_HEADER structure/byte buffer.
-#
-# typedef struct {
-#   EFI_GUID                  FileSystemGuid;
-#   UINT32                    ExtHeaderSize;
-# } EFI_FIRMWARE_VOLUME_EXT_HEADER;
 
 
 class EfiFirmwareVolumeExtHeader(object):
+    """An object representing an EFI_FIRMWARE_VOLUME_EXT_HEADER.
+
+    Can parse or produce an EFI_FIRMWARE_VOLUME_EXT_HEADER structure/byte buffer.
+
+    typedef struct {
+        EFI_GUID                  FileSystemGuid;
+        UINT32                    ExtHeaderSize;
+    } EFI_FIRMWARE_VOLUME_EXT_HEADER;
+    """
     def __init__(self):
+        """Inits an empty object."""
         self.StructString = "=16sL"
         self.FileSystemGuid = None
         self.ExtHeaderSize = None
 
     def load_from_file(self, file):
+        """Loads data into the object from a filestream.
+
+        Args:
+            file (obj): An open file that has been seeked to the correct location.
+
+        Returns:
+            (EfiFirmwareVolumeExtHeader): self
+        """
         # This function assumes that the file has been seeked
         # to the correct starting location.
         orig_seek = file.tell()

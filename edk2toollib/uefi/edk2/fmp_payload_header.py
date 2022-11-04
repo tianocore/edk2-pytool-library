@@ -7,9 +7,11 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 
-'''
-FmpPayloadHeader
-'''
+"""Module that encodes and decodes a FMP_PAYLOAD_HEADER with a payload.
+
+The FMP_PAYLOAD_HEADER is processed by the FmpPayloadHeaderLib in the
+FmpDevicePkg.
+"""
 
 import struct
 
@@ -23,22 +25,24 @@ def _SIGNATURE_32_TO_STRING(Signature):
 
 
 class FmpPayloadHeaderClass (object):
-    #
-    # typedef struct {
-    #   UINT32  Signature;
-    #   UINT32  HeaderSize;
-    #   UINT32  FwVersion;
-    #   UINT32  LowestSupportedVersion;
-    # } FMP_PAYLOAD_HEADER;
-    #
-    # #define FMP_PAYLOAD_HEADER_SIGNATURE SIGNATURE_32 ('M', 'S', 'S', '1')
-    #
+    """An object representing a FMP_PAYLOAD_HEADER.
+
+    typedef struct {
+        UINT32  Signature;
+        UINT32  HeaderSize;
+        UINT32  FwVersion;
+        UINT32  LowestSupportedVersion;
+    } FMP_PAYLOAD_HEADER;
+
+    #define FMP_PAYLOAD_HEADER_SIGNATURE SIGNATURE_32 ('M', 'S', 'S', '1')
+    """
     _StructFormat = '<IIII'
     _StructSize = struct.calcsize(_StructFormat)
 
     _FMP_PAYLOAD_HEADER_SIGNATURE = _SIGNATURE_32('M', 'S', 'S', '1')
 
     def __init__(self):
+        """Inits an empty object."""
         self.Signature = self._FMP_PAYLOAD_HEADER_SIGNATURE
         self.HeaderSize = self._StructSize
         self.FwVersion = 0x00000000
@@ -46,6 +50,11 @@ class FmpPayloadHeaderClass (object):
         self.Payload = b''
 
     def Encode(self):
+        r"""Serializes the Header + payload.
+
+        Returns:
+            (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
+        """
         FmpPayloadHeader = struct.pack(
             self._StructFormat,
             self.Signature,
@@ -56,6 +65,19 @@ class FmpPayloadHeaderClass (object):
         return FmpPayloadHeader + self.Payload
 
     def Decode(self, Buffer):
+        """Loads data into the Object by parsing a buffer.
+
+        Args:
+            Buffer (obj): Buffer containing the data
+
+        Returns:
+            (str): string of binary representing the payload
+
+        Raises:
+            (ValueError): Invalid Buffer
+            (ValueError): Invalid Signature
+            (ValueError): Invalid Header size
+        """
         if len(Buffer) < self._StructSize:
             raise ValueError
         (Signature, HeaderSize, FwVersion, LowestSupportedVersion) = struct.unpack(
@@ -75,6 +97,7 @@ class FmpPayloadHeaderClass (object):
         return self.Payload
 
     def DumpInfo(self):
+        """Prints payload header information."""
         print('FMP_PAYLOAD_HEADER.Signature              = {Signature:08X} ({SignatureString})'
               .format(Signature=self.Signature, SignatureString=_SIGNATURE_32_TO_STRING(self.Signature)))
         print('FMP_PAYLOAD_HEADER.HeaderSize             = {HeaderSize:08X}'.format(HeaderSize=self.HeaderSize))

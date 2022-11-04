@@ -5,13 +5,27 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Code to help parse EDK2 Fdf files."""
 from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 import os
 
 
 class FdfParser(HashFileParser):
+    """FDF parser object that represents an FDF file.
 
+    Attributes:
+        Parsed (bool): Whether the object contains a parsed FDF file
+        Lines (list[str]): an ordered list of each line in the FDF file
+        Dict (dict): dict of form: {"VariableName": Value}
+        FVs (dict): dict of form: {"sectionName": {"Dict": {}, "Infs": [], "Files": {}}}
+        FDs (dict): dict of form: {"sectionName": {}}
+        CurrentSection (list): all lines in current section
+        Path (str): path to FDF file
+
+    Note: Dict Key Value pairs come from lines that contain a single =.
+    """
     def __init__(self):
+        """Inits an empty FDF parser."""
         HashFileParser.__init__(self, 'ModuleFdfParser')
         self.Lines = []
         self.Parsed = False
@@ -22,6 +36,11 @@ class FdfParser(HashFileParser):
         self.Path = ""
 
     def GetNextLine(self):
+        """Returns the next line to parse.
+
+        Performs manipulation on the line like replacing variables,
+        processing conditionals, etc.
+        """
         if len(self.Lines) == 0:
             return None
 
@@ -45,12 +64,14 @@ class FdfParser(HashFileParser):
         return sline
 
     def InsertLinesFromFile(self, file_path: str):
+        """Adds additional lines to the Lines Attribute from the provided file."""
         with open(file_path, 'r') as lines_file:
             self.Lines += reversed(lines_file.readlines())
             # Back off the line count to ignore the include line itself.
             self.CurrentLine -= 1
 
     def ParseFile(self, filepath):
+        """Parses the provided FDF file."""
         self.Logger.debug("Parsing file: %s" % filepath)
         if (not os.path.isabs(filepath)):
             fp = self.FindPath(filepath)

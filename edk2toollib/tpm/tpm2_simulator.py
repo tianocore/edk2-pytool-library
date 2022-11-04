@@ -5,7 +5,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-
+"""Module that contains transportation layer classes for interacting with the TPM 2.0 simulator."""
 import socket
 import struct
 import edk2toollib.tpm.tpm2_stream as t2s
@@ -40,8 +40,9 @@ PLAT_COMMANDS = {
 
 
 class TpmSimulator(object):
-
+    """An object for interacting with the Tpm Simulator."""
     def __init__(self, host='localhost', port=2321):
+        """Initialize the simulator on the requested host (ip) and port."""
         super(TpmSimulator, self).__init__()
 
         # Connect to the control socket.
@@ -60,15 +61,18 @@ class TpmSimulator(object):
         self.platSock.send(struct.pack(">L", PLAT_COMMANDS['TPM_SIGNAL_NV_ON']))
 
     def send_raw_data(self, data):
+        """Send raw data to the TPM simulator."""
         print("RAW -->: " + str(data).encode('hex'))
         self.tpmSock.send(data)
 
     def read_raw_data(self, count):
+        """Read raw data from the TPM simulator."""
         data = self.tpmSock.recv(count)
         print("RAW <--: " + str(data).encode('hex'))
         return data
 
     def send_data(self, data):
+        """Send data to the TPM simulator."""
         # Send the "I'm about to send data" command.
         self.send_raw_data(struct.pack(">L", PLAT_COMMANDS['TPM_SEND_COMMAND']))
         # Send the locality for the data.
@@ -90,6 +94,7 @@ class TpmSimulator(object):
         return self.read_raw_data(result_size)
 
     def startup(self, type):
+        """Initialize the connection to the TPM simulator."""
         stream = t2s.Tpm2CommandStream(t2d.TPM_ST_NO_SESSIONS, 0x00, t2d.TPM_CC_Startup)
         stream.add_element(t2s.Tpm2StreamPrimitive(t2d.TPM_SU_Size, type))
         return self.send_data(stream.get_stream())

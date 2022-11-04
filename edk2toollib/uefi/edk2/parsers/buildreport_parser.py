@@ -5,19 +5,31 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Code to help parse an Edk2 Build Report."""
 import os
 import logging
 from enum import Enum
 
 import edk2toollib.uefi.edk2.path_utilities as pu
 
-#
-# Class to represent a module within the Build Report
-#
-
 
 class ModuleSummary(object):
+    """Object to represent a module within the Build Report.
+
+    Arguments:
+        Guid (str): Module Guid
+        Name (str): Module name
+        InfPath (str): Path to INF
+        Type (str): Module type
+        PCDs (dict): Dict containing PCDs
+        Libraries (dict): Dict containing libraries
+        Depex (str): module depex
+        WorkspacePath (str): workspace root
+        PackagePathList (list): list of package paths
+        FvName (str): Name of Fv
+    """
     def __init__(self, content, ws, packagepatahlist):
+        """Inits an empty Module Summary Object."""
         self._RawContent = content
         self.Guid = ""
         self.Name = ""
@@ -31,6 +43,7 @@ class ModuleSummary(object):
         self.FvName = None
 
     def Parse(self):
+        """Parses the Module summary object."""
         inPcdSection = False
         inLibSection = False
         inDepSection = False
@@ -158,23 +171,31 @@ class ModuleSummary(object):
             logging.debug("Exception in Parsing: %d" % i)
             raise
 
-#
-# Class to parse and objectify the Build report so that
-# tools can interact with the Build Report.
-# This should simplify the Build Report based interactions
-# but should not contain tool specific logic or tests.
-#
-
 
 class BuildReport(object):
+    """An object representing a parsed Build Report with capability to parse.
 
+    Attributes:
+        PlatformName (str): name
+        DscPath (str): Path to DSC
+        FdfPath (str): Path to FDF
+        BuildOutputDir (str): Path to Build Output
+        ReportFile (str): Path to Build Report
+        Modules (dict): dict containing ModuleSummary type
+        Workspace (str): Workspace root
+        PackagesPathList (list): List of package paths
+        ProtectedWords (dict): Dict of protected words
+        PathConverter (Edk2Path): path utilities
+    """
     class RegionTypes(Enum):
+        """Enum for different Region Types."""
         PCD = 'PCD'
         FD = 'FD'
         MODULE = 'MODULE'
         UNKNOWN = 'UNKNOWN'
 
     def __init__(self, filepath, ws, packagepathcsv, protectedWordsDict):
+        """Inits an empty BuildReport object."""
         self.PlatformName = ""
         self.DscPath = ""
         self.FdfPath = ""
@@ -197,6 +218,10 @@ class BuildReport(object):
     # to get the layout, lists, and dictionaries setup.
     #
     def BasicParse(self):
+        """Performs region level parsing.
+
+        Gets the layout, lists, and dictionaries setup.
+        """
         if (not os.path.isfile(self.ReportFile)):
             raise Exception("Report File path invalid!")
 
@@ -264,6 +289,15 @@ class BuildReport(object):
                 self._ParseFdRegionForModules(self._ReportContents[r[1]:r[2]])
 
     def FindComponentByInfPath(self, InfPath):
+        """Attempts to find the Component the Inf is apart of.
+
+        Args:
+            InfPath (str): Inf Path
+
+        Returns:
+            (ModuleSummary): Module if found
+            (None): If not found
+        """
         for (k, v) in self.Modules.items():
             if (v.InfPath.lower() == InfPath.lower()):
                 logging.debug("Found Module by InfPath: %s" % InfPath)

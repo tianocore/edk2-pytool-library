@@ -5,7 +5,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-
+"""Module contains helper classes and functions to work with UEFI Variables."""
 import uuid
 import struct
 import sys
@@ -29,22 +29,23 @@ VAR_DELETED = 0xFD  # Variable is obsolete.
 VAR_HEADER_VALID_ONLY = 0x7F  # Variable header has been valid.
 VAR_ADDED = 0x3F  # Variable has been completely added.
 
-#
-# VARIABLE_STORE_HEADER
-# Can parse or produce an VARIABLE_STORE_HEADER structure/byte buffer.
-#
-# typedef struct {
-#   EFI_GUID  Signature;
-#   UINT32  Size;
-#   UINT8   Format;
-#   UINT8   State;
-#   UINT16  Reserved;
-#   UINT32  Reserved1;
-# } VARIABLE_STORE_HEADER;
-
 
 class VariableStoreHeader(object):
+    """Object representing the VARIABLE_STORE_HEADER struct.
+
+    Can parse or produce an VARIABLE_STORE_HEADER structure/byte buffer.
+
+    typedef struct {
+        EFI_GUID  Signature;
+        UINT32  Size;
+        UINT8   Format;
+        UINT8   State;
+        UINT16  Reserved;
+        UINT32  Reserved1;
+    } VARIABLE_STORE_HEADER;
+    """
     def __init__(self):
+        """Init the empty structure."""
         self.StructString = "=16sLBBHL"  # spell-checker: disable-line
         self.StructSize = struct.calcsize(self.StructString)
         self.Signature = None
@@ -56,6 +57,7 @@ class VariableStoreHeader(object):
         self.Type = 'Var'
 
     def load_from_file(self, file):
+        """Load the structure from a file."""
         # This function assumes that the file has been seeked
         # to the correct starting location.
         orig_seek = file.tell()
@@ -81,33 +83,34 @@ class VariableStoreHeader(object):
         return self
 
     def serialize(self):
+        """Serialize the structure."""
         signature_bin = self.Signature.bytes if sys.byteorder == 'big' else self.Signature.bytes_le
         return struct.pack(self.StructString, signature_bin, self.Size, self.Format,
                            self.State, self.Reserved0, self.Reserved1)
+
 
 #
 # TODO: VariableHeader and AuthenticatedVariableHeader are not truly
 #       header structures. They're entire variables. This code should be
 #       cleaned up.
 #
-
-#
-# VARIABLE_HEADER
-# Can parse or produce an VARIABLE_HEADER structure/byte buffer.
-#
-# typedef struct {
-#   UINT16      StartId;
-#   UINT8       State;
-#   UINT8       Reserved;
-#   UINT32      Attributes;
-#   UINT32      NameSize;
-#   UINT32      DataSize;
-#   EFI_GUID    VendorGuid;
-# } VARIABLE_HEADER;
-
-
 class VariableHeader(object):
+    """Object representing the VARIABLE_HEADER struct.
+
+    Can parse or produce an VARIABLE_HEADER structure/byte buffer.
+
+    typedef struct {
+        UINT16      StartId;
+        UINT8       State;
+        UINT8       Reserved;
+        UINT32      Attributes;
+        UINT32      NameSize;
+        UINT32      DataSize;
+        EFI_GUID    VendorGuid;
+    } VARIABLE_HEADER;
+    """
     def __init__(self):
+        """Init the structure."""
         self.StructString = "=HBBLLL16s"  # spell-checker: disable-line
         self.StructSize = struct.calcsize(self.StructString)
         self.StartId = VARIABLE_DATA
@@ -120,10 +123,12 @@ class VariableHeader(object):
         self.Data = None
 
     def populate_structure_fields(self, in_bytes):
+        """Populate the structure field from bytes."""
         (self.StartId, self.State, reserved, self.Attributes, self.NameSize,
             self.DataSize, self.VendorGuid) = struct.unpack(self.StructString, in_bytes)
 
     def load_from_bytes(self, in_bytes):
+        """Load the structure from a bytes."""
         # Load this object with the contents of the data.
         self.populate_structure_fields(in_bytes[0:self.StructSize])
 
@@ -147,6 +152,7 @@ class VariableHeader(object):
         return self
 
     def load_from_file(self, file):
+        """Load the struct from a file."""
         # This function assumes that the file has been seeked
         # to the correct starting location.
         orig_seek = file.tell()
@@ -174,9 +180,11 @@ class VariableHeader(object):
         return self
 
     def get_buffer_data_size(self):
+        """Get the buffer data size."""
         return self.StructSize + self.NameSize + self.DataSize
 
     def get_buffer_padding_size(self):
+        """Get the buffer padding size."""
         buffer_data_size = self.get_buffer_data_size()
         padding_size = 0
         if buffer_data_size % HEADER_ALIGNMENT != 0:
@@ -184,9 +192,11 @@ class VariableHeader(object):
         return padding_size
 
     def get_buffer_size(self):
+        """Get the buffer size."""
         return self.get_buffer_data_size() + self.get_buffer_padding_size()
 
     def get_packed_name(self):
+        """Get the name attribute."""
         # Make sure to replace the terminating char.
         # name_bytes = b"\x00".join([char for char in (self.Name + b'\x00')])
         name_bytes = self.Name.encode('utf-16')
@@ -201,19 +211,23 @@ class VariableHeader(object):
         return name_bytes
 
     def set_name(self, new_name):
+        """Set the name attribute."""
         self.Name = new_name
         self.NameSize = len(self.get_packed_name())
 
     def set_data(self, new_data):
+        """Set the data attribute."""
         self.Data = new_data
         self.DataSize = len(new_data)
 
     def pack_struct(self):
+        """Pack the object."""
         vendor_guid = self.VendorGuid.bytes if sys.byteorder == 'big' else self.VendorGuid.bytes_le
         return struct.pack(self.StructString, self.StartId, self.State, 0, self.Attributes,
                            self.NameSize, self.DataSize, vendor_guid)
 
     def serialize(self, with_padding=False):
+        """Serialize the object."""
         bytes = self.pack_struct()
 
         # Now add the name and data.
@@ -226,26 +240,27 @@ class VariableHeader(object):
 
         return bytes
 
-#
-# AUTHENTICATED_VARIABLE_HEADER
-# Can parse or produce an AUTHENTICATED_VARIABLE_HEADER structure/byte buffer.
-#
-# typedef struct {
-#   UINT16      StartId;
-#   UINT8       State;
-#   UINT8       Reserved;
-#   UINT32      Attributes;
-#   UINT64      MonotonicCount;
-#   EFI_TIME    TimeStamp;
-#   UINT32      PubKeyIndex;
-#   UINT32      NameSize;
-#   UINT32      DataSize;
-#   EFI_GUID    VendorGuid;
-# } AUTHENTICATED_VARIABLE_HEADER;
-
 
 class AuthenticatedVariableHeader(VariableHeader):
+    """Object representing the AUTHENTICATED_VARIABLE_HEADER struct.
+
+    Can parse or produce an AUTHENTICATED_VARIABLE_HEADER structure/byte buffer.
+
+    typedef struct {
+        UINT16      StartId;
+        UINT8       State;
+        UINT8       Reserved;
+        UINT32      Attributes;
+        UINT64      MonotonicCount;
+        EFI_TIME    TimeStamp;
+        UINT32      PubKeyIndex;
+        UINT32      NameSize;
+        UINT32      DataSize;
+        EFI_GUID    VendorGuid;
+    } AUTHENTICATED_VARIABLE_HEADER;
+    """
     def __init__(self):
+        """Initializes the struct."""
         super(AuthenticatedVariableHeader, self).__init__()
         self.StructString = "=HBBLQ16sLLL16s"  # spell-checker: disable-line
         self.StructSize = struct.calcsize(self.StructString)
@@ -254,10 +269,12 @@ class AuthenticatedVariableHeader(VariableHeader):
         self.PubKeyIndex = 0
 
     def populate_structure_fields(self, in_bytes):
+        """Populates the struct."""
         (self.StartId, self.State, reserved, self.Attributes, self.MonotonicCount, self.TimeStamp, self.PubKeyIndex,
          self.NameSize, self.DataSize, self.VendorGuid) = struct.unpack(self.StructString, in_bytes)
 
     def pack_struct(self, with_padding=False):
+        """Packs the struct."""
         vendor_guid = self.VendorGuid.bytes if sys.byteorder == 'big' else self.VendorGuid.bytes_le
         return struct.pack(self.StructString, self.StartId, self.State, 0, self.Attributes, self.MonotonicCount,
                            self.TimeStamp, self.PubKeyIndex, self.NameSize, self.DataSize, vendor_guid)
