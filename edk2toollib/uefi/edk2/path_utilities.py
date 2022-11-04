@@ -26,7 +26,7 @@ class Edk2Path(object):
 
         Args:
             ws (os.PathLike): absolute path or cwd relative path of the workspace.
-            packagespathlist (Iterable[os.PathLike]): list of packages path.
+            package_path_list (Iterable[os.PathLike]): list of packages path.
                 Entries can be Absolute path, workspace relative path, or CWD relative.
             error_on_invalid_pp (bool): default value is True. If packages path
                                         value is invalid raise exception.
