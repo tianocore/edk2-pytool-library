@@ -646,6 +646,60 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(pp1_abs, "module2", "X64", "TestFile.c")
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{pp1_name}/module2/X64/TestFile.c")
 
+    def test_get_relative_path_with_nested_packages(self):
+        ''' test a two package paths that contain nested packages.
+            Should raise an exception due to nested packages.
+
+        File layout:
+        root/                                   <-- Current working directory
+        └───folder_ws/                          <-- Workspace root
+            └───folder_pp1/                     <-- Package Path 1
+                └───PPTestPkg1/                 <-- A valid edk2 package
+                    │   PPTestPkg1.dec
+                    │
+                    ├───folder_pp2/             <-- Package Path 2
+                    │   └───PPTestPkg2/         <-- A valid edk2 package
+                    │       │   PPTestPkg2.dec
+                    │       │
+                    │       ├───module1/
+                    │       │       module1.inf
+                    │       │
+                    │       └───module2/
+                    │           │   module2.inf
+                    │           │
+                    │           └───X64/
+                    │                   TestFile.c
+                    │
+                    ├───module1/
+                    │       module1.inf
+                    │
+                    └───module2/
+                        │   module2.inf
+                        │
+                        └───X64/
+                                TestFile.c
+        '''
+        folder_ws_rel = "folder_ws"
+        folder_ws_abs = os.path.join(self.tmp, folder_ws_rel)
+        os.mkdir(folder_ws_abs)
+
+        folder_pp1_rel = "folder_pp1"
+        folder_pp1_abs = os.path.join(folder_ws_abs, folder_pp1_rel)
+        os.mkdir(folder_pp1_abs)
+
+        pp1_name = "PPTestPkg1"
+        pp1_abs = self._make_edk2_package_helper(folder_pp1_abs, pp1_name)
+
+        folder_pp2_rel = "folder_pp2"
+        folder_pp2_abs = os.path.join(pp1_abs, folder_pp2_rel)
+        os.mkdir(folder_pp2_abs)
+
+        pp2_name = "PPTestPkg2"
+        self._make_edk2_package_helper(folder_pp2_abs, pp2_name)
+
+        self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs])
+        self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
+
     def test_get_relative_path_when_folder_is_next_to_package(self):
         ''' test usage of GetEdk2RelativePathFromAbsolutePath when a folder containing a package is in the same
         directory as a different package. This test ensures the correct value is returned regardless the order of
