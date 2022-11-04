@@ -5,7 +5,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-
+"""Contains classes and helper functions to modify variables in a UEFI ROM image."""
 import edk2toollib.uefi.pi_firmware_volume as PiFV
 import edk2toollib.uefi.edk2.variable_format as VF
 
@@ -14,7 +14,12 @@ import mmap
 
 
 class VariableStore(object):
+    """Class representing the variable store."""
     def __init__(self, romfile, store_base=None, store_size=None):
+        """Initialize the Variable store and read necessary files.
+
+        Loads the data.
+        """
         self.rom_file_path = romfile
         self.store_base = store_base
         self.store_size = store_size
@@ -68,6 +73,7 @@ class VariableStore(object):
         self.rom_file.seek(self.store_base)
 
     def __del__(self):
+        """Flushes and closes files."""
         if self.rom_file_map is not None:
             self.rom_file_map.flush()
             self.rom_file_map.close()
@@ -76,6 +82,7 @@ class VariableStore(object):
             self.rom_file.close()
 
     def get_new_var_class(self):
+        """Var class builder method depending on var type."""
         if self.var_store_header.Type == 'Var':
             new_var = VF.VariableHeader()
         else:
@@ -84,9 +91,11 @@ class VariableStore(object):
         return new_var
 
     def add_variable(self, new_var):
+        """Add a variable to the variable list."""
         self.variables.append(new_var)
 
     def flush_to_file(self):
+        """Flush the changes to file."""
         # First, we need to make sure that our variables will fit in the VarStore.
         var_size = sum([var.get_buffer_size() for var in self.variables])
         # Add the terminating var header.

@@ -8,19 +8,23 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Code to help parse guid formats and transform into UUIDs.
+
+Some functionality copied from Tianocore/edk2 basetools.
+"""
 import uuid
 import re
 
 
 class GuidParser():
-    """ Provide support functions for converting between different guid formats.  Also support str
-        uuid and uuid to string.
+    """Provide support functions for converting between different guid formats.
 
-        Common terms:
-          C-Format:   {0xD3B36F2C, 0xD551, 0x11D4, {0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D}}
-          Reg-Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    Also support str uuid and uuid to string.
+
+    Note:
+      C-Format:   {0xD3B36F2C, 0xD551, 0x11D4, {0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D}}
+      Reg-Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     """
-
     _HexChar = r"[0-9a-fA-F]"
     # Regular expression for GUID c structure format
     _GuidCFormatPattern = r"{{\s*0[xX]{Hex}{{1,8}}\s*,\s*0[xX]{Hex}{{1,4}}\s*,\s*0[xX]{Hex}{{1,4}}" \
@@ -37,13 +41,13 @@ class GuidParser():
 
     @classmethod
     def is_guid_in_c_format(cls, guidstring: str) -> bool:
-        """ determine if guidstring is in c format
+        """Determine if guidstring is in c format.
 
         Args:
-          guidstring: str: string containing guid
+          guidstring (str): string containing guid
 
         Returns:
-          True if in C format.  Otherwise False
+          (bool): True if in C format. Otherwise False
 
         """
         guidstring = guidstring.strip()
@@ -51,27 +55,27 @@ class GuidParser():
 
     @classmethod
     def is_guid_in_reg_format(cls, guidstring: str) -> bool:
-        """ determine if guidstring is in registry format
+        """Determine if guidstring is in registry format.
 
         Args:
-          guidstring: str: string containing guid
+          guidstring (str): string containing guid
 
         Returns:
-          True if in Registry format.  Otherwise False
+          (bool): True if in Registry format. Otherwise False
         """
         guidstring = guidstring.strip().strip('} {')
         return cls.GuidRegFormatRegEx.match(guidstring)
 
     @classmethod
     def reg_guid_from_c_format(cls, guidstring: str) -> str:
-        """ convert a c formatted guidstring to a registry formatted guidstring
+        """Convert a c formatted guidstring to a registry formatted guidstring.
 
         Args:
-          guidstring: str: c format guidstring
+          guidstring (str): c format guidstring
 
         Returns:
-          Success: guidstring in registry format
-          Failure: empty string ''
+          (Success): guidstring in registry format
+          (Failure): empty string ''
         """
         guidstring = guidstring.strip()
         if not cls.is_guid_in_c_format(guidstring):
@@ -100,14 +104,14 @@ class GuidParser():
 
     @classmethod
     def c_guid_from_reg_format(cls, guidstring: str) -> str:
-        """Convert registry format guidstring to c format guidstring
+        """Convert registry format guidstring to c format guidstring.
 
         Args:
-          guidstring: str: registry format guidstring
+          guidstring (str): registry format guidstring
 
         Returns:
-          Success: guidstring in c format
-          Failure: empty string ''
+          (Success): guidstring in c format
+          (Failure): empty string ''
         """
         guidstring = guidstring.strip().strip('} {')
         if (not cls.is_guid_in_reg_format(guidstring)):
@@ -125,8 +129,7 @@ class GuidParser():
 
     @classmethod
     def uuid_from_guidstring(cls, guidstring: str) -> uuid.UUID:
-        """ create a uuid object from the supplied guidstring"""
-
+        """Create a uuid object from the supplied guidstring."""
         if (cls.is_guid_in_c_format(guidstring)):
             return uuid.UUID(cls.reg_guid_from_c_format(guidstring))
         elif (cls.is_guid_in_reg_format(guidstring)):
@@ -137,27 +140,27 @@ class GuidParser():
 
     @classmethod
     def c_guid_str_from_uuid(cls, guid: uuid.UUID) -> str:
-        """ get a C string formatted guidstring from a uuid object
+        """Get a C string formatted guidstring from a uuid object.
 
         Args:
-          guid: uuid.UUID: valid uuid object
+          guid (uuid.UUID): valid uuid object
 
         Returns:
-          Success: guidstring in C format
-          Failure: empty string ''
+          (Success): guidstring in C format
+          (Failure): empty string ''
         """
         reg = str(guid)
         return cls.c_guid_from_reg_format(reg)
 
     @classmethod
     def reg_guid_str_from_uuid(cls, guid: uuid.UUID) -> str:
-        """ get a registry string formatted guidstring from a uuid object
+        """Get a registry string formatted guidstring from a uuid object.
 
         Args:
-          guid: uuid.UUID: valid uuid object
+          guid (uuid.UUID): valid uuid object
 
         Returns:
-          Success: guidstring in registry format
-          Failure: empty string ''
+          (Success): guidstring in registry format
+          (Failure): empty string ''
         """
         return str(guid)

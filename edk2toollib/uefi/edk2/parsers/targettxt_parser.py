@@ -5,13 +5,22 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Code to help parse Edk2 Conf/Target.txt file."""
 from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 import os
 
 
 class TargetTxtParser(HashFileParser):
+    """Parser for the Edk2 Conf/Target.txt file.
 
+    Attributes:
+        Parsed (bool): Whether the object has parsed a file or not
+        Lines (list): Ordered list of each line in the file
+        Dict (dict): Key / Value pair of all lines that contain a `=` in them (key=value)
+        Path (str): path to Target.txt file
+    """
     def __init__(self):
+        """Inits an empty parser."""
         HashFileParser.__init__(self, 'TargetTxtParser')
         self.Lines = []
         self.Parsed = False
@@ -19,6 +28,7 @@ class TargetTxtParser(HashFileParser):
         self.Path = ""
 
     def ParseFile(self, filepath):
+        """Parses the file provided."""
         self.Logger.debug("Parsing file: %s" % filepath)
         if (not os.path.isabs(filepath)):
             fp = self.FindPath(filepath)

@@ -5,10 +5,11 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Module for converting an Int to StatusCode string."""
 
 
 class UefiStatusCode(object):
-    # See appendix D of the UEFI spec
+    """Object representing a UEFI Status Code from Appendix D of the UEFI spec."""
 
     # high bit set
     ErrorCodeStrings = ["NOT VALID", "Load Error", "Invalid Parameter", "Unsupported", "Bad BufferSize",
@@ -23,7 +24,7 @@ class UefiStatusCode(object):
                            "Stale Data", "File System", "Reset Required"]
 
     def Convert32BitToString(self, value: int) -> str:
-        ''' convert 32 bit int to a friendly UEFI status code string value'''
+        """Convert 32 bit int to a friendly UEFI status code string value."""
         StatusStrings = UefiStatusCode.NonErrorCodeStrings
 
         if (value >> 31) & 1 == 1:
@@ -37,7 +38,7 @@ class UefiStatusCode(object):
         return StatusStrings[value]
 
     def Convert64BitToString(self, value: int) -> str:
-        ''' convert 64 bit int to a friendly UEFI status code string value'''
+        """Convert 64 bit int to a friendly UEFI status code string value."""
         StatusStrings = UefiStatusCode.NonErrorCodeStrings
 
         if (value >> 63) & 1 == 1:
@@ -51,11 +52,11 @@ class UefiStatusCode(object):
         return StatusStrings[value]
 
     def ConvertHexString64ToString(self, hexstring: str) -> str:
-        ''' convert 64 bit hexstring in 0x format to a UEFI status code '''
+        """Convert 64 bit hexstring in 0x format to a UEFI status code."""
         value = int(hexstring, 16)
         return self.Convert64BitToString(value)
 
     def ConvertHexString32ToString(self, hexstring):
-        ''' convert 32 bit hexstring in 0x format to a UEFI status code '''
+        """Convert 32 bit hexstring in 0x format to a UEFI status code."""
         value = int(hexstring, 16)
         return self.Convert32BitToString(value)

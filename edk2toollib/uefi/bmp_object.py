@@ -5,20 +5,30 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Module for reading and parsing bitmap graphics files."""
 import logging
 import struct
 
 
 class BmpColorMap(object):
+    """An object representing a BMP_COLOR_MAP.
+
+    Attributes:
+        Blue (int): blue
+        Green (int): green
+        Red (int): red
+
+    typedef struct {
+        UINT8   Blue;
+        UINT8   Green;
+        UINT8   Red;
+        UINT8   Reserved;
+    } BMP_COLOR_MAP;
+    """
     STATIC_SIZE = 4
-# typedef struct {
-#  UINT8   Blue;
-#  UINT8   Green;
-#  UINT8   Red;
-#  UINT8   Reserved;
-# } BMP_COLOR_MAP;
 
     def __init__(self, filestream=None):
+        """Inits an empty object or loads from an fs."""
         if filestream is None:
             self.Blue = 0
             self.Green = 0
@@ -27,10 +37,15 @@ class BmpColorMap(object):
         else:
             self.PopulateFromFileStream(filestream)
 
-    #
-    # Method to un-serialize from a filestream
-    #
     def PopulateFromFileStream(self, fs):
+        """Loads a bmp from a filestream.
+
+        Args:
+            fs (obj): A loaded filestream.
+
+        Raises:
+            (Exception): Invalid filestream
+        """
         if fs is None:
             raise Exception("Invalid File stream")
 
@@ -50,6 +65,7 @@ class BmpColorMap(object):
         self.Reserved = struct.unpack("=B", fs.read(1))[0]
 
     def Print(self):
+        """Logs the object."""
         logger = logging.get(__name__)
         logger.info("BMP Color Map")
         logger.info("  Blue:           0x%X" % self.Blue)
@@ -58,6 +74,7 @@ class BmpColorMap(object):
         logger.info("  Reserved:       0x%X" % self.Reserved)
 
     def Write(self, fs):
+        """Writes the object to a fs."""
         fs.write(struct.pack("=B", self.Blue))
         fs.write(struct.pack("=B", self.Green))
         fs.write(struct.pack("=B", self.Red))
@@ -65,29 +82,32 @@ class BmpColorMap(object):
 
 
 class BmpObject(object):
+    """An object representing a BMP_IMAGE_HEADER.
+
+    typedef struct {
+        CHAR8         CharB;  < -- Start of FileHeader
+        CHAR8         CharM;
+        UINT32        Size;
+        UINT16        Reserved[2];
+        UINT32        ImageOffset;  <-- Start of pixel data relative to start of FileHeader
+        UINT32        HeaderSize;  < -- Start of BmpHeader
+        UINT32        PixelWidth;
+        UINT32        PixelHeight;
+        UINT16        Planes;          ///< Must be 1
+        UINT16        BitPerPixel;     ///< 1, 4, 8, or 24
+        UINT32        CompressionType;
+        UINT32        ImageSize;       ///< Compressed image size in bytes
+        UINT32        XPixelsPerMeter;
+        UINT32        YPixelsPerMeter;
+        UINT32        NumberOfColors;
+        UINT32        ImportantColors;
+    } BMP_IMAGE_HEADER;
+    """
     STATIC_FILE_HEADER_SIZE = 14
     STATIC_IMAGE_HEADER_SIZE = 40
 
-# typedef struct {
-#  CHAR8         CharB;  < -- Start of FileHeader
-#  CHAR8         CharM;
-#  UINT32        Size;
-#  UINT16        Reserved[2];
-#  UINT32        ImageOffset;  <-- Start of pixel data relative to start of FileHeader
-#  UINT32        HeaderSize;  < -- Start of BmpHeader
-#  UINT32        PixelWidth;
-#  UINT32        PixelHeight;
-#  UINT16        Planes;          ///< Must be 1
-#  UINT16        BitPerPixel;     ///< 1, 4, 8, or 24
-#  UINT32        CompressionType;
-#  UINT32        ImageSize;       ///< Compressed image size in bytes
-#  UINT32        XPixelsPerMeter;
-#  UINT32        YPixelsPerMeter;
-#  UINT32        NumberOfColors;
-#  UINT32        ImportantColors;
-# } BMP_IMAGE_HEADER;
-
     def __init__(self, filestream=None):
+        """Inits an empty object or loads from filestream."""
         self.logger = logging.getLogger(__name__)
         if filestream is None:
             self.CharB = 'B'
@@ -120,6 +140,7 @@ class BmpObject(object):
             self.PopulateFromFileStream(filestream)
 
     def ExpectedColorMapEntires(self):
+        """Returns expected entries depending on BitPerPixel."""
         if (self.BitPerPixel == 1):
             return 2
         elif (self.BitPerPixel == 4):
@@ -128,11 +149,19 @@ class BmpObject(object):
             return 256
         else:
             return 0
-    #
-    # Method to un-serialize from a filestream
-    #
 
     def PopulateFromFileStream(self, fs):
+        """Method to un-serialize from a filestream.
+
+        Args:
+            fs (obj): filestream
+
+        Raises:
+            (Exception): Invalid filestream
+            (Exception): Invalid size
+            (Exception): Invalid Color map
+            (Exception): Data remaining in buffer
+        """
         if fs is None:
             raise Exception("Invalid File stream")
 
@@ -210,11 +239,13 @@ class BmpObject(object):
             raise Exception(
                 "Extra Data at the end of BMP file - 0x%X bytes" % (end - fs.tell()))
 
-    #
-    # Method to Print Bmp Header to stdout
-    #
-
     def Print(self, PrintImageData=False, PrintColorMapData=False):
+        """Prints to logger.
+
+        Args:
+            PrintImageData (bool): Whether to print the ColorImage Data
+            PrintColorMapData (bool): Whether to print the ColorMap List
+        """
         self.logger.info("BMP")
         self.logger.info("  BMP File Header")
         self.logger.info("    CharB:           %s" % self.CharB)
@@ -263,6 +294,11 @@ class BmpObject(object):
             self.logger.info("")
 
     def Write(self, fs):
+        r"""Serializes the Bmp object.
+
+        Returns:
+            (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
+        """
         # Bmp File header
         fs.write(struct.pack("=c", self.CharB))
         fs.write(struct.pack("=c", self.CharM))

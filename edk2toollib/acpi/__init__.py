@@ -5,3 +5,4 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Package containing different ACPI Parsers."""

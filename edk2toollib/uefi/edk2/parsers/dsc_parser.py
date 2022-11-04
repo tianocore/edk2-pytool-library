@@ -5,13 +5,27 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Code to help parse DSC files."""
 from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 import os
 
 
 class DscParser(HashFileParser):
+    """Object representing a parsed DSC file with a capability to parse.
 
+    Attributes:
+        SixMods (list): list of X64 Modules (the line in the file)
+        SixModsEnhanced (list): Better parsed (in a dict) list of X64 Modules
+        ThreeMods (list): list of IA32 Modules (the line in the file)
+        ThreeModsEnhanced (list): Better parsed (in a dict) list of IA32 Modules
+        OtherMods (list): list of other Mods that are not IA32, X64 specific
+        Libs (list): list of Libs (the line in the file)
+        LibsEnhanced (list): Better parsed (in a dict) list of Libs
+        LibraryClassToInstanceDict (dict): Key (Library class) Value (Instance)
+        Pcds (list): List of Pcds
+    """
     def __init__(self):
+        """Init an empty Parser."""
         super(DscParser, self).__init__('DscParser')
         self.SixMods = []
         self.SixModsEnhanced = []
@@ -226,6 +240,7 @@ class DscParser(HashFileParser):
             return (line_resolved, [])
 
     def ParseInfPathLib(self, line):
+        """Parses a line with an INF path Lib."""
         if (line.count("|") > 0):
             line_parts = []
             c = line.split("|")[0].strip()
@@ -240,13 +255,14 @@ class DscParser(HashFileParser):
             return line.strip().split()[0]
 
     def ParseInfPathMod(self, line):
+        """Parses a line with an INF path."""
         return line.strip().split()[0].rstrip("{")
 
     def __ProcessMore(self, lines, file_name=None):
-        '''
-        ProcessMore runs after ProcessDefines and does a full parsing of the DSC
+        """Runs after ProcessDefines and does a full parsing of the DSC.
+
         Everything is resolved to a final state
-        '''
+        """
         if (len(lines) == 0):
             return
         for index in range(0, len(lines)):
@@ -267,14 +283,13 @@ class DscParser(HashFileParser):
                     self.Logger.warning(e)
 
     def __ProcessDefines(self, lines):
-        '''
-        ProcessDefines goes through a file once to look for [Define] sections.
+        """Goes through a file once to look for [Define] sections.
+
         Only Sections, DEFINE, X = Y, and !includes are resolved
         This resolves all the defines since they can be anywhere in a file.
         Ideally this should be run until we reach stable state but this parser is not
         accurate and is more of an approximation of what the real parser does.
-        '''
-
+        """
         if (len(lines) == 0):
             return
         for raw_line in lines:
@@ -290,19 +305,21 @@ class DscParser(HashFileParser):
                     raise
 
     def SetNoFailMode(self, enabled=True):
-        '''
-        The parser won't throw exceptions when this is turned on
-        This can result in some weird behavior
-        '''
+        """The parser won't throw exceptions when this is turned on.
+
+        WARNING: This can result in some weird behavior
+        """
         self._no_fail_mode = enabled
 
     def ResetParserState(self):
+        """Resets the parser."""
         #
         # add more DSC parser based state reset here, if necessary
         #
         super(DscParser, self).ResetParserState()
 
     def ParseFile(self, filepath):
+        """Parses the DSC file at the provided path."""
         self.Logger.debug("Parsing file: %s" % filepath)
         sp = self.FindPath(filepath)
         if sp is None:
@@ -324,18 +341,24 @@ class DscParser(HashFileParser):
         self._dsc_file_paths.add(self.TargetFilePath)
 
     def GetMods(self):
+        """Returns a list with all Mods."""
         return self.ThreeMods + self.SixMods
 
     def GetModsEnhanced(self):
+        """Returns a list with all ModsEnhanced."""
         return self.ThreeModsEnhanced + self.SixModsEnhanced
 
     def GetLibs(self):
+        """Returns a list with all Libs."""
         return self.Libs
 
     def GetLibsEnhanced(self):
+        """Returns a list with all LibsEnhanced."""
         return self.LibsEnhanced
 
     def GetAllDscPaths(self):
-        ''' returns an iterable with all the paths that this DSC uses (the base file and any includes).
-            They are not all guaranteed to be DSC files '''
+        """Returns a list with all the paths that this DSC uses (the base file and any includes).
+
+        They are not all guaranteed to be DSC files
+        """
         return self._dsc_file_paths

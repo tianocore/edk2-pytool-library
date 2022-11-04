@@ -7,7 +7,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-
+"""Contains classes to help with parsing INF files that may contain OVERRIDE information."""
 import os
 import datetime
 
@@ -15,25 +15,28 @@ FORMAT_VERSION_1 = (1, 4)   # Version 1: #OVERRIDE : VERSION | PATH_TO_MODULE | 
 
 
 class OpParseError(Exception):
+    """Class representing OpParseError types."""
     PE_VER = 'VERSION'
     PE_PATH = 'PATH'
     PE_HASH = 'HASH'
     PE_DATE = 'DATE'
 
     def __init__(self, my_type):
+        """Verifies type is a valid OpParseError type."""
         if my_type not in (OpParseError.PE_VER, OpParseError.PE_PATH,
                            OpParseError.PE_HASH, OpParseError.PE_DATE):
             raise ValueError("Unknown type '%s'" % my_type)
         self.type = my_type
 
     def __str__(self):
+        """String representation of the OpParseError type."""
         return repr(self.type)
 
 
 class OverrideParser(object):
-    """
-    OverrideParser is a simple file parser for .inf files that
-    contain OVERRIDE data (i.e. overriding other .infs).
+    """OverrideParser is a simple file parser for .inf files.
+
+    OverrideParser must contain OVERRIDE data (i.e. overriding other .infs).
     Creating the object can be done by passing either a valid file path
     or a string containing the contents of an .inf file.
 
@@ -45,12 +48,20 @@ class OverrideParser(object):
           more details and has a much higher overhead. During a parser refactor,
           this should be considered.
 
-    ALSO NOTE: There is a pattern used here where the object parses during
-               instantiation. This pattern does not necessarily match the other
-               parsers. The pros and cons of this should also be weighed during
-               any parser refactor.
+    NOTE: There is a pattern used here where the object parses during
+          instantiation. This pattern does not necessarily match the other
+          parsers. The pros and cons of this should also be weighed during
+          any parser refactor.
     """
     def __init__(self, file_path=None, inf_contents=None):
+        """Inits and parses either a file or already parsed contents.
+
+        Args:
+            file_path (:obj:`PathLike`, optional): Path to an INF file
+            inf_contents (:obj:`str`, optional): Parsed lines as a string
+
+        NOTE: Either file_path or inf_contents must be provided.
+        """
         super(OverrideParser, self).__init__()
 
         # Make sure that at least some data is provided.
@@ -90,6 +101,11 @@ class OverrideParser(object):
 
     @staticmethod
     def get_override_lines(parse_contents):
+        """Parses contents and returns only lines that start with #OVERRIDE.
+
+        Returns:
+            (list[str]): lines starting with #OVERRIDE
+        """
         parse_lines = parse_contents.split('\n')
         result = []
 
@@ -101,6 +117,17 @@ class OverrideParser(object):
 
     @staticmethod
     def parse_override_line(line_contents):
+        """Parses an override_line.
+
+        Args:
+            line_contents (str): a line that starts with #OVERRIDE
+
+        Returns:
+            (dict): Key/Value pairs including version, original_path, current_hash, datetime
+
+        Raises:
+            (OpParseError): Failed to parse one of the keys
+        """
         result = {}
 
         # Split the override string into pieces.

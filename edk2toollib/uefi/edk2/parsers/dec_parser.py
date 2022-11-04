@@ -5,15 +5,16 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Code to help parse DEC files."""
 import os
 from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 from edk2toollib.uefi.edk2.parsers.guid_parser import GuidParser
 
 
 class LibraryClassDeclarationEntry():
-
+    """Object representing a Library Class Declaration Entry."""
     def __init__(self, packagename: str, rawtext: str = None):
-        """Init a library Class Declaration Entry"""
+        """Init a library Class Declaration Entry."""
         self.path = ""
         self.name = ""
         self.package_name = packagename
@@ -21,16 +22,14 @@ class LibraryClassDeclarationEntry():
             self._parse(rawtext)
 
     def _parse(self, rawtext: str) -> None:
-        """Parses the rawtext line to collect the Library Class declaration
-           information (name and package root relative path).
+        """Parses the rawtext line to collect the Library Class declaration information.
+
+        information includes (name and package root relative path).
 
         Args:
-          rawtext: str
-          expected format is <library class name> | <package relative path to header file>
+          rawtext (str): raw text
 
-        Returns:
-          None
-
+        NOTE: expected format of rawtext is <library class name> | <package relative path to header file>
         """
         t = rawtext.partition("|")
         self.name = t[0].strip()
@@ -38,13 +37,20 @@ class LibraryClassDeclarationEntry():
 
 
 class GuidedDeclarationEntry():
-    """A baseclass for declaration types that have a name and guid."""
+    """A baseclass for declaration types that have a name and guid.
+
+    Attributes:
+        name (str): name
+        guidstring (str): guid
+        guid (uuid.UUID): guid
+        package_name (str): packagename
+    """
     PROTOCOL = 1
     PPI = 2
     GUID = 3
 
     def __init__(self, packagename: str, rawtext: str = None):
-        """Init a protocol/Ppi/or Guid declaration entry"""
+        """Init a protocol/Ppi/or Guid declaration entry."""
         self.name = ""
         self.guidstring = ""
         self.guid = None
@@ -53,13 +59,10 @@ class GuidedDeclarationEntry():
             self._parse(rawtext)
 
     def _parse(self, rawtext: str) -> None:
-        """Parses the name and guid of a declaration
+        """Parses the name and guid of a declaration.
 
         Args:
-          rawtext: str:
-
-        Returns:
-
+          rawtext (str): raw text
         """
         t = rawtext.partition("=")
         self.name = t[0].strip()
@@ -70,33 +73,42 @@ class GuidedDeclarationEntry():
 
 
 class ProtocolDeclarationEntry(GuidedDeclarationEntry):
-
+    """Object representing a Protocol Declaration Entry."""
     def __init__(self, packagename: str, rawtext: str = None):
-        """Init a protocol declaration entry"""
+        """Init a protocol declaration entry."""
         super().__init__(packagename, rawtext)
         self.type = GuidedDeclarationEntry.PROTOCOL
 
 
 class PpiDeclarationEntry(GuidedDeclarationEntry):
-
+    """Object representing a Ppi Declaration Entry."""
     def __init__(self, packagename: str, rawtext: str = None):
-        """Init a Ppi declaration entry"""
+        """Init a Ppi declaration entry."""
         super().__init__(packagename, rawtext)
         self.type = GuidedDeclarationEntry.PPI
 
 
 class GuidDeclarationEntry(GuidedDeclarationEntry):
-
+    """Object representing a Guid Declaration Entry."""
     def __init__(self, packagename: str, rawtext: str = None):
-        """Init a Ppi declaration entry"""
+        """Init a Ppi declaration entry."""
         super().__init__(packagename, rawtext)
         self.type = GuidedDeclarationEntry.GUID
 
 
 class PcdDeclarationEntry():
+    """Object representing a Pcd Delcaration Entry.
 
+    Attributes:
+        token_space_name (str): token space name
+        name (str): name
+        default_value (str): value
+        type (str): type
+        id (str): id
+        package_name: package name
+    """
     def __init__(self, packagename: str, rawtext: str = None):
-        """Creates a PCD Declaration Entry for one PCD"""
+        """Creates a PCD Declaration Entry for one PCD."""
         self.token_space_name = ""
         self.name = ""
         self.default_value = ""
@@ -107,14 +119,7 @@ class PcdDeclarationEntry():
             self._parse(rawtext)
 
     def _parse(self, rawtext: str):
-        """
-
-        Args:
-          rawtext: str:
-
-        Returns:
-
-        """
+        """Parses the PcdDeclaration Entry for one PCD."""
         sp = rawtext.partition(".")
         self.token_space_name = sp[0].strip()
         op = sp[2].split("|")
@@ -138,9 +143,24 @@ class PcdDeclarationEntry():
 
 
 class DecParser(HashFileParser):
-    """Parses an EDK2 DEC file"""
+    """Parses an EDK2 DEC file.
+
+    Attributes:
+        Parsed (bool): If a DEC file has been parsed or not
+        Lines (list): order list of lines in the Dec file
+        Dict (dict): Dict of variables set in the DEC file
+        LibraryClasses (list): list of Library classes
+        PPIs (list): list of PPIs
+        Protocols (list): list of Protocols
+        Guids (list): list of Guids
+        Pcds (list): list of Pcds
+        IncludePaths (list): list of IncludePaths
+        PackageName (str): Package Name variable also found in Dict
+        Path (str): path to the DEC file
+    """
 
     def __init__(self):
+        """Init an empty Dec Parser."""
         HashFileParser.__init__(self, 'DecParser')
         self.Lines = []
         self.Parsed = False
@@ -155,7 +175,7 @@ class DecParser(HashFileParser):
         self.PackageName = None
 
     def _Parse(self) -> None:
-
+        """Parses the EDK2 DEC file."""
         InDefinesSection = False
         InLibraryClassSection = False
         InProtocolsSection = False
@@ -260,29 +280,21 @@ class DecParser(HashFileParser):
         self.Parsed = True
 
     def ParseStream(self, stream) -> None:
-        """
-        parse the supplied IO as a DEC file
+        """Parse the supplied IO as a DEC file.
+
         Args:
-            stream: a file-like/stream object in which DEC file contents can be read
-
-        Returns:
-            None - Existing object now contains parsed data
-
+            stream (IOBase): a file-like/stream object in which DEC file contents can be read
         """
         self.Path = "None:stream_given"
         self.Lines = stream.readlines()
         self._Parse()
 
     def ParseFile(self, filepath: str) -> None:
-        """
-        Parse the supplied file.
+        """Parse the supplied file.
+
         Args:
-          filepath: path to dec file to parse.  Can be either an absolute path or
-          relative to your CWD
-
-        Returns:
-          None - Existing object now contains parsed data
-
+          filepath (str): path to dec file to parse.  Can be either an absolute path or
+            relative to your CWD
         """
         self.Logger.debug("Parsing file: %s" % filepath)
         if (not os.path.isabs(filepath)):

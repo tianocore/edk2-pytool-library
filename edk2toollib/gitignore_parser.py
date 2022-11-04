@@ -1,18 +1,14 @@
+# Copyright (c) Microsoft Corporation
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+"""Gitignore parser configured to work for edk2-pytool-library."""
 from pathlib import Path
 from os.path import dirname, abspath
 import re
 import os
 import collections
-"""
-gitignore parser configured to work for edk2-pytool-library
-"""
 
-# Copyright (c) Microsoft Corporation
-#
-# SPDX-License-Identifier: BSD-2-Clause-Patent
-
-
-''' Original file is from
+"""Original file is from
 https://github.com/mherrmann/gitignore_parser/blob/master/gitignore_parser.py
 sha hash: 31407327e4a10d122632c5f03c7a705b010e5fbd
 
@@ -40,13 +36,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-'''
+"""
 
 
 def handle_negation(file_path, rules):
-    """ allows `matched` value override if negation is true, otherwise
-    `matched` cannot be overwritten with an exception. Used for ensuring rules
-    with ! will override a previous true result back to false.
+    """Allows `matched` value override if negation is true.
+
+    Otherwise `matched` cannot be overwritten with an exception.
+    Used for ensuring rules with ! will override a previous true result back to false.
     """
     matched = False
     for rule in rules:
@@ -59,8 +56,7 @@ def handle_negation(file_path, rules):
 
 
 def parse_gitignore_file(full_path, base_dir=None):
-    """ parse a gitignore file
-    """
+    """Parse a gitignore file."""
     if base_dir is None:
         base_dir = dirname(full_path)
     with open(full_path) as ignore_file:
@@ -69,8 +65,7 @@ def parse_gitignore_file(full_path, base_dir=None):
 
 
 def parse_gitignore_lines(lines: list, full_path: str, base_dir: str):
-    """ parse a list of lines matching gitignore syntax
-    """
+    """Parse a list of lines matching gitignore syntax."""
     counter = 0
     rules = []
     for line in lines:
@@ -84,7 +79,8 @@ def parse_gitignore_lines(lines: list, full_path: str, base_dir: str):
 
 
 def rule_from_pattern(pattern, base_path=None, source=None):
-    """
+    """Generates an IgnoreRule object from a pattern.
+
     Take a .gitignore match pattern, such as "*.py[cod]" or "**/*.bak",
     and return an IgnoreRule suitable for matching against files and
     directories. Patterns which do not match files, such as comments
@@ -167,13 +163,17 @@ IGNORE_RULE_FIELDS = [
 
 
 class IgnoreRule(collections.namedtuple('IgnoreRule_', IGNORE_RULE_FIELDS)):
+    """Class representing a single rule parsed from a .ignore file."""
     def __str__(self):
+        """String representation (user friendly) of the rule."""
         return self.pattern
 
     def __repr__(self):
+        """String representation (developer friendly) of the rule."""
         return ''.join(['IgnoreRule(\'', self.pattern, '\')'])
 
     def match(self, abs_path):
+        """Returns True or False if the path matches the rule."""
         matched = False
         if self.base_path:
             rel_path = str(Path(abs_path).relative_to(self.base_path))
@@ -189,9 +189,9 @@ class IgnoreRule(collections.namedtuple('IgnoreRule_', IGNORE_RULE_FIELDS)):
 # Frustratingly, python's fnmatch doesn't provide the FNM_PATHNAME
 # option that .gitignore's behavior depends on.
 def fnmatch_pathname_to_regex(pattern):
-    """
-    Implements fnmatch style-behavior, as though with FNM_PATHNAME flagged;
-    the path seperator will not match shell-style '*' and '.' wildcards.
+    """Implements fnmatch style-behavior, as though with FNM_PATHNAME flagged.
+
+    WARNING: the path seperator will not match shell-style '*' and '.' wildcards.
     """
     i, n = 0, len(pattern)
 
