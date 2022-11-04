@@ -385,6 +385,53 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(folder_pp1_abs, "testfile.c")
         self.assertIsNone(pathobj.GetContainingPackage(p), folder_pp_rel)
 
+    def test_get_containing_module_with_infs_in_other_temp_dirs(self):
+        ''' test that GetContainingModule does not look outside the workspace
+        root for modules. To do so, a temporary .inf file is placed in the
+        user's temporary directory. Such a file could already exist and
+        similarly impact test results. To ensure consistent test results, this
+        test explicitly creates such a file.
+
+        File layout:
+
+        root/                         <-- User temporary directory
+           SomeModule.inf             <-- .inf file in user temporary directory
+           <temp_working_dir>/        <-- Current working directory (self.tmp)
+               folder_ws              <-- Workspace root
+                   WSTestPkg          <-- An edk2 package
+                       WSTestPkg.dec
+                       module1
+                           module1.inf
+                       module2
+                           module2.inf
+                           X64
+                               TestFile.c
+        '''
+        # Make the workspace directory: <self.tmp>/folder_ws/
+        ws_rel = "folder_ws"
+        ws_abs = os.path.join(self.tmp, ws_rel)
+
+        # Make WSTestPkg: <self.tmp>/folder_ws/WSTestPkg/
+        ws_p_name = "WSTestPkg"
+        self._make_edk2_package_helper(ws_abs, ws_p_name)
+
+        # Place a .inf file in the temporary directory
+        # <Temporary Directory>/SomeModule.inf
+        other_inf = os.path.join(os.path.dirname(self.tmp), "SomeModule.inf")
+        with open(other_inf, 'w'):
+            pass
+
+        try:
+            pathobj = Edk2Path(ws_abs, [])
+
+            # File outside of the workspace - invalid and should return None
+            p = os.path.join(os.path.dirname(ws_abs), "testfile.c")
+            relist = pathobj.GetContainingModules(p)
+            self.assertEqual(len(relist), 0)
+        finally:
+            if os.path.isfile(other_inf):
+                os.remove(other_inf)
+
     def test_get_containing_module(self):
         ''' test basic usage of GetContainingModule with packages path nested
         inside the workspace
