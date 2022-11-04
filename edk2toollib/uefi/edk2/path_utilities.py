@@ -62,7 +62,7 @@ class Edk2Path(object):
             if os.path.isabs(a):
                 candidate_package_path_list.append(Path(a))
             else:
-                wsr = Path(ws, a)
+                wsr = Path(self.WorkspacePath, a)
                 if wsr.is_dir():
                     candidate_package_path_list.append(wsr)
                 else:
