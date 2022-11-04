@@ -611,11 +611,21 @@ class PathUtilitiesTest(unittest.TestCase):
             Should not raise an exception.
 
         File layout:
-        root/                           <-- Current working diretory
-            folder_ws/                  <-- Workspace Root
-                folder_pp1/             <-- A Package Path
-                    PPTestPkg1/         <-- A Package
-                            folder_pp2/ <-- A Package Path
+        root/                            <-- Current working directory
+        └───folder_ws/                   <-- Workspace root
+            └───folder_pp1/              <-- Package Path 1
+                └───PPTestPkg1/          <-- A valid edk2 package
+                    │   PPTestPkg1.dec
+                    │
+                    ├───folder_pp2/      <-- Package Path 2
+                    ├───module1/
+                    │       module1.inf
+                    │
+                    └───module2/
+                        │   module2.inf
+                        │
+                        └───X64/
+                                TestFile.c
         '''
         folder_ws_rel = "folder_ws"
         folder_ws_abs = os.path.join(self.tmp, folder_ws_rel)
@@ -631,6 +641,10 @@ class PathUtilitiesTest(unittest.TestCase):
         folder_pp2_rel = "folder_pp2"
         folder_pp2_abs = os.path.join(pp1_abs, folder_pp2_rel)
         os.mkdir(folder_pp2_abs)
+
+        pathobj = Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
+        p = os.path.join(pp1_abs, "module2", "X64", "TestFile.c")
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{pp1_name}/module2/X64/TestFile.c")
 
     def test_get_relative_path_when_folder_is_next_to_package(self):
         ''' test usage of GetEdk2RelativePathFromAbsolutePath when a folder containing a package is in the same
