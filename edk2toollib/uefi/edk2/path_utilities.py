@@ -20,7 +20,7 @@ class Edk2Path(object):
     Class that helps perform path operations within an EDK workspace.
     """
 
-    def __init__(self, ws: os.PathLike, packagepathlist: Iterable[os.PathLike],
+    def __init__(self, ws: os.PathLike, package_path_list: Iterable[os.PathLike],
                  error_on_invalid_pp: bool = True):
         """Constructor.
 
@@ -84,8 +84,17 @@ class Edk2Path(object):
             raise NotADirectoryError(errno.ENOENT, os.strerror(errno.ENOENT),
                                      a.resolve())
 
+        #
         # Nested package check - ensure packages do not exist in a linear
         # path hierarchy.
+        #
+        # 1. Build a dictionary for each package path.
+        #      - Key = Package path
+        #      - Value = List of packages discovered in package path
+        # 2. Enumerate all keys in dictionary checking if any package
+        #    is relative (nested) to each other.
+        # 3. Raise an Exception if two packages are found to be nested.
+        #
         package_path_packages = {}
         for package_path in candidate_package_path_list:
             package_path_packages[package_path] = \
