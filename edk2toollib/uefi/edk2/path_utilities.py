@@ -245,53 +245,99 @@ class Edk2Path(object):
 
         return None
 
-    def GetContainingModules(self, InputPath: str) -> list:
-        """Find the list of modules (infs) that file path is in.
+    def GetContainingModules(self, input_path: str) -> list[str]:
+        """Find the list of modules (inf files) for a file path.
 
-        for now just assume any inf in the same dir or if none
-        then check parent dir.  If InputPath is not in the filesystem
-        this function will try to return the likely containing module
-        but if the entire module has been deleted this isn't possible.
+        Note: This function only accepts absolute paths. An exception will
+              be raised if a non-absolute path is given.
+
+        Note: If input_path does not exist in the filesystem, this function
+              will try to return the likely containing module(s) but if the
+              entire module has been deleted, this isn't possible.
+
+        - If a .inf file is given, that file is returned.
+        - Otherwise, the nearest set of .inf files (in the closest parent)
+          will be returned in a list of file path strings.
 
         Args:
-            InputPath (str): file path in the Os spefic path form
+            input_path (str): Absolute path to a file, directory, or module.
+                              Supports both Windows and Linux like paths.
 
         Returns:
-            (list): list of module inf paths in absolute form.
+            (list[str]): Absolute paths of .inf files that could be the
+                         containing module.
         """
-        self.logger.debug("GetContainingModules: %s" % InputPath)
+        input_path = Path(os.path.normcase(input_path))
+        if not input_path.is_absolute():
+            # Todo: Return a more specific exception type when
+            # https://github.com/tianocore/edk2-pytool-library/issues/184 is
+            # implemented.
+            raise Exception("Module path must be absolute.")
 
-        # if INF return self
-        if fnmatch.fnmatch(InputPath.lower(), '*.inf'):
-            return [InputPath]
+        package_paths = [Path(os.path.normcase(x)) for x in self.PackagePathList]
+        workspace_path = Path(os.path.normcase(self.WorkspacePath))
+        all_root_paths = package_paths + [workspace_path]
 
-        # Before checking the local filesystem for an INF
-        # make sure filesystem has file or at least folder
-        if not os.path.isfile(InputPath):
-            logging.debug("InputPath doesn't exist in filesystem")
+        # For each root path, find the maximum allowed root in its hierarchy.
+        maximum_root_paths = all_root_paths
+        for root_path in maximum_root_paths:
+            for other_root_path in maximum_root_paths[:]:
+                if root_path == other_root_path:
+                    continue
+                if root_path.is_relative_to(other_root_path):
+                    if len(root_path.parts) > len(other_root_path.parts):
+                        maximum_root_paths.remove(root_path)
+                    else:
+                        maximum_root_paths.remove(other_root_path)
+
+        # Verify the file path is within a valid workspace or package path
+        # directory.
+        for path in maximum_root_paths:
+            if input_path.is_relative_to(path):
+                break
+        else:
+            return []
 
         modules = []
-        # Check current dir
-        dirpath = os.path.dirname(InputPath)
-        if os.path.isdir(dirpath):
-            for f in os.listdir(dirpath):
-                if fnmatch.fnmatch(f.lower(), '*.inf'):
-                    self.logger.debug("Found INF file in %s.  INf is: %s", dirpath, f)
-                    modules.append(os.path.join(dirpath, f))
+        if input_path.suffix == '.inf':
+            # Return the file path given since it is a module .inf file
+            modules = [str(input_path)]
 
-        # if didn't find any in current dir go to parent dir.
-        # this handles cases like:
-        # ModuleDir/
-        #   Module.inf
-        #   x64/
-        #     file.c
-        #
-        if (len(modules) == 0):
-            dirpath = os.path.dirname(dirpath)
-            if os.path.isdir(dirpath):
-                for f in os.listdir(dirpath):
-                    if fnmatch.fnmatch(f.lower(), '*.inf'):
-                        self.logger.debug("Found INF file in %s.  INf is: %s", dirpath, f)
-                        modules.append(os.path.join(dirpath, f))
+        if not modules:
+            # Continue to ascend directories up to a maximum root path.
+            #
+            # This handles cases like:
+            #   ModuleDir/      |   ModuleDir/      | ...similarly nested files
+            #     Module.inf    |     Module.inf    |
+            #     x64/          |     Common/       |
+            #       file.c      |       X64/        |
+            #                   |         file.c    |
+            #
+            # The terminating condition of the loop is when a maximum root
+            # path has been reached.
+            #
+            # A maximum root path represents the maximum allowed ascension
+            # point in the input_path directory hierarchy as sub-roots like
+            # a package path pointing under a workspace path are already
+            # accounted for during maximum root path filtering.
+            #
+            # Given a root path is either the workspace or a package path,
+            # neither of which are a module directory, once that point is
+            # reached, all possible module candidates are exhausted.
+            current_dir = input_path.parent
+            while current_dir not in maximum_root_paths:
+                if current_dir.is_dir():
+                    current_dir_inf_files = \
+                        [str(f) for f in current_dir.iterdir() if
+                         f.is_file() and f.suffix.lower() == '.inf']
+                    if current_dir_inf_files:
+                        # A .inf file(s) exist in this directory.
+                        #
+                        # Since this is the closest parent that can be considered
+                        # a module, return the .inf files as module candidates.
+                        modules.extend(current_dir_inf_files)
+                        break
+
+                current_dir = current_dir.parent
 
         return modules

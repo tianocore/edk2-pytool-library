@@ -386,6 +386,70 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(folder_pp1_abs, "testfile.c")
         self.assertIsNone(pathobj.GetContainingPackage(p), folder_pp_rel)
 
+    def test_get_containing_modules_with_relative_path(self):
+        """Test that a relative path raises an exception.
+
+        Note: GetContainingModules() only accepts absolute paths.
+
+        File layout:
+            root/                   <-- Current working directory (self.tmp)
+                folder_ws           <-- Workspace directory
+                    pp1             <-- Package Path 1
+                        PPTestPkg   <-- An edk2 package
+                            PPTestPkg.DEC
+                            module1
+                                module1.INF
+                            module2
+                                module2.INF
+                                X64
+                                    TestFile.c
+                    WSTestPkg       <-- An edk2 package
+                        WSTestPkg.dec
+                        module1
+                            module1.inf
+                        module2
+                            module2.inf
+                            X64
+                                TestFile.c
+       """
+        # Make the workspace directory: folder_ws/
+        ws_rel = "folder_ws"
+        ws_abs = os.path.join(self.tmp, ws_rel)
+        os.mkdir(ws_abs)
+
+        # Make Package Path 1 directory: folder_ws/pp1
+        folder_pp_rel = "pp1"
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
+        os.mkdir(folder_pp1_abs)
+
+        # Make WSTestPkg: folder_ws/WSTestPkg
+        ws_p_name = "WSTestPkg"
+        self._make_edk2_package_helper(ws_abs, ws_p_name)
+
+        # Make PPTestPkg in Package Path 1: folder_ws/pp1/PPTestPkg
+        pp_p_name = "PPTestPkg"
+        self._make_edk2_package_helper(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
+
+        # Change the current working directory to the workspace
+        os.chdir(ws_abs)
+
+        # Pass a valid relative path to GetContainingModules()
+        #   folder_ws/WSTestPkg/module2/module2.inf
+        p = os.path.join("WSTestPkg", "module2", "module2.inf")
+        self.assertRaises(Exception, pathobj.GetContainingModules, p)
+
+        # Pass an invalid relative path to GetContainingModules()
+        #   folder_ws/WSTestPkg/module2/module3.inf
+        p = os.path.join("WSTestPkg", "module2", "module3.inf")
+        self.assertRaises(Exception, pathobj.GetContainingModules, p)
+
+        # Pass a valid non .inf relative path to GetContainingModules()
+        #   folder_ws/WSTestPkg/module2/X64/TestFile.c
+        p = os.path.join("WSTestPkg", "module2", "X64", "TestFile.c")
+        self.assertRaises(Exception, pathobj.GetContainingModules, p)
+
     def test_get_containing_module_with_infs_in_other_temp_dirs(self):
         ''' test that GetContainingModule does not look outside the workspace
         root for modules. To do so, a temporary .inf file is placed in the
