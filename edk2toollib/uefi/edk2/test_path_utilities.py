@@ -13,6 +13,7 @@ import sys
 import tempfile
 import shutil
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
+from pathlib import Path
 
 
 class PathUtilitiesTest(unittest.TestCase):
@@ -479,7 +480,9 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_pkg_abs, "module1", "testfile.c")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 1)
-        self.assertIn(os.path.join(ws_pkg_abs, "module1", "module1.inf"), relist)
+        self.assertEqual(
+            Path(os.path.join(ws_pkg_abs, "module1", "module1.inf")),
+            Path(relist[0]))
 
         # file in workspace root - no package- should return ws root
         p = os.path.join(ws_abs, "testfile.c")
@@ -495,13 +498,17 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_pkg_abs, "module2", "X64", "testfile.c")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 1)
-        self.assertIn(os.path.join(ws_pkg_abs, "module2", "module2.inf"), relist)
+        self.assertEqual(
+            Path(os.path.join(ws_pkg_abs, "module2", "module2.inf")),
+            Path(relist[0]))
 
         # inf file in module2 x64
         p = os.path.join(ws_pkg_abs, "module2", "module2.inf")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 1)
-        self.assertIn(os.path.join(ws_pkg_abs, "module2", "module2.inf"), relist)
+        self.assertEqual(
+            Path(os.path.join(ws_pkg_abs, "module2", "module2.inf")),
+            Path(relist[0]))
 
         # file in PPTestPkg root
         p = os.path.join(pp_pkg_abs, "testfile.c")
@@ -512,13 +519,17 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(pp_pkg_abs, "module1", "testfile.c")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 1)
-        self.assertIn(os.path.join(pp_pkg_abs, "module1", "module1.INF"), relist)
+        self.assertEqual(
+            Path(os.path.join(pp_pkg_abs, "module1", "module1.INF")),
+            Path(relist[0]))
 
         # inf file in module in PPTestPkg
         p = os.path.join(pp_pkg_abs, "module1", "module1.INF")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 1)
-        self.assertIn(os.path.join(pp_pkg_abs, "module1", "module1.INF"), relist)
+        self.assertEqual(
+            Path(os.path.join(pp_pkg_abs, "module1", "module1.INF")),
+            Path(relist[0]))
 
         # file in packages path root - no module
         p = os.path.join(folder_pp1_abs, "testfile.c")
@@ -540,7 +551,9 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_pkg_abs, "module1", "ThisParentDirDoesNotExist", "testfile.c")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 1)
-        self.assertIn(os.path.join(ws_pkg_abs, "module1", "module1.inf"), relist)
+        self.assertEqual(
+            Path(os.path.join(ws_pkg_abs, "module1", "module1.inf")),
+            Path(relist[0]))
 
     def test_get_edk2_relative_path_from_absolute_path(self):
         ''' test basic usage of GetEdk2RelativePathFromAbsolutePath with packages path nested
