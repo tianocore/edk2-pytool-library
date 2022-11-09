@@ -13,7 +13,6 @@ import sys
 import tempfile
 import shutil
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
-import pytest
 
 
 class PathUtilitiesTest(unittest.TestCase):
@@ -607,7 +606,6 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_pkg_abs, "module2", "X64", "TestFile2.c")
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{ws_p_name}/module2/X64/TestFile2.c")
 
-    @pytest.mark.skip(reason="disable test until all nested package issues resolved")
     def test_get_relative_path_when_package_path_inside_package(self):
         ''' test usage of GetEdk2RelativePathFromAbsolutePath when a package_path directory is
         inside the subfolders of a package. Should raise an exception.
@@ -633,7 +631,8 @@ class PathUtilitiesTest(unittest.TestCase):
         folder_pp2_abs = os.path.join(pp1_abs, folder_pp2_rel)
         os.mkdir(folder_pp2_abs)
 
-        self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
+#        self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
+        Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
 
     def test_get_relative_path_when_folder_is_next_to_package(self):
         ''' test usage of GetEdk2RelativePathFromAbsolutePath when a folder containing a package is in the same

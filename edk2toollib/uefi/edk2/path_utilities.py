@@ -75,7 +75,8 @@ class Edk2Path(object):
                 if str(p).lower() == str(ws).lower():
                     break
                 if len(glob.glob(f'{p}/*dec')) != 0:
-                    self.logger.log(logging.WARNING,f'Nested packages not allowed. Pkg path [{package_path}] nested in Package [{p}]')
+                    self.logger.log(logging.WARNING,
+                                    f'Nested packages not allowed. Pkg path [{package_path}] nested in Package [{p}]')
                 p = p.parent
 
     def GetEdk2RelativePathFromAbsolutePath(self, abspath):
