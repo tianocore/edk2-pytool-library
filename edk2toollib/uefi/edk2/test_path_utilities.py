@@ -612,19 +612,16 @@ class PathUtilitiesTest(unittest.TestCase):
 
         File layout:
         root/                            <-- Current working directory
-        └───folder_ws/                   <-- Workspace root
-            └───folder_pp1/              <-- Package Path 1
-                └───PPTestPkg1/          <-- A valid edk2 package
-                    │   PPTestPkg1.dec
-                    │
-                    ├───folder_pp2/      <-- Package Path 2
-                    ├───module1/
-                    │       module1.inf
-                    │
-                    └───module2/
-                        │   module2.inf
-                        │
-                        └───X64/
+            folder_ws/                   <-- Workspace root
+                folder_pp1/              <-- Package Path 1
+                    PPTestPkg1/          <-- A valid edk2 package
+                        PPTestPkg1.dec
+                        folder_pp2/      <-- Package Path 2
+                        module1/
+                            module1.inf
+                        module2/
+                            module2.inf
+                            X64/
                                 TestFile.c
         '''
         folder_ws_rel = "folder_ws"
@@ -652,31 +649,24 @@ class PathUtilitiesTest(unittest.TestCase):
 
         File layout:
         root/                                   <-- Current working directory
-        └───folder_ws/                          <-- Workspace root
-            └───folder_pp1/                     <-- Package Path 1
-                └───PPTestPkg1/                 <-- A valid edk2 package
-                    │   PPTestPkg1.dec
-                    │
-                    ├───folder_pp2/             <-- Package Path 2
-                    │   └───PPTestPkg2/         <-- A valid edk2 package
-                    │       │   PPTestPkg2.dec
-                    │       │
-                    │       ├───module1/
-                    │       │       module1.inf
-                    │       │
-                    │       └───module2/
-                    │           │   module2.inf
-                    │           │
-                    │           └───X64/
-                    │                   TestFile.c
-                    │
-                    ├───module1/
-                    │       module1.inf
-                    │
-                    └───module2/
-                        │   module2.inf
-                        │
-                        └───X64/
+            folder_ws/                          <-- Workspace root
+                folder_pp1/                     <-- Package Path 1
+                    PPTestPkg1/                 <-- A valid edk2 package
+                        PPTestPkg1.dec
+                        folder_pp2/             <-- Package Path 2
+                            PPTestPkg2/         <-- A valid edk2 package
+                                PPTestPkg2.dec
+                                module1/
+                                    module1.inf
+                                module2/
+                                    module2.inf
+                                    X64/
+                                        TestFile.c
+                        module1/
+                            module1.inf
+                        module2/
+                            module2.inf
+                            X64/
                                 TestFile.c
         '''
         folder_ws_rel = "folder_ws"
