@@ -816,7 +816,9 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
 
         # Nested packages should no longer raise an exception
-        os.environ["STUART_IGNORE_EDK_NESTED_PACKAGES"] = "true"
+        # Note: These tests can be removed when support for
+        #       PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES is removed.
+        os.environ["PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES"] = "true"
         Edk2Path(folder_ws_abs, [folder_pp1_abs])
         Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
 

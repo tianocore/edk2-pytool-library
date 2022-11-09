@@ -100,9 +100,13 @@ class Edk2Path(object):
             package_path_packages[package_path] = \
                 [Path(p).parent for p in package_path.glob('**/*.dec')]
 
+        # Note: The ability to ignore this function raising an exception on
+        #       nested packages is temporary. Do not plan on this variable
+        #       being available long-term and try to resolve the nested
+        #       packages problem right away.
         ignore_nested_packages = False
-        if "STUART_IGNORE_EDK_NESTED_PACKAGES" in os.environ and \
-            os.environ["STUART_IGNORE_EDK_NESTED_PACKAGES"].strip().lower() == \
+        if "PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES" in os.environ and \
+            os.environ["PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES"].strip().lower() == \
                 "true":
             ignore_nested_packages = True
 
@@ -118,11 +122,19 @@ class Edk2Path(object):
                                 f"Nested packages not allowed. The packages "
                                 f"[{str(package)}] and [{str(comp_package)}] are "
                                 f"nested.")
+                            self.logger.log(
+                                logging.WARNING,
+                                "Note 1: Nested packages are being ignored right now because the "
+                                "\"PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES\" environment variable "
+                                "is set. Do not depend on this variable long-term.")
+                            self.logger.log(
+                                logging.WARNING,
+                                "Note 2: Some pytool features may not work as expected with nested packages.")
                         else:
                             raise Exception(
                                 f"Nested packages not allowed. The packages "
                                 f"[{str(package)}] and [{str(comp_package)}] are "
-                                f"nested. Set the \"STUART_IGNORE_EDK_NESTED_PACKAGES\" "
+                                f"nested. Set the \"PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES\" "
                                 f"environment variable to \"true\" as a temporary workaround "
                                 f"until you fix the packages so they are no longer nested.")
 
