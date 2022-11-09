@@ -6,7 +6,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-
+"""This module contains utility classes to help interpret definitions from the Tpm20.h header file."""
 ##
 # INCLUDES CONTENTS FROM TianoCore Tpm20.h HEADER FILE!!
 #
@@ -236,8 +236,20 @@ TPM_RH_LAST = 0x4000010F
 
 
 class CommandCode(object):
+    """Class representing a command code.
+
+    Allows alternativing between command codes and command strings.
+    """
     @staticmethod
     def get_code(cc_string):
+        """Returns associated command code.
+
+        Args:
+            cc_string (str): command string
+        Returns:
+            (int): Associated command code
+            (None): cc_string not found
+        """
         return {
             "TPM_CC_NV_UndefineSpaceSpecial": 0x0000011F,
             "TPM_CC_EvictControl": 0x00000120,
@@ -350,6 +362,14 @@ class CommandCode(object):
 
     @staticmethod
     def get_string(cc_code):
+        """Returns associated command string.
+
+        Args:
+            cc_code (int): command code
+        Returns:
+            (str): Associated command string
+            (None): cc_code not found
+        """
         return {
             0x0000011F: "TPM_CC_NV_UndefineSpaceSpecial",
             0x00000120: "TPM_CC_EvictControl",
@@ -462,8 +482,20 @@ class CommandCode(object):
 
 
 class ResponseCode(object):
+    """Class representing a Response code.
+
+    Allows alternativing between response codes and response strings.
+    """
     @staticmethod
     def get_simple_string(rc_code):
+        """Returns associated response string.
+
+        Args:
+            rc_code (int): response code
+        Returns:
+            (str): Associated response string
+            (None): rc_code not found
+        """
         return {
             0x00000100: "TPM_RC_INITIALIZE",
             0x00000101: "TPM_RC_FAILURE",
@@ -503,6 +535,7 @@ class ResponseCode(object):
 
     @staticmethod
     def parse_code(rc_code):
+        """Returns a Tuple representing the parsed response code."""
         generic_errors = {
             0x000: 'TPM_RC_INITIALIZE',
             0x001: 'TPM_RC_FAILURE',

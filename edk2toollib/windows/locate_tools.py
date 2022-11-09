@@ -16,7 +16,10 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Module to assist in locating tools via VsWhere.
 
+NOTE: Has the capability to download VSwhere.
+"""
 import pkg_resources
 import os
 import logging
@@ -79,13 +82,16 @@ def __VsWherePath():
     return vswhere_path
 
 
-####
-#
-# https://docs.microsoft.com/en-us/vswhere/install-vswhere-client-tools
-#
-# @return string "/PATH/TO/vswhere.exe" or None
-####
 def GetVsWherePath(fail_on_not_found: bool = True):
+    """Get the VsWhere tool path.
+
+    Args:
+        fail_on_not_found (:obj:`bool`, optional): whether to log an error or not.
+
+    Returns:
+        (str): "/PATH/TO/vswhere.exe" if found
+        (None): if fail_on_not_found and is not found
+    """
     vswhere_path = __VsWherePath()
     # check if we can't find it, look for vswhere in the path
     if not os.path.isfile(vswhere_path):
@@ -112,13 +118,13 @@ def GetVsWherePath(fail_on_not_found: bool = True):
     return vswhere_path
 
 
-####
-# Finds a product with VS Where
-#
-# product: is defined by vswhere tool
-# vs_version: helper to find version of supported VS version (example vs2019).
-####
 def FindWithVsWhere(products: str = "*", vs_version: str = None):
+    """Finds a product with VS Where.
+
+    Args:
+        products (:obj:`str`, optional): product defined by vswhere tool
+        vs_version (:obj:`str, optional): helper to find version of supported VS version (example vs2019)
+    """
     cmd = "-latest -nologo -all -property installationPath"
     vs_where_path = GetVsWherePath()
     if vs_where_path is None:
@@ -145,20 +151,20 @@ def FindWithVsWhere(products: str = "*", vs_version: str = None):
     return (ret, None)
 
 
-# Run visual studio batch file and collect the
-# interesting environment values
-#
-#  Inspiration taken from cpython for this method of env collection
-#
-# keys: enumerable list with names of env variables to collect after bat run
-# arch: arch to run.  amd64, x86, ??
-# product: value defined by vswhere.exe
-# vs_version: helper to find version of supported VS version (example vs2019).
-# returns a dictionary of the interesting environment variables
 def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_version: str = None):
-    """Launch vcvarsall.bat and read the settings from its environment.  This is a windows only function
-    and Windows is case insensitive for the keys"""
+    """Launch vcvarsall.bat and read the settings from its environment.
 
+    This is a windows only function and Windows is case insensitive for the keys
+
+    Args:
+        keys (list): names of env variables to collect after bat run
+        arch (:obj:`str`, optional): arch to run
+        product (:obj:`str`, optional): values defined by vswhere.exe
+        vs_version (:obj:`str`, optional): helper to find version of supported VS version (example vs2019)
+
+    Returns:
+        (dict): the appropriate environment variables
+    """
     if product is None:
         product = "*"
     if arch is None:
@@ -203,10 +209,14 @@ def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_versi
     return result
 
 
-# return 1 if a > b
-# return 0 if b == a
-# return -1 if a < b
 def _CompareWindowVersions(a, b):
+    """Compares Windows versions.
+
+    Returns:
+        (int): 1 if a > b
+        (int): 0 if a == b
+        (int): -1 if a < b
+    """
     a_periods = str(a).count(".")
     b_periods = str(b).count(".")
     if a_periods == 3 and b_periods != 3:
@@ -228,11 +238,13 @@ def _CompareWindowVersions(a, b):
 
 
 def _CheckArchOfMatch(match):
-    '''
-    Returns if this binary matches our host
-    returns true or false
-    if no arch is in the match, then we return true
-    '''
+    """Returns if this binary matches our host.
+
+    Returns:
+        (bool): if arch matches
+
+    NOTE: if no arch is in the match, then we return true
+    """
     match = str(match).lower()
     isx86 = "x86" in match
     isx64 = "x64" in match or "amd64" in match
@@ -269,7 +281,14 @@ def _CheckArchOfMatch(match):
 
 # does a glob in the folder that your sdk is
 # uses the environmental variable WindowsSdkDir and tries to use WindowsSDKVersion
-def FindToolInWinSdk(tool: str, product=None, arch=None):
+def FindToolInWinSdk(tool: str, product: str = None, arch: str = None):
+    """Searches for a tool in the Windows SDK Directory.
+
+    Args:
+        tool (str): Tool to search for
+        product (:obj:`str`, optional): product for searching with vswhere
+        arch (:obj:`str`, optional): arch for searching with vswhere
+    """
     variables = ["WindowsSdkDir", "WindowsSDKVersion"]
     # get the value with QueryVcVariables
     try:

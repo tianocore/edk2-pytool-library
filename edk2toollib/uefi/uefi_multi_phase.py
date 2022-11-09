@@ -5,6 +5,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Module containing definitions and structures from the UefiMultiPhase header file."""
 
 import struct
 
@@ -18,6 +19,7 @@ EFI_VARIABLE_APPEND_WRITE = 0x00000040
 
 
 class EfiVariableAttributes(object):
+    """Object representing the different efi variable attributes."""
     # UINT32
     _StructFormat = "<I"
     _StructSize = struct.calcsize(_StructFormat)
@@ -33,9 +35,11 @@ class EfiVariableAttributes(object):
     }
 
     def __init__(self, attributes=0x0000_0000):
+        """Inits with specified attributes."""
         self.Attributes = attributes
 
     def __str__(self):
+        """String representation of the attributes."""
         result = []
         for key in EfiVariableAttributes.STRING_MAP:
             if self.Attributes & key:

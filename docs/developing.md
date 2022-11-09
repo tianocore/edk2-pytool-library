@@ -89,13 +89,19 @@
     (whitespace, indentation, etc). In VSCode open the py file and use
     ++alt+shift+f++ to auto format.  
 
-2. Run the `BasicDevTests.py` script to check file encoding, file naming, etc
+2. Run a Basic Python docstring Check (using pydocstring) and resolve any issues
+
+    ``` cmd
+    pydocstyle edk2toollib
+    ```
+
+3. Run the `BasicDevTests.py` script to check file encoding, file naming, etc
 
     ```cmd
     BasicDevTests.py
     ```
 
-3. Run pytest with coverage data collected
+4. Run pytest with coverage data collected
 
     ``` cmd
     pytest -v --junitxml=test.junit.xml --html=pytest_report.html --self-contained-html --cov=edk2toollib --cov-report html:cov_html --cov-report xml:cov.xml --cov-config .coveragerc
@@ -107,17 +113,17 @@
     Coverage is uploaded to `codecov.io`. For more information, review
     `coverage.md` in the docs folder.
 
-4. Look at the reports
+5. Look at the reports
     * pytest_report.html
     * cov_html/index.html
 
-5. Run the spell checker
+6. Run the spell checker
 
     ```cmd
     cspell -c .cspell.json "**/*.py" "**/*.md"
     ```
 
-6. Run the markdown linter
+7. Run the markdown linter
 
     ```cmd
     markdownlint "**/*.md"

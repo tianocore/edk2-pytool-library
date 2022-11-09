@@ -5,6 +5,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Code to help convert Edk2, absolute, and relative file paths."""
 import os
 import logging
 import fnmatch
@@ -12,24 +13,28 @@ import glob
 from typing import Iterable
 from pathlib import Path
 
-#
-# Class to help convert from absolute path to EDK2 build path
-# using workspace and packagepath variables
-#
-
 
 class Edk2Path(object):
+    """Represents edk2 file paths.
+
+    Class to help convert from absolute path to EDK build path
+    using workspace and packagepath variables.
+
+    Can be used to resolve relative paths.
+    """
 
     def __init__(self, ws: os.PathLike, packagepathlist: Iterable[os.PathLike], error_on_invalid_pp: bool = True):
-        """ An Edk2Path object is an object that can be used to resolve edk2 relative paths
+        """Constructor.
 
         Args:
-            ws: absolute path or cwd relative path of the workspace.
-            packagespathlist: list of packages path.
+            ws (os.PathLike): absolute path or cwd relative path of the workspace.
+            packagespathlist (Iterable[os.PathLike]): list of packages path.
                 Entries can be Absolute path, workspace relative path, or CWD relative.
-            error_on_invalid_pp: default value is True. If packages path value is invalid raise exception
-        """
+            error_on_invalid_pp (bool): default value is True. If packages path value is invalid raise exception
 
+        Raises:
+            (NotADirectoryError): Invalid workspace or package path directory.
+        """
         self.WorkspacePath = ws
         self.logger = logging.getLogger("Edk2Path")
         if (not os.path.isabs(ws)):
@@ -79,16 +84,19 @@ class Edk2Path(object):
                 p = p.parent
 
     def GetEdk2RelativePathFromAbsolutePath(self, abspath):
-        ''' Given an absolute path return a edk2 path relative to workspace or packagespath.
+        """Given an absolute path return a edk2 path relative to workspace or packagespath.
 
         Note: absolute path must be in the OS specific path form
         Note: the relative path will be in POSIX-like path form
 
-        @param abspath: absolute path to a file or directory. Path must contain OS specific separator.
+        Args:
+            abspath (os.PathLike): absolute path to a file or directory. Path must contain OS specific separator.
 
-        @ret POSIX-like relative path to workspace or packagespath
-        @ret None if path is not valid
-        '''
+        Returns:
+            (os.PathLike): POSIX-like relative path to workspace or packagespath
+            (None): abspath is none
+            (None): path is not valid
+        """
         if abspath is None:
             return None
 
@@ -127,16 +135,17 @@ class Edk2Path(object):
         return None
 
     def GetAbsolutePathOnThisSystemFromEdk2RelativePath(self, relpath, log_errors=True):
-        ''' Given a edk2 relative path return an absolute path to the file in this workspace.
+        """Given a edk2 relative path return an absolute path to the file in this workspace.
 
-        Note: The relative path must be in POSIX-like path form
-        Note: The absolute path will be returned as an OS specific path form
-        Note: For case insensitive operating systems the case of the input
-        relpath will be used for the return value even if it doesn't match
-        the case in the filesystem.
+        Args:
+            relpath (os.PathLike): POSIX-like path
+            log_errors (:obj:`bool`, optional): whether to log errors
 
-        If not valid or doesn't exist return None'''
-
+        Returns:
+            (os.PathLike): absolute path in the OS specific form
+            (None): invalid relpath
+            (None): Unable to get the absolute path
+        """
         if relpath is None:
             return None
         relpath = relpath.replace("/", os.sep)
@@ -155,15 +164,19 @@ class Edk2Path(object):
         return None
 
     def GetContainingPackage(self, InputPath):
-        ''' Find the package this path belongs to using some Heuristic.  This isn't
-        perfect but at least identifies the directory consistently.
+        """Find the package that contains the given path.
 
-        Note: The inputPath must be in the OS specific path form
+        This isn't perfect but at least identifies the directory consistently.
 
-        @param InputPath:  absolute path to a file, directory, or module. Supports both Windows and Linux like paths
+        Note: The inputPath must be in the OS specific path form.
 
-        @ret Name of Package that the module is in.
-        '''
+        Args:
+            InputPath (str): absolute path to a file, directory, or module.
+                             supports both windows and linux like paths
+
+        Returns:
+            (str): Name of Package that the module is in.
+        """
         self.logger.debug("GetContainingPackage: %s" % InputPath)
         # Make a list that has the path case normalized for comparison.
         # This only does anything on Windows
@@ -231,19 +244,19 @@ class Edk2Path(object):
         return None
 
     def GetContainingModules(self, InputPath: str) -> list:
-        '''Find the list of modules (infs) that file path is in
+        """Find the list of modules (infs) that file path is in.
+
         for now just assume any inf in the same dir or if none
         then check parent dir.  If InputPath is not in the filesystem
         this function will try to return the likely containing module
         but if the entire module has been deleted this isn't possible.
 
-        Note: The inputPath must be in the OS specific path form
+        Args:
+            InputPath (str): file path in the Os spefic path form
 
-        @param InputPath:  absolute path to file
-
-        @ret list of abs path file paths for module infs
-        '''
-
+        Returns:
+            (list): list of module inf paths in absolute form.
+        """
         self.logger.debug("GetContainingModules: %s" % InputPath)
 
         # if INF return self

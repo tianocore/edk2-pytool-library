@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
+"""Translates a DSC object into a file."""
 import os
 import logging
 from edk2toollib.uefi.edk2.build_objects.dsc import dsc
@@ -18,9 +19,10 @@ from edk2toollib.uefi.edk2.build_objects.dsc import build_option
 
 
 class DscTranslator():
-
+    """A class used to translate DSCs."""
     @classmethod
     def dsc_to_file(cls, dsc_obj, filepath):
+        """Transforms the DSC object to a file."""
         file_path = os.path.abspath(filepath)
         f = open(file_path, "w")
         lines = cls._GetDscLinesFromDscObj(dsc_obj)
@@ -30,7 +32,7 @@ class DscTranslator():
 
     @classmethod
     def _GetDscLinesFromDscObj(cls, obj, depth=0) -> list:
-        ''' gets the DSC strings for an data model objects '''
+        """Gets the DSC strings for an data model objects."""
         lines = []
         depth_pad = ''.ljust(depth)
         org_depth = depth

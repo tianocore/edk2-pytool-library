@@ -5,3 +5,4 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""This package contains various firmware policy management tools."""

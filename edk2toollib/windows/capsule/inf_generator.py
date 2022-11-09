@@ -6,7 +6,10 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Module to generate inf files for capsule update based on an INF template.
 
+Uses supplied information such as Name, Version, ESRT Guid, Rollback, etc.
+"""
 import os
 import logging
 import datetime
@@ -15,16 +18,23 @@ import uuid
 
 
 class InfSection(object):
+    """Object representing an INF Section."""
     def __init__(self, name) -> None:
+        """Inits the object."""
         self.Name = name
         self.Items = []
 
     def __str__(self) -> str:
+        """Returns the string representation of the object.
+
+        Returns:
+            (str): string representation of the object.
+        """
         return "\n".join(["[%s]" % self.Name] + self.Items)
 
 
 class InfGenerator(object):
-
+    """An object that generates an INF file from data it is initialized with."""
     ### INF Template ###
     TEMPLATE = r""";
 ; {Name}.inf
@@ -91,6 +101,17 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
                       }
 
     def __init__(self, name_string, provider, esrt_guid, arch, description_string, version_string, version_hex):
+        """Inits the object with data necessary to generate an INF file.
+
+        Args:
+            name_string (str): Name
+            provider (str): Provider
+            esrt_guid (str): stringified guid, will be converted
+            arch (str): architecture
+            description_string (str): description
+            version_string (str): version
+            version_hex (int): version
+        """
         self.Name = name_string
         self.Provider = provider
         self.EsrtGuid = esrt_guid
@@ -104,10 +125,16 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
 
     @property
     def Name(self):
+        """Getter for the Name Attribute."""
         return self._name
 
     @Name.setter
     def Name(self, value):
+        """Setter for the Name Attribute.
+
+        Raises:
+            (ValueError): Invalid Characters in name
+        """
         # test here for invalid chars
         if not (re.compile(r'[\w-]*$')).match(value):
             logging.critical("Name invalid: '%s'", value)
@@ -116,14 +143,20 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
 
     @property
     def Provider(self):
+        """Getter for the Provider Attribute."""
         return self._provider
 
     @Provider.setter
     def Provider(self, value):
+        """Setter for the Provider Attribute."""
         self._provider = value
 
     @property
     def Manufacturer(self):
+        """Getter for the Manufacturer Attribute.
+
+        NOTE: Returns Provider attribute if Manufacturer attribute is not set.
+        """
         if (self._manufacturer is None):
             return self.Provider
 
@@ -131,32 +164,47 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
 
     @Manufacturer.setter
     def Manufacturer(self, value):
+        """Setter for the Manufacturer Attribute."""
         self._manufacturer = value
 
     @property
     def Description(self):
+        """Getter for the Description Attribute."""
         return self._description
 
     @Description.setter
     def Description(self, value):
+        """Setter for the Description Attribute."""
         self._description = value
 
     @property
     def EsrtGuid(self):
+        """Getter for the EsrtGuid Attribute."""
         return self._esrt_guid
 
     @EsrtGuid.setter
     def EsrtGuid(self, value):
+        """Setter for the EsrtGuid Attribute.
+
+        Raises:
+            (Exception): Invalid value
+        """
         uuid.UUID(value)  # if this works it is valid...otherwise throws exception
         # todo - make sure it is formatted exactly right
         self._esrt_guid = value
 
     @property
     def VersionString(self):
+        """Getter for VersionString attribute."""
         return self._versionstring
 
     @VersionString.setter
     def VersionString(self, value):
+        """Setter for the VersionString attribute.
+
+        Raises:
+            (ValueError): Invalid format
+        """
         c = value.count(".")
         if (c < 1) or (c > 3):
             logging.critical("Version string in invalid format.")
@@ -165,10 +213,16 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
 
     @property
     def VersionHex(self):
+        """Getter for the VersionHex attribute."""
         return "0x%X" % self._versionhex
 
     @VersionHex.setter
     def VersionHex(self, value):
+        """Setter for the VersionHex attribute.
+
+        Raises:
+            (ValueError): hex does not fit in a 32but uint
+        """
         a = int(value, 0)
         if (a > 0xFFFFFFFF):
             logging.critical("VersionHex invalid: '%s'", value)
@@ -177,10 +231,16 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
 
     @property
     def Arch(self):
+        """Getter for the Arch property."""
         return self._arch
 
     @Arch.setter
     def Arch(self, value):
+        """Setter for the Arch Attribute.
+
+        Raises:
+            (ValueError): Unsupported Arch
+        """
         key = value.lower()
         if (key not in InfGenerator.SUPPORTED_ARCH.keys()):
             logging.critical("Arch invalid: '%s'", value)
@@ -189,23 +249,44 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
 
     @property
     def Date(self):
+        """Getter for the date attribute.
+
+        Formats to a m/d/y str before returning
+        """
         return self._date.strftime("%m/%d/%Y")
 
     @Date.setter
     def Date(self, value):
+        """Setter for the Date attribute.
+
+        Raises:
+            (ValueError): not a datetime.date object
+        """
         if (not isinstance(value, datetime.date)):
             raise ValueError("Date must be a datetime.date object")
         self._date = value
 
     @property
     def IntegrityFilename(self):
+        """Getter for the Integrity File Name.
+
+        Transforms value into string.
+        """
         return str(self._integrityfile) if self._integrityfile is not None else ""
 
     @IntegrityFilename.setter
     def IntegrityFilename(self, value):
+        """Setter for the IntegrityFile name."""
         self._integrityfile = value
 
     def MakeInf(self, OutputInfFilePath, FirmwareBinFileName, Rollback=False):
+        """Generates the INF with provided information.
+
+        Args:
+            OutputInfFilePath (PathLike): Path to existing file
+            FirmwareBinFileName (str): File Name
+            Rollback (:obj:`bool`, optional): Generate with Rollback template
+        """
         RollbackString = ""
         if (Rollback):
             RollbackString = InfGenerator.ROLLBACKTEMPLATE.format(EsrtGuid=self.EsrtGuid)

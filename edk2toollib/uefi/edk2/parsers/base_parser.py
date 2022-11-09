@@ -5,16 +5,29 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Code to support parsing EDK2 files."""
 import os
 import logging
 from edk2toollib.uefi.edk2 import path_utilities
 
 
 class BaseParser(object):
-    """ """
+    """Base Parser for other parser objects.
+
+    Attributes:
+        Parsed (bool): If a file has been parsed or not
+        Lines (list): order list of lines in the file
+        LocalVars (dict): Dict of local variables
+        InputVars (dict): Dict of Input variables
+        ConditionalStack (list): list of current condition expressions
+        RootPath (str): Workspace root
+        PPs (list): List of PPs
+        TargetFilePath (list): file being parsed
+    """
     operators = ["OR", "AND", "IN", "==", "!=", ">", "<", "<=", ">="]
 
     def __init__(self, log="BaseParser"):
+        """Inits an empty Parser."""
         self.Logger = logging.getLogger(log)
         self.Lines = []
         self.LocalVars = {}
@@ -35,56 +48,58 @@ class BaseParser(object):
     #
 
     def SetBaseAbsPath(self, path):
-        """
+        """Sets the attribute RootPath.
 
         Args:
-          path:
+          path (str): Abs root path
 
         Returns:
-
+            (self)
         """
         self.RootPath = os.path.abspath(path)
         self._ConfigEdk2PathUtil()
         return self
 
     def _ConfigEdk2PathUtil(self):
-        ''' creates the path utility object based on the root path and package paths '''
+        """Creates the path utility object based on the root path and package paths."""
         self._Edk2PathUtil = path_utilities.Edk2Path(self.RootPath, self.PPs, error_on_invalid_pp=False)
 
     def SetPackagePaths(self, pps=[]):
-        """
+        """Sets the attribute PPs.
 
         Args:
-          pps:  (Default value = [])
+          pps (:obj:`list`, optional): list of pps
 
-        This must be called after SetBaseAbsPath
+        NOTE: This must be called after SetBaseAbsPath
 
         Returns:
-
+            (self)
         """
         self.PPs = pps
         self._ConfigEdk2PathUtil()
         return self
 
     def SetInputVars(self, inputdict):
-        """
+        """Sets the attribute InputVars.
 
         Args:
-          inputdict:
+          inputdict (dict): The input vars dictionary
 
         Returns:
-
+            (self)
         """
         self.InputVars = inputdict
         return self
 
     def FindPath(self, *p):
-        """
-        Given a path, it will find it relative to the root, the current target file, or the packages path
+        """Given a path, it will find it relative to the root, the current target file, or the packages path.
+
         Args:
           *p: any number of strings or path like objects
 
-        Returns: a full absolute path if the file exists, None on failure
+        Returns:
+            (str): a full absolute path if the file exists
+            (None): None on failure
 
         """
         # check if we're getting a None
@@ -119,33 +134,27 @@ class BaseParser(object):
         return None
 
     def WriteLinesToFile(self, filepath):
-        """
+        """Write all parsed lines to a file.
 
         Args:
-          filepath:
-
-        Returns:
-
+          filepath (str): path to an unopened file
         """
         self.Logger.debug("Writing all lines to file: %s" % filepath)
         file_handle = open(filepath, "w")
         for line in self.Lines:
             file_handle.write(line + "\n")
         file_handle.close()
-    #
-    # do logical comparisons
-    #
 
     def ComputeResult(self, value, cond, value2):
-        """
+        """Compute a logical comaprison.
 
         Args:
-          value:
-          cond:
-          value2:
+          value (str, int): First value
+          cond (str): comparison to do
+          value2 (str, int): Second value
 
         Returns:
-
+            (bool): result of comparison
         """
         ivalue = value
         ivalue2 = value2
@@ -215,18 +224,14 @@ class BaseParser(object):
             self.Logger.error(f"{self.__class__}: Unknown conditional: {cond}")
             raise RuntimeError("Unknown conditional")
 
-    #
-    # convert to int based on prefix
-    #
-
     def ConvertToInt(self, value):
-        """
+        """Converts a str or int to an int based on prefix.
 
         Args:
-          value: must be str or int
+          value (str, int): value to convert
 
         Returns:
-
+            (int): Converted value
         """
         if isinstance(value, int):
             return value
@@ -239,26 +244,16 @@ class BaseParser(object):
         else:
             return int(value, 10)
 
-    #
-    # Push new value on stack
-    #
     def PushConditional(self, v):
-        """
+        """Push new value onto the conditional stack.
 
         Args:
-          v:
-
-        Returns:
-
+          v: Value to push
         """
         self.ConditionalStack.append(v)
 
-    #
-    # Pop conditional and return the value
-    #
-
     def PopConditional(self):
-        """ """
+        """Pops the current conditional and return the value."""
         if (len(self.ConditionalStack) > 0):
             return self.ConditionalStack.pop()
         else:
@@ -286,18 +281,14 @@ class BaseParser(object):
 
         return str(v)
 
-    #
-    # Method to replace variables
-    # in a line with their value from input dict or local dict
-    #
     def ReplaceVariables(self, line):
-        """
+        """Replaces a variable in a string.
 
         Args:
-          line:
+          line (str): The line to process
 
         Returns:
-
+            (str): The line with the replaced variable.
         """
         # first tokenize and look for tokens require special macro
         # handling without $.  This must be done first otherwise
@@ -330,19 +321,14 @@ class BaseParser(object):
 
         return result
 
-    #
-    # Process Conditional
-    # return true if line is a conditional otherwise false
-    #
-
     def ProcessConditional(self, text):
-        """
+        """Processes a conditional.
 
         Args:
-          text:
+          text (str): The text to process
 
         Returns:
-
+            (bool) true if a line is a conditiona otherwise false
         """
         if '"' in text:
             tokens = text.split('"')
@@ -386,7 +372,7 @@ class BaseParser(object):
         return False
 
     def EvaluateConditional(self, text):
-        ''' Uses a pushdown resolver '''
+        """Uses a pushdown resolver."""
         text = str(text).strip()
         if not text.lower().startswith("!if "):
             raise RuntimeError(f"Invalid conditional cannot be validated: {text}")
@@ -453,7 +439,7 @@ class BaseParser(object):
 
     @classmethod
     def _TokenizeConditional(cls, text):
-        ''' takes in a string that has macros replaced '''
+        """Takes in a string that has macros replaced."""
         # TOKENIZER
         # first we create tokens
         TEXT_MODE = 0
@@ -599,12 +585,12 @@ class BaseParser(object):
             return 1
         return 0
 
-    #
-    # returns true or false depending on what state of conditional you are currently in
-    #
-
     def InActiveCode(self):
-        """ """
+        """Determines what the state of the conditional you are currently in.
+
+        Returns:
+            (bool): result of the state of the conditional you are in.
+        """
         ret = True
         for a in self.ConditionalStack:
             if not a:
@@ -614,28 +600,33 @@ class BaseParser(object):
         return ret
 
     def IsGuidString(self, line):
-        """
-        will return true if the the line has
-        = { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
+        """Determines if a line is a guid string.
+
         Args:
-          line:
+            line (str): line representing a possible guid string
 
         Returns:
+            (bool): whether the string is a guid string
 
+        NOTE: format = { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
+        Will return true if the the line has
         """
         if (line.count("{") == 2 and line.count("}") == 2 and line.count(",") == 10 and line.count("=") == 1):
             return True
         return False
 
     def ParseGuid(self, line):
-        """
-        parse a guid into a different format
-        Will throw exception if missing any of the 11 parts of isn't long enough
+        """Parse a guid into a different format.
+
         Args:
-          l: the guid to parse ex: { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
+          line (str): the guid to parse ex:
+            { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
 
-        Returns: a string of the guid. ex: D3B36F2C-D551-11D4-9A46-0090273FC14D
+        Returns:
+            (str): guid. ex: D3B36F2C-D551-11D4-9A46-0090273FC14D
 
+        Raises:
+            (RuntimeError): if missing any of the 11 parts, or it isn't long enough.
         """
         entries = line.lstrip(' {').rstrip(' }').split(',')
         if len(entries) != 11:
@@ -706,42 +697,33 @@ class BaseParser(object):
         return gu.upper()
 
     def ResetParserState(self):
-        """ """
+        """Resets the state of the parser."""
         self.ConditionalStack = []
         self.CurrentSection = ''
         self.CurrentFullSection = ''
         self.Parsed = False
 
-#
-# Base Class for Edk2 build files that use # for comments
-#
-
 
 class HashFileParser(BaseParser):
-    """ """
+    """Base class for Edk2 build files that use # for comments."""
 
     def __init__(self, log):
+        """Inits an empty Parser for files that use # for comments.."""
         BaseParser.__init__(self, log)
 
     def StripComment(self, line):
-        """
+        """Removes a comment from a line.
 
         Args:
-          line:
-
-        Returns:
-
+          line (str): line with a comment (#)
         """
         return line.split('#')[0].strip()
 
     def ParseNewSection(self, line):
-        """
+        """Parses a new section line.
 
         Args:
-          line:
-
-        Returns:
-
+          line (str): line representing a new section.
         """
         if (line.count("[") == 1 and line.count("]") == 1):  # new section
             section = line.strip().lstrip("[").split(".")[0].split(",")[0].rstrip("]").strip()

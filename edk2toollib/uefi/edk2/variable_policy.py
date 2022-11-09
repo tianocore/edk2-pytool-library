@@ -6,35 +6,40 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-
+"""Module containing helper classes and functions to work with Variable Policy structures and substructures."""
 import uuid
 import struct
 from edk2toollib.uefi.uefi_multi_phase import EfiVariableAttributes
 
 
 class VariableLockOnVarStatePolicy(object):
-    # typedef struct {
-    #     EFI_GUID Namespace;
-    #     UINT8    Value;
-    #     UINT8    Reserved;
-    #     // CHAR16   Name[];           // Variable Length Field
-    # } VARIABLE_LOCK_ON_VAR_STATE_POLICY;
+    """Object representing the Lock on var state policy c struct.
+
+    typedef struct {
+        EFI_GUID Namespace;
+        UINT8    Value;
+        UINT8    Reserved;
+        // CHAR16   Name[];           // Variable Length Field
+    } VARIABLE_LOCK_ON_VAR_STATE_POLICY;
+    """
     _HdrStructFormat = "<16sBB"
     _HdrStructSize = struct.calcsize(_HdrStructFormat)
 
     def __init__(self):
+        """Initializes the Variable Lock On Var State Policy."""
         self.Namespace = uuid.UUID(bytes=b'\x00' * 16)
         self.Value = 0
         self.Name = None
 
     def __str__(self):
+        """String representation of the object."""
         return "VARIABLE_LOCK_ON_VAR_STATE_POLICY(%s, %d, %s)" % (self.Namespace, self.Value, self.Name)
 
     def decode(self, buffer):
-        """
-        load this object from a bytes buffer
+        """Load this object from a bytes buffer.
 
-        return any remaining buffer
+        Returns:
+            (obj): any remaining buffer
         """
         (_namespace, self.Value, _) = struct.unpack(
             self._HdrStructFormat, buffer[:self._HdrStructSize])
@@ -61,20 +66,24 @@ class VariableLockOnVarStatePolicy(object):
 
 
 class VariablePolicyEntry(object):
-    # typedef struct {
-    #     UINT32   Version;
-    #     UINT16   Size;
-    #     UINT16   OffsetToName;
-    #     EFI_GUID Namespace;
-    #     UINT32   MinSize;
-    #     UINT32   MaxSize;
-    #     UINT32   AttributesMustHave;
-    #     UINT32   AttributesCantHave;
-    #     UINT8    LockPolicyType;
-    #     UINT8    Reserved[3];
-    #     // UINT8    LockPolicy[];     // Variable Length Field
-    #     // CHAR16   Name[]            // Variable Length Field
-    # } VARIABLE_POLICY_ENTRY;
+    """Object representing the Variable Policy C struct.
+
+    Example:
+        typedef struct {
+            UINT32   Version;
+            UINT16   Size;
+            UINT16   OffsetToName;
+            EFI_GUID Namespace;
+            UINT32   MinSize;
+            UINT32   MaxSize;
+            UINT32   AttributesMustHave;
+            UINT32   AttributesCantHave;
+            UINT8    LockPolicyType;
+            UINT8    Reserved[3];
+            // UINT8    LockPolicy[];     // Variable Length Field
+            // CHAR16   Name[]            // Variable Length Field
+        } VARIABLE_POLICY_ENTRY;
+    """
     _HdrStructFormat = "<IHH16sIIIIB3s"             # spell-checker:disable-line
     _HdrStructSize = struct.calcsize(_HdrStructFormat)
 
@@ -98,6 +107,7 @@ class VariablePolicyEntry(object):
     }
 
     def __init__(self):
+        """Initializes the Variable Policy Entry."""
         self.Version = VariablePolicyEntry.ENTRY_REVISION
         self.Size = VariablePolicyEntry._HdrStructSize
         self.OffsetToName = self.Size
@@ -111,6 +121,7 @@ class VariablePolicyEntry(object):
         self.Name = None
 
     def __str__(self):
+        """String representation of the object."""
         result = "VARIABLE_POLICY_ENTRY(%s, %s)\n" % (self.Namespace, self.Name)
 
         if self.LockPolicyType in (VariablePolicyEntry.TYPE_NO_LOCK,
@@ -127,17 +138,17 @@ class VariablePolicyEntry(object):
 
     @staticmethod
     def csv_header():
-        """returns a list containing the names of the ordered columns that are produced by csv_row()"""
+        """Returns a list containing the names of the ordered columns that are produced by csv_row()."""
         return ['Namespace', 'Name', 'LockPolicyType', 'VarStateNamespace', 'VarStateName',
                 'VarStateValue', 'MinSize', 'MaxSize', 'AttributesMustHave', 'AttributesCantHave']
 
     def csv_row(self, guid_xref: dict = None):
-        """
-        returns a list containing the elements of this structure (in the same order as the csv_header)
-        ready to be written to a csv file
+        """Returns a list containing the elements of this structure.
 
-        guid_xref - a dictionary of GUID/name substitutions where the key is a uuid object
-                    and the value is a string
+        (in the same order as the csv_header) ready to be written to a csv file
+        Args:
+            guid_xref (dict) - GUID/name substitutions where the key is a uuid object
+                and the value is a string
         """
         if guid_xref is None:
             guid_xref = {}
@@ -161,10 +172,10 @@ class VariablePolicyEntry(object):
         return result
 
     def decode(self, buffer):
-        """
-        load this object from a bytes buffer
+        """Load this object from a bytes buffer.
 
-        return any remaining buffer
+        Returns:
+            (obj): Any remaining buffer
         """
         (self.Version, self.Size, self.OffsetToName, _namespace,
             self.MinSize, self.MaxSize, self.AttributesMustHave,

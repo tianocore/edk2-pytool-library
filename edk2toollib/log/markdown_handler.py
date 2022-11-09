@@ -5,11 +5,14 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Module for handling basic logging to markdown.."""
 import logging
 
 
 class MarkdownFileHandler(logging.FileHandler):
+    """Class for logging to markdown."""
     def __init__(self, filename, mode='w+'):
+        """Init a MarkdownFileHandler."""
         logging.FileHandler.__init__(self, filename, mode=mode)
         if self.stream.writable:
             self.stream.write("  # Build Report\n")
@@ -21,6 +24,7 @@ class MarkdownFileHandler(logging.FileHandler):
         self.error_records = []
 
     def emit(self, record):
+        """Emit a record to the file."""
         if self.stream is None:
             self.stream = self._open()
         msg = record.message.strip("#- ")
@@ -48,14 +52,13 @@ class MarkdownFileHandler(logging.FileHandler):
             # self.flush()
 
     def handle(self, record):
-        """
-        Conditionally emit the specified logging record.
+        """Conditionally emit the specified logging record.
+
         Emission depends on filters which may have been added to the handler.
         Wrap the actual emission of the record with acquisition/release of
         the I/O thread lock. Returns whether the filter passed the record for
         emission.
         """
-
         rv = self.filter(record)
         if rv and record.levelno >= self.level:
             self.acquire()
@@ -83,6 +86,7 @@ class MarkdownFileHandler(logging.FileHandler):
         self.stream.write(output)
 
     def close(self):
+        """Close the Markdown file. Appends the table of contents."""
         self.stream.write("## Table of Contents\n")
         for item, subsections in self.contents:
             link = MarkdownFileHandler.__convert_to_markdownlink(item)

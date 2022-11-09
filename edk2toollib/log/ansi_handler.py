@@ -6,6 +6,10 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+"""Handle basic logging with color via ANSI commands.
+
+Will call into win32 commands as needed when needed
+"""
 import logging
 import re
 from edk2toollib.utility_functions import GetHostInfo
@@ -19,12 +23,12 @@ except (AttributeError, ImportError):
     # if we run into an exception (ie on unix or linux)
     windll = None
 
-    # create blank lambda
     def SetConsoleTextAttribute():
+        """Create blank lambda for when on unix / linux."""
         None
 
-    # create blank lambda
     def winapi_test():
+        """Create blank lambda for when on unix / linux."""
         None
 
 else:
@@ -34,6 +38,7 @@ else:
 
     # inspired by https://github.com/tartley/colorama/
     class CONSOLE_SCREEN_BUFFER_INFO(Structure):
+        """Object representing a console screen buffer."""
         COORD = wintypes._COORD
         """struct in wincon.h."""
         _fields_ = [
@@ -45,6 +50,7 @@ else:
         ]
 
         def __str__(self):
+            """String representation of the console screen buffer."""
             return '(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)' % (
                 self.dwSize.Y, self.dwSize.X,
                 self.dwCursorPosition.Y, self.dwCursorPosition.X,
@@ -54,8 +60,8 @@ else:
                 self.dwMaximumWindowSize.Y, self.dwMaximumWindowSize.X
             )
 
-    # a simple wrapper around the few methods calls to windows
     class Win32Console(object):
+        """A simple wrapper around the few methods calls to windows."""
         _GetConsoleScreenBufferInfo = windll.kernel32.GetConsoleScreenBufferInfo
         _SetConsoleTextAttribute = windll.kernel32.SetConsoleTextAttribute
         _SetConsoleTextAttribute.argtypes = [
@@ -82,12 +88,14 @@ else:
 
         @staticmethod
         def winapi_test():
+            """Returns the winapi_test."""
             return any(Win32Console._winapi_test(h) for h in
                        (Win32Console._GetStdHandle(Win32Console.STDOUT),
                         Win32Console._GetStdHandle(Win32Console.STDERR)))
 
         @staticmethod
         def GetConsoleScreenBufferInfo(stream_id=STDOUT):
+            """Returns the console screen buffer info object."""
             handle = Win32Console._GetStdHandle(stream_id)
             csbi = CONSOLE_SCREEN_BUFFER_INFO()
             Win32Console._GetConsoleScreenBufferInfo(
@@ -96,12 +104,14 @@ else:
 
         @staticmethod
         def SetConsoleTextAttribute(stream_id, attrs):
+            """Sets the console text attribute."""
             handle = Win32Console._GetStdHandle(stream_id)
             return Win32Console._SetConsoleTextAttribute(handle, attrs)
 
 
 # from wincon.h
 class WinColor(object):
+    """Enum representing Windows Console colors."""
     BLACK = 0
     BLUE = 1
     GREEN = 2
@@ -115,8 +125,8 @@ class WinColor(object):
     BRIGHT_BACKGROUND = 0x80  # dim text, bright background
 
 
-# defines the different codes for the ansi colors
 class AnsiColor(object):
+    """Defines the different codes for the ansi colors."""
     BLACK = 30
     RED = 31
     GREEN = 32
@@ -155,7 +165,7 @@ class AnsiColor(object):
 
     @classmethod
     def __contains__(self, item):
-
+        """Verifies we contain the color."""
         if type(item) is str and hasattr(self, item):
             return True
         # check if we contain the color number
@@ -165,8 +175,8 @@ class AnsiColor(object):
         return False
 
 
-# the formatter that outputs ANSI codes as needed
 class ColoredFormatter(logging.Formatter):
+    """The formatter that outputs ANSI codes as needed."""
     AZURE_COLORS = {
         'CRITICAL': "section",
         'ERROR': "error"
@@ -184,10 +194,12 @@ class ColoredFormatter(logging.Formatter):
     }
 
     def __init__(self, msg="", use_azure=False):
+        """Inits the formatter."""
         logging.Formatter.__init__(self, msg)
         self.use_azure = use_azure
 
     def format(self, record):
+        """Formats the given record and returns it."""
         levelname = record.levelname
         org_message = record.msg
 
@@ -213,8 +225,8 @@ class ColoredFormatter(logging.Formatter):
         return result
 
 
-# returns the string formatted ANSI command for the specific color
 def get_ansi_string(color=AnsiColor.RESET):
+    """Returns the string formatted ANSI command for the specific color."""
     CSI = '\033['
     colors = AnsiColor()
     if color not in colors:
@@ -223,11 +235,12 @@ def get_ansi_string(color=AnsiColor.RESET):
 
 
 class ColoredStreamHandler(logging.StreamHandler):
-
+    """Class for logging in Color.."""
     # Control Sequence Introducer
     ANSI_CSI_RE = re.compile('\001?\033\\[((?:\\d|;)*)([a-zA-Z])\002?')
 
     def __init__(self, stream=None, strip=None, convert=None):
+        """Inits a Colored Stream Handler."""
         logging.StreamHandler.__init__(self, stream)
         self.on_windows = GetHostInfo().os == "Windows"
         # We test if the WinAPI works, because even if we are on Windows
@@ -262,14 +275,13 @@ class ColoredStreamHandler(logging.StreamHandler):
             self._default_style = self._style
 
     def handle(self, record):
-        """
-        Conditionally emit the specified logging record.
+        """Conditionally emit the specified logging record.
+
         Emission depends on filters which may have been added to the handler.
         Wrap the actual emission of the record with acquisition/release of
         the I/O thread lock. Returns whether the filter passed the record for
         emission.
         """
-
         rv = self.filter(record)
         if rv and record.levelno >= self.level:
             self.acquire()
@@ -280,6 +292,7 @@ class ColoredStreamHandler(logging.StreamHandler):
         return rv
 
     def get_win32_calls(self):
+        """Returns a dict for converting ANSI Colors to Windows Colors."""
         if self.convert:
             return {
                 AnsiColor.BLACK: (self.set_foreground, WinColor.BLACK),
@@ -319,8 +332,8 @@ class ColoredStreamHandler(logging.StreamHandler):
             }
         return dict()
 
-    # does the win32 call to set the foreground
     def set_foreground(self, fore=None, light=False, on_stderr=False):
+        """Does the win32 call to set the foreground."""
         if fore is None:
             fore = self._default_fore
         self._fore = fore
@@ -331,8 +344,8 @@ class ColoredStreamHandler(logging.StreamHandler):
             self._light &= ~WinColor.BRIGHT
         self.set_console(on_stderr=on_stderr)
 
-    # does the win32 call to see the background
     def set_background(self, back=None, light=False, on_stderr=False):
+        """Does the win32 call to see the background."""
         if back is None:
             back = self._default_back
         self._back = back
@@ -343,8 +356,8 @@ class ColoredStreamHandler(logging.StreamHandler):
             self._light &= ~WinColor.BRIGHT_BACKGROUND
         self.set_console(on_stderr=on_stderr)
 
-    # the win32 call to set the console text attribute
     def set_console(self, attrs=None, on_stderr=False):
+        """Does the win32 call to set the console text attribute."""
         if attrs is None:
             attrs = self.get_attrs()
         handle = Win32Console.STDOUT
@@ -352,25 +365,25 @@ class ColoredStreamHandler(logging.StreamHandler):
             handle = Win32Console.STDERR
         Win32Console.SetConsoleTextAttribute(handle, attrs)
 
-    # gets the current settings for the style and colors selected
     def get_attrs(self):
+        """Gets the current settings for the style and colors selected."""
         return self._fore + self._back * 16 + (self._style | self._light)
 
-    # sets the attributes for the style and colors selected
     def set_attrs(self, value):
+        """Sets the attributes for the style and colors selected."""
         self._fore = value & 7
         self._back = (value >> 4) & 7
         self._style = value & (WinColor.BRIGHT | WinColor.BRIGHT_BACKGROUND)
 
-    # writes to stream, stripping ANSI if specified
     def write(self, text):
+        """Writes to stream, stripping ANSI if specified."""
         if self.strip or self.convert:
             self.write_and_convert(text)
         else:
             self.write_plain_text(text)
 
-    # write the given text to the strip stripping and converting ANSI
     def write_and_convert(self, text):
+        """Write the given text to the strip stripping and converting ANSI."""
         cursor = 0
         for match in self.ANSI_CSI_RE.finditer(text):
             start, end = match.span()
@@ -381,30 +394,30 @@ class ColoredStreamHandler(logging.StreamHandler):
 
         self.write_plain_text(text, cursor, len(text))
 
-    # writes plain text to our stream
     def write_plain_text(self, text, start=None, end=None):
+        """Writes plain text to our stream."""
         if start is None:
             self.stream.write(text)
         elif start < end:
             self.stream.write(text[start:end])
         self.flush()
 
-    # converts an ANSI command to a win32 command
     def convert_ansi(self, paramstring, command):
+        """Converts an ANSI command to a win32 command."""
         if self.convert:
             params = self.extract_params(command, paramstring)
             self.call_win32(command, params)
-    # extracts the parameters in the ANSI command
 
     def extract_params(self, command, paramstring):
+        """Extracts the parameters in the ANSI command."""
         params = tuple(int(p) for p in paramstring.split(';') if len(p) != 0)
         if len(params) == 0:
             params = (0,)
 
         return params
 
-    # calls the win32 apis set_foreground and set_background
     def call_win32(self, command, params):
+        """Calls the win32 apis set_foreground and set_background."""
         if command == 'm':
             for param in params:
                 if param in self.win32_calls:
@@ -414,8 +427,8 @@ class ColoredStreamHandler(logging.StreamHandler):
                     kwargs = dict()
                     func(*args, **kwargs)
 
-    # logging.handler method we are overriding to emit a record
     def emit(self, record):
+        """Logging.handler method we are overriding to emit a record."""
         try:
             if record is None:
                 return
