@@ -811,8 +811,19 @@ class PathUtilitiesTest(unittest.TestCase):
         pp2_name = "PPTestPkg2"
         self._make_edk2_package_helper(folder_pp2_abs, pp2_name)
 
+        # Nested packages should raise an exception by default
         self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs])
         self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
+
+        # Nested packages should no longer raise an exception
+        # Note: These tests can be removed when support for
+        #       PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES is removed.
+        os.environ["PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES"] = "true"
+        Edk2Path(folder_ws_abs, [folder_pp1_abs])
+        Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
+
+        # Remove the environment variable now that the test above is complete
+        os.environ.pop("PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES")
 
     def test_get_relative_path_when_folder_is_next_to_package(self):
         ''' test usage of GetEdk2RelativePathFromAbsolutePath when a folder containing a package is in the same
