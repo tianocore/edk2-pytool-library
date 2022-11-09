@@ -104,6 +104,9 @@ class Edk2Path(object):
         #       nested packages is temporary. Do not plan on this variable
         #       being available long-term and try to resolve the nested
         #       packages problem right away.
+        #
+        # Removal is tracked in the following GitHub issue:
+        # https://github.com/tianocore/edk2-pytool-library/issues/200
         ignore_nested_packages = False
         if "PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES" in os.environ and \
             os.environ["PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES"].strip().lower() == \
