@@ -822,6 +822,9 @@ class PathUtilitiesTest(unittest.TestCase):
         Edk2Path(folder_ws_abs, [folder_pp1_abs])
         Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
 
+        # Remove the environment variable now that the test above is complete
+        os.environ.pop("PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES")
+
     def test_get_relative_path_when_folder_is_next_to_package(self):
         ''' test usage of GetEdk2RelativePathFromAbsolutePath when a folder containing a package is in the same
         directory as a different package. This test ensures the correct value is returned regardless the order of
