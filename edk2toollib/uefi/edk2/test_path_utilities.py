@@ -226,9 +226,9 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_pkg_abs, "module1", "testfile.c")
         self.assertEqual(pathobj.GetContainingPackage(p), ws_p_name)
 
-        # file in workspace root - no package- should return ws root
+        # file in workspace root - no package- should return None
         p = os.path.join(ws_abs, "testfile.c")
-        self.assertEqual(pathobj.GetContainingPackage(p), ws_rel)
+        self.assertIsNone(pathobj.GetContainingPackage(p))
 
         # file outside of the workspace - invalid and should return None
         p = os.path.join(os.path.dirname(ws_abs), "testfile.c")
@@ -242,9 +242,9 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(pp_pkg_abs, "module1", "testfile.c")
         self.assertEqual(pathobj.GetContainingPackage(p), pp_p_name)
 
-        # file in packages path root - no package- should return packages path dir
+        # file in packages path root - no package- should return None
         p = os.path.join(folder_pp1_abs, "testfile.c")
-        self.assertEqual(pathobj.GetContainingPackage(p), folder_pp_rel)
+        self.assertIsNone(pathobj.GetContainingPackage(p))
 
     def test_get_containing_package_outside_workspace(self):
         ''' test basic usage of GetContainingPackage with packages path
@@ -292,9 +292,9 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_pkg_abs, "module1", "testfile.c")
         self.assertEqual(pathobj.GetContainingPackage(p), ws_p_name)
 
-        # file in workspace root - no package- should return ws root
+        # file in workspace root - no package- should return None
         p = os.path.join(ws_abs, "testfile.c")
-        self.assertEqual(pathobj.GetContainingPackage(p), ws_rel)
+        self.assertIsNone(pathobj.GetContainingPackage(p))
 
         # file outside of the workspace - invalid and should return None
         p = os.path.join(os.path.dirname(ws_abs), "testfile.c")
@@ -308,9 +308,9 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(pp_pkg_abs, "module1", "testfile.c")
         self.assertEqual(pathobj.GetContainingPackage(p), pp_p_name)
 
-        # file in packages path root - no package- should return packages path dir
+        # file in packages path root - no package- should return None
         p = os.path.join(folder_pp1_abs, "testfile.c")
-        self.assertEqual(pathobj.GetContainingPackage(p), folder_pp_rel)
+        self.assertIsNone(pathobj.GetContainingPackage(p))
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_get_containing_package_ws_abs_different_case(self):
@@ -365,9 +365,9 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_pkg_abs, "module1", "testfile.c")
         self.assertEqual(pathobj.GetContainingPackage(p), ws_p_name)
 
-        # file in workspace root - no package- should return ws root
+        # file in workspace root - no package- should return None
         p = os.path.join(ws_abs, "testfile.c")
-        self.assertEqual(pathobj.GetContainingPackage(p), ws_rel)
+        self.assertIsNone(pathobj.GetContainingPackage(p), ws_rel)
 
         # file outside of the workspace - invalid and should return None
         p = os.path.join(os.path.dirname(ws_abs), "testfile.c")
@@ -381,9 +381,9 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(pp_pkg_abs, "module1", "testfile.c")
         self.assertEqual(pathobj.GetContainingPackage(p), pp_p_name)
 
-        # file in packages path root - no package- should return packages path dir
+        # file in packages path root - no package- should return None
         p = os.path.join(folder_pp1_abs, "testfile.c")
-        self.assertEqual(pathobj.GetContainingPackage(p), folder_pp_rel)
+        self.assertIsNone(pathobj.GetContainingPackage(p), folder_pp_rel)
 
     def test_get_containing_module(self):
         ''' test basic usage of GetContainingModule with packages path nested
@@ -607,14 +607,22 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{ws_p_name}/module2/X64/TestFile2.c")
 
     def test_get_relative_path_when_package_path_inside_package(self):
-        ''' test usage of GetEdk2RelativePathFromAbsolutePath when a package_path directory is
-        inside the subfolders of a package. Should raise an exception.
-        file layout:
-        root/                           <-- Current working diretory
-            folder_ws/                  <-- Workspace Root
-                folder_pp1/             <-- A Package Path
-                    PPTestPkg1/         <-- A Package
-                            folder_pp2/ <-- A Package Path
+        ''' test a package_path directory inside the subfolders of a package.
+            Should not raise an exception.
+
+        File layout:
+        root/                            <-- Current working directory
+            folder_ws/                   <-- Workspace root
+                folder_pp1/              <-- Package Path 1
+                    PPTestPkg1/          <-- A valid edk2 package
+                        PPTestPkg1.dec
+                        folder_pp2/      <-- Package Path 2
+                        module1/
+                            module1.inf
+                        module2/
+                            module2.inf
+                            X64/
+                                TestFile.c
         '''
         folder_ws_rel = "folder_ws"
         folder_ws_abs = os.path.join(self.tmp, folder_ws_rel)
@@ -631,6 +639,55 @@ class PathUtilitiesTest(unittest.TestCase):
         folder_pp2_abs = os.path.join(pp1_abs, folder_pp2_rel)
         os.mkdir(folder_pp2_abs)
 
+        pathobj = Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
+        p = os.path.join(pp1_abs, "module2", "X64", "TestFile.c")
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{pp1_name}/module2/X64/TestFile.c")
+
+    def test_get_relative_path_with_nested_packages(self):
+        ''' test a two package paths that contain nested packages.
+            Should raise an exception due to nested packages.
+
+        File layout:
+        root/                                   <-- Current working directory
+            folder_ws/                          <-- Workspace root
+                folder_pp1/                     <-- Package Path 1
+                    PPTestPkg1/                 <-- A valid edk2 package
+                        PPTestPkg1.dec
+                        folder_pp2/             <-- Package Path 2
+                            PPTestPkg2/         <-- A valid edk2 package
+                                PPTestPkg2.dec
+                                module1/
+                                    module1.inf
+                                module2/
+                                    module2.inf
+                                    X64/
+                                        TestFile.c
+                        module1/
+                            module1.inf
+                        module2/
+                            module2.inf
+                            X64/
+                                TestFile.c
+        '''
+        folder_ws_rel = "folder_ws"
+        folder_ws_abs = os.path.join(self.tmp, folder_ws_rel)
+        os.mkdir(folder_ws_abs)
+
+        folder_pp1_rel = "folder_pp1"
+        folder_pp1_abs = os.path.join(folder_ws_abs, folder_pp1_rel)
+        os.mkdir(folder_pp1_abs)
+
+        pp1_name = "PPTestPkg1"
+        pp1_abs = self._make_edk2_package_helper(folder_pp1_abs, pp1_name)
+
+        folder_pp2_rel = "folder_pp2"
+        folder_pp2_abs = os.path.join(pp1_abs, folder_pp2_rel)
+        os.mkdir(folder_pp2_abs)
+
+        pp2_name = "PPTestPkg2"
+        self._make_edk2_package_helper(folder_pp2_abs, pp2_name)
+
+        self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs])
         self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
 
     def test_get_relative_path_when_folder_is_next_to_package(self):

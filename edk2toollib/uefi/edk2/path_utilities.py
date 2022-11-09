@@ -9,7 +9,7 @@
 import os
 import logging
 import fnmatch
-import glob
+import errno
 from typing import Iterable
 from pathlib import Path
 
@@ -17,71 +17,100 @@ from pathlib import Path
 class Edk2Path(object):
     """Represents edk2 file paths.
 
-    Class to help convert from absolute path to EDK build path
-    using workspace and packagepath variables.
-
-    Can be used to resolve relative paths.
+    Class that helps perform path operations within an EDK workspace.
     """
 
-    def __init__(self, ws: os.PathLike, packagepathlist: Iterable[os.PathLike], error_on_invalid_pp: bool = True):
+    def __init__(self, ws: os.PathLike, package_path_list: Iterable[os.PathLike],
+                 error_on_invalid_pp: bool = True):
         """Constructor.
 
         Args:
             ws (os.PathLike): absolute path or cwd relative path of the workspace.
-            packagespathlist (Iterable[os.PathLike]): list of packages path.
+            package_path_list (Iterable[os.PathLike]): list of packages path.
                 Entries can be Absolute path, workspace relative path, or CWD relative.
-            error_on_invalid_pp (bool): default value is True. If packages path value is invalid raise exception
+            error_on_invalid_pp (bool): default value is True. If packages path
+                                        value is invalid raise exception.
 
         Raises:
             (NotADirectoryError): Invalid workspace or package path directory.
         """
         self.WorkspacePath = ws
         self.logger = logging.getLogger("Edk2Path")
-        if (not os.path.isabs(ws)):
-            self.WorkspacePath = os.path.abspath(os.path.join(os.getcwd(), ws))
 
-        if (not os.path.isdir(self.WorkspacePath)):
-            self.logger.error("Workspace path invalid.  {0}".format(ws))
-            raise Exception("Workspace path invalid.  {0}".format(ws))
+        # Other code is dependent the following types, so keep it that way:
+        #   - self.PackagePathList: List[str]
+        #   - self.WorkspacePath: str
 
-        # Set PackagePath
-        self.PackagePathList = list()
-        for a in packagepathlist:
-            if (os.path.isabs(a)):
-                self.PackagePathList.append(a)
+        self.PackagePathList = []
+        self.WorkspacePath = ""
+
+        workspace_candidate_path = Path(ws)
+
+        if not workspace_candidate_path.is_absolute():
+            workspace_candidate_path = Path(os.getcwd(), ws)
+
+        if not workspace_candidate_path.is_dir():
+            raise NotADirectoryError(
+                errno.ENOENT,
+                os.strerror(errno.ENOENT),
+                workspace_candidate_path.resolve())
+
+        self.WorkspacePath = str(workspace_candidate_path)
+
+        candidate_package_path_list = []
+        for a in package_path_list:
+            if os.path.isabs(a):
+                candidate_package_path_list.append(Path(a))
             else:
-                # see if workspace relative
-                wsr = os.path.join(ws, a)
-                if (os.path.isdir(wsr)):
-                    self.PackagePathList.append(wsr)
+                wsr = Path(self.WorkspacePath, a)
+                if wsr.is_dir():
+                    candidate_package_path_list.append(wsr)
                 else:
                     # assume current working dir relative.  Will catch invalid dir when checking whole list
-                    self.PackagePathList.append(os.path.abspath(os.path.join(os.getcwd(), a)))
+                    candidate_package_path_list.append(Path(os.getcwd(), a))
 
         error = False
-        for a in self.PackagePathList[:]:
-            if (not os.path.isdir(a)):
-                self.logger.log(logging.ERROR if error_on_invalid_pp else logging.WARNING,
-                                "Invalid package path entry {0}".format(a))
-                self.PackagePathList.remove(a)  # remove invalid path
+        for a in candidate_package_path_list[:]:
+            if not a.is_dir():
+                self.logger.log(logging.ERROR if error_on_invalid_pp else
+                                logging.WARNING,
+                                f"Invalid package path entry {a.resolve()}")
+                candidate_package_path_list.remove(a)
                 error = True
 
-        # report error
-        if (error and error_on_invalid_pp):
-            raise Exception("Invalid package path directory(s)")
+        self.PackagePathList = [str(p) for p in candidate_package_path_list]
 
-        # for each package path, trace from packagepath to the
-        # either the workspace root or filesystem root and verify
-        # no *.DEC file exists. This would signify a nested package.
-        for package_path in self.PackagePathList:
-            p = Path(package_path)
-            ws = self.WorkspacePath
-            while p != p.parent:
-                if str(p).lower() == str(ws).lower():
-                    break
-                if len(glob.glob(f'{p}/*dec')) != 0:
-                    raise Exception(f'Nested packages not allowed. Pkg path [{package_path}] nested in Package [{p}]')
-                p = p.parent
+        if error and error_on_invalid_pp:
+            raise NotADirectoryError(errno.ENOENT, os.strerror(errno.ENOENT),
+                                     a.resolve())
+
+        #
+        # Nested package check - ensure packages do not exist in a linear
+        # path hierarchy.
+        #
+        # 1. Build a dictionary for each package path.
+        #      - Key = Package path
+        #      - Value = List of packages discovered in package path
+        # 2. Enumerate all keys in dictionary checking if any package
+        #    is relative (nested) to each other.
+        # 3. Raise an Exception if two packages are found to be nested.
+        #
+        package_path_packages = {}
+        for package_path in candidate_package_path_list:
+            package_path_packages[package_path] = \
+                [Path(p).parent for p in package_path.glob('**/*.dec')]
+
+        for package_path, packages in package_path_packages.items():
+            for i, package in enumerate(packages):
+                for j in range(i + 1, len(packages)):
+                    comp_package = packages[j]
+
+                    if (package.is_relative_to(comp_package)
+                            or comp_package.is_relative_to(package)):
+                        raise Exception(
+                            f"Nested packages not allowed. The packages "
+                            f"[{str(package)}] and [{str(comp_package)}] are "
+                            f"nested")
 
     def GetEdk2RelativePathFromAbsolutePath(self, abspath):
         """Given an absolute path return a edk2 path relative to workspace or packagespath.
@@ -163,7 +192,7 @@ class Edk2Path(object):
 
         return None
 
-    def GetContainingPackage(self, InputPath):
+    def GetContainingPackage(self, InputPath: str) -> str:
         """Find the package that contains the given path.
 
         This isn't perfect but at least identifies the directory consistently.
@@ -172,75 +201,48 @@ class Edk2Path(object):
 
         Args:
             InputPath (str): absolute path to a file, directory, or module.
-                             supports both windows and linux like paths
+                             supports both windows and linux like paths.
 
         Returns:
-            (str): Name of Package that the module is in.
+            (str): name of the package that the module is in.
         """
         self.logger.debug("GetContainingPackage: %s" % InputPath)
         # Make a list that has the path case normalized for comparison.
-        # This only does anything on Windows
-        NormCasePackagesPathList = [os.path.normcase(x) for x in self.PackagePathList]
+        # Note: This only does anything on Windows
+        package_paths = [os.path.normcase(x) for x in self.PackagePathList]
+        workspace_path = os.path.normcase(self.WorkspacePath)
 
-        # check InputPath to make sure it is at least in the folder structure of the code tree
-        if os.path.normcase(self.WorkspacePath) not in os.path.normcase(InputPath):
-            # not in workspace - check all the packages paths
-            found_in_pp = False
-            for p in NormCasePackagesPathList:
+        # 1. Handle the case that InputPath is not in the workspace tree
+        path_root = None
+        if workspace_path not in os.path.normcase(InputPath):
+            for p in package_paths:
                 if p in os.path.normcase(InputPath):
-                    found_in_pp = True
+                    path_root = p
                     break
-            if (not found_in_pp):
-                self.logger.error(f"{InputPath} not in code tree")
-                self.logger.info("PackagePath is: %s" % os.pathsep.join(self.PackagePathList))
-                self.logger.info("Workspace path is : %s" % self.WorkspacePath)
+            if not path_root:
                 return None
+
+        # 2. Determine if the path is under a package in the workspace
 
         # Start the search within the first available directory. If provided InputPath is a directory, start there,
         # else (if InputPath is a file) move to it's parent directory and start there.
         if os.path.isdir(InputPath):
-            dirpathprevious = str(InputPath)
             dirpath = str(InputPath)
         else:
-            dirpathprevious = os.path.dirname(InputPath)
             dirpath = os.path.dirname(InputPath)
 
-        # InputPath is in workspace or PackagesPath for worst case scenario.
-        for _ in range(100):  # 100 is just a counter to avoid infinite loops.  Path nodes are unlikely to exceed 100
-            #
-            # Check for a DEC file in this folder
-            # if here then return the directory name as the "package"
-            #
-            for f in os.listdir(dirpath):
-                if fnmatch.fnmatch(f.lower(), '*.dec'):
-                    a = os.path.basename(dirpath)
-                    self.logger.debug("Found DEC file at %s.  Pkg is: %s", dirpath, a)
-                    return a
+        if not path_root:
+            path_root = workspace_path
 
-            #
-            # if at the root of the workspace return the previous dir.
-            # this catches cases where a package has no DEC
-            #
-            if os.path.normcase(dirpath) == os.path.normcase(self.WorkspacePath):
-                a = os.path.basename(dirpathprevious)
-                self.logger.debug("Reached Workspace Path.  Using previous directory: %s" % a)
-                return a
+        while path_root != os.path.normcase(dirpath):
+            if os.path.exists(dirpath):
+                for f in os.listdir(dirpath):
+                    if fnmatch.fnmatch(f.lower(), '*.dec'):
+                        a = os.path.basename(dirpath)
+                        return a
 
-            #
-            # if at the root of a packagepath return the previous dir.
-            # this catches cases where a package has no DEC
-            #
-            if os.path.normcase(dirpath) in NormCasePackagesPathList:
-                a = os.path.basename(dirpathprevious)
-                self.logger.debug("Reached Package Path.  Using previous directory: %s" % a)
-                return a
-
-            dirpathprevious = dirpath
             dirpath = os.path.dirname(dirpath)
 
-        self.logger.error("Failed to find containing package for %s" % InputPath)
-        self.logger.info("PackagePath is: %s" % os.pathsep.join(self.PackagePathList))
-        self.logger.info("Workspace path is : %s" % self.WorkspacePath)
         return None
 
     def GetContainingModules(self, InputPath: str) -> list:
