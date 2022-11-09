@@ -100,17 +100,31 @@ class Edk2Path(object):
             package_path_packages[package_path] = \
                 [Path(p).parent for p in package_path.glob('**/*.dec')]
 
+        ignore_nested_packages = False
+        if "STUART_IGNORE_EDK_NESTED_PACKAGES" in os.environ and \
+            os.environ["STUART_IGNORE_EDK_NESTED_PACKAGES"].strip().lower() == \
+                "true":
+            ignore_nested_packages = True
+
         for package_path, packages in package_path_packages.items():
             for i, package in enumerate(packages):
                 for j in range(i + 1, len(packages)):
                     comp_package = packages[j]
-
                     if (package.is_relative_to(comp_package)
                             or comp_package.is_relative_to(package)):
-                        raise Exception(
-                            f"Nested packages not allowed. The packages "
-                            f"[{str(package)}] and [{str(comp_package)}] are "
-                            f"nested")
+                        if ignore_nested_packages:
+                            self.logger.log(
+                                logging.WARNING,
+                                f"Nested packages not allowed. The packages "
+                                f"[{str(package)}] and [{str(comp_package)}] are "
+                                f"nested.")
+                        else:
+                            raise Exception(
+                                f"Nested packages not allowed. The packages "
+                                f"[{str(package)}] and [{str(comp_package)}] are "
+                                f"nested. Set the \"STUART_IGNORE_EDK_NESTED_PACKAGES\" "
+                                f"environment variable to \"true\" as a temporary workaround "
+                                f"until you fix the packages so they are no longer nested.")
 
     def GetEdk2RelativePathFromAbsolutePath(self, abspath):
         """Given an absolute path return a edk2 path relative to workspace or packagespath.
