@@ -296,7 +296,7 @@ class Edk2Path(object):
             (list[str]): Absolute paths of .inf files that could be the
                          containing module.
         """
-        input_path = Path(os.path.normcase(input_path))
+        input_path = Path(input_path)
         if not input_path.is_absolute():
             # Todo: Return a more specific exception type when
             # https://github.com/tianocore/edk2-pytool-library/issues/184 is
