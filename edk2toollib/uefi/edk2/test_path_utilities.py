@@ -13,7 +13,7 @@ import sys
 import tempfile
 import shutil
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
-from pathlib import Path
+from pathlib import Path, PurePath
 
 
 class PathUtilitiesTest(unittest.TestCase):
@@ -497,6 +497,70 @@ class PathUtilitiesTest(unittest.TestCase):
             if os.path.isfile(other_inf):
                 os.remove(other_inf)
 
+    def test_get_containing_modules_path_format(self):
+        """Test that get containing modules returns the exact expected path.
+
+        Note: GetContainingModules() only accepts absolute paths.
+
+        File layout:
+            root/                   <-- Current working directory (self.tmp)
+                folder_ws           <-- Workspace directory
+                    pp1             <-- Package Path 1
+                        PPTestPkg   <-- An edk2 package
+                            PPTestPkg.DEC
+                            module1
+                                module1.INF
+                            module2
+                                module2.INF
+                                X64
+                                    TestFile.c
+                    WSTestPkg       <-- An edk2 package
+                        WSTestPkg.dec
+                        module1
+                            module1.inf
+                        module2
+                            module2.inf
+                            X64
+                                TestFile.c
+        """
+        # /folder_ws/
+        ws_rel = "folder_ws"
+        # /folder_ws/pp1/
+        folder_pp_rel = "pp1"
+        # /folder_ws/WSTestPkg/
+        ws_p_name = "WSTestPkg"
+        # /folder_ws/pp1/PPTestPkg
+        pp_p_name = "PPTestPkg"
+
+        # Create <temp_dir>/folder_ws/
+        ws_abs = os.path.join(self.tmp, ws_rel)
+        os.mkdir(ws_abs)
+
+        # Create <temp_dir>/folder_ws/pp1/
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
+        os.mkdir(folder_pp1_abs)
+
+        # Create <temp_dir>/folder_ws/WSTestPkg/
+        ws_pkg_abs = self._make_edk2_package_helper(ws_abs, ws_p_name)
+
+        # Create <temp_dir>/folder_ws/pp1/PPTestPkg
+        pp_pkg_abs = self._make_edk2_package_helper(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
+
+        # Check the case and location of the absolute path
+        p = os.path.join(pp_pkg_abs, "module1", "module1.INF")
+        expected_module_inf = p
+        actual_module_inf_list = pathobj.GetContainingModules(p)
+        self.assertEqual(len(actual_module_inf_list), 1)
+        self.assertEqual(expected_module_inf, actual_module_inf_list[0])
+
+        # Check the case and location of the absolute path
+        p = os.path.join(ws_pkg_abs, "module2", "X64", "TestFile.c")
+        expected_module_inf = os.path.join(ws_pkg_abs, "module2", "module2.inf")
+        actual_module_inf_list = pathobj.GetContainingModules(p)
+        self.assertEqual(len(actual_module_inf_list), 1)
+        self.assertEqual(expected_module_inf, actual_module_inf_list[0])
+
     def test_get_containing_module(self):
         ''' test basic usage of GetContainingModule with packages path nested
         inside the workspace
@@ -618,6 +682,64 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(
             Path(os.path.join(ws_pkg_abs, "module1", "module1.inf")),
             Path(relist[0]))
+
+    def test_get_edk2_relative_path_from_absolute_path_posix(self):
+        """Test that relative path returned is a POSIX path.
+
+        File layout:
+            root/                   <-- Current working directory (self.tmp)
+                folder_ws           <-- Workspace directory
+                    pp1             <-- Package Path 1
+                        PPTestPkg   <-- An edk2 package
+                            PPTestPkg.DEC
+                            module1
+                                module1.INF
+                            module2
+                                module2.INF
+                                X64
+                                    TestFile.c
+                    WSTestPkg       <-- An edk2 package
+                        WSTestPkg.dec
+                        module1
+                            module1.inf
+                        module2
+                            module2.inf
+                            X64
+                                TestFile.c
+        """
+        # /folder_ws/
+        ws_rel = "folder_ws"
+        # /folder_ws/pp1/
+        folder_pp_rel = "pp1"
+        # /folder_ws/WSTestPkg/
+        ws_p_name = "WSTestPkg"
+        # /folder_ws/pp1/PPTestPkg
+        pp_p_name = "PPTestPkg"
+
+        # Create <temp_dir>/folder_ws/
+        ws_abs = os.path.join(self.tmp, ws_rel)
+        os.mkdir(ws_abs)
+
+        # Create <temp_dir>/folder_ws/pp1/
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
+        os.mkdir(folder_pp1_abs)
+
+        # Create <temp_dir>/folder_ws/WSTestPkg/
+        ws_pkg_abs = self._make_edk2_package_helper(ws_abs, ws_p_name)
+
+        # Create <temp_dir>/folder_ws/pp1/PPTestPkg
+        pp_pkg_abs = self._make_edk2_package_helper(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
+
+        p = os.path.join(pp_pkg_abs, "module1", "module1.INF")
+        expected_rel_from_abs_path = PurePath(os.path.join(pp_p_name, "module1", "module1.INF")).as_posix()
+        actual_rel_from_abs_path = pathobj.GetEdk2RelativePathFromAbsolutePath(p)
+        self.assertEqual(expected_rel_from_abs_path, actual_rel_from_abs_path)
+
+        p = os.path.join(ws_pkg_abs, "module_2", "X64", "TestFile.inf")
+        expected_rel_from_abs_path = PurePath(os.path.join(ws_p_name, "module_2", "X64", "TestFile.inf")).as_posix()
+        actual_rel_from_abs_path = pathobj.GetEdk2RelativePathFromAbsolutePath(p)
+        self.assertEqual(expected_rel_from_abs_path, actual_rel_from_abs_path)
 
     def test_get_edk2_relative_path_from_absolute_path(self):
         ''' test basic usage of GetEdk2RelativePathFromAbsolutePath with packages path nested
