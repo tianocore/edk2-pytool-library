@@ -29,6 +29,7 @@ class EfiFirmwareVolumeHeader(object):
 
     Can parse or produce an EFI_FIRMWARE_VOLUME_HEADER structure/byte buffer.
 
+    ```
     typedef struct {
         UINT8                     ZeroVector[16];
         EFI_GUID                  FileSystemGuid;
@@ -42,6 +43,7 @@ class EfiFirmwareVolumeHeader(object):
         UINT8                     Revision;
         EFI_FV_BLOCK_MAP_ENTRY    BlockMap[1];
     } EFI_FIRMWARE_VOLUME_HEADER;
+    ```
     """
     def __init__(self):
         """Inits an empty object."""
@@ -110,10 +112,12 @@ class EfiFirmwareVolumeExtHeader(object):
 
     Can parse or produce an EFI_FIRMWARE_VOLUME_EXT_HEADER structure/byte buffer.
 
+    ```
     typedef struct {
         EFI_GUID                  FileSystemGuid;
         UINT32                    ExtHeaderSize;
     } EFI_FIRMWARE_VOLUME_EXT_HEADER;
+    ```
     """
     def __init__(self):
         """Inits an empty object."""

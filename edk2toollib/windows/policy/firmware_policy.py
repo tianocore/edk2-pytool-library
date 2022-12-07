@@ -239,7 +239,7 @@ class PolicyValueType():
         """Inits the PolicyValueType.
 
         Args:
-            Type: POLICY_VALUE_TYPE_*
+            Type (obj): POLICY_VALUE_TYPE_*
 
         Raises:
             (Exception): Unsupported ValueType
@@ -487,7 +487,7 @@ class PolicyValue():
         """Serializes the object to valueOut.
 
         Args:
-            ValueOut (bytearray): object to write bytes to.
+            valueOut (bytearray): object to write bytes to.
 
         Raises:
             (Exception): Value Type not supported.
@@ -562,7 +562,7 @@ class Reserved2(object):
         """Prints the Reserved2 structure.
 
         Args:
-            prefix(:obj:`str`, optional): prefix to append when printing to terminal
+            prefix (str): prefix to append when printing to terminal
         """
         print('%sReserved2' % prefix)
         print('%s  ObjectType:  %x' % (prefix, self.ObjectType))

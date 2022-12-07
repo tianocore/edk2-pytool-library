@@ -932,6 +932,7 @@ class EFiVariableAuthentication2(object):
 '''
 THESE ARE NOT SUPPORTED IN THE TOOL
 
+```
 typedef struct {
   ///
   /// The SHA256 hash of an X.509 certificate's To-Be-Signed contents.
@@ -942,7 +943,9 @@ typedef struct {
   ///
   EFI_TIME            TimeOfRevocation;
 } EFI_CERT_X509_SHA256;
+```
 
+```
 typedef struct {
   ///
   /// The SHA384 hash of an X.509 certificate's To-Be-Signed contents.
@@ -953,7 +956,9 @@ typedef struct {
   ///
   EFI_TIME            TimeOfRevocation;
 } EFI_CERT_X509_SHA384;
+```
 
+```
 typedef struct {
   ///
   /// The SHA512 hash of an X.509 certificate's To-Be-Signed contents.
@@ -964,4 +969,5 @@ typedef struct {
   ///
   EFI_TIME            TimeOfRevocation;
 } EFI_CERT_X509_SHA512;
+```
 '''

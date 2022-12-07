@@ -54,7 +54,7 @@ class BaseParser(object):
           path (str): Abs root path
 
         Returns:
-            (self)
+            (BaseParser): self
         """
         self.RootPath = os.path.abspath(path)
         self._ConfigEdk2PathUtil()
@@ -73,7 +73,7 @@ class BaseParser(object):
         NOTE: This must be called after SetBaseAbsPath
 
         Returns:
-            (self)
+            (BaseParser): self
         """
         self.PPs = pps
         self._ConfigEdk2PathUtil()
@@ -86,7 +86,7 @@ class BaseParser(object):
           inputdict (dict): The input vars dictionary
 
         Returns:
-            (self)
+            (BaseParser): self
         """
         self.InputVars = inputdict
         return self
@@ -95,7 +95,7 @@ class BaseParser(object):
         """Given a path, it will find it relative to the root, the current target file, or the packages path.
 
         Args:
-          *p: any number of strings or path like objects
+          *p (obj): any number of strings or path like objects
 
         Returns:
             (str): a full absolute path if the file exists
@@ -248,7 +248,7 @@ class BaseParser(object):
         """Push new value onto the conditional stack.
 
         Args:
-          v: Value to push
+          v (obj): Value to push
         """
         self.ConditionalStack.append(v)
 
@@ -328,7 +328,7 @@ class BaseParser(object):
           text (str): The text to process
 
         Returns:
-            (bool) true if a line is a conditiona otherwise false
+            (bool): true if a line is a conditiona otherwise false
         """
         if '"' in text:
             tokens = text.split('"')

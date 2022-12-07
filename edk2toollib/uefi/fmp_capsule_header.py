@@ -31,6 +31,7 @@ class FmpCapsuleImageHeaderClass (object):
                                        all HardwareInstances.
         Payload (str):                 String representing payload as bytes (i.e. b'\x01\x00\x03')
 
+    ```
     typedef struct {
         UINT32   Version;
         EFI_GUID UpdateImageTypeId;
@@ -42,6 +43,7 @@ class FmpCapsuleImageHeaderClass (object):
     } EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER;
 
     #define EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER_INIT_VERSION 0x00000002
+    ```
     """
     _StructFormat = '<I16sB3BIIQ'  # spell-checker: disable-line
     _StructSize = struct.calcsize(_StructFormat)
@@ -152,13 +154,14 @@ class FmpCapsuleHeaderClass (object):
 
     Can parse or produce an EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER_INIT_VERSION structure/byte buffer.
 
-    Args:
+    Attributes:
         Version (int): EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER_INIT_VERSION
         EmbeddedDriverCount (int): The number of drivers included in the capsule and the number of corresponding
                                    offsets stored in ItemOffsetList array.
         PayloadItemCount (int):    The number of payload items included in the capsule and the number of corresponding
                                    offsets stored in the ItemOffsetList array.
 
+    ```
     typedef struct {
         UINT32 Version;
         UINT16 EmbeddedDriverCount;
@@ -166,6 +169,7 @@ class FmpCapsuleHeaderClass (object):
         UINT64 ItemOffsetList[];
     } EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER;
     #define EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER_INIT_VERSION       0x00000001
+    ```
     """
     _StructFormat = '<IHH'
     _StructSize = struct.calcsize(_StructFormat)

@@ -161,19 +161,24 @@ def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstre
 
     This is the public function that should be used to run commands from the shell in python environment
 
-    Args:
-        cmd - command being run, either quoted or not quoted
-        parameters - parameters string taken as is
-        capture - boolean to determine if caller wants the output captured in any format.
-        workingdir - path to set to the working directory before running the command.
-        outfile - capture output to file of given path.
-        outstream - capture output to a stream.
-        environ - shell environment variables dictionary that replaces the one inherited from the current process.
-        logging_level - log level to log output at.  Default is INFO
-        raise_exception_on_nonzero - Setting to true causes exception to be raised if the cmd return code is not zero.
-        encodingErrors - may be given to set the desired error handling for encoding errors decoding cmd output.
-            Default is 'strict'.
-        close_fds - If True, file descriptors are closed before the command is run. Default is True.
+    Attributes:
+        cmd (str): command being run, either quoted or not quoted
+        parameters (str): parameters string taken as is
+        capture (obj): boolean to determine if caller wants the output captured
+            in any format.
+        workingdir (str): path to set to the working directory before running
+            the command.
+        outfile (obj): capture output to file of given path.
+        outstream (obj): capture output to a stream.
+        environ (obj): shell environment variables dictionary that replaces the
+            one inherited from the current process.
+        logging_level (obj): log level to log output at.  Default is INFO
+        raise_exception_on_nonzero (bool): Setting to true causes exception to
+            be raised if the cmd return code is not zero.
+        encodingErrors (str): may be given to set the desired error handling
+            for encoding errors decoding cmd output. Default is 'strict'.
+        close_fds (bool): If True, file descriptors are closed before the
+            command is run. Default is True.
 
     Returns:
         (int): returncode of called cmd
@@ -221,7 +226,7 @@ def RunPythonScript(pythonfile, params, capture=True, workingdir=None, outfile=N
     This is the public function that should be used to execute python scripts from the shell in python environment.
     The python script will be located using the path as if it was an executable.
 
-    Args:
+    Attributes:
         cmd: cmd string to run including parameters
         capture: boolean to determine if caller wants the output captured in any format.
         workingdir: path to set to the working directory before running the command.
@@ -230,7 +235,7 @@ def RunPythonScript(pythonfile, params, capture=True, workingdir=None, outfile=N
         environ: shell environment variables dictionary that replaces the one inherited from the current process.
 
     Returns:
-        (int) returncode of called cmd
+        (int): returncode of called cmd
     """
     # locate python file on path
     pythonfile.strip('"\'')
