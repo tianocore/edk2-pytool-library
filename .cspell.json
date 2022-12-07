@@ -92,6 +92,7 @@
         "smoosh",
         "markdownlint",
         "codecov",
-        "nonlocalizable"
+        "nonlocalizable",
+        "mkdocs"
     ]
 }

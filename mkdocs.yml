@@ -1,0 +1,74 @@
+site_name: Tianocore Edk2 Pytool Library (edk2toollib)
+repo_url: https://github.com/tianocore/edk2-pytool-library
+copyright: Copyright (c) Microsoft.  All rights reserved
+site_description: edk2toollib package documentation
+
+theme:
+  name: readthedocs
+
+docs_dir: docs/user
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+  - exclude:
+      glob:
+        - coverage.md
+        - publishing.md
+        - developing.md
+  - gen-files:
+      scripts:
+        - docs/user/gen_api.py
+  - awesome-pages
+
+extra_javascript:
+  - https://unpkg.com/mermaid@8.7.0/dist/mermaid.min.js
+
+markdown_extensions:
+  - markdown_include.include:
+      base_path: .
+  - admonition
+  - codehilite
+  - meta
+  - fenced_code
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_div_format
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+  - pymdownx.tabbed
+  - toc:
+      permalink: true
+watch:
+  - 'docs/user'
+  - 'mkdocs.yml'
+  - 'edk2toollib/'
+
+nav:
+  - Our Philosophy: index.md
+  - Advanced Features:
+    - ANSI Logging: features/logging.ansi_handler.md
+    - Get Host Info: features/utility_functions.GetHostInfo.md
+    - Windows Firmware Policy: features/windows_firmware_policy.md
+    - Build Objects: features/build_objects.md
+  - API Reference:
+    - ... | flat | api/**/*.md
