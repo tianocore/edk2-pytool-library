@@ -147,7 +147,7 @@ class VariablePolicyEntry(object):
 
         (in the same order as the csv_header) ready to be written to a csv file
         Args:
-            guid_xref (dict) - GUID/name substitutions where the key is a uuid object
+            guid_xref (dict): GUID/name substitutions where the key is a uuid object
                 and the value is a string
         """
         if guid_xref is None:

@@ -27,10 +27,12 @@ class FmpAuthHeaderClass (object):
         Payload (str):              string representing payload as bytes (i.e. b'\x01\x00\x03')
         FmpPayloadHeader (FmpPayloadHeaderClass): Header for the payload
 
+    ```
     typedef struct {
         UINT64                                  MonotonicCount;
         WIN_CERTIFICATE_UEFI_GUID               AuthInfo;
     } EFI_FIRMWARE_IMAGE_AUTHENTICATION;
+    ```
     """
     _MonotonicCountFormat = '<Q'
     _MonotonicCountSize = struct.calcsize(_MonotonicCountFormat)

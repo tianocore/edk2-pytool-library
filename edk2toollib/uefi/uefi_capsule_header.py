@@ -27,6 +27,7 @@ class UefiCapsuleHeaderClass (object):
         Payload (str):              string representing packed data as bytes (i.e. b'\x01\x00\x03')
         FmpCapsuleHeader (FmpCapsuleHeaderClass): Fmp Capsule Header
 
+    ```
     typedef struct {
         EFI_GUID          CapsuleGuid;
         UINT32            HeaderSize;
@@ -37,6 +38,7 @@ class UefiCapsuleHeaderClass (object):
     #define CAPSULE_FLAGS_PERSIST_ACROSS_RESET          0x00010000
     #define CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE         0x00020000
     #define CAPSULE_FLAGS_INITIATE_RESET                0x00040000
+    ```
     """
     _StructFormat = '<16sIIII'
     _StructSize = struct.calcsize(_StructFormat)

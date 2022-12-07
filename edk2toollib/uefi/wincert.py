@@ -138,7 +138,7 @@ class WinCertPkcs1(object):
 class WinCertUefiGuid(object):
     """Object representing a Certificate which encapsulates a GUID-specific digital signature.
 
-    Args:
+    Attributes:
         Hdr_dwLength (int):         The length of the entire certificate, including the length of the header, in bytes.
         Hdr_wRevision (int):        The certificate type. See WIN_CERT_TYPE_xxx for the UEFI certificate types. The UEFI
                                     specification reserves the range of certificate type values from 0x0EF0 to 0x0EFF.

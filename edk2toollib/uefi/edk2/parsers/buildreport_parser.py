@@ -16,7 +16,7 @@ import edk2toollib.uefi.edk2.path_utilities as pu
 class ModuleSummary(object):
     """Object to represent a module within the Build Report.
 
-    Arguments:
+    Attributes:
         Guid (str): Module Guid
         Name (str): Module name
         InfPath (str): Path to INF

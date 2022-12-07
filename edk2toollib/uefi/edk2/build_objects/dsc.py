@@ -182,12 +182,14 @@ class dsc_buildoption_section_type(dsc_section_type):
         codebase (:obj:`str`, optional): the codebase type
 
     Examples:
-        [BuildOptions.$(arch).CodeBase.Edk2ModuleType]
-        [BuildOptions.$(arch).CodeBase]
-        [BuildOptions.common.CodeBase]
-        [BuildOptions.$(arch)]
-        [BuildOptions.common]
-        [BuildOptions]
+        ```
+        BuildOptions.$(arch).CodeBase.Edk2ModuleType
+        BuildOptions.$(arch).CodeBase
+        BuildOptions.common.CodeBase
+        BuildOptions.$(arch)
+        BuildOptions.common
+        BuildOptions
+        ```
     """
     def __init__(self, arch="common", codebase="common", module_type="common"):
         """Inits dsc build option section type."""
@@ -530,7 +532,7 @@ pcd_variable_attributes = ["NV", "BS", "RT", "RO"]
 class pcd_variable(pcd):
     """A Variable PCD object.
 
-    Args:
+    Attributes:
         var_name (obj): VariableName
         var_guid (obj): VariableGuid
         var_offset (obj): VariableOffset

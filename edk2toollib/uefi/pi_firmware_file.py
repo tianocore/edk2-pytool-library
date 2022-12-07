@@ -16,6 +16,7 @@ class EfiFirmwareFileSystemHeader(object):
 
     Can parse or produce an EFI_FFS_FILE_HEADER structure/byte buffer.
 
+    ```
     typedef struct {
         EFI_GUID                Name;
         EFI_FFS_INTEGRITY_CHECK IntegrityCheck;
@@ -24,6 +25,7 @@ class EfiFirmwareFileSystemHeader(object):
         UINT8                   Size[3];
         EFI_FFS_FILE_STATE      State;
     } EFI_FFS_FILE_HEADER;
+    ```
     """
     def __init__(self):
         """Inits an empty object."""

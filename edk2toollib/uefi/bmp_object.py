@@ -18,12 +18,14 @@ class BmpColorMap(object):
         Green (int): green
         Red (int): red
 
+    ```
     typedef struct {
         UINT8   Blue;
         UINT8   Green;
         UINT8   Red;
         UINT8   Reserved;
     } BMP_COLOR_MAP;
+    ```
     """
     STATIC_SIZE = 4
 
@@ -84,6 +86,7 @@ class BmpColorMap(object):
 class BmpObject(object):
     """An object representing a BMP_IMAGE_HEADER.
 
+    ```
     typedef struct {
         CHAR8         CharB;  < -- Start of FileHeader
         CHAR8         CharM;
@@ -102,6 +105,7 @@ class BmpObject(object):
         UINT32        NumberOfColors;
         UINT32        ImportantColors;
     } BMP_IMAGE_HEADER;
+    ```
     """
     STATIC_FILE_HEADER_SIZE = 14
     STATIC_IMAGE_HEADER_SIZE = 40
