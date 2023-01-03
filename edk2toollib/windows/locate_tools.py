@@ -174,7 +174,11 @@ def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_versi
     result = {}
     ret, vs_path = FindWithVsWhere(product, vs_version)
     if ret != 0 or vs_path is None:
-        logging.warning("We didn't find VS path or otherwise failed to invoke vsWhere")
+        logging.error("We didn't find VS path or otherwise failed to invoke vsWhere")
+        if vs_version:
+            logging.error(f'  Might need to verify {vs_version} install exists.')
+        else:
+            logging.error('  Might need to specify VS version... i.e. vs2022.')
         raise ValueError("Bad VC")
     vcvarsall_path = os.path.join(vs_path, "VC", "Auxiliary", "Build", "vcvarsall.bat")
     logging.debug("Calling '%s %s'", vcvarsall_path, arch)
