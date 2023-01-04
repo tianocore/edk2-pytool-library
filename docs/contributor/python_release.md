@@ -18,7 +18,7 @@ the next version.
 
 We typically support the last three minor versions; barring any special
 exceptions, if the newest minor version is 3.11, then overall we will support
-3.9, 3.10, and 3.11. Therefore you should update the line to 
+3.9, 3.10, and 3.11. Therefore you should update the line to
 `python_requires = ">=3.9.0"`.
 
 Additionally, we must update the classifiers section to show the three
