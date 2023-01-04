@@ -60,11 +60,15 @@ setuptools.setup(
     include_package_data=True,
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
+    python_requires=">=3.9.0",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Development Status :: 4 - Beta",
-        "Intended Audience :: Developers"
+        "Intended Audience :: Developers",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11"
     ]
 )
