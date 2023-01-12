@@ -129,8 +129,8 @@ class Edk2Path(object):
                 else:
                     packages_to_check.append(package)
             for i, package in enumerate(packages_to_check):
-                for j in range(i + 1, len(packages)):
-                    comp_package = packages[j]
+                for j in range(i + 1, len(packages_to_check)):
+                    comp_package = packages_to_check[j]
                     if (package.is_relative_to(comp_package)
                             or comp_package.is_relative_to(package)):
                         if ignore_nested_packages:
