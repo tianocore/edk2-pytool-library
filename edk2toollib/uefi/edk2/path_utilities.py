@@ -113,8 +113,22 @@ class Edk2Path(object):
                 "true":
             ignore_nested_packages = True
 
+        if "PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES" in os.environ:
+            pkgs_to_ignore = os.environ["PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES"].split(",")
+        else:
+            pkgs_to_ignore = []
+
         for package_path, packages in package_path_packages.items():
-            for i, package in enumerate(packages):
+            packages_to_check = []
+            for package in packages:
+                if any(x in str(package) for x in pkgs_to_ignore):
+                    self.logger.log(
+                        logging.INFO,
+                        f"Ignoring nested package check for known-bad package "
+                        f"[{str(package)}].")
+                else:
+                    packages_to_check.append(package)
+            for i, package in enumerate(packages_to_check):
                 for j in range(i + 1, len(packages)):
                     comp_package = packages[j]
                     if (package.is_relative_to(comp_package)
