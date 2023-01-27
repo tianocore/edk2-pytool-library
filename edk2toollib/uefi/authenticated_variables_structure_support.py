@@ -799,7 +799,7 @@ class EfiTime(object):
         Daylight = struct.unpack("<B", fs.read(1))[0]
         fs.seek(1, 1)  # seek past pad2
 
-        self.Time = datetime.datetime(Year, Month, Day, Hour, Minute, Second, NanoSecond / 1000)
+        self.Time = datetime.datetime(Year, Month, Day, Hour, Minute, Second, NanoSecond)
         logging.debug("I don't know how to deal with TimeZone or Daylight and I don't care at the moment")
         logging.debug("Timezone value is: 0x%x" % TimeZone)
         logging.debug("Daylight value is: 0x%X" % Daylight)
