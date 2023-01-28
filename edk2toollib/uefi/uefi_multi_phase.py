@@ -20,8 +20,8 @@ EFI_VARIABLE_APPEND_WRITE = 0x00000040
 class EfiVariableAttributes(object):
     """Object representing the different efi variable attributes."""
 
-    _StructFormat = "<I"  # UINT32
-    _StructSize = struct.calcsize(_StructFormat)
+    ATTR_FMT  = "<I"  # UINT32
+    ATTR_FMT_SIZE = struct.calcsize(ATTR_FMT)
 
     SHORT_STRING_MAP = {
         EFI_VARIABLE_APPEND_WRITE: "PW",
@@ -45,14 +45,17 @@ class EfiVariableAttributes(object):
     }
     INVERSE_STRING_MAP = {v: k for k, v in STRING_MAP.items()}
 
-    def __init__(self, attributes=0x0000_0000):
+    def __init__(self, attributes=0x0000_0000, decodefs=None):
         """
         :param attributes: supported types [int, str], attributes to parse
+        :param decodefs: filestream to decode from
 
         :param none
         """
-
-        self.Update(attributes)
+        if decodefs:
+            self.ReadBytes(decodefs)
+        else:
+            self.Update(attributes)
 
     def Update(self, attributes: 0x0000_00000):
         """
@@ -110,6 +113,20 @@ class EfiVariableAttributes(object):
             attributes |= attr_value
 
         return attributes
+
+    def ReadBytes(self, fs):
+        """
+        reads in attributes from a file stream
+
+        :param fs: file stream to read from
+        """
+        self.Attributes = struct.unpack(EfiVariableAttributes.ATTR_FMT, fs.read(EfiVariableAttributes.ATTR_FMT_SIZE))
+
+    def GetBytes(self):
+        """
+        returns the attributes as a packed structure
+        """
+        return struct.pack(EfiVariableAttributes.ATTR_FMT, self.Attributes)
 
     def GetShortString(self):
         """
