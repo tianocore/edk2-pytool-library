@@ -18,6 +18,16 @@ class Edk2Path(object):
     """Represents edk2 file paths.
 
     Class that helps perform path operations within an EDK workspace.
+
+    There are two OS environment variables that modify the behavior of this class with
+    respect to nested package checking:
+        PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES - converts errors about nested
+            packages to warnings.
+        PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES - contains a comma-delimited list of
+            known bad packages. If a package matching a known bad package from the
+            list is encountered, an info-level message will be printed and the nested
+            package check will be skipped.
+
     """
 
     def __init__(self, ws: os.PathLike, package_path_list: Iterable[os.PathLike],
