@@ -18,6 +18,16 @@ class Edk2Path(object):
     """Represents edk2 file paths.
 
     Class that helps perform path operations within an EDK workspace.
+
+    There are two OS environment variables that modify the behavior of this class with
+    respect to nested package checking:
+        PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES - converts errors about nested
+            packages to warnings.
+        PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES - contains a comma-delimited list of
+            known bad packages. If a package matching a known bad package from the
+            list is encountered, an info-level message will be printed and the nested
+            package check will be skipped.
+
     """
 
     def __init__(self, ws: os.PathLike, package_path_list: Iterable[os.PathLike],
@@ -113,10 +123,24 @@ class Edk2Path(object):
                 "true":
             ignore_nested_packages = True
 
+        if "PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES" in os.environ:
+            pkgs_to_ignore = os.environ["PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES"].split(",")
+        else:
+            pkgs_to_ignore = []
+
         for package_path, packages in package_path_packages.items():
-            for i, package in enumerate(packages):
-                for j in range(i + 1, len(packages)):
-                    comp_package = packages[j]
+            packages_to_check = []
+            for package in packages:
+                if any(x in str(package) for x in pkgs_to_ignore):
+                    self.logger.log(
+                        logging.INFO,
+                        f"Ignoring nested package check for known-bad package "
+                        f"[{str(package)}].")
+                else:
+                    packages_to_check.append(package)
+            for i, package in enumerate(packages_to_check):
+                for j in range(i + 1, len(packages_to_check)):
+                    comp_package = packages_to_check[j]
                     if (package.is_relative_to(comp_package)
                             or comp_package.is_relative_to(package)):
                         if ignore_nested_packages:
