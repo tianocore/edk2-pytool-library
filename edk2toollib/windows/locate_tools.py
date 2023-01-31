@@ -92,6 +92,8 @@ def GetVsWherePath(fail_on_not_found: bool = True):
         (str): "/PATH/TO/vswhere.exe" if found
         (None): if fail_on_not_found and is not found
     """
+    if GetHostInfo().os != "Windows":
+        raise EnvironmentError("VsWhere cannot be used on a non-windows system.")
     vswhere_path = __VsWherePath()
     # check if we can't find it, look for vswhere in the path
     if not os.path.isfile(vswhere_path):
@@ -129,12 +131,12 @@ def FindWithVsWhere(products: str = "*", vs_version: str = None):
         (str): VsWhere products
         (None): If no products returned
     Raises:
-        (EnvironmentError): Not on a windows system
+        (EnvironmentError): Not on a windows system or cannot locate the VsWhere
         (ValueError): Unsupported VS version
         (RuntimeError): Error when running vswhere
     """
     cmd = "-latest -nologo -all -property installationPath"
-    vs_where_path = GetVsWherePath()
+    vs_where_path = GetVsWherePath()  # Will raise the Environment Error if not on windows.
     if vs_where_path is None:
         raise EnvironmentError("Unable to locate the VsWhere Executable.")
 
