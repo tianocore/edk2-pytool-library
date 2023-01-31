@@ -20,8 +20,8 @@ EFI_VARIABLE_APPEND_WRITE = 0x00000040
 class EfiVariableAttributes(object):
     """Object representing the different efi variable attributes."""
 
-    ATTR_FMT  = "<I"  # UINT32
-    ATTR_FMT_SIZE = struct.calcsize(ATTR_FMT)
+    _struct_format = "<I"  # UINT32
+    _struct_size = struct.calcsize(_struct_format)
 
     SHORT_STRING_MAP = {
         EFI_VARIABLE_APPEND_WRITE: "PW",
@@ -45,47 +45,58 @@ class EfiVariableAttributes(object):
     }
     INVERSE_STRING_MAP = {v: k for k, v in STRING_MAP.items()}
 
-    def __init__(self, attributes=0x0000_0000, decodefs=None):
-        """
-        :param attributes: supported types [int, str], attributes to parse
-        :param decodefs: filestream to decode from
+    def __init__(self, attributes=0x0000_0000, decodefs=None) -> None:
+        """ Creates a EfiVariableAttributes object
 
-        :param none
+        Args:
+            attributes (int, or str): attributes to parse
+            decodefs: filestream to decode from
+
+        Returns:
+            none (implcit)
         """
         if decodefs:
-            self.ReadBytes(decodefs)
+            self.decode(decodefs)
         else:
-            self.Update(attributes)
+            self.update(attributes)
 
-    def Update(self, attributes: 0x0000_00000):
-        """
-        Updates an instance of EfiVariableAttributes to new value
+    def update(self, attributes: 0x0000_00000) -> None:
+        """Updates an instance of EfiVariableAttributes to new value.
 
-        :param attributes: supported types [int, str], attributes to parse
+        Args:
+            attributes: supported types [int, str], attributes to parse
 
-        :param none (implicit)
+        Returns:
+            None
+
+        Raises:
+            TypeError: If the attribute provided is neither int or string
         """
 
         if isinstance(attributes, int):
-            self.Attributes = attributes
+            self.attributes = attributes
         elif isinstance(attributes, str):
-            self.Attributes = self._parse_attributes_str(attributes)
+            self.attributes = self._parse_attributes_str(attributes)
         else:
-            raise ValueError(
+            raise TypeError(
                 f"Invalid type: {type(attributes)}")
 
     def _parse_attributes_str(self, attributes_str):
-        """
-        converts attributes string integer representation
+        """Converts attributes string integer representation.
 
-        :param attributes_str: string containing attributes that have been comma delimated.
-            Examples: 
-                "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE"
-                "EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_NON_VOLATILE"
-                "BS,NV"
-                "BS, NV"
+        Args:
+            attributes_str: string containing attributes that have been comma delimated.
+                Examples: 
+                    "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE"
+                    "EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_NON_VOLATILE"
+                    "BS,NV"
+                    "BS, NV"
 
-        :return: int representation of the attributes
+        Returns:
+            int representation of the attributes
+
+        Raises:
+            ValueError: if the attribute provided is not supported
         """
 
         attributes = 0
@@ -114,21 +125,28 @@ class EfiVariableAttributes(object):
 
         return attributes
 
-    def ReadBytes(self, fs):
-        """
-        reads in attributes from a file stream
+    def decode(self, fs) -> int:
+        """reads in attributes from a file stream
 
-        :param fs: file stream to read from
-        """
-        self.Attributes = struct.unpack(EfiVariableAttributes.ATTR_FMT, fs.read(EfiVariableAttributes.ATTR_FMT_SIZE))
+        Args:
+            fs: file stream to read from
 
-    def GetBytes(self):
+        Returns:
+            Int - attributes
+        """
+        attributes = struct.unpack(EfiVariableAttributes._struct_format, fs.read(EfiVariableAttributes._struct_size))[0]
+
+        self.update(attributes)
+
+        return attributes
+
+    def encode(self):
         """
         returns the attributes as a packed structure
         """
-        return struct.pack(EfiVariableAttributes.ATTR_FMT, self.Attributes)
+        return struct.pack(EfiVariableAttributes._struct_format, self.attributes)
 
-    def GetShortString(self):
+    def get_short_string(self):
         """
         Short string representation of the attributes.
 
@@ -136,7 +154,7 @@ class EfiVariableAttributes(object):
         """
         result = []
         for key in EfiVariableAttributes.STRING_MAP:
-            if self.Attributes & key:
+            if self.attributes & key:
                 result.append(EfiVariableAttributes.SHORT_STRING_MAP[key])
         return ",".join(result)
 
@@ -148,9 +166,9 @@ class EfiVariableAttributes(object):
         """
         result = []
         for key in EfiVariableAttributes.STRING_MAP:
-            if self.Attributes & key:
+            if self.attributes & key:
                 result.append(EfiVariableAttributes.STRING_MAP[key])
         return ",".join(result)
 
     def __int__(self):
-        return self.Attributes
+        return self.attributes

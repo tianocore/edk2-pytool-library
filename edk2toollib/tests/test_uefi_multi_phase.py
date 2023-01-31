@@ -14,84 +14,84 @@ from edk2toollib.uefi.uefi_multi_phase import (EfiVariableAttributes,
 
 class TestUefiMultiphase (unittest.TestCase):
 
-    def test_StringConversion(self):
-        Attr = EfiVariableAttributes(EFI_VARIABLE_NON_VOLATILE
+    def test_string_conversion(self):
+        attributes = EfiVariableAttributes(EFI_VARIABLE_NON_VOLATILE
                                      | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS)
-        string = str(Attr)
+        string = str(attributes)
 
         self.assertTrue("EFI_VARIABLE_RUNTIME_ACCESS" in string)
         self.assertTrue("EFI_VARIABLE_NON_VOLATILE" in string)
         self.assertTrue("EFI_VARIABLE_BOOTSERVICE_ACCESS" in string)
 
-    def test_Empty(self):
-        Attr = EfiVariableAttributes(0)
+    def test_empty(self):
+        attributes = EfiVariableAttributes(0)
 
-        self.assertEqual(str(Attr), "")
-        self.assertEqual(int(Attr), 0)
+        self.assertEqual(str(attributes), "")
+        self.assertEqual(int(attributes), 0)
 
-    def test_IntToAlternate(self):
+    def test_int_to_alternate(self):
 
-        Attr = EfiVariableAttributes(EFI_VARIABLE_NON_VOLATILE)
-        self.assertEqual(str(Attr), "EFI_VARIABLE_NON_VOLATILE")
-        self.assertEqual(Attr.GetShortString(), "NV")
-        self.assertEqual(int(Attr), EFI_VARIABLE_NON_VOLATILE)
+        attributes = EfiVariableAttributes(EFI_VARIABLE_NON_VOLATILE)
+        self.assertEqual(str(attributes), "EFI_VARIABLE_NON_VOLATILE")
+        self.assertEqual(attributes.get_short_string(), "NV")
+        self.assertEqual(int(attributes), EFI_VARIABLE_NON_VOLATILE)
 
-        Attr.Update(EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
-        self.assertEqual(str(Attr), "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
-        self.assertEqual(Attr.GetShortString(), "BS,NV")
-        self.assertEqual(int(Attr), EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
+        attributes.update(EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
+        self.assertEqual(str(attributes), "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+        self.assertEqual(attributes.get_short_string(), "BS,NV")
+        self.assertEqual(int(attributes), EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
 
-        Attr.Update(EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS
+        attributes.update(EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS
                     | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS)
         self.assertEqual(
-            str(Attr), "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
-        self.assertEqual(Attr.GetShortString(), "AT,BS,NV")
-        self.assertEqual(int(Attr), EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
+            str(attributes), "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+        self.assertEqual(attributes.get_short_string(), "AT,BS,NV")
+        self.assertEqual(int(attributes), EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
                          | EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
 
-    def test_StringToAlternate(self):
-        Attr = EfiVariableAttributes("EFI_VARIABLE_NON_VOLATILE")
-        self.assertEqual(str(Attr), "EFI_VARIABLE_NON_VOLATILE")
-        self.assertEqual(Attr.GetShortString(), "NV")
-        self.assertEqual(int(Attr), EFI_VARIABLE_NON_VOLATILE)
+    def test_string_to_alternate(self):
+        attributes = EfiVariableAttributes("EFI_VARIABLE_NON_VOLATILE")
+        self.assertEqual(str(attributes), "EFI_VARIABLE_NON_VOLATILE")
+        self.assertEqual(attributes.get_short_string(), "NV")
+        self.assertEqual(int(attributes), EFI_VARIABLE_NON_VOLATILE)
 
-        Attr.Update("EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
-        self.assertEqual(str(Attr), "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
-        self.assertEqual(Attr.GetShortString(), "BS,NV")
-        self.assertEqual(int(Attr), EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
+        attributes.update("EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+        self.assertEqual(str(attributes), "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+        self.assertEqual(attributes.get_short_string(), "BS,NV")
+        self.assertEqual(int(attributes), EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
 
-        Attr.Update("EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+        attributes.update("EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
         self.assertEqual(
-            str(Attr), "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
-        self.assertEqual(Attr.GetShortString(), "AT,BS,NV")
-        self.assertEqual(int(Attr), EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
+            str(attributes), "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+        self.assertEqual(attributes.get_short_string(), "AT,BS,NV")
+        self.assertEqual(int(attributes), EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
                          | EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
 
-    def test_ShortStringToAlternate(self):
-        Attr = EfiVariableAttributes("NV")
-        self.assertEqual(str(Attr), "EFI_VARIABLE_NON_VOLATILE")
-        self.assertEqual(Attr.GetShortString(), "NV")
-        self.assertEqual(int(Attr), EFI_VARIABLE_NON_VOLATILE)
+    def test_short_string_to_alternate(self):
+        attributes = EfiVariableAttributes("NV")
+        self.assertEqual(str(attributes), "EFI_VARIABLE_NON_VOLATILE")
+        self.assertEqual(attributes.get_short_string(), "NV")
+        self.assertEqual(int(attributes), EFI_VARIABLE_NON_VOLATILE)
 
-        Attr.Update("BS,NV")
-        self.assertEqual(str(Attr), "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
-        self.assertEqual(Attr.GetShortString(), "BS,NV")
-        self.assertEqual(int(Attr), EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
+        attributes.update("BS,NV")
+        self.assertEqual(str(attributes), "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+        self.assertEqual(attributes.get_short_string(), "BS,NV")
+        self.assertEqual(int(attributes), EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
 
-        Attr.Update("AT,BS,NV")
+        attributes.update("AT,BS,NV")
         self.assertEqual(
-            str(Attr), "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
-        self.assertEqual(Attr.GetShortString(), "AT,BS,NV")
-        self.assertEqual(int(Attr), EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
+            str(attributes), "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+        self.assertEqual(attributes.get_short_string(), "AT,BS,NV")
+        self.assertEqual(int(attributes), EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
                          | EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
 
-    def test_WithSpacesToAlternate(self):
-        Attr = EfiVariableAttributes("BS, NV")
-        self.assertEqual(str(Attr), "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
-        self.assertEqual(Attr.GetShortString(), "BS,NV")
-        self.assertEqual(int(Attr), EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
+    def test_with_spaces_to_alternate(self):
+        attributes = EfiVariableAttributes("BS, NV")
+        self.assertEqual(str(attributes), "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+        self.assertEqual(attributes.get_short_string(), "BS,NV")
+        self.assertEqual(int(attributes), EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
 
-        Attr.Update("EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
-        self.assertEqual(str(Attr), "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
-        self.assertEqual(Attr.GetShortString(), "BS,NV")
-        self.assertEqual(int(Attr), EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
+        attributes.update("EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+        self.assertEqual(str(attributes), "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+        self.assertEqual(attributes.get_short_string(), "BS,NV")
+        self.assertEqual(int(attributes), EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
