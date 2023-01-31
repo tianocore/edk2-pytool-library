@@ -8,6 +8,7 @@
 ##
 
 import unittest
+import io
 import os
 import sys
 import edk2toollib.utility_functions as utilities
@@ -90,6 +91,90 @@ class EnumClassTest(unittest.TestCase):
         self.assertFalse(hasattr(colors, "Purple"))
         # check to make sure the values are unique
         self.assertNotEqual(colors.Green, colors.Red)
+
+
+class ExportCTypeArrayTest(unittest.TestCase):
+    """Tests export_c_type_array"""
+
+    def test_export_c_type_array_basic_usage(self):
+        """Basic Usage Test"""
+        test = io.BytesIO(b"Hello UEFI!")
+        output = io.StringIO()
+
+        newline = '\n'
+
+        expected_output = \
+            f"UINT8 TestVariable[] = {{{newline}" + \
+            f"    0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x55, 0x45, 0x46, 0x49, 0x21                                 // Hello UEFI!{newline}" + \
+            f"}};{newline*2}" + \
+            f"UINTN TestVariableLength = sizeof TestVariable;{newline*2}"
+
+        utilities.export_c_type_array(test, "TestVariable", output)
+
+        self.assertEqual(expected_output, output.getvalue())
+
+    def test_export_c_type_array_16_bytes(self):
+        """Basic 16 byte Test"""
+        test = io.BytesIO(b"0123456789abcdef")
+        output = io.StringIO()
+
+        newline = '\n'
+
+        expected_output = \
+            f"UINT8 TestVariable[] = {{{newline}" + \
+            f"    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66   // 0123456789abcdef{newline}" + \
+            f"}};{newline*2}" + \
+            f"UINTN TestVariableLength = sizeof TestVariable;{newline*2}"
+
+        utilities.export_c_type_array(test, "TestVariable", output)
+
+        self.assertEqual(expected_output, output.getvalue())
+
+    def test_export_c_type_array_32_bytes(self):
+        """Basic 32 byte Test"""
+        test = io.BytesIO(b"0123456789abcdef0123456789abcdef")
+        output = io.StringIO()
+
+        newline = '\n'
+
+        expected_output = \
+            f"UINT8 TestVariable[] = {{{newline}" + \
+            f"    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,  // 0123456789abcdef{newline}" + \
+            f"    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66   // 0123456789abcdef{newline}" + \
+            f"}};{newline*2}" + \
+            f"UINTN TestVariableLength = sizeof TestVariable;{newline*2}"
+
+        utilities.export_c_type_array(test, "TestVariable", output)
+
+        self.assertEqual(expected_output, output.getvalue())
+
+    def test_export_c_type_array_33_bytes(self):
+        """Basic 32 byte Test"""
+        test = io.BytesIO(b"0123456789abcdef0123456789abcdef0")
+        output = io.StringIO()
+
+        newline = '\n'
+
+        expected_output = \
+            f"UINT8 TestVariable[] = {{{newline}" + \
+            f"    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,  // 0123456789abcdef{newline}" + \
+            f"    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,  // 0123456789abcdef{newline}" + \
+            f"    0x30                                                                                             // 0{newline}" + \
+            f"}};{newline*2}" + \
+            f"UINTN TestVariableLength = sizeof TestVariable;{newline*2}"
+
+        utilities.export_c_type_array(test, "TestVariable", output)
+
+        self.assertEqual(expected_output, output.getvalue())
+
+
+    def test_export_c_type_array_empty(self):
+        """Ensure exception is raised if the array is length 0"""
+        binary_data = io.BytesIO(b"")
+        output = io.StringIO()
+
+        with self.assertRaises(ValueError):
+            utilities.export_c_type_array(binary_data, "TestVariable", output)
 
 # DO NOT PUT A MAIN FUNCTION HERE
 # this test runs itself to test runpython script, which is a tad bit strange yes.
