@@ -12,16 +12,23 @@ from setuptools.command.sdist import sdist
 from setuptools.command.install import install
 from setuptools.command.develop import develop
 from edk2toollib.windows.locate_tools import _DownloadVsWhere
+from edk2toollib.utility_functions import GetHostInfo
 
 with open("readme.md", "r") as fh:
     long_description = fh.read()
+
+
+def _download_vswhere_if_windows(): # noqa
+    """Downloads vswhere only if on the windows OS."""
+    if GetHostInfo().os == "Windows":
+        _DownloadVsWhere()
 
 
 class PostSdistCommand(sdist): # noqa
     """Post-sdist."""
     def run(self): # noqa
         # we need to download vswhere so throw the exception if we don't get it
-        _DownloadVsWhere()
+        _download_vswhere_if_windows()
         sdist.run(self)
 
 
@@ -29,7 +36,7 @@ class PostInstallCommand(install): # noqa
     """Post-install."""
     def run(self): # noqa
         install.run(self)
-        _DownloadVsWhere()
+        _download_vswhere_if_windows()
 
 
 class PostDevCommand(develop): # noqa
@@ -37,7 +44,7 @@ class PostDevCommand(develop): # noqa
     def run(self): # noqa
         develop.run(self)
         try:
-            _DownloadVsWhere()
+            _download_vswhere_if_windows()
         except:
             pass
 
