@@ -16,7 +16,7 @@ class TestUefiMultiphase (unittest.TestCase):
 
     def test_string_conversion(self):
         attributes = EfiVariableAttributes(EFI_VARIABLE_NON_VOLATILE
-                                     | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS)
+                                           | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS)
         string = str(attributes)
 
         self.assertTrue("EFI_VARIABLE_RUNTIME_ACCESS" in string)
@@ -42,9 +42,9 @@ class TestUefiMultiphase (unittest.TestCase):
         self.assertEqual(int(attributes), EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
 
         attributes.update(EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS
-                    | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS)
+                          | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS)
         self.assertEqual(
-            str(attributes), "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+            str(attributes), "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")  # noqa
         self.assertEqual(attributes.get_short_string(), "AT,BS,NV")
         self.assertEqual(int(attributes), EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
                          | EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
@@ -60,9 +60,10 @@ class TestUefiMultiphase (unittest.TestCase):
         self.assertEqual(attributes.get_short_string(), "BS,NV")
         self.assertEqual(int(attributes), EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
 
-        attributes.update("EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+        attributes.update(
+            "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")  # noqa
         self.assertEqual(
-            str(attributes), "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+            str(attributes), "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")  # noqa
         self.assertEqual(attributes.get_short_string(), "AT,BS,NV")
         self.assertEqual(int(attributes), EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
                          | EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
@@ -80,7 +81,7 @@ class TestUefiMultiphase (unittest.TestCase):
 
         attributes.update("AT,BS,NV")
         self.assertEqual(
-            str(attributes), "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+            str(attributes), "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")  # noqa
         self.assertEqual(attributes.get_short_string(), "AT,BS,NV")
         self.assertEqual(int(attributes), EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
                          | EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)

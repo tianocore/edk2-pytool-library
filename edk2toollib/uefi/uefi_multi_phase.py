@@ -113,7 +113,8 @@ class EfiVariableAttributes(object):
                     and attr not in EfiVariableAttributes.INVERSE_SHORT_STRING_MAP:
                 raise ValueError(f"Attribute string \"{attr}\" not supported")
 
-            # attempt to get the value from the INVERSE_STRING_MAP if it fails, try to grab it from the INVERSE_SHORT_MAP
+            # attempt to get the value from the INVERSE_STRING_MAP if it fails,
+            # try to grab it from the INVERSE_SHORT_MAP
             attr_value = EfiVariableAttributes.INVERSE_STRING_MAP.get(
                 attr,
                 EfiVariableAttributes.INVERSE_SHORT_STRING_MAP.get(
