@@ -11,9 +11,13 @@
 import unittest
 import uuid
 import io
+import datetime
+
+
 from edk2toollib.uefi.authenticated_variables_structure_support import \
     EfiSignatureDatabase, EfiSignatureList, EfiSignatureDataEfiCertSha256,\
-    EfiSignatureDataEfiCertX509, EfiSignatureDataFactory, EFiVariableAuthentication2
+    EfiSignatureDataEfiCertX509, EfiSignatureDataFactory, EfiTime, \
+    EfiVariableAuthentication2
 # import logging
 
 VERBOSE = False
@@ -1817,8 +1821,8 @@ class AuthVarSupportLibraryUnitTests(unittest.TestCase):
         # translate the DBXFILE to a ByteIo stream
         DbxIo = io.BytesIO(bytes.fromhex(DBXFILE))
 
-        # Use EFiVariableAuthentication2 to decode the DBX file
-        EfiAuthVar = EFiVariableAuthentication2(decodefs=DbxIo)
+        # Use EfiVariableAuthentication2 to decode the DBX file
+        EfiAuthVar = EfiVariableAuthentication2(decodefs=DbxIo)
 
         # Write the decoded Dbx File back into a ByteIo stream
         Output = io.BytesIO()
@@ -1826,3 +1830,41 @@ class AuthVarSupportLibraryUnitTests(unittest.TestCase):
 
         # Assert if the Decoded version does not match the original
         self.assertEqual(Output.getvalue(), DbxIo.getvalue())
+
+
+class EfiTimeTest(unittest.TestCase):
+
+    def test_EfiTime_basic_usage(self):
+
+        test_data = [
+            (
+                [1970, 1, 1, 0, 0, 0],
+                b"\xB2\x07\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            ),
+            (
+                [2022, 12, 5, 12, 33, 5],
+                b"\xe6\x07\x0c\x05\x0c\x21\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            )
+        ]
+
+        for time_array, expected_bytes in test_data:
+            
+            byte_stream = io.BytesIO()
+
+            year, month, day, hour, minute, second = time_array
+            epoch_time = datetime.datetime(year, month, day, hour, minute, second)
+
+            efi_time = EfiTime(Time=epoch_time)
+            self.assertEqual(efi_time.Encode(), expected_bytes)
+
+            efi_time.Write(byte_stream)
+
+            # Seek to the start
+            byte_stream.seek(0)
+
+            efi_time2 = EfiTime(decodefs=byte_stream)
+
+            self.assertEqual(efi_time.Encode(), efi_time2.Encode())
+
+
+
