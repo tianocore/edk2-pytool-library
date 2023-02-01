@@ -844,9 +844,7 @@ class EfiTime(object):
             self.Time, "%A, %B %d, %Y %I:%M%p"))
 
     def Encode(self):
-        """
-        Get's time as packed EfiTime structure 
-        """
+        """Get's time as packed EfiTime structure."""
         return struct.pack(
             EfiTime._StructFormat,
             self.Time.year,
@@ -874,9 +872,7 @@ class EfiTime(object):
         fs.write(self.Encode())
 
     def __str__(self):
-        """
-        String representation of EFI_TIME
-        """
+        """String representation of EFI_TIME."""
         return datetime.datetime.strftime(self.Time, "%A, %B %d, %Y %I:%M%p")
 
 
@@ -890,7 +886,6 @@ class EfiVariableAuthentication2(object):
             Time (:obj:`datetime`, optional): Inits object with specified date (if decodefs not set)
             decodefs (:obj:`BinaryIO`, optional): Inits the object with this stream
         """
-
         if decodefs:
             self.PopulateFromFileStream(decodefs)
             return
@@ -904,14 +899,13 @@ class EfiVariableAuthentication2(object):
         self.SigListPayload = None
 
     def Encode(self, outfs=None):
-        """Encodes a new variable into a binary representation
+        """Encodes a new variable into a binary representation.
 
         Args:
             outfs (BinaryIO): [default: None] write's to a file stream if provided
 
         :return: buffer - binary representation of the variable
         """
-
         buffer = self.Time.Encode() + self.AuthInfo.Encode()
 
         if self.Payload:
@@ -1008,7 +1002,7 @@ class EfiVariableAuthentication2(object):
 
 
 class EfiVariableAuthentication2Builder(object):
-    """"Builds EfiVariableAuthentication2 variables"""
+    """Builds EfiVariableAuthentication2 variables."""
 
     def __init__(self, name, guid, attributes, payload=None, efi_time=datetime.datetime.now()):
         """Builds a EfiVariableAuthentication2 structure.
@@ -1021,7 +1015,6 @@ class EfiVariableAuthentication2Builder(object):
             efi_time (datetime): EFI time of the datetime object
 
         """
-
         self.signature = b""
 
         # the authenticated variable to be returned
@@ -1058,7 +1051,7 @@ class EfiVariableAuthentication2Builder(object):
         return self.signature
 
     def update_payload(self, payload) -> None:
-        """Updates the autheticated variables payload and ultimately the digest
+        """Updates the autheticated variables payload and ultimately the digest.
 
         Args:
             payload: byte array or byte file stream of variable data
@@ -1128,17 +1121,16 @@ class EfiVariableAuthentication2Builder(object):
             self.signature_builder = self.signature_builder.add_certificate(cert.certificate)
 
     def finalize(self, omit_content_info=True) -> EfiVariableAuthentication2:
-        """Finalizes the signature and returns a EfiVariableAuthentication2
+        """Finalizes the signature and returns a EfiVariableAuthentication2.
 
         Args:
             omit_content_info: omits the asn.1 content info structure
-                By specification this should be supported (and the SignedData structure) but this has been broken in
-                tianocore for some time now
-
+                By specification this should be supported (and the SignedData structure) but this
+                has been broken in tianocore for some time now
+                
         Returns:
             EfiVariableAuthentication2
         """
-
         # Set the options for the pkcs7 signature:
         #   - The signature is detached
         #   - Do not convert LF to CRLF in the file (windows format)
