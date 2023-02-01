@@ -12,8 +12,7 @@
         "*.exe"
     ],
     "allowCompoundWords": true,
-    "ignoreWords": [
-    ],
+    "ignoreWords": [],
     "words": [
         "isfile",
         "isclass",
@@ -68,7 +67,9 @@
         "dirid",
         "nologo",
         "rsassa",
-        "fixedpcd", "featurepcd", "patchpcd",
+        "fixedpcd",
+        "featurepcd",
+        "patchpcd",
         "edkii",
         "levelno",
         "localizable",
@@ -93,6 +94,8 @@
         "markdownlint",
         "codecov",
         "nonlocalizable",
-        "mkdocs"
+        "mkdocs",
+        "DBXFILE",
+        "decodefs"
     ]
 }
