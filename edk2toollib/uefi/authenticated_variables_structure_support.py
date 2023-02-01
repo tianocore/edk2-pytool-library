@@ -1271,11 +1271,12 @@ class EfiVariableAuthentication2Builder(object):
         """Builds a EfiVariableAuthentication2 structure.
 
         Args:
-            name: Name of the UEFI Variable
-            guid: Guid of the namespace the UEFI variable belongs to
-            attributes: Attributes of the UEFI variable
-            payload (fs, or bytearray): binary payload to be signed and used as the value of the variable
-            efi_time (datetime): EFI time of the datetime object
+            name (str): Name of the UEFI Variable
+            guid (str): Guid of the namespace the UEFI variable belongs to
+            attributes (int | str): Attributes of the UEFI variable
+            payload (io.BytesIO | bytes): binary payload to be signed and used as the value
+                of the variable
+            efi_time (time.datetime): EFI time of the datetime object
 
         """
         self.signature = b""
@@ -1305,11 +1306,11 @@ class EfiVariableAuthentication2Builder(object):
 
         self.update_payload(payload)
 
-    def get_digest(self) -> bytearray:
-        """Returns the Digest to be signed."""
+    def get_digest(self) -> bytes:
+        """Returns the digest to be signed."""
         return self.digest
 
-    def get_signature(self) -> bytearray:
+    def get_signature(self) -> bytes:
         """Returns the Signature of the digest (PKCS#7 ContentInfo or SignedData structure)."""
         return self.signature
 
@@ -1317,7 +1318,7 @@ class EfiVariableAuthentication2Builder(object):
         """Updates the autheticated variables payload and ultimately the digest.
 
         Args:
-            payload: byte array or byte file stream of variable data
+            payload (io.ByteIO | bytes): byte array or byte file stream of variable data
 
         Returns:
             None
@@ -1341,22 +1342,24 @@ class EfiVariableAuthentication2Builder(object):
 
         self.authenticated_variable.set_payload(payload)
 
-    def sign(self, signing_certificate: Certificate, signing_private_key: RSAPrivateKey, additional_certificates=[],
-             **kwargs) -> None:
+    def sign(self, signing_certificate: Certificate, signing_private_key: RSAPrivateKey,
+             additional_certificates: List = [], **kwargs) -> None:
         """Signs an authenticated variable.
 
         Args:
-            signing_certificate: x.509 format public key
-            signing_private_key: x.509 format private key
-            additional_certificates: list of x.509 format public keys to include
+            signing_certificate (Certificate): x.509 format public key
+            signing_private_key (RSAPrivateKey): x.509 format private key
+            additional_certificates (list): list of x.509 format public keys to include
 
         Keyword Arguments:
-            hash_algorithm: accepts cryptography.hazmat.primitives.hashes types to specify the hash_algorithm
-            omit_content_info: enabled by default, allows to include the  content info asn.1 structure
-            digest: uses the digest produced by EFiVariableAuthentication2.New() by default, otherwise may specify a
+            hash_algorithm (cryptography.hazmat.primitives.hashes): accepts cryptography.hazmat.primitives.hashes types
+                to specify the hash_algorithm
+            omit_content_info (bool): enabled by default, allows to include the content info asn.1 structure
+            digest (bytes): uses the digest produced by EFiVariableAuthentication2.New() by default, otherwise may specify a
                  new digest to sign
 
-        :return: pkcs#7 signature (content_info structure may be ommited unless otherwised specified)
+        Returns:
+            None
         """
         hash_algorithm = kwargs.get("hash_algorithm", SHA256())
         digest = kwargs.get("digest", self.digest)
@@ -1387,7 +1390,7 @@ class EfiVariableAuthentication2Builder(object):
         """Finalizes the signature and returns a EfiVariableAuthentication2.
 
         Args:
-            omit_content_info: omits the asn.1 content info structure
+            omit_content_info (bool): omits the asn.1 content info structure
                 By specification this should be supported (and the SignedData structure) but this
                 has been broken in tianocore for some time now
 
