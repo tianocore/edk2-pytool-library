@@ -6,6 +6,8 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
+"""Module for working with UEFI Authenticated Variable Atrributes."""
+
 import struct
 
 EFI_VARIABLE_NON_VOLATILE = 0x00000001
@@ -46,7 +48,7 @@ class EfiVariableAttributes(object):
     INVERSE_STRING_MAP = {v: k for k, v in STRING_MAP.items()}
 
     def __init__(self, attributes=0x0000_0000, decodefs=None) -> None:
-        """ Creates a EfiVariableAttributes object
+        """Creates a EfiVariableAttributes object.
 
         Args:
             attributes (int, or str): attributes to parse
@@ -72,7 +74,6 @@ class EfiVariableAttributes(object):
         Raises:
             TypeError: If the attribute provided is neither int or string
         """
-
         if isinstance(attributes, int):
             self.attributes = attributes
         elif isinstance(attributes, str):
@@ -86,11 +87,12 @@ class EfiVariableAttributes(object):
 
         Args:
             attributes_str: string containing attributes that have been comma delimated.
-                Examples: 
-                    "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE"
-                    "EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_NON_VOLATILE"
-                    "BS,NV"
-                    "BS, NV"
+
+        Examples:
+            "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE"
+            "EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_NON_VOLATILE"
+            "BS,NV"
+            "BS, NV"
 
         Returns:
             int representation of the attributes
@@ -98,7 +100,6 @@ class EfiVariableAttributes(object):
         Raises:
             ValueError: if the attribute provided is not supported
         """
-
         attributes = 0
 
         # Handle spaces
@@ -126,7 +127,7 @@ class EfiVariableAttributes(object):
         return attributes
 
     def decode(self, fs) -> int:
-        """reads in attributes from a file stream
+        """Reads in attributes from a file stream.
 
         Args:
             fs: file stream to read from
@@ -141,14 +142,11 @@ class EfiVariableAttributes(object):
         return attributes
 
     def encode(self):
-        """
-        returns the attributes as a packed structure
-        """
+        """Returns the attributes as a packed structure."""
         return struct.pack(EfiVariableAttributes._struct_format, self.attributes)
 
     def get_short_string(self):
-        """
-        Short string representation of the attributes.
+        """Short string representation of the attributes.
 
         :return: 'short string' of the attributes
         """
@@ -159,8 +157,7 @@ class EfiVariableAttributes(object):
         return ",".join(result)
 
     def __str__(self):
-        """
-        String representation of the attributes.
+        """String representation of the attributes.
 
         :return: 'short string' of the attributes
         """
@@ -171,4 +168,5 @@ class EfiVariableAttributes(object):
         return ",".join(result)
 
     def __int__(self):
+        """Returns attributes as an int."""
         return self.attributes
