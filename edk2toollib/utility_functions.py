@@ -441,18 +441,18 @@ def PrintByteList(ByteList, IncludeAscii=True, IncludeOffset=True, IncludeHexSep
     hexdump(ByteList, offset_start=OffsetStart, out_fs=out_fs, **kwargs)
 
 
-def hexdump(byte_list, offset_start=0, out_fs=sys.stdout, **kwargs):
+def hexdump(byte_list, offset_start=0, out_fs=sys.stdout, **kwargs) -> None:
     """Print a byte array as hex and optionally output ascii as well as offset within the buffer.
 
     Args:
-        byte_list: byte array to print
-        offset_start: offset to print to the side of the hexdump
-        out_fs: output file stream to print to
+        byte_list (bytearray): byte array to print
+        offset_start (int): offset to print to the side of the hexdump
+        out_fs (io.BytesIO): output file stream to print to
 
     Keyword Arguments:
-        include_ascii: Boolean option (Default: True) to include ascii
-        include_offset: Boolean option (Default: True) to include the offset
-        include_hex_sep: Boolean option (Default: True) to include the hex seperator
+        include_ascii (bool): Option (Default: True) to include ascii
+        include_offset (bool): Option (Default: True) to include the offset
+        include_hex_sep (bool): Option (Default: True) to include the hex seperator
 
     Returns:
         None
@@ -507,28 +507,29 @@ def hexdump(byte_list, offset_start=0, out_fs=sys.stdout, **kwargs):
         out_fs.write("\n")
 
 
-def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs):
+def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs) -> None:
     """Converts a given binary file to a UEFI typed C style array.
 
     Args:
-        buffer_fs: buffer file stream to turn into a C style array
-        variable_name: variable name to use for the C style array
-        out_fs: output filestream to write to
+        buffer_fs (io.BytesIO): buffer file stream to turn into a C style array
+        variable_name (str): variable name to use for the C style array
+        out_fs (io.StringIO): output filestream to write to
 
     Keyword Arguments:
-        data_type: The datatype of the array (Default: UINT8)
-        length_data_type: The datatype of the length field (Default: UINTN)
-        is_array: if true includes '[]' (Default: True)
-        bytes_per_row: number of bytes to include per row (Default: 16)
-        indent: the characters to use for indention (Default: '    ' (4 spaces))
-        length_variable_name: name to use for the length variable (Default: <variable name>Length)
-        include_ascii: includes a ascii comment to side of hex
+        data_type (str): The datatype of the array (Default: UINT8)
+        length_data_type (str): The datatype of the length field (Default: UINTN)
+        is_array (bool): if true includes '[]' (Default: True)
+        bytes_per_row (int): number of bytes to include per row (Default: 16)
+        indent (str): the characters to use for indention (Default: '  ' (2 spaces))
+        length_variable_name (str): name to use for the length variable
+            (Default: <variable name>Length)
+        include_ascii (bool): includes a ascii comment to side of hex
 
     Return:
          None
 
     Raises:
-        ValueError - Binary file length was 0
+        ValueError: Binary file length was 0
     """
     data_type = kwargs.get("data_type", "UINT8")
     length_data_type = kwargs.get("length_data_type", "UINTN")
