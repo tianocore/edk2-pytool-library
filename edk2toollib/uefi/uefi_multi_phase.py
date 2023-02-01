@@ -51,11 +51,11 @@ class EfiVariableAttributes(object):
         """Creates a EfiVariableAttributes object.
 
         Args:
-            attributes (int, or str): attributes to parse
-            decodefs: filestream to decode from
+            attributes (int | str): attributes to parse
+            decodefs (io.BytesIO): filestream to decode from
 
         Returns:
-            none (implcit)
+            None
         """
         if decodefs:
             self.decode(decodefs)
@@ -63,10 +63,10 @@ class EfiVariableAttributes(object):
             self.update(attributes)
 
     def update(self, attributes: 0x0000_00000) -> None:
-        """Updates an instance of EfiVariableAttributes to new value.
+        """Updates instance to provided attributes.
 
         Args:
-            attributes: supported types [int, str], attributes to parse
+            attributes (int | str): attributes to parse
 
         Returns:
             None
@@ -77,25 +77,28 @@ class EfiVariableAttributes(object):
         if isinstance(attributes, int):
             self.attributes = attributes
         elif isinstance(attributes, str):
-            self.attributes = self._parse_attributes_str(attributes)
+            self.attributes = EfiVariableAttributes.parse_attributes_str(attributes)
         else:
             raise TypeError(
                 f"Invalid type: {type(attributes)}")
 
-    def _parse_attributes_str(self, attributes_str):
-        """Converts attributes string integer representation.
+    @staticmethod
+    def parse_attributes_str(attributes_str) -> int:
+        """Converts attributes string into integer representation.
 
         Args:
-            attributes_str: string containing attributes that have been comma delimated.
+            attributes_str (str): string containing attributes that have been comma delimated.
 
         Examples:
-            "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE"
-            "EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_NON_VOLATILE"
-            "BS,NV"
-            "BS, NV"
+            ```python
+            parse_attributes_str("EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
+            parse_attributes_str("EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_NON_VOLATILE")
+            parse_attributes_str("BS,NV")
+            parse_attributes_str("BS, NV")
+            ```
 
         Returns:
-            int representation of the attributes
+            Integer representation of the attributes
 
         Raises:
             ValueError: if the attribute provided is not supported
@@ -130,11 +133,20 @@ class EfiVariableAttributes(object):
     def decode(self, fs) -> int:
         """Reads in attributes from a file stream.
 
+        This updates the attributes value of the object
+
         Args:
-            fs: file stream to read from
+            fs (io.BytesIO): file stream to read from
+
+        !!! Examples
+            ```python
+            with open (my_data_file, 'rb') as f:
+                attributes = EfiVariableAttributes()
+                attributes.decode(f)
+            ```
 
         Returns:
-            Int - attributes
+            Attributes in integer form
         """
         attributes = struct.unpack(EfiVariableAttributes._struct_format, fs.read(EfiVariableAttributes._struct_size))[0]
 
@@ -142,14 +154,35 @@ class EfiVariableAttributes(object):
 
         return attributes
 
-    def encode(self):
-        """Returns the attributes as a packed structure."""
+    def encode(self) -> bytes:
+        """Returns the attributes as a packed structure.
+
+        !!! Examples
+            ```python
+
+            my_byte_array = b""
+
+            attributes = EfiVariableAttributes("EFI_VARIABLE_NON_VOLATILE")
+            my_byte_array += attributes.encode()
+            ```
+
+        Returns:
+            Attributes in packed byte form
+        """
         return struct.pack(EfiVariableAttributes._struct_format, self.attributes)
 
-    def get_short_string(self):
-        """Short string representation of the attributes.
+    def get_short_string(self) -> str:
+        """Short form string representation of the attributes.
 
-        :return: 'short string' of the attributes
+        !!! Examples
+            ```python
+
+            attributes = EfiVariableAttributes("EFI_VARIABLE_NON_VOLATILE")
+            attrributes.get_short_string() # "NV"
+            ```
+
+        Returns:
+            Short form of the attributes (Ex. "BS,NV")
         """
         result = []
         for key in EfiVariableAttributes.STRING_MAP:
@@ -157,10 +190,11 @@ class EfiVariableAttributes(object):
                 result.append(EfiVariableAttributes.SHORT_STRING_MAP[key])
         return ",".join(result)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation of the attributes.
 
-        :return: 'short string' of the attributes
+        Returns:
+            Long form of the attributes (Ex. "EFI_VARIABLE_BOOTSERVICE_ACCESS,EFI_VARIABLE_NON_VOLATILE")
         """
         result = []
         for key in EfiVariableAttributes.STRING_MAP:
