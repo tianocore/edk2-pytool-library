@@ -1127,7 +1127,7 @@ class EfiVariableAuthentication2Builder(object):
             omit_content_info: omits the asn.1 content info structure
                 By specification this should be supported (and the SignedData structure) but this
                 has been broken in tianocore for some time now
-                
+
         Returns:
             EfiVariableAuthentication2
         """

@@ -1,10 +1,10 @@
-##
 # UEFI Authenticated Variable Structure Support Library Unit Test
 #
 # Copyright (c) Microsoft Corporation
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
-##
+
+"""Unit test for authenticated_variables_structure_support"""
 
 # spell-checker: ignore deduplicated, deduplication, Dedpulication
 
@@ -1848,7 +1848,7 @@ class EfiTimeTest(unittest.TestCase):
         ]
 
         for time_array, expected_bytes in test_data:
-            
+
             byte_stream = io.BytesIO()
 
             year, month, day, hour, minute, second = time_array
@@ -1865,6 +1865,3 @@ class EfiTimeTest(unittest.TestCase):
             efi_time2 = EfiTime(decodefs=byte_stream)
 
             self.assertEqual(efi_time.Encode(), efi_time2.Encode())
-
-
-

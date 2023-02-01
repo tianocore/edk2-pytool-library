@@ -18,6 +18,7 @@ from edk2toollib.utility_functions import hexdump
 from pyasn1.codec.der.decoder import decode as der_decode
 from pyasn1_modules import rfc2315
 
+
 class WinCertPkcs1(object):
     """Object representing a WinCertPkcs1 struct.
 
@@ -321,7 +322,7 @@ class WinCertUefiGuid(object):
         outfs.write(f"sizeof (WIN_CERTIFICATE_UEFI_GUID.CertData)    = {len(self.CertData):08X}\n")
 
         outfs.write("\n------------------- CERTIFICATE DATA ---------------------\n")
-        # Technically the signature could be wrapped in a ContentInfo 
+        # Technically the signature could be wrapped in a ContentInfo
         try:
             content_info, _ = der_decode(self.CertData, asn1Spec=rfc2315.ContentInfo())
 
