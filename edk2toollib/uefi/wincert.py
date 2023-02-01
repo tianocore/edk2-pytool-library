@@ -312,8 +312,7 @@ class WinCertUefiGuid(object):
         self.DumpInfo(outfs)
 
     def DumpInfo(self, outfs=sys.stdout):
-        """Prints struct to a file stream"""
-
+        """Prints struct to a file stream."""
         outfs.write("\n-------------------- WIN_CERTIFICATE ---------------------\n")
         outfs.write(f"WIN_CERTIFICATE.dwLength         = {self.Hdr_dwLength:08X}\n")
         outfs.write(f"WIN_CERTIFICATE.wRevision        = {self.Hdr_wRevision:04X}\n")
