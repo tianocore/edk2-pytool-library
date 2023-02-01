@@ -429,7 +429,6 @@ def RemoveTree(dir_path: str, ignore_errors: bool = False) -> None:
 
 def PrintByteList(ByteList, IncludeAscii=True, IncludeOffset=True, IncludeHexSep=True, OffsetStart=0, **kwargs):
     """Print a byte array as hex and optionally output ascii as well as offset within the buffer."""
-
     out_fs = kwargs.get("out_fs", sys.stdout)
     kwargs["include_ascii"] = IncludeAscii
     kwargs["include_hex_sep"] = IncludeHexSep
@@ -458,7 +457,6 @@ def hexdump(byte_list, offset_start=0, out_fs=sys.stdout, **kwargs):
     Returns:
         None
     """
-
     include_ascii = kwargs.get('include_ascii', True)
     include_offset = kwargs.get('include_offset', True)
     include_hex_sep = kwargs.get('include_hex_sep', True)
@@ -532,7 +530,6 @@ def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs):
     Raises:
         ValueError - Binary file length was 0
     """
-
     data_type = kwargs.get("data_type", "UINT8")
     length_data_type = kwargs.get("length_data_type", "UINTN")
     is_array = kwargs.get("is_array", True)
