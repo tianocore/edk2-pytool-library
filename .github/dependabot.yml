@@ -18,3 +18,7 @@ updates:
     directory: "/docs/user/"
     schedule:
       interval: "daily"
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows/"
+    schedule:
+      interval: "daily"
