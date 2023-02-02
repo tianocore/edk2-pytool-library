@@ -178,7 +178,7 @@ class EfiVariableAttributes(object):
             ```python
 
             attributes = EfiVariableAttributes("EFI_VARIABLE_NON_VOLATILE")
-            attrributes.get_short_string() # "NV"
+            attributes.get_short_string() # "NV"
             ```
 
         Returns:
