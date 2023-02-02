@@ -524,7 +524,7 @@ def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs) -> None:
         length_variable_name (str): name to use for the length variable
         include_ascii (bool): includes a ascii comment to side of hex
         include_length (bool): includes length in the decleration of array
-            (ex. "UINT8 TestVaraible[13] = {")
+            (ex. "UINT8 TestVariable[13] = {")
     Return:
          None
 
