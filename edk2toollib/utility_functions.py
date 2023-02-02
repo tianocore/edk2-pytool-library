@@ -522,9 +522,9 @@ def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs) -> None:
         bytes_per_row (int): number of bytes to include per row (Default: 16)
         indent (str): the characters to use for indention (Default: '  ' (2 spaces))
         length_variable_name (str): name to use for the length variable
-            (Default: <variable name>Length)
         include_ascii (bool): includes a ascii comment to side of hex
-
+        include_length (bool): includes length in the decleration of array
+            (ex. "UINT8 TestVaraible[13] = {")
     Return:
          None
 
