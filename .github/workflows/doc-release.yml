@@ -1,0 +1,64 @@
+# This workflow builds and deploys documentation on a release.
+#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+
+name: Documentation
+
+on:
+  release:
+    types: [published]
+
+jobs:
+
+  variables:
+    name: Variables
+    uses: ./.github/workflows/VariableProducer.yml
+  
+  build:
+    name: Build
+    needs: variables
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Set up Python ${{ fromJson(needs.variables.outputs.python-versions)[0] }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ fromJson(needs.variables.outputs.python-versions)[0] }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade -r docs/user/requirements.txt
+      
+      - name: Build Documentation
+        run: |
+          mkdocs build --strict
+      
+      - name: Upload Github Pages Site Artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          name: "github-pages"
+          path: "site/"
+          
+  deploy:
+    name: Deploy
+
+    needs: [variables, build]
+
+    permissions:
+      pages: write
+      id-token: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Deploy Github Pages Site
+      uses: actions/deploy-pages@v1
+      with:
+        token: ${{ github.token }}
+        artifact_name: "github-pages"

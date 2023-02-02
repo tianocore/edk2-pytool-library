@@ -1,5 +1,10 @@
 # Tianocore Edk2 PyTool Library (edk2toollib)
 
+[![pypi]][_pypi]]
+[![codecov]][_codecov]
+[![ci]][_ci]
+[![docs]][_docs]
+
 This is a Tianocore maintained project consisting of a python library supporting
 UEFI firmware development.  This package's intent is to provide an easy way to
 organize and share python code to facilitate reuse across environments, tools,
@@ -10,14 +15,30 @@ This is a supplemental package and is not required to be used for edk2 builds.
 
 ## Current Status
 
-| Host Type | Toolchain | Branch | Build Status | Test Status | Code Coverage |
-| :-------- | :-------- | :---- | :----- | :---- | :--- |
-| Linux Ubuntu 2004 | Python 3.8.x | master | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/edk2-pytool-library%20-%20PR%20Gate%20-%20Linux)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=1) | ![Azure DevOps tests](https://img.shields.io/azure-devops/tests/tianocore/edk2-pytools-library/1.svg) | ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/tianocore/edk2-pytools-library/1.svg) |
-| Windows Server 2022 | Python 3.8.x | master | [![Build Status](https://dev.azure.com/tianocore/edk2-pytools-library/_apis/build/status/Edk2-PyTool-Library%20PR%20build%20-%20Win%20-%20VS2019)](https://dev.azure.com/tianocore/edk2-pytools-library/_build/latest?definitionId=2) | ![Azure DevOps tests](https://img.shields.io/azure-devops/tests/tianocore/edk2-pytools-library/2.svg)| ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/tianocore/edk2-pytools-library/2.svg) |
+[![codecov]][_codecov]
+[![ci]][_ci]
+
+The code coverage and CI badges represent unit test status and the code coverage
+of those unit tests. We require 100% unit test success (Hence the pass / fail)
+and that code coverage percentage does not lower.
+
+Supported Versions
+
+|  Host Type         |  Toolchain    |  Status
+|  :---------------  |  :----------  |  :--------------------  |
+|  [Windows-Latest]  |  Python 3.9   |  [![ci]][_ci]           |
+|  [Windows-Latest]  |  Python 3.10  |  [![ci]][_ci]           |
+|  [Windows-Latest]  |  Python 3.11  |  [![ci]][_ci]           |
+|  [Ubuntu-Latest]   |  Python 3.9   |  [![ci]][_ci]           |
+|  [Ubuntu-Latest]   |  Python 3.10  |  [![ci]][_ci]           |
+|  [Ubuntu-Latest]   |  Python 3.11  |  [![ci]][_ci]           |
+|  [MacOS-Latest]    |  Python 3.9   |  [![coming_soon]][_ci]  |
+|  [MacOS-Latest]    |  Python 3.10  |  [![coming_soon]][_ci]  |
+|  [MacOS-Latest]    |  Python 3.11  |  [![coming_soon]][_ci]  |
 
 ### Current Release
 
-[![PyPI](https://img.shields.io/pypi/v/edk2_pytool_library.svg)](https://pypi.org/project/edk2-pytool-library/)
+[![pypi]][_pypi]
 
 All release information is now tracked with Github
  [tags](https://github.com/tianocore/edk2-pytool-library/tags),
@@ -105,4 +126,33 @@ details.
 
 ## Documentation
 
-See the github repo __docs__ folder
+[![docs]][_docs]
+
+Documentation for the most recent release of edk2-pytool-library is hosted on
+[tianocore.org/edk2-pytool-library](https://www.tianocore.org/edk2-pytool-library/)]).
+Raw documentation is located in the ```docs/``` folder and is split into two
+separate categories. The first is located at ```docs/user/``` and is
+documentation and API references for those that are using this package in their
+own project. Users can generate a local copy of the documentation by executing the
+following command from the root of the project:
+
+```cmd
+pip install --upgrade -r .\docs\user\requirements.txt
+mkdocs serve
+```
+
+The second is located at ```docs/contributor/``` and is documentation for
+contributing to the edk2-pytool-extensions repository.
+
+[codecov]: https://codecov.io/gh/tianocore/edk2-pytool-library/branch/master/graph/badge.svg
+[_codecov]: https://codecov.io/gh/tianocore/edk2-pytool-extensions/
+[pypi]: https://img.shields.io/pypi/v/edk2_pytool_library.svg
+[_pypi]: https://pypi.org/project/edk2-pytool-library/
+[ci]: https://github.com/tianocore/edk2-pytool-library/actions/workflows/run-ci.yml/badge.svg?branch=master
+[_ci]: https://github.com/tianocore/edk2-pytool-library/actions/workflows/run-ci.yml
+[Windows-Latest]: https://github.com/actions/runner-images
+[Ubuntu-Latest]: https://github.com/actions/runner-images
+[MacOS-Latest]: https://github.com/actions/runner-images
+[docs]: https://img.shields.io/website?label=docs&url=https%3A%2F%2Fwww.tianocore.org%2Fedk2-pytool-library%2F
+[_docs]: https://www.tianocore.org/edk2-pytool-library/
+[coming_soon]: https://img.shields.io/badge/CI-coming_soon-blue
