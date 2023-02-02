@@ -533,11 +533,11 @@ def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs) -> None:
     """
     data_type = kwargs.get("data_type", "UINT8")
     length_data_type = kwargs.get("length_data_type", "UINTN")
-    is_array = kwargs.get("is_array", True)
     bytes_per_row = kwargs.get("bytes_per_row", 16)
     indent = kwargs.get("indent", "    ")
-    length_variable_name = kwargs.get("length_variable_name", f"{variable_name}Length")
     include_ascii = kwargs.get("include_ascii", True)
+    include_length = kwargs.get("include_length", True)
+    length_variable_name = kwargs.get("length_variable_name", None)
 
     start = buffer_fs.tell()
     buffer_fs.seek(0, 2)
@@ -551,7 +551,11 @@ def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs) -> None:
     if length == 0:
         raise ValueError("Binary file length was 0")
 
-    out_fs.write(f"{data_type} {variable_name}{'[]' if is_array else ''} = {{")
+    length_value = ""
+    if include_length:
+        length_value = str(length)
+
+    out_fs.write(f"{data_type} {variable_name}[{length_value}] = {{")
 
     ascii_string = ""
     i = 0
@@ -593,5 +597,8 @@ def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs) -> None:
         # An ending space is required because the '\' character will cause a line cont.
         out_fs.write(f"   // {ascii_string} ")
 
-    out_fs.write(f"{newline}}};")
-    out_fs.write(f"{newline*2}{length_data_type} {length_variable_name} = sizeof {variable_name};{newline*2}")
+    out_fs.write(f"{newline}}};{newline*2}")
+
+    if length_variable_name:
+        out_fs.write(
+            f"{length_data_type} {length_variable_name} = sizeof {variable_name};{newline*2}")
