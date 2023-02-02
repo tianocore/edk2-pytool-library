@@ -26,7 +26,7 @@ class EfiVariableAttributes(object):
     _struct_size = struct.calcsize(_struct_format)
 
     SHORT_STRING_MAP = {
-        EFI_VARIABLE_APPEND_WRITE: "PW",
+        EFI_VARIABLE_APPEND_WRITE: "AP",
         EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS: "AT",
         EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS: "AW",
         EFI_VARIABLE_HARDWARE_ERROR_RECORD: "HW",
