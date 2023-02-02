@@ -485,7 +485,7 @@ def hexdump(byte_list, offset_start=0, out_fs=sys.stdout, **kwargs) -> None:
         # End of Line
         if index % 16 == 15:
             if include_ascii:
-                out_fs.write(f" {ascii_string}")
+                out_fs.write(f" {ascii_string} ")
             ascii_string = ""
             out_fs.write("\n")
 
@@ -502,7 +502,7 @@ def hexdump(byte_list, offset_start=0, out_fs=sys.stdout, **kwargs) -> None:
                         out_fs.write("  ")
                 index += 1
             # print the ascii partial line
-            out_fs.write(f" {ascii_string}")
+            out_fs.write(f" {ascii_string} ")
             # print a single newline so that next print will be on new line
         out_fs.write("\n")
 
@@ -560,7 +560,8 @@ def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs) -> None:
     for i, byte in enumerate(buffer_fs.read()):
         if i % bytes_per_row == 0:
             if i != 0 and include_ascii:
-                out_fs.write(f" // {ascii_string}")
+                # An ending space is required because the '\' character will cause a line cont.
+                out_fs.write(f" // {ascii_string} ")
                 ascii_string = ""
             out_fs.write(f"{newline}{indent}")
 
@@ -589,7 +590,8 @@ def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs) -> None:
         out_fs.write(" " * potential_bytes * byte_length)
 
         # make up for the trailing ',' and print a comment
-        out_fs.write(f"   // {ascii_string}")
+        # An ending space is required because the '\' character will cause a line cont.
+        out_fs.write(f"   // {ascii_string} ")
 
     out_fs.write(f"{newline}}};")
     out_fs.write(f"{newline*2}{length_data_type} {length_variable_name} = sizeof {variable_name};{newline*2}")
