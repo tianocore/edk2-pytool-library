@@ -98,31 +98,52 @@ class ExportCTypeArrayTest(unittest.TestCase):
 
     def test_export_c_type_array_basic_usage(self):
         """Basic Usage Test"""
-        test = io.BytesIO(b"Hello UEFI!")
+        original_bytes = b"Hello UEFI!"
+        length = len(original_bytes)
+        test = io.BytesIO(original_bytes)
         output = io.StringIO()
 
         newline = '\n'
 
-        expected_output =  f"UINT8 TestVariable[] = {{{newline}"  # noqa
+        expected_output =  f"UINT8 TestVariable[{length}] = {{{newline}"  # noqa
         expected_output += f"    0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x55, 0x45, 0x46, 0x49, 0x21                                 // Hello UEFI! {newline}"  # noqa
         expected_output += f"}};{newline*2}"
-        expected_output += f"UINTN TestVariableLength = sizeof TestVariable;{newline*2}"
 
         utilities.export_c_type_array(test, "TestVariable", output)
 
         self.assertEqual(expected_output, output.getvalue())
 
-    def test_export_c_type_array_16_bytes(self):
-        """Basic 16 byte Test"""
-        test = io.BytesIO(b"0123456789abcdef")
+    def test_export_c_type_array_include_length_variable(self):
+        """Basic Usage Test"""
+        original_bytes = b"Hello UEFI!"
+        length = len(original_bytes)
+        test = io.BytesIO(original_bytes)
         output = io.StringIO()
 
         newline = '\n'
 
-        expected_output =  f"UINT8 TestVariable[] = {{{newline}"  # noqa
-        expected_output += f"    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66   // 0123456789abcdef {newline}"  # noqa
+        expected_output =  f"UINT8 TestVariable[{length}] = {{{newline}"  # noqa
+        expected_output += f"    0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x55, 0x45, 0x46, 0x49, 0x21                                 // Hello UEFI! {newline}"  # noqa
         expected_output += f"}};{newline*2}"
         expected_output += f"UINTN TestVariableLength = sizeof TestVariable;{newline*2}"
+
+        utilities.export_c_type_array(test, "TestVariable", output, length_variable_name="TestVariableLength")
+
+        self.assertEqual(expected_output, output.getvalue())
+
+    def test_export_c_type_array_16_bytes(self):
+        """Basic 16 byte Test"""
+
+        original_bytes = b"0123456789abcdef"
+        length = len(original_bytes)
+        test = io.BytesIO(original_bytes)
+        output = io.StringIO()
+
+        newline = '\n'
+
+        expected_output =  f"UINT8 TestVariable[{length}] = {{{newline}"  # noqa
+        expected_output += f"    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66   // 0123456789abcdef {newline}"  # noqa
+        expected_output += f"}};{newline*2}"
 
         utilities.export_c_type_array(test, "TestVariable", output)
 
@@ -130,16 +151,17 @@ class ExportCTypeArrayTest(unittest.TestCase):
 
     def test_export_c_type_array_32_bytes(self):
         """Basic 32 byte Test"""
-        test = io.BytesIO(b"0123456789abcdef0123456789abcdef")
+        original_bytes = b"0123456789abcdef0123456789abcdef"
+        length = len(original_bytes)
+        test = io.BytesIO(original_bytes)
         output = io.StringIO()
 
         newline = '\n'
 
-        expected_output =  f"UINT8 TestVariable[] = {{{newline}" # noqa
+        expected_output =  f"UINT8 TestVariable[{length}] = {{{newline}"  # noqa
         expected_output += f"    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,  // 0123456789abcdef {newline}"  # noqa
         expected_output += f"    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66   // 0123456789abcdef {newline}"  # noqa
         expected_output += f"}};{newline*2}"
-        expected_output += f"UINTN TestVariableLength = sizeof TestVariable;{newline*2}"
 
         utilities.export_c_type_array(test, "TestVariable", output)
 
@@ -147,17 +169,18 @@ class ExportCTypeArrayTest(unittest.TestCase):
 
     def test_export_c_type_array_33_bytes(self):
         """Basic 32 byte Test"""
-        test = io.BytesIO(b"0123456789abcdef0123456789abcdef0")
+        original_bytes = b"0123456789abcdef0123456789abcdef0"
+        length = len(original_bytes)
+        test = io.BytesIO(original_bytes)
         output = io.StringIO()
 
         newline = '\n'
 
-        expected_output =  f"UINT8 TestVariable[] = {{{newline}" # noqa
+        expected_output =  f"UINT8 TestVariable[{length}] = {{{newline}"  # noqa
         expected_output += f"    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,  // 0123456789abcdef {newline}"  # noqa
         expected_output += f"    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,  // 0123456789abcdef {newline}"  # noqa
         expected_output += f"    0x30                                                                                             // 0 {newline}"  # noqa
         expected_output += f"}};{newline*2}"
-        expected_output += f"UINTN TestVariableLength = sizeof TestVariable;{newline*2}"
 
         utilities.export_c_type_array(test, "TestVariable", output)
 
@@ -165,16 +188,17 @@ class ExportCTypeArrayTest(unittest.TestCase):
 
     def test_export_c_type_array_32_bytes_and_line_cont(self):
         """Basic line continuation Test"""
-        test = io.BytesIO(b"0123456789abcde\\0123456789abcde\\")
+        original_bytes = b"0123456789abcde\\0123456789abcde\\"
+        length = len(original_bytes)
+        test = io.BytesIO(original_bytes)
         output = io.StringIO()
 
         newline = '\n'
 
-        expected_output =  f"UINT8 TestVariable[] = {{{newline}" # noqa
+        expected_output =  f"UINT8 TestVariable[{length}] = {{{newline}"  # noqa
         expected_output += f"    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x5c,  // 0123456789abcde\\ {newline}"  # noqa
         expected_output += f"    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x5c   // 0123456789abcde\\ {newline}"  # noqa
         expected_output += f"}};{newline*2}"
-        expected_output += f"UINTN TestVariableLength = sizeof TestVariable;{newline*2}"
 
         utilities.export_c_type_array(test, "TestVariable", output)
 
