@@ -1,4 +1,3 @@
 [run]
-omit = 
-    # test files should all be named *_test.py
-    */*_test.py
+include = edk2toollib/*
+omit = edk2toollib/tests/*
