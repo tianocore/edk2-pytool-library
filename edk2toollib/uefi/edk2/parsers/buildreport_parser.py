@@ -28,7 +28,7 @@ class ModuleSummary(object):
         PackagePathList (list): list of package paths
         FvName (str): Name of Fv
     """
-    def __init__(self, content, ws, packagepatahlist):
+    def __init__(self, content, ws, packagepatahlist, pathconverter):
         """Inits an empty Module Summary Object."""
         self._RawContent = content
         self.Guid = ""
@@ -41,6 +41,7 @@ class ModuleSummary(object):
         self.WorkspacePath = ws
         self.PackagePathList = packagepatahlist
         self.FvName = None
+        self.pathConverter = pathconverter
 
     def Parse(self):
         """Parses the Module summary object."""
@@ -49,7 +50,6 @@ class ModuleSummary(object):
         inDepSection = False
         nextLineSection = False
         tokenspace = ""
-        pathConverter = pu.Edk2Path(self.WorkspacePath, self.PackagePathList)
 
         i = 0
         try:
@@ -105,7 +105,7 @@ class ModuleSummary(object):
                         lib_instance = templine.partition('{')[0].strip()
 
                         # Take absolute path and convert to EDK build path
-                        RelativePath = pathConverter.GetEdk2RelativePathFromAbsolutePath(lib_instance)
+                        RelativePath = self.pathConverter.GetEdk2RelativePathFromAbsolutePath(lib_instance)
                         if (RelativePath is not None):
                             self.Libraries[lib_class] = RelativePath
                         else:
@@ -278,7 +278,9 @@ class BuildReport(object):
         # parse it
         for r in self._Regions:
             if (r[0] == BuildReport.RegionTypes.MODULE):
-                mod = ModuleSummary(self._ReportContents[r[1]:r[2]], self.Workspace, self.PackagePathList)
+                mod = ModuleSummary(self._ReportContents[r[1]:r[2]],
+                                    self.Workspace, self.PackagePathList,
+                                    self.PathConverter)
                 mod.Parse()
                 self.Modules[mod.Guid] = mod
 
