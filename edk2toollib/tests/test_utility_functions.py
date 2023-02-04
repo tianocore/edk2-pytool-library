@@ -106,7 +106,7 @@ class HexdumpTest(unittest.TestCase):
         utilities.hexdump(test, out_fs=output)
 
         self.assertEqual(expected_output, output.getvalue())
-    
+
     def test_hexdump_basic_usage_offset_start(self):
         """Basic Usage Test"""
         test = b"Hello UEFI!"
