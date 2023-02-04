@@ -24,8 +24,10 @@ from collections import namedtuple
 from enum import Enum as StdEnum
 import locale
 
+from warnings import warn
 
-def Enum(*args): # noqa
+
+def Enum(*args):  # noqa
     items = []
     if len(args) == 1:
         item = args[0]
@@ -49,14 +51,15 @@ def Enum(*args): # noqa
 
 # https://stackoverflow.com/questions/2829329/catch-a-threads-exception-in-the-caller-thread-in-python
 # TODO make this a private class.
-class PropagatingThread(threading.Thread): # noqa
+class PropagatingThread(threading.Thread):  # noqa
     """Class to support running commands from the shell in a python environment.
 
     Don't use directly.
 
     PropagatingThread copied from sample here:
     """
-    def run(self): # noqa
+
+    def run(self):  # noqa
         self.exc = None
         try:
             if hasattr(self, '_Thread__target'):
@@ -67,7 +70,7 @@ class PropagatingThread(threading.Thread): # noqa
         except BaseException as e:
             self.exc = e
 
-    def join(self, timeout=None): # noqa
+    def join(self, timeout=None):  # noqa
         super(PropagatingThread, self).join()
         if self.exc:
             raise self.exc
@@ -76,7 +79,7 @@ class PropagatingThread(threading.Thread): # noqa
 
 # http://stackoverflow.com/questions/19423008/logged-subprocess-communicate
 # TODO make this a private function
-def reader(filepath, outstream, stream, logging_level=logging.INFO, encodingErrors='strict'): # noqa
+def reader(filepath, outstream, stream, logging_level=logging.INFO, encodingErrors='strict'):  # noqa
     """Helper functions for running commands from the shell in python environment.
 
     Don't use directly
@@ -339,54 +342,6 @@ def CatalogSignWithSignTool(SignToolPath, ToSignFilePath, PfxFilePath, PfxPass=N
     return ret
 
 
-def PrintByteList(ByteList, IncludeAscii=True, IncludeOffset=True, IncludeHexSep=True, OffsetStart=0):
-    """Print a byte list as hex and optionally output ascii as well as offset within the buffer."""
-    Ascii = ""
-    for index in range(len(ByteList)):
-        # Start of New Line
-        if (index % 16 == 0):
-            if (IncludeOffset):
-                print("0x%04X -" % (index + OffsetStart), end='')
-
-        # Midpoint of a Line
-        if (index % 16 == 8):
-            if (IncludeHexSep):
-                print(" -", end='')
-
-        # Print As Hex Byte
-        print(" 0x%02X" % ByteList[index], end='')
-
-        # Prepare to Print As Ascii
-        if (ByteList[index] < 0x20) or (ByteList[index] > 0x7E):
-            Ascii += "."
-        else:
-            Ascii += ("%c" % ByteList[index])
-
-        # End of Line
-        if (index % 16 == 15):
-            if (IncludeAscii):
-                print(" %s" % Ascii, end='')
-            Ascii = ""
-            print("")
-
-    # Done - Lets check if we have partial
-    if (index % 16 != 15):
-        # Lets print any partial line of ascii
-        if (IncludeAscii) and (Ascii != ""):
-            # Pad out to the correct spot
-
-            while (index % 16 != 15):
-                print("     ", end='')
-                if (index % 16 == 7):  # account for the - symbol in the hex dump
-                    if (IncludeOffset):
-                        print("  ", end='')
-                index += 1
-            # print the ascii partial line
-            print(" %s" % Ascii, end='')
-            # print a single newline so that next print will be on new line
-        print("")
-
-
 # Simplified Comparison Function borrowed from StackOverflow...
 # https://stackoverflow.com/questions/1714027/version-number-comparison
 # With Python 3.0 help from:
@@ -470,3 +425,180 @@ def RemoveTree(dir_path: str, ignore_errors: bool = False) -> None:
             break
     else:
         raise RuntimeError(f"Failed to remove {dir_path}")
+
+
+def PrintByteList(ByteList, IncludeAscii=True, IncludeOffset=True, IncludeHexSep=True, OffsetStart=0, **kwargs):
+    """Print a byte array as hex and optionally output ascii as well as offset within the buffer."""
+    out_fs = kwargs.get("out_fs", sys.stdout)
+    kwargs["include_ascii"] = IncludeAscii
+    kwargs["include_hex_sep"] = IncludeHexSep
+    kwargs["include_offset"] = IncludeOffset
+
+    warn(
+        "This function is being replaced by hexdump, if you rely on this behavior switch to hexdump",
+        DeprecationWarning
+    )
+    hexdump(ByteList, offset_start=OffsetStart, out_fs=out_fs, **kwargs)
+
+
+def hexdump(byte_list, offset_start=0, out_fs=sys.stdout, **kwargs) -> None:
+    """Print a byte array as hex and optionally output ascii as well as offset within the buffer.
+
+    Args:
+        byte_list (bytearray): byte array to print
+        offset_start (int): offset to print to the side of the hexdump
+        out_fs (io.BytesIO): output file stream to print to
+
+    Keyword Arguments:
+        include_ascii (bool): Option (Default: True) to include ascii
+        include_offset (bool): Option (Default: True) to include the offset
+        include_hex_sep (bool): Option (Default: True) to include the hex seperator
+
+    Returns:
+        None
+    """
+    include_ascii = kwargs.get('include_ascii', True)
+    include_offset = kwargs.get('include_offset', True)
+    include_hex_sep = kwargs.get('include_hex_sep', True)
+
+    ascii_string = ""
+    index = 0
+
+    for index, byte in enumerate(byte_list):
+        # Start of New Line
+        if index % 16 == 0 and include_offset:
+            out_fs.write(f"{(index + offset_start):#04x} -")
+
+        # Midpoint of a Line
+        if index % 16 == 8 and include_hex_sep:
+            out_fs.write(" -")
+
+        # Print As Hex Byte
+        out_fs.write(f" {byte:#04x}")
+
+        # Prepare to Print As Ascii
+        if byte < 0x20 or byte > 0x7E:
+            ascii_string += "."
+        else:
+            ascii_string += f"{chr(byte)}"
+
+        # End of Line
+        if index % 16 == 15:
+            if include_ascii:
+                out_fs.write(f" {ascii_string} ")
+            ascii_string = ""
+            out_fs.write("\n")
+
+    # Done - Lets check if we have partial
+    if index % 16 != 15:
+        # Lets print any partial line of ascii
+        if include_ascii and ascii_string != "":
+            # Pad out to the correct spot
+
+            while index % 16 != 15:
+                out_fs.write("     ")
+                if index % 16 == 7:  # account for the - symbol in the hex dump
+                    if include_offset:
+                        out_fs.write("  ")
+                index += 1
+            # print the ascii partial line
+            out_fs.write(f" {ascii_string} ")
+            # print a single newline so that next print will be on new line
+        out_fs.write("\n")
+
+
+def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs) -> None:
+    """Converts a given binary file to a UEFI typed C style array.
+
+    Args:
+        buffer_fs (io.BytesIO): buffer file stream to turn into a C style array
+        variable_name (str): variable name to use for the C style array
+        out_fs (io.StringIO): output filestream to write to
+
+    Keyword Arguments:
+        data_type (str): The datatype of the array (Default: UINT8)
+        length_data_type (str): The datatype of the length field (Default: UINTN)
+        is_array (bool): if true includes '[]' (Default: True)
+        bytes_per_row (int): number of bytes to include per row (Default: 16)
+        indent (str): the characters to use for indention (Default: '  ' (2 spaces))
+        length_variable_name (str): name to use for the length variable
+        include_ascii (bool): includes a ascii comment to side of hex
+        include_length (bool): includes length in the decleration of array
+            (ex. "UINT8 TestVariable[13] = {")
+    Return:
+         None
+
+    Raises:
+        ValueError: Binary file length was 0
+    """
+    data_type = kwargs.get("data_type", "UINT8")
+    length_data_type = kwargs.get("length_data_type", "UINTN")
+    bytes_per_row = kwargs.get("bytes_per_row", 16)
+    indent = kwargs.get("indent", "    ")
+    include_ascii = kwargs.get("include_ascii", True)
+    include_length = kwargs.get("include_length", True)
+    length_variable_name = kwargs.get("length_variable_name", None)
+
+    start = buffer_fs.tell()
+    buffer_fs.seek(0, 2)
+    end = buffer_fs.tell()
+    buffer_fs.seek(start)
+    length = end - start
+
+    # for some reason os.linesep causes twice the amount of desired newlines
+    newline = '\n'
+
+    if length == 0:
+        raise ValueError("Binary file length was 0")
+
+    length_value = ""
+    if include_length:
+        length_value = str(length)
+
+    out_fs.write(f"{data_type} {variable_name}[{length_value}] = {{")
+
+    ascii_string = ""
+    i = 0
+    byte = ''
+
+    for i, byte in enumerate(buffer_fs.read()):
+        if i % bytes_per_row == 0:
+            if i != 0 and include_ascii:
+                # An ending space is required because the '\' character will cause a line cont.
+                out_fs.write(f" // {ascii_string} ")
+                ascii_string = ""
+            out_fs.write(f"{newline}{indent}")
+
+        out_fs.write(f"{byte:#04x}")
+
+        if byte < 0x20 or byte > 0x7E:
+            ascii_string += "."
+        else:
+            ascii_string += f"{chr(byte)}"
+
+        if i != length - 1:
+            out_fs.write(", ")
+
+    # pad out the remaining space
+    if include_ascii:
+        # bytes_per_row - 1 because indexes at 0
+        # subtract the number of bytes we printed
+        # now we know how many bytes we could have printed
+        potential_bytes = (bytes_per_row - 1) - (i % bytes_per_row)
+
+        # pad out the number of bytes by our byte length
+        # use whatever was left over in byte
+        byte_length = len(f" {byte:#04x},")
+
+        # pad out the the line
+        out_fs.write(" " * potential_bytes * byte_length)
+
+        # make up for the trailing ',' and print a comment
+        # An ending space is required because the '\' character will cause a line cont.
+        out_fs.write(f"   // {ascii_string} ")
+
+    out_fs.write(f"{newline}}};{newline*2}")
+
+    if length_variable_name:
+        out_fs.write(
+            f"{length_data_type} {length_variable_name} = sizeof {variable_name};{newline*2}")
