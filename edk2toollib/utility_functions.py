@@ -100,6 +100,11 @@ def GetHostInfo():
     arch = None
     bit = None
 
+    # For backwards compatibility, platform.uname() returns Darwin for macs, which is the kernal rather then the OS.
+    # Due to this, we manually fix it.
+    if os == "Darwin":
+        os = "MacOs"
+
     if ("x86" in processor_info.lower()) or ("AMD" in processor_info.upper()) or ("INTEL" in processor_info.upper()):
         arch = "x86"
     elif ("ARM" in processor_info.upper()) or ("AARCH" in processor_info.upper()):
