@@ -21,32 +21,9 @@ import inspect
 import platform
 import importlib
 from collections import namedtuple
-from enum import Enum as StdEnum
 import locale
 
 from warnings import warn
-
-
-def Enum(*args):  # noqa
-    items = []
-    if len(args) == 1:
-        item = args[0]
-        if isinstance(item, list):
-            items = item
-        elif isinstance(item, tuple):
-            items = list(item)
-        else:
-            items.append(item)
-    else:
-        items = args
-    calling_frame = inspect.stack()[1]
-    calling_mod = inspect.getmodule(calling_frame[0])
-    calling_func = calling_frame.function
-    calling_line = calling_frame.lineno
-
-    enum_name = calling_func + ":" + str(calling_line)
-    logging.warning(f"Enum is deprecated! Please fix it in {calling_mod}:{calling_func}")
-    return StdEnum(enum_name, items, module=calling_mod)
 
 
 # https://stackoverflow.com/questions/2829329/catch-a-threads-exception-in-the-caller-thread-in-python
