@@ -62,7 +62,7 @@ class PathUtilitiesTest(unittest.TestCase):
     def setUp(self):
         ''' unittest fixture run before each test.
         Create a tmpdir and set the current working dir there'''
-        self.tmp = tempfile.mkdtemp()
+        self.tmp = str(Path(tempfile.mkdtemp()).resolve())  # MacOS uses a symlink for tempfile. Resolve the symlink
         self.precwd = os.getcwd()
         os.chdir(self.tmp)  # move to tempfile root
 

@@ -179,7 +179,7 @@ def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstre
     logging.log(logging_level, "------------------------------------------------")
     logging.log(logging_level, "--------------Cmd Output Starting---------------")
     logging.log(logging_level, "------------------------------------------------")
-    c = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    c = subprocess.Popen(cmd.split(" "), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                          cwd=workingdir, shell=True, env=environ, close_fds=close_fds)
     if (capture):
         thread = PropagatingThread(target=reader, args=(outfile, outstream, c.stdout, logging_level, encodingErrors))
@@ -228,7 +228,7 @@ def RunPythonScript(pythonfile, params, capture=True, workingdir=None, outfile=N
         pythonfile = '"' + pythonfile + '"'
     params.strip()
     logging.debug("RunPythonScript: {0} {1}".format(pythonfile, params))
-    if (os.path.isabs(pythonfile)):
+    if os.path.isabs(pythonfile) and os.path.isfile(pythonfile):
         logging.debug("Python Script was given as absolute path: %s" % pythonfile)
     elif (os.path.isfile(os.path.join(os.getcwd(), pythonfile))):
         pythonfile = os.path.join(os.getcwd(), pythonfile)
@@ -241,6 +241,13 @@ def RunPythonScript(pythonfile, params, capture=True, workingdir=None, outfile=N
                 pythonfile = os.path.join(a, pythonfile)
                 logging.debug("Python Script was found on the path: %s" % pythonfile)
                 break
+        else:
+            err_msg = f"{pythonfile} not found on path."
+            if raise_exception_on_nonzero:
+                raise Exception(err_msg)
+            else:
+                logging.debug(err_msg)
+                return -1
     params = pythonfile + " " + params
     return RunCmd(sys.executable, params, capture=capture, workingdir=workingdir, outfile=outfile,
                   outstream=outstream, environ=environ, logging_level=logging_level,
