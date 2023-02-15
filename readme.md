@@ -25,16 +25,16 @@ and that code coverage percentage does not lower.
 Supported Versions
 
 |  Host Type         |  Toolchain    |  Status
-|  :---------------  |  :----------  |  :--------------------  |
-|  [Windows-Latest]  |  Python 3.9   |  [![ci]][_ci]           |
-|  [Windows-Latest]  |  Python 3.10  |  [![ci]][_ci]           |
-|  [Windows-Latest]  |  Python 3.11  |  [![ci]][_ci]           |
-|  [Ubuntu-Latest]   |  Python 3.9   |  [![ci]][_ci]           |
-|  [Ubuntu-Latest]   |  Python 3.10  |  [![ci]][_ci]           |
-|  [Ubuntu-Latest]   |  Python 3.11  |  [![ci]][_ci]           |
-|  [MacOS-Latest]    |  Python 3.9   |  [![coming_soon]][_ci]  |
-|  [MacOS-Latest]    |  Python 3.10  |  [![coming_soon]][_ci]  |
-|  [MacOS-Latest]    |  Python 3.11  |  [![coming_soon]][_ci]  |
+|  :---------------  |  :----------  |  :----------- |
+|  [Windows-Latest]  |  Python 3.9   |  [![ci]][_ci] |
+|  [Windows-Latest]  |  Python 3.10  |  [![ci]][_ci] |
+|  [Windows-Latest]  |  Python 3.11  |  [![ci]][_ci] |
+|  [Ubuntu-Latest]   |  Python 3.9   |  [![ci]][_ci] |
+|  [Ubuntu-Latest]   |  Python 3.10  |  [![ci]][_ci] |
+|  [Ubuntu-Latest]   |  Python 3.11  |  [![ci]][_ci] |
+|  [MacOS-Latest]    |  Python 3.9   |  [![ci]][_ci] |
+|  [MacOS-Latest]    |  Python 3.10  |  [![ci]][_ci] |
+|  [MacOS-Latest]    |  Python 3.11  |  [![ci]][_ci] |
 
 ### Current Release
 
@@ -155,4 +155,3 @@ contributing to the edk2-pytool-extensions repository.
 [MacOS-Latest]: https://github.com/actions/runner-images
 [docs]: https://img.shields.io/website?label=docs&url=https%3A%2F%2Fwww.tianocore.org%2Fedk2-pytool-library%2F
 [_docs]: https://www.tianocore.org/edk2-pytool-library/
-[coming_soon]: https://img.shields.io/badge/CI-coming_soon-blue
