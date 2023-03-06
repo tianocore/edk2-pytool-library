@@ -1,6 +1,6 @@
 # Tianocore Edk2 PyTool Library (edk2toollib)
 
-[![pypi]][_pypi]]
+[![pypi]][_pypi]
 [![codecov]][_codecov]
 [![ci]][_ci]
 [![docs]][_docs]
