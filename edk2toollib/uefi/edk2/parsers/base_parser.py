@@ -9,6 +9,7 @@
 import os
 import logging
 from edk2toollib.uefi.edk2 import path_utilities
+from warnings import warn
 
 
 class BaseParser(object):
@@ -47,6 +48,44 @@ class BaseParser(object):
     # For include files set the base root path
     #
 
+    def SetEdk2Path(self, pathobj: path_utilities.Edk2Path):
+        """Sets the internal attribute Edk2PathUtil.
+
+        !!! note
+            This is a drop in replacement for SetBaseAbsPath and SetPackagePaths as it will asssign both RootPath
+            and PPs using the Edk2Path object attributes WorkspacePath and PackagePathList respectively.
+
+        SetBaseAbsPath/SetPackagePaths integration instructions:
+
+        ```python
+        # Previous Way
+        parser = BaseParser()
+        parser.SetBaseAbsPath(path)
+        parser.SetPackagePaths(pps)
+        ```
+
+        ```python
+        # Integration
+        parser = BaseParser()
+        parser.SetEdk2Path(Edk2Path(path, pps))
+        ```
+
+        ```python
+        # Integrate with no pps
+        parser = BaseParser()
+        parser.SetEdk2Path(Edk2Path(path, []))
+
+        Args:
+          pathobj (Edk2Path): Edk2Path object
+
+        Returns:
+            (BaseParser): self
+        """
+        self.RootPath = pathobj.WorkspacePath
+        self.PPs = pathobj.PackagePathList
+        self._Edk2PathUtil = pathobj
+        return self
+
     def SetBaseAbsPath(self, path):
         """Sets the attribute RootPath.
 
@@ -56,6 +95,7 @@ class BaseParser(object):
         Returns:
             (BaseParser): self
         """
+        warn("SetBaseAbsPath is deprecated.  Use SetEdk2Path instead", DeprecationWarning)
         self.RootPath = os.path.abspath(path)
         self._ConfigEdk2PathUtil()
         return self
@@ -75,6 +115,7 @@ class BaseParser(object):
         Returns:
             (BaseParser): self
         """
+        warn("SetPackagePaths is deprecated.  Use SetEdk2Path instead", DeprecationWarning)
         self.PPs = pps
         self._ConfigEdk2PathUtil()
         return self

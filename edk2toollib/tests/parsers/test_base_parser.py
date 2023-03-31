@@ -9,6 +9,7 @@
 
 import unittest
 from edk2toollib.uefi.edk2.parsers.base_parser import BaseParser
+from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 import tempfile
 import os
 
@@ -596,8 +597,8 @@ class TestBaseParserPathAndFile(unittest.TestCase):
             parser.WriteLinesToFile(os.path.join(pack_path, f"package_{index}.txt"))
             index += 1
         # setup the parser
-        parser.SetBaseAbsPath(root_path)
-        parser.SetPackagePaths(package_paths)
+        pathobj = Edk2Path(root_path, package_paths)
+        parser.SetEdk2Path(pathobj)
 
         # create the root and target files
         root_file = "root.txt"
