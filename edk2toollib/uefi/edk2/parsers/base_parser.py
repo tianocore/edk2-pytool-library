@@ -54,7 +54,7 @@ class BaseParser(object):
         !!! note
             This is a drop in replacement for SetBaseAbsPath and SetPackagePaths as it will asssign both RootPath
             and PPs using the Edk2Path object attributes WorkspacePath and PackagePathList respectively.
-        
+
         SetBaseAbsPath/SetPackagePaths integration instructions:
 
         ```python
