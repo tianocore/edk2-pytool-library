@@ -62,7 +62,7 @@ class TestDscParserIncludes(unittest.TestCase):
         file1_data = "!include BAD_FILE.dsc"
 
         TestDscParserIncludes.write_to_file(file1_path, file1_data)
-        
+
         pathobj = Edk2Path(workspace, [])
         parser = DscParser().SetEdk2Path(pathobj)
         with self.assertRaises(FileNotFoundError):
