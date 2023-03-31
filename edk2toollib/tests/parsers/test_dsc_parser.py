@@ -11,6 +11,7 @@ import unittest
 import tempfile
 import os
 from edk2toollib.uefi.edk2.parsers.dsc_parser import DscParser
+from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 
 class TestDscParserBasic(unittest.TestCase):
@@ -43,8 +44,7 @@ class TestDscParserIncludes(unittest.TestCase):
         TestDscParserIncludes.write_to_file(file1_path, file1_data)
         TestDscParserIncludes.write_to_file(file2_path, file2_data)
 
-        parser = DscParser()
-        parser.SetBaseAbsPath(workspace)
+        parser = DscParser().SetEdk2Path(Edk2Path(workspace, []))
         parser.ParseFile(file1_path)
 
         # test to make sure we did it right
@@ -62,9 +62,9 @@ class TestDscParserIncludes(unittest.TestCase):
         file1_data = "!include BAD_FILE.dsc"
 
         TestDscParserIncludes.write_to_file(file1_path, file1_data)
-
-        parser = DscParser()
-        parser.SetBaseAbsPath(workspace)
+        
+        pathobj = Edk2Path(workspace, [])
+        parser = DscParser().SetEdk2Path(pathobj)
         with self.assertRaises(FileNotFoundError):
             parser.ParseFile(file1_path)
 
@@ -81,7 +81,7 @@ class TestDscParserIncludes(unittest.TestCase):
 
         parser = DscParser()
         parser.SetNoFailMode()
-        parser.SetBaseAbsPath(workspace)
+        parser.SetEdk2Path(Edk2Path(workspace, []))
         parser.ParseFile(file1_path)
 
     def test_dsc_parse_file_on_package_path(self):
@@ -103,11 +103,11 @@ class TestDscParserIncludes(unittest.TestCase):
         TestDscParserIncludes.write_to_file(file1_path, file1_data)
         with self.assertRaises(FileNotFoundError):
             parser = DscParser()
-            parser.SetBaseAbsPath(workspace)
+            parser.SetEdk2Path(Edk2Path(workspace, []))
             parser.ParseFile(file1_short_path)
 
         parser = DscParser()
-        parser.SetBaseAbsPath(workspace)
+        parser.SetEdk2Path(Edk2Path(workspace, []))
         parser.SetPackagePaths([working_folder, ])
         parser.ParseFile(file1_short_path)
         self.assertEqual(parser.LocalVars["INCLUDED"], "TRUE")  # make sure we got the defines
@@ -148,7 +148,7 @@ class TestDscParserIncludes(unittest.TestCase):
             TestDscParserIncludes.write_to_file(file3_path, file3_data)
 
             parser = DscParser()
-            parser.SetBaseAbsPath(workspace)
+            parser.SetEdk2Path(Edk2Path(workspace, []))
             parser.ParseFile(file1_path)
 
             self.assertEqual(parser.LocalVars["INCLUDED"], "TRUE")  # make sure we got the defines
