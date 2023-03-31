@@ -49,7 +49,6 @@ class BaseParser(object):
     #
 
     def SetEdk2Path(self, pathobj: path_utilities.Edk2Path):
-<<<<<<< HEAD
         """Sets the internal attribute Edk2PathUtil.
 
         !!! note
@@ -76,12 +75,6 @@ class BaseParser(object):
         parser = BaseParser()
         parser.SetEdk2Path(Edk2Path(path, []))
 
-=======
-        """Sets the attribute RootPath.
-
-        !!! note
-            This is a drop in replacement for SetBaseAbsPath and SetPackagePaths
->>>>>>> a55fa49345e20e40c45cbe330b5d487fb90dd60c
         Args:
           pathobj (Edk2Path): Edk2Path object
 
