@@ -12,6 +12,7 @@ import os
 import textwrap
 import tempfile
 from edk2toollib.uefi.edk2.parsers.fdf_parser import FdfParser
+from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 TEST_PATH = os.path.realpath(os.path.dirname(__file__))
 
@@ -20,8 +21,7 @@ class TestBasicFdfParser(unittest.TestCase):
 
     def test_primary_defines(self):
         test_fdf = os.path.join(TEST_PATH, 'SimpleDefines.fdf')
-        print(test_fdf)
-        parser = FdfParser().SetBaseAbsPath(TEST_PATH)
+        parser = FdfParser().SetEdk2Path(Edk2Path(TEST_PATH, []))
         parser.ParseFile(test_fdf)
 
         # Make sure that we can read local variables out of the file.
@@ -31,8 +31,7 @@ class TestBasicFdfParser(unittest.TestCase):
 
     def test_primary_conditional_defines(self):
         test_fdf = os.path.join(TEST_PATH, 'SimpleDefines.fdf')
-        print(test_fdf)
-        parser = FdfParser().SetBaseAbsPath(TEST_PATH).SetInputVars({"TARGET": "TEST2"})
+        parser = FdfParser().SetEdk2Path(Edk2Path(TEST_PATH, [])).SetInputVars({"TARGET": "TEST2"})
         parser.ParseFile(test_fdf)
 
         # Make sure that we can read local variables out of the file.
@@ -42,7 +41,7 @@ class TestBasicFdfParser(unittest.TestCase):
 
     def test_included_defines(self):
         test_fdf = os.path.join(TEST_PATH, 'IncludedDefinesParent.fdf')
-        parser = FdfParser().SetBaseAbsPath(TEST_PATH)
+        parser = FdfParser().SetEdk2Path(Edk2Path(TEST_PATH, []))
         parser.ParseFile(test_fdf)
 
         # Make sure that we can read local variables out of the file.
@@ -52,8 +51,9 @@ class TestBasicFdfParser(unittest.TestCase):
 
     def test_included_conditional_defines(self):
         test_fdf = os.path.join(TEST_PATH, 'IncludedDefinesParent.fdf')
-        parser = FdfParser().SetBaseAbsPath(TEST_PATH)
-        parser = FdfParser().SetBaseAbsPath(TEST_PATH).SetInputVars({"TARGET": "TEST4"})
+        pathobj = Edk2Path(TEST_PATH, [])
+        parser = FdfParser().SetEdk2Path(pathobj)
+        parser = FdfParser().SetEdk2Path(pathobj).SetInputVars({"TARGET": "TEST4"})
         parser.ParseFile(test_fdf)
 
         # Make sure that we can read local variables out of the file.
@@ -65,8 +65,9 @@ class TestBasicFdfParser(unittest.TestCase):
 
     def test_conditionally_included_defines(self):
         test_fdf = os.path.join(TEST_PATH, 'IncludedDefinesParent.fdf')
-        parser = FdfParser().SetBaseAbsPath(TEST_PATH)
-        parser = FdfParser().SetBaseAbsPath(TEST_PATH).SetInputVars({"TARGET": "TEST5"})
+        pathobj = Edk2Path(TEST_PATH, [])
+        parser = FdfParser().SetEdk2Path(pathobj)
+        parser = FdfParser().SetEdk2Path(pathobj).SetInputVars({"TARGET": "TEST5"})
         parser.ParseFile(test_fdf)
 
         # Make sure that we can read local variables out of the file.
