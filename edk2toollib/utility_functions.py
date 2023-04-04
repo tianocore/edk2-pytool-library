@@ -71,7 +71,7 @@ def reader(filepath, outstream, stream, logging_level=logging.INFO, encodingErro
 
     (_, encoding) = locale.getdefaultlocale()
     while True:
-        s = stream.readline().decode(encoding, errors=encodingErrors)
+        s = stream.readline().decode(encoding or 'utf-8', errors=encodingErrors)
         if not s:
             break
         if (f is not None):
