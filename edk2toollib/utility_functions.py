@@ -411,7 +411,7 @@ def RemoveTree(dir_path: str, ignore_errors: bool = False) -> None:
 
 def PrintByteList(ByteList, IncludeAscii=True, IncludeOffset=True, IncludeHexSep=True, OffsetStart=0, **kwargs):
     """Print a byte array as hex and optionally output ascii as well as offset within the buffer."""
-    out_fs = kwargs.get("out_fs", sys.stdout)
+    outfs = kwargs.get("outfs", sys.stdout)
     kwargs["include_ascii"] = IncludeAscii
     kwargs["include_hex_sep"] = IncludeHexSep
     kwargs["include_offset"] = IncludeOffset
@@ -420,10 +420,10 @@ def PrintByteList(ByteList, IncludeAscii=True, IncludeOffset=True, IncludeHexSep
         "This function is being replaced by hexdump, if you rely on this behavior switch to hexdump",
         DeprecationWarning
     )
-    hexdump(ByteList, offset_start=OffsetStart, out_fs=out_fs, **kwargs)
+    hexdump(ByteList, offset_start=OffsetStart, outfs=outfs, **kwargs)
 
 
-def hexdump(byte_list, offset_start=0, out_fs=sys.stdout, **kwargs) -> None:
+def hexdump(byte_list, offset_start=0, outfs=sys.stdout, **kwargs) -> None:
     """Print a byte array as hex and optionally output ascii as well as offset within the buffer.
 
     Args:
@@ -450,14 +450,14 @@ def hexdump(byte_list, offset_start=0, out_fs=sys.stdout, **kwargs) -> None:
     for index, byte in enumerate(byte_list):
         # Start of New Line
         if index % 16 == 0 and include_offset:
-            out_fs.write(f"{(index + offset_start):#04x} -")
+            outfs.write(f"{(index + offset_start):#04x} -")
 
         # Midpoint of a Line
         if index % 16 == 8 and include_hex_sep:
-            out_fs.write(" -")
+            outfs.write(" -")
 
         # Print As Hex Byte
-        out_fs.write(f" {byte:#04x}")
+        outfs.write(f" {byte:#04x}")
 
         # Prepare to Print As Ascii
         if byte < 0x20 or byte > 0x7E:
@@ -468,9 +468,9 @@ def hexdump(byte_list, offset_start=0, out_fs=sys.stdout, **kwargs) -> None:
         # End of Line
         if index % 16 == 15:
             if include_ascii:
-                out_fs.write(f" {ascii_string} ")
+                outfs.write(f" {ascii_string} ")
             ascii_string = ""
-            out_fs.write("\n")
+            outfs.write("\n")
 
     # Done - Lets check if we have partial
     if index % 16 != 15:
@@ -479,15 +479,15 @@ def hexdump(byte_list, offset_start=0, out_fs=sys.stdout, **kwargs) -> None:
             # Pad out to the correct spot
 
             while index % 16 != 15:
-                out_fs.write("     ")
+                outfs.write("     ")
                 if index % 16 == 7:  # account for the - symbol in the hex dump
                     if include_offset:
-                        out_fs.write("  ")
+                        outfs.write("  ")
                 index += 1
             # print the ascii partial line
-            out_fs.write(f" {ascii_string} ")
+            outfs.write(f" {ascii_string} ")
             # print a single newline so that next print will be on new line
-        out_fs.write("\n")
+        outfs.write("\n")
 
 
 def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs) -> None:

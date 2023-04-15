@@ -13,6 +13,9 @@ import io
 import struct
 import uuid
 import sys
+
+from warnings import warn
+
 from edk2toollib.utility_functions import hexdump
 
 from pyasn1.codec.der.decoder import decode as der_decode
@@ -30,8 +33,8 @@ class WinCertPkcs1(object):
                                     specification reserves the range of certificate type values from 0x0EF0 to 0x0EFF.
         Hdr_wCertificateType (int): The following is the actual certificate. The format of the certificate depends on
                                     wCertificateType.
-        HashAlgorithm (uuid.UUID):  The Guid representing the hash algorithm for the Cert.
-        CertData (memoryview):      The actual Cert.
+        hash_algorithm (uuid.UUID):  The Guid representing the hash algorithm for the Cert.
+        cert_data (memoryview):      The actual Cert.
 
     The WIN_CERTIFICATE_UEFI_PKCS1_15 structure is derived from
     WIN_CERTIFICATE and encapsulate the information needed to
@@ -56,41 +59,64 @@ class WinCertPkcs1(object):
 
     def __init__(self, filestream=None):
         """Inits the object."""
-        if (filestream is None):
+        if filestream is None:
             self.Hdr_dwLength = WinCertPkcs1.STATIC_STRUCT_SIZE
             self.Hdr_wRevision = WinCert.REVISION
             self.Hdr_wCertificateType = WinCert.WIN_CERT_TYPE_EFI_PKCS115
-            self.HashAlgorithm = None
-            self.CertData = None
+            self.hash_algorithm = None
+            self.cert_data = None
         else:
-            self.PopulateFromFileStream(filestream)
+            self.decode(filestream)
+
+    def add_cert_data(self, fs):
+        """Adds the Cert Data to the struct.
+
+        Args:
+            fs (io.BytesIO): filestream representing bytes
+
+        Raises:
+            (ValueError): Invalid Cert Data
+            (ValueError): Missing Hash Algorithm
+        """
+        if self.cert_data is not None:
+            raise ValueError("Certificate data already set")
+
+        if self.hash_algorithm is None:
+            raise ValueError("You must set the Hash Algorithm first")
+
+        self.cert_data = memoryview(fs.read())
+        self.Hdr_dwLength = self.Hdr_dwLength + len(self.cert_data)
 
     def AddCertData(self, fs):
         """Adds the Cert Data to the struct.
 
         Raises:
-            (Exception): Invalid Cert Data
-            (Exception): Missing Hash Algorithm
+            (ValueError): Invalid Cert Data
+            (ValueError): Missing Hash Algorithm
         """
-        if (self.CertData is not None):
-            raise Exception("Cert Data not 0")
-        if (self.HashAlgorithm is None):
-            raise Exception("You must set the Hash Algorithm first")
-        self.CertData = fs.read()
-        self.Hdr_dwLength = self.Hdr_dwLength + len(self.CertData)
+        warn("AddCertData is deprecated, use add_cert_data instead", DeprecationWarning, 2)
+        self.add_cert_data(fs)
 
-    def PopulateFromFileStream(self, fs):
+    def set_hash_algorithm(self, hash_algorithm: uuid.UUID):
+        """Sets the hash algoritm for the wincert
+        
+        Args:
+            hash_algorithm (uuid.UUID): The Guid representing the hash algorithm for the Cert.
+        """
+        self.hash_algorithm = hash_algorithm
+
+    def decode(self, fs):
         """Populates the struct from a filestream.
 
         Args:
             fs (obj): An open file
 
         Raises:
-            (Exception): Invalid stream
-            (Exception): Invalid stream size
+            (ValueError): Invalid stream
+            (ValueError): Invalid stream size
         """
         if (fs is None):
-            raise Exception("Invalid File stream")
+            raise ValueError("Invalid File stream")
 
         # only populate from file stream those parts that are complete in the file stream
         offset = fs.tell()
@@ -99,44 +125,83 @@ class WinCertPkcs1(object):
         fs.seek(offset)
 
         if ((end - offset) < WinCertPkcs1.STATIC_STRUCT_SIZE):  # size of the static header data
-            raise Exception("Invalid file stream size")
+            raise ValueError("Invalid file stream size")
 
         self.Hdr_dwLength = struct.unpack("=I", fs.read(4))[0]
         self.Hdr_wRevision = struct.unpack("=H", fs.read(2))[0]
         self.Hdr_wCertificateType = struct.unpack("=H", fs.read(2))[0]
-        self.HashAlgorithm = uuid.UUID(bytes_le=fs.read(16))
-        self.CertData = None
+        self.hash_algorithm = uuid.UUID(bytes_le=fs.read(16))
+        self.cert_data = None
 
         if ((end - fs.tell()) < 1):
-            raise Exception("Invalid File stream. No data for signature cert data")
+            raise ValueError("Invalid File stream. No data for signature cert data")
 
         if ((end - fs.tell()) < (self.Hdr_dwLength - WinCertPkcs1.STATIC_STRUCT_SIZE)):
-            raise Exception("Invalid file stream size")
+            raise ValueError("Invalid file stream size")
 
-        self.CertData = memoryview(fs.read(self.Hdr_dwLength - WinCertPkcs1.STATIC_STRUCT_SIZE))
+        self.cert_data = memoryview(fs.read(self.Hdr_dwLength - WinCertPkcs1.STATIC_STRUCT_SIZE))
 
-    def Print(self, out_fs=sys.stdout):
+    def PopulateFromFileStream(self, fs):
+        """Populates the struct from a filestream.
+
+        Args:
+            fs (obj): an open file
+
+        Raises:
+            (ValueError): Invalid stream
+            (ValueError): Invalid stream size
+        """
+        warn("PopulateFromFileStream is deprecated, use decode instead", DeprecationWarning, 2)
+        return self.decode(fs)
+
+    def print(self, out_fs=sys.stdout):
         """Prints the struct to the console."""
         out_fs.write("\n-------------------- WinCertPKCS115 ---------------------\n")
         out_fs.write(f"  Hdr_dwLength:         0x{self.Hdr_dwLength:0X}\n")
         out_fs.write(f"  Hdr_wRevision:        0x{self.Hdr_wRevision:0X}\n")
         out_fs.write(f"  Hdr_wCertificateType: 0x{self.Hdr_wCertificateType:0X}\n")
-        out_fs.write(f"  Hash Guid:            {str(self.HashAlgorithm)}\n")
-        out_fs.write("  CertData:             \n")
-        cdl = self.CertData.tolist()
+        out_fs.write(f"  Hash Guid:            {str(self.hash_algorithm)}\n")
+        out_fs.write("  cert_data:             \n")
+        cdl = self.cert_data.tolist()
         hexdump(cdl, out_fs=out_fs)
+
+    def Print(self, out_fs=sys.stdout):
+        """Prints the struct to the console."""
+        warn("Print is deprecated, use print instead", DeprecationWarning, 2)
+        self.print(out_fs)
+
+    def encode(self):
+        r"""Serializes the object.
+
+        Returns:
+            (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
+        """
+        output = b""
+        
+        output += struct.pack("=I", self.Hdr_dwLength)
+        output += struct.pack("=H", self.Hdr_wRevision)
+        output += struct.pack("=H", self.Hdr_wCertificateType)
+        output += self.hash_algorithm.bytes_le
+        output += self.cert_data
+
+        return output
+    
+    def write(self, fs):
+        """Writes an serialized object to a filestream
+
+            (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
+
+        """
+        fs.write(self.encode())
 
     def Write(self, fs):
         r"""Serializes the object.
 
         Returns:
             (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
-        """
-        fs.write(struct.pack("=I", self.Hdr_dwLength))
-        fs.write(struct.pack("=H", self.Hdr_wRevision))
-        fs.write(struct.pack("=H", self.Hdr_wCertificateType))
-        fs.write(self.HashAlgorithm.bytes_le)
-        fs.write(self.CertData)
+        """    
+        warn("Write is deprecated, use encode instead", DeprecationWarning, 2)
+        self.write(fs)
 
 
 class WinCertUefiGuid(object):
@@ -148,12 +213,12 @@ class WinCertUefiGuid(object):
                                     specification reserves the range of certificate type values from 0x0EF0 to 0x0EFF.
         Hdr_wCertificateType (int): The following is the actual certificate. The format of the certificate depends on
                                     wCertificateType.
-        CertData (memoryview):      The actual Cert.
+        cert_data (memoryview):      The actual Cert.
 
     typedef struct {
         WIN_CERTIFICATE   Hdr;
-        EFI_GUID          CertType;
-        UINT8            CertData[1];
+        EFI_GUID          cert_type;
+        UINT8            cert_data[1];
     } WIN_CERTIFICATE_UEFI_GUID;
 
     The WIN_CERTIFICATE structure is part of the PE/COFF specification.
@@ -165,7 +230,7 @@ class WinCertUefiGuid(object):
     } WIN_CERTIFICATE;
     """
 
-    _StructFormat = '<IHH16s'
+    _StructFormat = '<L2H16s'
     _StructSize = struct.calcsize(_StructFormat)
 
     _EFI_CERT_TYPE_PKCS7_GUID = uuid.UUID('4aafd29d-68df-49ee-8aa9-347d375665a7')
@@ -179,15 +244,15 @@ class WinCertUefiGuid(object):
         self.Hdr_dwLength = self._StructSize
         self.Hdr_wRevision = WinCert.REVISION
         self.Hdr_wCertificateType = WinCert.WIN_CERT_TYPE_EFI_GUID
-        self.CertType = self._EFI_CERT_TYPE_PKCS7_GUID
-        self.CertData = b''
+        self.cert_type = self._EFI_CERT_TYPE_PKCS7_GUID
+        self.cert_data = b''
 
         if in_data is not None:
-            # Account for back compat. Behave differently for file streams.
-            if hasattr(in_data, 'seek'):
-                self.PopulateFromFileStream(in_data)
-            else:
-                self.Decode(in_data)
+            self.decode(in_data)
+
+    def get_length(self):
+        """returns the length of the WinCertUefiGuid and it's data"""
+        return self.Hdr_dwLength
 
     def Encode(self):
         r"""Serializes the object.
@@ -199,25 +264,80 @@ class WinCertUefiGuid(object):
             (ValueError): Invalid Revision
             (ValueError): Invalid Cert Type
         """
-        if self.Hdr_wRevision != WinCert.REVISION:
-            raise ValueError
-        if self.Hdr_wCertificateType != WinCert.WIN_CERT_TYPE_EFI_GUID:
-            raise ValueError
-        if self.CertType != self._EFI_CERT_TYPE_PKCS7_GUID:
-            raise ValueError
-        self.Hdr_dwLength = self._StructSize + len(self.CertData)
+        warn("Encode is deprecated, use encode instead", DeprecationWarning, 2)
+        return self.encode()
+   
+    def encode(self):
+        r"""Serializes the object.
 
-        WinCertHeader = struct.pack(
+        Returns:
+            (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
+
+        Raises:
+            (ValueError): Invalid Revision
+            (ValueError): Invalid Cert Type
+        """
+        if self.Hdr_wRevision != WinCert.REVISION:
+            raise ValueError("Invalid revision")
+        if self.Hdr_wCertificateType != WinCert.WIN_CERT_TYPE_EFI_GUID:
+            raise ValueError("Invalid win_certificate type (WIN_CERT_TYPE_EFI_GUID)")
+        if self.cert_type != self._EFI_CERT_TYPE_PKCS7_GUID:
+            raise ValueError("Invalid certificate type (EFI_CERT_TYPE_PKCS7_GUID)")
+        self.Hdr_dwLength = self._StructSize + len(self.cert_data)
+
+        win_cert_header = struct.pack(
             self._StructFormat,
             self.Hdr_dwLength,
             self.Hdr_wRevision,
             self.Hdr_wCertificateType,
-            self.CertType.bytes_le
+            self.cert_type.bytes_le
         )
 
-        return WinCertHeader + self.CertData
+        return win_cert_header + self.cert_data
 
     def Decode(self, Buffer):
+        """Loads the struct with values from a buffer.
+
+        Args:
+            Buffer (filestream | bytes): Buffer containing serialized data
+
+        Returns:
+            (obj): Any remaining buffer
+
+        Raises:
+            (ValueError): Invalid Buffer
+            (ValueError): Invalid dwlength
+            (ValueError): Invalid Revision
+            (ValueError): Invalid Cert Type
+        """
+        warn("Decode is deprecated, use decode instead", DeprecationWarning, 2)
+        return self.decode(Buffer)
+    
+    def decode(self, in_data):
+        """Loads the struct with values from a buffer.
+
+        Args:
+            Buffer (filestream | bytes): Buffer containing serialized data
+
+        Returns:
+            (obj): Any remaining buffer
+
+        Raises:
+            (ValueError): Invalid buffer
+            (ValueError): Invalid dwLength
+            (ValueError): Invalid Revision
+            (ValueError): Invalid Cert Type
+            (ValueError): Invalid datatype provided
+
+        """
+        if hasattr(in_data, 'seek'):  # Filestream like object
+            return self._from_filestream(in_data)
+        elif hasattr(in_data, 'decode'):  # Bytes like object
+            return self._from_buffer(in_data)
+        else:
+            raise ValueError(f"Invalid datatype provided: {type(in_data)}, data may only be of type filestream or bytes")
+
+    def _from_buffer(self, buffer):
         """Loads the struct with values from a buffer.
 
         Args:
@@ -227,16 +347,16 @@ class WinCertUefiGuid(object):
             (obj): Any remaining buffer
 
         Raises:
-            (ValueError): Invalid Buffer
-            (ValueError): Invalid dw length
+            (ValueError): Invalid buffer
+            (ValueError): Invalid dwLength
             (ValueError): Invalid Revision
             (ValueError): Invalid Cert Type
         """
-        if len(Buffer) < self._StructSize:
+        if len(buffer) < self._StructSize:
             raise ValueError
-        (dwLength, wRevision, wCertificateType, CertType) = struct.unpack(
+        (dwLength, wRevision, wCertificateType, cert_type) = struct.unpack(
             self._StructFormat,
-            Buffer[0:self._StructSize]
+            buffer[0:self._StructSize]
         )
         if dwLength < self._StructSize:
             raise ValueError
@@ -244,32 +364,18 @@ class WinCertUefiGuid(object):
             raise ValueError
         if wCertificateType != WinCert.WIN_CERT_TYPE_EFI_GUID:
             raise ValueError
-        if CertType != self._EFI_CERT_TYPE_PKCS7_GUID.bytes_le:
+        if cert_type != self._EFI_CERT_TYPE_PKCS7_GUID.bytes_le:
             raise ValueError
         self.Hdr_dwLength = dwLength
         self.Hdr_wRevision = wRevision
         self.Hdr_wCertificateType = wCertificateType
-        self.CertType = uuid.UUID(bytes_le=CertType)
-        self.CertData = Buffer[self._StructSize:self.Hdr_dwLength]
+        self.cert_type = uuid.UUID(bytes_le=cert_type)
+        self.cert_data = buffer[self._StructSize:self.Hdr_dwLength]
 
         # Return the remaining buffer, if any exists.
-        return Buffer[self.Hdr_dwLength:]
+        return buffer[self.Hdr_dwLength:]
 
-    def AddCertData(self, in_data):
-        """Adds the Cert Data to the struct.
-
-        Args:
-            in_data (obj): Data to read.
-        """
-        # Account for back compat. Behave differently for file streams.
-        if hasattr(in_data, 'seek'):
-            self.CertData = in_data.read()
-        else:
-            self.CertData = in_data
-
-        self.Hdr_dwLength = self.Hdr_dwLength + len(self.CertData)
-
-    def PopulateFromFileStream(self, fs):
+    def _from_filestream(self, fs):
         """Un-serialized from a filestream.
 
         Args:
@@ -302,43 +408,119 @@ class WinCertUefiGuid(object):
         fs.seek(current)
         object_buffer = fs.read(buffer_size)
 
-        return self.Decode(object_buffer)
+        return self._from_buffer(object_buffer)
+    
+    def AddCertData(self, in_data):
+        """Adds the Cert Data to the struct.
+
+        Args:
+            in_data (obj): Data to read.
+        """
+        warn("AddCertData is deprecated, use add_cert_data instead", DeprecationWarning, 2)
+        return self.add_cert_data(in_data)
+
+    def add_cert_data(self, in_data):
+        """Adds the Cert Data to the struct.
+
+        Args:
+            in_data (obj): Data to read.
+        """
+
+        # if the data is already set, let's subtract it from the length before adding the new data
+        if self.cert_data is not None:
+            self.Hdr_dwLength -= len(self.cert_data)
+
+        # Account for back compat. Behave differently for file streams.
+        if hasattr(in_data, 'seek'):
+            self.cert_data = in_data.read()
+        elif hasattr(in_data, 'decode'):
+            self.cert_data = in_data
+        else:
+            raise ValueError(f"Invalid datatype provided: {type(in_data)}, data may only be of type filestream or bytes")
+
+        self.Hdr_dwLength = self.Hdr_dwLength + len(self.cert_data)
+
+    def PopulateFromFileStream(self, fs):
+        """Un-serialized from a filestream.
+
+        Args:
+            fs (obj): Already opened file
+
+        Raises:
+            (ValueError): Invalid fs
+            (ValueError): Invalid size
+        """
+        warn("PopulateFromFileStream is deprecated, use decode instead", DeprecationWarning, 2)
+        return self.decode(fs)
+
+    def get_certificate(self):
+        """Returns certificate data, if certificate data exists."""
+        return self.cert_data
 
     def GetCertificate(self):
         """Returns certificate data, if certificate data exists."""
-        return self.CertData
+        warn("GetCertificate is deprecated, use get_certificate instead", DeprecationWarning, 2)
+        return self.get_certificate()
+
+    def print(self, outfs=sys.stdout):
+        """Prints struct to console."""
+        self.dump_info(outfs)
 
     def Print(self, outfs=sys.stdout):
         """Prints struct to console."""
-        self.DumpInfo(outfs)
+        warn("Print is deprecated, use print instead.", DeprecationWarning, 2)
+        self.dump_info(outfs)
 
-    def DumpInfo(self, outfs=sys.stdout):
+    def dump_info(self, outfs=sys.stdout):
         """Prints struct to a file stream."""
         outfs.write("\n-------------------- WIN_CERTIFICATE ---------------------\n")
         outfs.write(f"WIN_CERTIFICATE.dwLength         = {self.Hdr_dwLength:08X}\n")
         outfs.write(f"WIN_CERTIFICATE.wRevision        = {self.Hdr_wRevision:04X}\n")
         outfs.write(f"WIN_CERTIFICATE.wCertificateType = {self.Hdr_wCertificateType:04X}\n")
-        outfs.write(f"WIN_CERTIFICATE_UEFI_GUID.CertType             = {str(self.CertType).upper()}\n")
-        outfs.write(f"sizeof (WIN_CERTIFICATE_UEFI_GUID.CertData)    = {len(self.CertData):08X}\n")
+        outfs.write(f"WIN_CERTIFICATE_UEFI_GUID.cert_type             = {str(self.cert_type).upper()}\n")
+        outfs.write(f"sizeof (WIN_CERTIFICATE_UEFI_GUID.cert_data)    = {len(self.cert_data):08X}\n")
 
         outfs.write("\n------------------- CERTIFICATE DATA ---------------------\n")
+        
         # Technically the signature could be wrapped in a ContentInfo
+        
         try:
-            content_info, _ = der_decode(self.CertData, asn1Spec=rfc2315.ContentInfo())
+            content_info, _ = der_decode(self.cert_data, asn1Spec=rfc2315.ContentInfo())
 
             outfs.write(str(content_info))
         except Exception:
             # But usually its not
             try:
-                signed_data, _ = der_decode(self.CertData, asn1Spec=rfc2315.SignedData())
+                signed_data, _ = der_decode(self.cert_data, asn1Spec=rfc2315.SignedData())
 
                 outfs.write(str(signed_data))
             except Exception as exc:
-                raise ValueError("Unable to decode CertData") from exc
+                raise ValueError("Unable to decode cert_data") from exc
+
+    def DumpInfo(self, outfs=sys.stdout):
+        """Prints struct to a file stream."""
+        warn("DumpInfo is deprecated, use dump_info instead", DeprecationWarning, 2)
+        self.dump_info(outfs)
+
+    def write(self, fs):
+        """Writes the struct to a filestream."""
+        fs.write(self.encode())
 
     def Write(self, fs):
         """Writes the struct to a filestream."""
-        fs.write(self.Encode())
+        warn("Write is deprecated, use write instead", DeprecationWarning, 2)
+        fs.write(self.encode())
+
+    def __str__(self):
+        """Returns the object as a string"""
+        string_repr = ""
+        with io.StringIO() as f:
+            self.print(f)
+            f.seek(0)
+            string_repr = f.read()
+
+        return string_repr
+
 
 
 class WinCert(object):
@@ -352,11 +534,8 @@ class WinCert(object):
     # Revision
     REVISION = 0x200
 
-    #
-    # this method is a factory
-    #
     @staticmethod
-    def Factory(fs):
+    def factory(fs):
         """Generates a specific Cert Type depending on parsed Hdr_wCertificationType from the fs.
 
         Args:
@@ -395,3 +574,22 @@ class WinCert(object):
             return WinCertPkcs1(fs)
         else:
             return None
+    #
+    # this method is a factory
+    #
+    @staticmethod
+    def Factory(fs):
+        """Generates a specific Cert Type depending on parsed Hdr_wCertificationType from the fs.
+
+        Args:
+            fs (obj): filestream
+
+        Returns:
+            (WinCertUefiGuid): if Hdr_wCertificationType == WIN_CERT_TYPE_EFI_GUID
+            (WinCertPkcs1): if Hdr_wCertificationType == WIN_CERT_TYPE_EFI_PKCS115
+        Raises:
+            (Exception): Invalid fs
+            (Exception): Invalid fs size
+        """
+        warn("Factory is deprecated, use factory instead", DeprecationWarning, 2)
+        return WinCert.factory(fs)
