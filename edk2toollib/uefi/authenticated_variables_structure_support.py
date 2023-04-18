@@ -455,6 +455,18 @@ class EfiSignatureDataFactory(object):
             ContentFileStream (BinaryIO): filestream to read
             sigowner (uuid.UUID): the uuid object of the signature owner guid
         """
+        warn("Create() is deprecated, use create() instead", DeprecationWarning, 2)
+        return EfiSignatureDataFactory.create(type, ContentFileStream, sigowner)
+
+    @staticmethod
+    def create(type, ContentFileStream, sigowner):
+        """Create a new EFI Sginature Data Object.
+
+        Args:
+            type (uuid.UUID): Guid of the type
+            ContentFileStream (BinaryIO): filestream to read
+            sigowner (uuid.UUID): the uuid object of the signature owner guid
+        """
         if (ContentFileStream is None):
             raise Exception("Invalid Content File Stream")
 
@@ -861,7 +873,7 @@ class EfiSignatureDatabase(object):
             self.write(fs)
             return fs.getvalue()
 
-    def GetCanonicalAndDupes(self):
+    def get_canonical_and_dupes(self):
         """Compute and return a tuple containing both a canonicalized database & a database of duplicates.
 
         Returns:
@@ -921,15 +933,41 @@ class EfiSignatureDatabase(object):
 
         return (canonicalDb, duplicatesDb)
 
+    def GetCanonicalAndDupes(self):
+        """Compute and return a tuple containing both a canonicalized database & a database of duplicates.
+
+        Returns:
+            (Tuple[EfiSignatureDatabase, EfiSignatureDatabase]): (canonical, duplicates)
+
+        NOTE:
+        canonical is an EfiSignatureDatabase where EfiSignatureLists are merged (where possible),
+            deduplicated, & sorted, and the EfiSignatureData elements are also deduplicated & sorted
+        duplicates is an EfiSignatureDatabase with EfiSignatureLists containing any duplicated
+            EfiSignatureData entries (only the data contents are checked for effective equality,
+            signature owner is ignored)
+        """
+        warn("GetCanonicalAndDupes() is deprecated. Use get_canonical_and_dupes() instead.", DeprecationWarning, 2)
+        return self.get_canonical_and_dupes()
+
+    def get_canonical(self):
+        """Return a canonicalized EfiSignatureDatabase, see GetCanonicalAndDupes() for more details."""
+        canonical, _ = self.get_canonical_and_dupes()
+        return canonical
+    
     def GetCanonical(self):
         """Return a canonicalized EfiSignatureDatabase, see GetCanonicalAndDupes() for more details."""
-        (canonical, dupes) = self.GetCanonicalAndDupes()
-        return canonical
+        warn("GetCanonical() is deprecated. Use get_canonical() instead.", DeprecationWarning, 2)
+        return self.get_canonical()
+
+    def get_duplicates(self):
+        """Return an EfiSignatureDatabase of duplicates, see GetCanonicalAndDupes() for more details."""
+        _, dupes = self.get_canonical_and_dupes()
+        return dupes
 
     def GetDuplicates(self):
         """Return an EfiSignatureDatabase of duplicates, see GetCanonicalAndDupes() for more details."""
-        (canonical, dupes) = self.GetCanonicalAndDupes()
-        return dupes
+        warn("GetDuplicates() is deprecated. Use get_duplicates() instead.", DeprecationWarning, 2)
+        return self.get_duplicates()
 
 
 class EfiTime(object):
@@ -1178,13 +1216,11 @@ class EfiVariableAuthentication2(object):
         if self.payload is not None:
             fs.write(self.payload)
 
-
     def SetPayload(self, fs) -> None:
         """Decodes a filestream and generates the payload.
 
         Args:
             fs (BinaryIO): filestream to load from
-            signature_list: Attempt to set this as a signature list (DEPRECATION_WARNING)
 
         Raises:
             (ValueError): Invalid filestream
@@ -1226,18 +1262,6 @@ class EfiVariableAuthentication2(object):
         # reset the file pointer
         fs.seek(start)
         self.payload = memoryview(fs.read(self.payload_size))
-
-    def SetPayload(self, fs, signature_list=False) -> None:
-        """Decodes a filestream and generates the payload.
-
-        Args:
-            fs (BinaryIO): filestream to load from
-
-        Raises:
-            (ValueError): Invalid filestream
-        """
-        warn("SetPayload() is deprecated, use set_payload() instead.", DeprecationWarning, 2)
-        self.set_payload(fs)
 
 
 class EfiVariableAuthentication2Builder(object):

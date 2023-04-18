@@ -76,8 +76,7 @@ class HexdumpTest(unittest.TestCase):
 
         newline = '\n'
         expected_output = f"0x00 - 0x48 0x65 0x6c 0x6c 0x6f 0x20 0x55 0x45 - 0x46 0x49 0x21                          Hello UEFI! {newline}" # noqa
-        utilities.hexdump(test, out_fs=output)
-
+        utilities.hexdump(test, outfs=output)
         self.assertEqual(expected_output, output.getvalue())
 
     def test_hexdump_basic_usage_offset_start(self):
@@ -87,7 +86,7 @@ class HexdumpTest(unittest.TestCase):
 
         newline = '\n'
         expected_output = f"0x40000000 - 0x48 0x65 0x6c 0x6c 0x6f 0x20 0x55 0x45 - 0x46 0x49 0x21                          Hello UEFI! {newline}" # noqa
-        utilities.hexdump(test, offset_start=0x4000_0000, out_fs=output)
+        utilities.hexdump(test, offset_start=0x4000_0000, outfs=output)
 
         self.assertEqual(expected_output, output.getvalue())
 
@@ -101,7 +100,7 @@ class HexdumpTest(unittest.TestCase):
 
         expected_output = f"0x00 - 0x30 0x31 0x32 0x33 0x34 0x35 0x36 0x37 - 0x38 0x39 0x61 0x62 0x63 0x64 0x65 0x66 0123456789abcdef {newline}" # noqa
 
-        utilities.hexdump(test, out_fs=output)
+        utilities.hexdump(test, outfs=output)
 
         self.assertEqual(expected_output, output.getvalue())
 
@@ -115,7 +114,7 @@ class HexdumpTest(unittest.TestCase):
         expected_output =  f"0x40000000 - 0x30 0x31 0x32 0x33 0x34 0x35 0x36 0x37 - 0x38 0x39 0x61 0x62 0x63 0x64 0x65 0x66 0123456789abcdef {newline}" # noqa
         expected_output += f"0x40000010 - 0x30 0x31 0x32 0x33 0x34 0x35 0x36 0x37 - 0x38 0x39 0x61 0x62 0x63 0x64 0x65 0x66 0123456789abcdef {newline}" # noqa
 
-        utilities.hexdump(test, offset_start=0x4000_0000, out_fs=output)
+        utilities.hexdump(test, offset_start=0x4000_0000, outfs=output)
 
         self.assertEqual(expected_output, output.getvalue())
 
@@ -129,7 +128,7 @@ class HexdumpTest(unittest.TestCase):
         expected_output += f"0x10 - 0x30 0x31 0x32 0x33 0x34 0x35 0x36 0x37 - 0x38 0x39 0x61 0x62 0x63 0x64 0x65 0x66 0123456789abcdef {newline}" # noqa
         expected_output += f"0x20 - 0x30                                                                              0 {newline}" # noqa
 
-        utilities.hexdump(test, out_fs=output)
+        utilities.hexdump(test, outfs=output)
 
         self.assertEqual(expected_output, output.getvalue())
 
@@ -142,7 +141,7 @@ class HexdumpTest(unittest.TestCase):
         expected_output =  f"0x00 - 0x30 0x31 0x32 0x33 0x34 0x35 0x36 0x37 - 0x38 0x39 0x61 0x62 0x63 0x64 0x65 0x5c 0123456789abcde\\ {newline}" # noqa
         expected_output += f"0x10 - 0x30 0x31 0x32 0x33 0x34 0x35 0x36 0x37 - 0x38 0x39 0x61 0x62 0x63 0x64 0x65 0x5c 0123456789abcde\\ {newline}" # noqa
 
-        utilities.hexdump(test, out_fs=output)
+        utilities.hexdump(test, outfs=output)
 
         self.assertEqual(expected_output, output.getvalue())
 
@@ -154,7 +153,7 @@ class HexdumpTest(unittest.TestCase):
 
         expected_output = f"{newline}"
 
-        utilities.hexdump(test, out_fs=output)
+        utilities.hexdump(test, outfs=output)
 
         self.assertEqual(expected_output, output.getvalue())
 
@@ -280,3 +279,5 @@ class ExportCTypeArrayTest(unittest.TestCase):
 
 # DO NOT PUT A MAIN FUNCTION HERE
 # this test runs itself to test runpython script, which is a tad bit strange yes.
+if __name__ == "__main__":
+    unittest.main()

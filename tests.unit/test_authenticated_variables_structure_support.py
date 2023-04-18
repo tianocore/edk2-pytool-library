@@ -896,7 +896,7 @@ class AuthVarSupportLibraryUnitTests(unittest.TestCase):
             (testName, (Esd, ExpectedDupesEsd, ExpectedCanonicalEsd)) = subTest
             with self.subTest(msg=testName):
 
-                (output_canonical_esd, output_dupes_esd) = Esd.GetCanonicalAndDupes()
+                (output_canonical_esd, output_dupes_esd) = Esd.get_canonical_and_dupes()
 
                 if VERBOSE:
                     print("Starting EfiSignatureDatabase: ")

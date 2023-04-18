@@ -486,7 +486,7 @@ def hexdump(byte_list, offset_start=0, outfs=sys.stdout, **kwargs) -> None:
                 index += 1
             # print the ascii partial line
             outfs.write(f" {ascii_string} ")
-            # print a single newline so that next print will be on new line
+        # print a single newline so that next print will be on new line
         outfs.write("\n")
 
 
