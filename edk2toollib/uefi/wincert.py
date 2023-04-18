@@ -468,7 +468,7 @@ class WinCertUefiGuid(object):
 
     def Print(self, outfs=sys.stdout):
         """Prints struct to console."""
-        warn("Print is deprecated, use print instead.", DeprecationWarning, 2)
+        warn("Print() is deprecated, use print() instead.", DeprecationWarning, 2)
         self.dump_info(outfs)
 
     def dump_info(self, outfs=sys.stdout):

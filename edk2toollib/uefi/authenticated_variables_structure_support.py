@@ -1175,7 +1175,7 @@ class EfiVariableAuthentication2(object):
             fs (BinaryIO): filestream to load from
 
         Raises:
-            (Exception): Invalid filestream
+            (ValueError): Invalid filestream
         """
         warn("PopulateFromFileStream() is deprecated, use decode() instead.", DeprecationWarning, 2)
         self.decode(fs)
