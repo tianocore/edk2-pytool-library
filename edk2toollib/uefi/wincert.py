@@ -98,7 +98,7 @@ class WinCertPkcs1(object):
         self.add_cert_data(fs)
 
     def set_hash_algorithm(self, hash_algorithm: uuid.UUID):
-        """Sets the hash algorithm for the wincert
+        """Sets the hash algorithm for the wincert.
 
         Args:
             hash_algorithm (uuid.UUID): The Guid representing the hash algorithm for the Cert.
@@ -186,15 +186,21 @@ class WinCertPkcs1(object):
         return output
 
     def write(self, fs):
-        """Writes an serialized object to a filestream
+        r"""Writes an serialized object to a filestream.
 
+        Args:
+            fs (obj): an open file
+
+        Returns:
             (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
-
         """
         fs.write(self.encode())
 
     def Write(self, fs):
         r"""Serializes the object.
+
+        Args:
+            fs (obj): an open file
 
         Returns:
             (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
@@ -249,8 +255,28 @@ class WinCertUefiGuid(object):
         if in_data is not None:
             self.decode(in_data)
 
+    @property
+    def CertData(self):
+        """Returns the CertData."""
+        return self.cert_data
+
+    @CertData.setter
+    def CertData(self, value):
+        """Sets the CertData."""
+        self.cert_data = value
+
+    @property
+    def CertType(self):
+        """Returns the CertType."""
+        return self.cert_type
+
+    @CertType.setter
+    def CertType(self, value):
+        """Sets the CertType."""
+        self.cert_type = value
+
     def get_length(self):
-        """returns the length of the WinCertUefiGuid and it's data"""
+        """Returns the length of the WinCertUefiGuid and it's data."""
         return self.Hdr_dwLength
 
     def Encode(self):
@@ -425,7 +451,6 @@ class WinCertUefiGuid(object):
         Args:
             in_data (obj): Data to read.
         """
-
         # if the data is already set, let's subtract it from the length before adding the new data
         if self.cert_data is not None:
             self.Hdr_dwLength -= len(self.cert_data)
@@ -512,7 +537,7 @@ class WinCertUefiGuid(object):
         fs.write(self.encode())
 
     def __str__(self):
-        """Returns the object as a string"""
+        """Returns the object as a string."""
         string_repr = ""
         with io.StringIO() as f:
             self.print(f)

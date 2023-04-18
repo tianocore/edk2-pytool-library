@@ -70,6 +70,7 @@
         "cpython",
         "dirid",
         "nologo",
+        "noout",
         "rsassa",
         "fixedpcd",
         "featurepcd",

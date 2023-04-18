@@ -675,7 +675,7 @@ class AuthVarSupportLibraryUnitTests(unittest.TestCase):
         new_esd = EfiSignatureDatabase(filestream=original_fs)
         original_fs.close()
 
-        self.assertEqual(original_esd.get_bytes(), new_esd.get_bytes())
+        self.assertEqual(original_esd.encode(), new_esd.encode())
 
     def test_EfiSignatureList_Sort_and_Deduplication_x509(self):
         owner = uuid.uuid4().hex
@@ -710,8 +710,8 @@ class AuthVarSupportLibraryUnitTests(unittest.TestCase):
 
                 output_dupes = testEsl.SortBySignatureDataValue(deduplicate=True)
 
-                self.assertEqual(output_dupes.get_bytes(), expected_dupes_esl.get_bytes())
-                self.assertEqual(testEsl.get_bytes(), expected_sort_esl.get_bytes())
+                self.assertEqual(output_dupes.encode(), expected_dupes_esl.encode())
+                self.assertEqual(testEsl.encode(), expected_sort_esl.encode())
 
     def test_EfiSignatureList_Sort_and_Deduplication_sha256(self):
 
@@ -883,8 +883,8 @@ class AuthVarSupportLibraryUnitTests(unittest.TestCase):
 
                 output_dupes_esl = testEsl.SortBySignatureDataValue(deduplicate=True)
 
-                self.assertEqual(testEsl.get_bytes(), expected_sort_esl.get_bytes())
-                self.assertEqual(output_dupes_esl.get_bytes(), expected_dupes_esl.get_bytes())
+                self.assertEqual(testEsl.encode(), expected_sort_esl.encode())
+                self.assertEqual(output_dupes_esl.encode(), expected_dupes_esl.encode())
 
     def test_EfiSignatureDatabase_Sort_and_Deduplication(self):
         subTestList = [
@@ -908,8 +908,8 @@ class AuthVarSupportLibraryUnitTests(unittest.TestCase):
                     print("Canonical: ")
                     output_canonical_esd.Print(compact=True)
 
-                self.assertEqual(output_dupes_esd.get_bytes(), ExpectedDupesEsd.get_bytes())
-                self.assertEqual(output_canonical_esd.get_bytes(), ExpectedCanonicalEsd.get_bytes())
+                self.assertEqual(output_dupes_esd.encode(), ExpectedDupesEsd.encode())
+                self.assertEqual(output_canonical_esd.encode(), ExpectedCanonicalEsd.encode())
 
 
 class EfiVariableAuthenticatedTests(unittest.TestCase):
