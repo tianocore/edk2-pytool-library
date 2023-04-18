@@ -98,8 +98,8 @@ class WinCertPkcs1(object):
         self.add_cert_data(fs)
 
     def set_hash_algorithm(self, hash_algorithm: uuid.UUID):
-        """Sets the hash algoritm for the wincert
-        
+        """Sets the hash algorithm for the wincert
+
         Args:
             hash_algorithm (uuid.UUID): The Guid representing the hash algorithm for the Cert.
         """
@@ -177,7 +177,6 @@ class WinCertPkcs1(object):
             (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
         """
         output = b""
-        
         output += struct.pack("=I", self.Hdr_dwLength)
         output += struct.pack("=H", self.Hdr_wRevision)
         output += struct.pack("=H", self.Hdr_wCertificateType)
@@ -185,7 +184,7 @@ class WinCertPkcs1(object):
         output += self.cert_data
 
         return output
-    
+
     def write(self, fs):
         """Writes an serialized object to a filestream
 
@@ -199,7 +198,7 @@ class WinCertPkcs1(object):
 
         Returns:
             (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
-        """    
+        """
         warn("Write is deprecated, use encode instead", DeprecationWarning, 2)
         self.write(fs)
 
@@ -266,7 +265,7 @@ class WinCertUefiGuid(object):
         """
         warn("Encode is deprecated, use encode instead", DeprecationWarning, 2)
         return self.encode()
-   
+
     def encode(self):
         r"""Serializes the object.
 
@@ -312,18 +311,18 @@ class WinCertUefiGuid(object):
         """
         warn("Decode is deprecated, use decode instead", DeprecationWarning, 2)
         return self.decode(Buffer)
-    
+
     def decode(self, in_data):
         """Loads the struct with values from a buffer.
 
         Args:
-            Buffer (filestream | bytes): Buffer containing serialized data
+            in_data (filestream | bytes): in_data containing serialized data
 
         Returns:
             (obj): Any remaining buffer
 
         Raises:
-            (ValueError): Invalid buffer
+            (ValueError): Invalid Buffer
             (ValueError): Invalid dwLength
             (ValueError): Invalid Revision
             (ValueError): Invalid Cert Type
@@ -335,7 +334,8 @@ class WinCertUefiGuid(object):
         elif hasattr(in_data, 'decode'):  # Bytes like object
             return self._from_buffer(in_data)
         else:
-            raise ValueError(f"Invalid datatype provided: {type(in_data)}, data may only be of type filestream or bytes")
+            raise ValueError(
+                f"Invalid datatype provided: {type(in_data)}, data may only be of type filestream or bytes")
 
     def _from_buffer(self, buffer):
         """Loads the struct with values from a buffer.
@@ -409,7 +409,7 @@ class WinCertUefiGuid(object):
         object_buffer = fs.read(buffer_size)
 
         return self._from_buffer(object_buffer)
-    
+
     def AddCertData(self, in_data):
         """Adds the Cert Data to the struct.
 
@@ -436,7 +436,8 @@ class WinCertUefiGuid(object):
         elif hasattr(in_data, 'decode'):
             self.cert_data = in_data
         else:
-            raise ValueError(f"Invalid datatype provided: {type(in_data)}, data may only be of type filestream or bytes")
+            raise ValueError(
+                f"Invalid datatype provided: {type(in_data)}, data may only be of type filestream or bytes")
 
         self.Hdr_dwLength = self.Hdr_dwLength + len(self.cert_data)
 
@@ -481,9 +482,8 @@ class WinCertUefiGuid(object):
         outfs.write(f"sizeof (WIN_CERTIFICATE_UEFI_GUID.cert_data)    = {len(self.cert_data):08X}\n")
 
         outfs.write("\n------------------- CERTIFICATE DATA ---------------------\n")
-        
+
         # Technically the signature could be wrapped in a ContentInfo
-        
         try:
             content_info, _ = der_decode(self.cert_data, asn1Spec=rfc2315.ContentInfo())
 
@@ -520,7 +520,6 @@ class WinCertUefiGuid(object):
             string_repr = f.read()
 
         return string_repr
-
 
 
 class WinCert(object):
@@ -577,6 +576,7 @@ class WinCert(object):
     #
     # this method is a factory
     #
+
     @staticmethod
     def Factory(fs):
         """Generates a specific Cert Type depending on parsed Hdr_wCertificationType from the fs.

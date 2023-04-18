@@ -1,3 +1,11 @@
+# @file test_wincert.py
+# unit test for utility_functions module.
+#
+#
+# Copyright (c) Microsoft Corporation
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
 import unittest
 import io
 
@@ -41,10 +49,10 @@ class WinCertPkcs1Tests(unittest.TestCase):
 
         with io.BytesIO(bytes.fromhex(SHA256_FINGERPRINT)) as f:
             wincert0.add_cert_data(f)
-        
+
         # write to a filestream
         with io.BytesIO() as f0, io.BytesIO() as f1, io.BytesIO() as f2:
-            
+
             # Write the data to the first filestream
             wincert0.write(f0)
 
@@ -111,7 +119,7 @@ class WinCertUefiGuidTest(unittest.TestCase):
         # Attempt to add Cert Data and capture the error
         with self.assertRaises(ValueError) as context:
             wincert.add_cert_data(None)
-        
+
         self.assertTrue("Invalid datatype provided" in str(context.exception))
 
         # TEST_SIGNATURE_PKCS7 is a signed variable, so we need to remove data we don't need for this test
@@ -135,7 +143,7 @@ class WinCertUefiGuidTest(unittest.TestCase):
 
         # TEST_SIGNATURE_PKCS7 is a signed variable, so we need to remove data we don't need for this test
         test_data = bytes.fromhex(TEST_AUTH_VAR_PKCS7)
-        
+
         # ignoring the top of the binary data and the bottom we can extract the wincert
         with io.BytesIO(test_data) as f:
             _ = EfiTime(decodefs=f)
@@ -160,7 +168,7 @@ class WinCertUefiGuidTest(unittest.TestCase):
 
         # encode / decode work
         self.assertTrue(wincert1.encode(), encoded)
-        
+
         # Test write - which is basically just an encode
         with io.BytesIO() as wincert1_encode:
             wincert1.write(wincert1_encode)
@@ -173,7 +181,7 @@ class WinCertUefiGuidTest(unittest.TestCase):
 
         # TEST_SIGNATURE_PKCS7 is a signed variable, so we need to remove data we don't need for this test
         test_data = bytes.fromhex(TEST_AUTH_VAR_PKCS7)
-        
+
         # ignoring the top of the binary data and the bottom we can extract the wincert
         with io.BytesIO(test_data) as f:
             _ = EfiTime(decodefs=f)
@@ -223,7 +231,7 @@ class WinCertTests(unittest.TestCase):
         wincert_guid_type = WinCertUefiGuid()
         # TEST_SIGNATURE_PKCS7 is a signed variable, so we need to remove data we don't need for this test
         test_data = bytes.fromhex(TEST_AUTH_VAR_PKCS7)
-        
+
         # ignoring the top of the binary data and the bottom we can extract the wincert
         with io.BytesIO(test_data) as f:
             _ = EfiTime(decodefs=f)
@@ -233,7 +241,7 @@ class WinCertTests(unittest.TestCase):
         wincert_pkcs1_type.set_hash_algorithm(WinCertPkcs1.EFI_HASH_SHA256)
         with io.BytesIO(bytes.fromhex(SHA256_FINGERPRINT)) as f:
             wincert_pkcs1_type.add_cert_data(f)
-        
+
         with io.BytesIO(wincert_guid_type.encode()) as f:
             wincert = WinCert().factory(f)
 
@@ -245,7 +253,3 @@ class WinCertTests(unittest.TestCase):
 
             self.assertTrue(wincert_pkcs1_type.encode(), wincert.encode())
             self.assertTrue(type(wincert), type(wincert_pkcs1_type))
-
-            
-if __name__ == "__main__":
-    unittest.main()

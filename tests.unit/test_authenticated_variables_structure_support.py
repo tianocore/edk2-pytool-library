@@ -657,7 +657,7 @@ class AuthVarSupportLibraryUnitTests(unittest.TestCase):
             esd.print(compact=True, outfs=f)
             f.seek(0)
             self.assertTrue(len(f.read()) > 0)
-        
+
         with io.StringIO() as f:
             esd.print(compact=False, outfs=f)
             f.seek(0)
@@ -955,7 +955,7 @@ class EfiVariableAuthenticatedTests(unittest.TestCase):
         self.assertEqual(Output.getvalue(), DbxIo.getvalue())
 
     def test_creating_EfiVariableAuthentication2_variable(self):
-        
+
         payload = b"Hello UEFI"
         auth_variable = self.build_test_authenticated_variable(payload)
 
@@ -972,8 +972,6 @@ class EfiVariableAuthenticatedTests(unittest.TestCase):
             self.assertTrue("WIN_CERTIFICATE" in output)
             self.assertTrue(payload.decode('ascii') in output)
 
-
-        
 
 class EfiTimeTest(unittest.TestCase):
     """Test the EfiTime class"""

@@ -368,7 +368,7 @@ class EfiSignatureDataEfiCertSha256(object):
         with io.BytesIO() as fs:
             self.Write(fs)
             return fs.getvalue()
-        
+
     def GetBytes(self) -> bytes:
         """Return bytes array produced by Write()."""
         warn("GetBytes() is deprecated. Use get_bytes() instead.", DeprecationWarning, 2)
@@ -587,7 +587,7 @@ class EfiSignatureList(object):
         """
         warn("PopulateFromFileStream() is deprecated, use decode() instead.", DeprecationWarning, 2)
         self.decode(fs)
-        
+
     def Print(self, compact: bool = False, outfs=sys.stdout):
         """Prints to the console."""
         warn("Print() is deprecated, use print() instead().", DeprecationWarning, 2)
@@ -861,7 +861,7 @@ class EfiSignatureDatabase(object):
             raise Exception("Invalid File Output Stream")
         for Esl in self.EslList:
             Esl.write(fs)
-    
+
     def GetBytes(self) -> bytes:
         """Return bytes array produced by Write()."""
         warn("GetBytes() is deprecated, use get_bytes() instead.")
@@ -953,7 +953,7 @@ class EfiSignatureDatabase(object):
         """Return a canonicalized EfiSignatureDatabase, see GetCanonicalAndDupes() for more details."""
         canonical, _ = self.get_canonical_and_dupes()
         return canonical
-    
+
     def GetCanonical(self):
         """Return a canonicalized EfiSignatureDatabase, see GetCanonicalAndDupes() for more details."""
         warn("GetCanonical() is deprecated. Use get_canonical() instead.", DeprecationWarning, 2)
@@ -979,7 +979,7 @@ class EfiTime(object):
         """Inits an EFI_TIME object.
 
         Args:
-            Time (:obj:`datetime`, optional): Inits object with specified date (if decodefs not set)
+            time (:obj:`datetime`, optional): Inits object with specified date (if decodefs not set)
             decodefs (:obj:`BinaryIO`, optional): Inits the object with this stream
         """
         if decodefs is None:
@@ -1106,7 +1106,7 @@ class EfiVariableAuthentication2(object):
         """Inits an EFI_VARIABLE_AUTHENTICATION_2 object.
 
         Args:
-            Time (:obj:`datetime`, optional): Inits object with specified date (if decodefs not set)
+            time (:obj:`datetime`, optional): Inits object with specified date (if decodefs not set)
             decodefs (:obj:`BinaryIO`, optional): Inits the object with this stream
         """
         if decodefs:
@@ -1315,7 +1315,7 @@ class EfiVariableAuthentication2Builder(object):
         return self.signature
 
     def update_payload(self, payload) -> None:
-        """Updates the autheticated variables payload and ultimately the digest.
+        """Updates the authenticated variables payload and ultimately the digest.
 
         Args:
             payload (io.ByteIO | bytes): byte array or byte file stream of variable data
@@ -1355,8 +1355,6 @@ class EfiVariableAuthentication2Builder(object):
             hash_algorithm (cryptography.hazmat.primitives.hashes): accepts cryptography.hazmat.primitives.hashes types
                 to specify the hash_algorithm
             omit_content_info (bool): enabled by default, allows to include the content info asn.1 structure
-            digest (bytes): uses the digest produced by EFiVariableAuthentication2.New() by default, otherwise may specify a
-                 new digest to sign
 
         Returns:
             None
@@ -1383,7 +1381,7 @@ class EfiVariableAuthentication2Builder(object):
             logging.info("%sIssuer: %s", indents, cert.certificate.issuer)
             logging.info("%sSubject: %s", indents, cert.certificate.subject)
 
-            # Add the certificate for verifcation
+            # Add the certificate for verification
             self.signature_builder = self.signature_builder.add_certificate(cert.certificate)
 
     def finalize(self, omit_content_info=True) -> EfiVariableAuthentication2:
@@ -1431,7 +1429,7 @@ class EfiVariableAuthentication2Builder(object):
 class EFiVariableAuthentication2(EfiVariableAuthentication2):
     """An object representing a EFI_VARIABLE_AUTHENTICATION_2. DEPRECATED"""
     def __init__(self, time=datetime.datetime.now(), decodefs=None):
-        warn("EFiVariableAuthentication2() is deprecated, use EfiVariableAuthentication2() instead.", DeprecationWarning, 2)
+        warn("EFiVariableAuthentication2() is deprecated, use EfiVariableAuthentication2() instead.", DeprecationWarning, 2)  # noqa: E501
         super().__init__(time, decodefs=decodefs)
 
 

@@ -279,5 +279,3 @@ class ExportCTypeArrayTest(unittest.TestCase):
 
 # DO NOT PUT A MAIN FUNCTION HERE
 # this test runs itself to test runpython script, which is a tad bit strange yes.
-if __name__ == "__main__":
-    unittest.main()
