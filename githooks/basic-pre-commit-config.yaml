@@ -1,0 +1,26 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+    -   id: trailing-whitespace
+        types_or: [python]
+    -   id: end-of-file-fixer
+        types_or: [python, markdown]
+    -   id: check-added-large-files
+    -   id: check-merge-conflict
+    -   id: check-ast
+-   repo: https://github.com/streetsidesoftware/cspell-cli
+    rev:  v6.31.0
+    hooks:
+    -   id: cspell
+        types_or: [markdown, python]
+-   repo: https://github.com/PyCQA/flake8
+    rev:  3.8.4
+    hooks:
+    -   id: flake8
+        entry: flake8 edk2toollib
+-   repo: https://github.com/igorshubovych/markdownlint-cli
+    rev:  v0.12.0
+    hooks:
+    -   id: markdownlint
+        args: [--config, .markdownlint.yaml]
