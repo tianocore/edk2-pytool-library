@@ -147,23 +147,23 @@ Installing is entirely optional, a developer may choose to run this manually.
 The following command will enable this pre-commit to prior to each commit. If it detects
 issues it will fail to commit until they are fixed.
 
-    ```bash
-    pre-commit install -c githooks/basic-pre-commit-config.yaml
-    ```
+```bash
+pre-commit install -c githooks/basic-pre-commit-config.yaml
+```
 
 #### Running across the entire repository (Manually)
 
 This step is entirely manual but gives a good example of what the behavior of this tool will be.
 
-    ```bash
-    pre-commit run --all-files -c githooks/basic-pre-commit-config.yaml
-    ```
+```bash
+pre-commit run --all-files -c githooks/basic-pre-commit-config.yaml
+```
 
 #### Uninstalling
 
-    ```bash
-    pre-commit uninstall
-    ```
+```bash
+pre-commit uninstall
+```
 
 ## Conventions Shortlist
 
