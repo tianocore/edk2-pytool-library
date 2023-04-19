@@ -51,7 +51,7 @@ class DscParser(HashFileParser):
             # Other parser returns line_resolved, [].  Need to figure out which is right
             return ("", [], None)
 
-        # not conditional keep procesing
+        # not conditional keep processing
 
         # check if conditional is active
         if (not self.InActiveCode()):
@@ -189,7 +189,7 @@ class DscParser(HashFileParser):
             # Other parser returns line_resolved, [].  Need to figure out which is right
             return ("", [])
 
-        # not conditional keep procesing
+        # not conditional keep processing
 
         # check if conditional is active
         if (not self.InActiveCode()):

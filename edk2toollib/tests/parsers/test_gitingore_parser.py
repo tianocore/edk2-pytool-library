@@ -68,7 +68,7 @@ class GitIgnoreParserTest(unittest.TestCase):
             self.assertTrue(rule_tester(os.path.join(root, "reader", "testing.txt")))
 
             # Test a rule which specifies that a folder at any depth from the
-            # root is correclty filtered.
+            # root is correctly filtered.
 
             # Example line in a .gitignore
             # **/Test/

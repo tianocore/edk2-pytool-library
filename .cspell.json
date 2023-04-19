@@ -87,6 +87,7 @@
         "DYNAMICVPD",
         "DYNAMICEXHII",
         "DYNAMICEXVPD",
+        "DYNAMICEX",
         "PCD's",
         "MDEPKG",
         "iommu",
@@ -96,6 +97,10 @@
         "nonlocalizable",
         "mkdocs",
         "DBXFILE",
-        "decodefs"
+        "decodefs",
+        "Guids",
+        "apath",
+        "vsvars",
+        "packagepatahlist"
     ]
 }
