@@ -54,6 +54,12 @@ def _DownloadVsWhere(unpack_folder: os.PathLike = None):
 
     out_file_name = os.path.join(unpack_folder, "vswhere.exe")
     logging.info("Attempting to download vswhere to: {}. This may take a second.".format(unpack_folder))
+
+    # check if the path we want to download to exists
+    if not os.path.exists(unpack_folder):
+        os.makedirs(unpack_folder, exist_ok=True)
+        logging.info("Created folder: {}".format(unpack_folder))
+
     # check if we have the vswhere file already downloaded
     if not os.path.isfile(out_file_name):
         try:
@@ -108,8 +114,8 @@ def GetVsWherePath(fail_on_not_found: bool = True):
         vswhere_dir = os.path.dirname(vswhere_path)
         try:  # try to download
             _DownloadVsWhere(vswhere_dir)
-        except Exception:
-            logging.warning("Tried to download VsWhere and failed")
+        except Exception as exc:
+            logging.warning("Tried to download VsWhere and failed with exception: %s", str(exc))
             pass
 
     # if we're still hosed
