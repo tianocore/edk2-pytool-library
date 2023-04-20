@@ -5,7 +5,6 @@ repos:
     -   id: trailing-whitespace
         types_or: [python, markdown]
     -   id: end-of-file-fixer
-        types_or: [python, markdown]
     -   id: check-added-large-files
     -   id: check-merge-conflict
     -   id: check-ast # check python ast

@@ -3,9 +3,8 @@ repos:
     rev: v3.2.0
     hooks:
     -   id: trailing-whitespace
-        types_or: [python, markdown]
     -   id: end-of-file-fixer
-        types_or: [python, markdown]
+        types_or: [python, markdown, yaml]
     -   id: check-added-large-files
     -   id: check-merge-conflict
     -   id: check-ast # check python ast
