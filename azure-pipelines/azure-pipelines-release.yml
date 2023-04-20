@@ -14,7 +14,7 @@ resources:
       endpoint: tianocore
 
 # trigger when a vXX.XX.XX tag is created
-trigger: 
+trigger:
   tags:
     include:
     - v*

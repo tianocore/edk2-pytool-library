@@ -87,7 +87,7 @@
 
     INFO: Newer editors are very helpful in resolving source formatting errors
     (whitespace, indentation, etc). In VSCode open the py file and use
-    ++alt+shift+f++ to auto format.  
+    ++alt+shift+f++ to auto format.
 
 2. Run a Basic Python docstring Check (using pydocstring) and resolve any issues
 
@@ -130,6 +130,41 @@
     markdownlint "**/*.md"
     ```
 
+### Githooks
+
+Optionally, there are two githooks provided to automate testing locally before running CI
+
+* githooks/basic-pre-commit-config.yaml
+  * This file runs only the quickest checks in order to test the code for common mistakes
+  * This yaml will pull in all the tools into an enviornment it needs to run
+* githooks/advanced-pre-commit-config.yaml
+  * This file will run all the basic checks and the longer running checks
+  * This yaml will need mkdocs installed prior to running
+
+#### Installing
+
+Installing is entirely optional, a developer may choose to run this manually.
+The following command will enable this pre-commit to prior to each commit. If it detects
+issues it will fail to commit until they are fixed.
+
+```bash
+pre-commit install -c githooks/basic-pre-commit-config.yaml
+```
+
+#### Running across the entire repository (Manually)
+
+This step is entirely manual but gives a good example of what the behavior of this tool will be.
+
+```bash
+pre-commit run --all-files -c githooks/basic-pre-commit-config.yaml
+```
+
+#### Uninstalling
+
+```bash
+pre-commit uninstall
+```
+
 ## Conventions Shortlist
 
 ### File and folder names
@@ -140,7 +175,7 @@ naming should follow PEP8 (<https://www.python.org/dev/peps/pep-0008/>)
 ### Comments
 
 Docstring style comments should be added to each public function and class.
-\*Existing code should be updated to be compliant as it is modified.  
+\*Existing code should be updated to be compliant as it is modified.
 
 ### New Module or Class
 
@@ -150,7 +185,7 @@ purpose and provide general purpose support.
 The module should be added to the package in which the interface is defined.
 
 * For example for modules supporting interfaces defined in the UEFI
-  specification it would be in the __uefi__ package.  
+  specification it would be in the __uefi__ package.
 * If it is defined by EDK2 then it should be in the __uefi.edk2__ package.
 
 Documentation of the feature should be added to the __docs/features__ folder in
@@ -162,7 +197,7 @@ parameters and usage info.
 
 Unit tests should be written in python unittest or pytest format.  A test module
 should be added in the same folder or package as the module and the filename
-should be same as the module plus "_test".  
+should be same as the module plus "_test".
 
 ### Spell Checking / False Positives
 

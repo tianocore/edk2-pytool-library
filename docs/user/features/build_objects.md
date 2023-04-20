@@ -53,8 +53,6 @@ functionality. However, there are a few problems with that fact.
    you to be in a defines section. You have no way to know this from the main
    DSC file.
 
-3.
-
 ## Why were they made
 
 To better abstract away the essence of what a build is doing. DSC is a way to

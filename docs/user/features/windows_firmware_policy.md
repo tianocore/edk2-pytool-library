@@ -1,7 +1,7 @@
 # Windows Firmware Policy Library
 
 This library supports creation and analysis of Windows Firmware Policy binaries
-(unsigned)  
+(unsigned)
 
 ## Usage info
 
@@ -17,14 +17,18 @@ This library supports creation and analysis of Windows Firmware Policy binaries
    covered here).
 1. Construct a Dictionary with keys 'Manufacturer', 'Product', 'SerialNumber',
    'OEM_01', 'OEM_02', & 'Nonce' populated with the targeting values read from
-   the device.  
+   the device.
 1. Construct an default ```FirmwarePolicy()``` object, then call
-   ```SetDeviceTarget(target_dictionary)``` to populate it with the targeting
-   information
+
+   ```SetDeviceTarget(target_dictionary)```
+
+   to populate it with the targeting information
 1. Bitwise OR the desired ```FirmwarePolicy.FW_POLICY_VALUE_foo``` values into
    an integer and pass to ```SetDevicePolicy(64_bit_device_policy)```
 1. The FirmwarePolicy object is now ready, serialize it to a file stream using
+
    ```SerializeToStream(your_file_stream)```
+
 1. For consumption by a secure device, sign the policy using instructions found
    elsewhere
 
