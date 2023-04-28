@@ -37,7 +37,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install --upgrade -r requirements.txt
         pip install .
-    
+
     - name: Run Unit Tests
       run: coverage run -m pytest
 
