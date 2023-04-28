@@ -9,7 +9,8 @@
     ],
     "minWordLength": 5,
     "ignorePaths": [
-        "*.exe"
+        "*.exe",
+        "build/**",
     ],
     "allowCompoundWords": true,
     "ignoreWords": [],
