@@ -624,7 +624,7 @@ class InfFileTest(unittest.TestCase):
             test2.bin = 1
 
             [DestinationDirs]
-            DefaultDestDir = %DIRID_WINDOWS%,Firmware ; %SystemRoot%\\Firmware
+            DefaultDestDir = 13
 
             [Strings]
             ; localizable
