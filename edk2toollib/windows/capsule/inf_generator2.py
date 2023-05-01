@@ -331,7 +331,7 @@ class InfSourceFiles(object):
         outstr += Files
         outstr += textwrap.dedent("""
             [DestinationDirs]
-            DefaultDestDir = %DIRID_WINDOWS%,Firmware ; %SystemRoot%\\Firmware
+            DefaultDestDir = 13
 
             """)
         return outstr
