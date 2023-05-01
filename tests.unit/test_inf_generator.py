@@ -177,7 +177,7 @@ HKR,,FirmwareFilename,,TestFirmwareRom.bin
 TestFirmwareRom.bin = 1
 
 [DestinationDirs]
-DefaultDestDir = %DIRID_WINDOWS%,Firmware ; %SystemRoot%\\Firmware
+DefaultDestDir = 13
 
 [Strings]
 ; localizable

@@ -382,7 +382,7 @@ class InfSourceFilesTest(unittest.TestCase):
             test3.bin = 1
 
             [DestinationDirs]
-            DefaultDestDir = %DIRID_WINDOWS%,Firmware ; %SystemRoot%\\Firmware
+            DefaultDestDir = 13
 
             """)
 
