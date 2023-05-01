@@ -72,7 +72,7 @@ AddReg = Firmware_AddReg
 {SourceDisksFilesSection}
 
 [DestinationDirs]
-DefaultDestDir = %DIRID_WINDOWS%,Firmware ; %SystemRoot%\Firmware
+DefaultDestDir = 13
 
 [Strings]
 ; localizable
