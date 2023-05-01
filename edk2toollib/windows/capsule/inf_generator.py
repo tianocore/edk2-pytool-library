@@ -300,7 +300,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         add_reg.Items.append("HKR,,FirmwareId,,{{{guid}}}".format(guid=self.EsrtGuid))
         add_reg.Items.append("HKR,,FirmwareVersion,%REG_DWORD%,{version}".format(
             version=self.VersionHex))
-        add_reg.Items.append("HKR,,FirmwareFilename,,{file_name}".format(file_name=binfilename))
+        add_reg.Items.append("HKR,,FirmwareFilename,,%13%\\{file_name}".format(file_name=binfilename))
 
         disks_files = InfSection('SourceDisksFiles')
         disks_files.Items.append("{file_name} = 1".format(file_name=binfilename))

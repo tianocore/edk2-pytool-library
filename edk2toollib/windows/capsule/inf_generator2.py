@@ -237,7 +237,7 @@ class InfFirmware(object):
             [{self.Tag}_AddReg]
             HKR,,FirmwareId,,{{{self.EsrtGuid}}}
             HKR,,FirmwareVersion,%REG_DWORD%,0x{self.VersionInt:X}
-            HKR,,FirmwareFilename,,{self.FirmwareFile}
+            HKR,,FirmwareFilename,,%13%\\{self.FirmwareFile}
             """)
         outstr += IntegrityFileReg + "\n"
         return outstr

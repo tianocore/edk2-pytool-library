@@ -91,7 +91,7 @@ class InfFirmwareTest(unittest.TestCase):
             [tag_AddReg]
             HKR,,FirmwareId,,{34e094e9-4079-44cd-9450-3f2cb7824c97}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000001
-            HKR,,FirmwareFilename,,test.bin
+            HKR,,FirmwareFilename,,%13%\\test.bin
 
             """)
 
@@ -132,7 +132,7 @@ class InfFirmwareTest(unittest.TestCase):
             [tag_AddReg]
             HKR,,FirmwareId,,{34e094e9-4079-44cd-9450-3f2cb7824c97}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000001
-            HKR,,FirmwareFilename,,test.bin
+            HKR,,FirmwareFilename,,%13%\\test.bin
 
             """)
 
@@ -175,7 +175,7 @@ class InfFirmwareTest(unittest.TestCase):
             [tag_AddReg]
             HKR,,FirmwareId,,{34e094e9-4079-44cd-9450-3f2cb7824c97}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000001
-            HKR,,FirmwareFilename,,test.bin
+            HKR,,FirmwareFilename,,%13%\\test.bin
             HKR,,FirmwareIntegrityFilename,,test2.bin
 
             """)
@@ -273,7 +273,7 @@ class InfFirmwareSectionsTest(unittest.TestCase):
             [tag_AddReg]
             HKR,,FirmwareId,,{34e094e9-4079-44cd-9450-3f2cb7824c97}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000001
-            HKR,,FirmwareFilename,,test.bin
+            HKR,,FirmwareFilename,,%13%\\test.bin
 
             """)
 
@@ -328,7 +328,7 @@ class InfFirmwareSectionsTest(unittest.TestCase):
             [tag1_AddReg]
             HKR,,FirmwareId,,{34e094e9-4079-44cd-9450-3f2cb7824c97}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000001
-            HKR,,FirmwareFilename,,test1.bin
+            HKR,,FirmwareFilename,,%13%\\test1.bin
 
             [tag2_Install.NT]
             CopyFiles = tag2_CopyFiles
@@ -342,7 +342,7 @@ class InfFirmwareSectionsTest(unittest.TestCase):
             [tag2_AddReg]
             HKR,,FirmwareId,,{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000002
-            HKR,,FirmwareFilename,,test2.bin
+            HKR,,FirmwareFilename,,%13%\\test2.bin
 
             """)
 
@@ -498,7 +498,7 @@ class InfFileTest(unittest.TestCase):
             [tag1_AddReg]
             HKR,,FirmwareId,,{34e094e9-4079-44cd-9450-3f2cb7824c97}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000001
-            HKR,,FirmwareFilename,,test1.bin
+            HKR,,FirmwareFilename,,%13%\\test1.bin
 
             [tag2_Install.NT]
             CopyFiles = tag2_CopyFiles
@@ -512,7 +512,7 @@ class InfFileTest(unittest.TestCase):
             [tag2_AddReg]
             HKR,,FirmwareId,,{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000002
-            HKR,,FirmwareFilename,,test2.bin
+            HKR,,FirmwareFilename,,%13%\\test2.bin
 
             [SourceDisksNames]
             1 = %DiskName%
@@ -596,7 +596,7 @@ class InfFileTest(unittest.TestCase):
             [tag1_AddReg]
             HKR,,FirmwareId,,{34e094e9-4079-44cd-9450-3f2cb7824c97}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000001
-            HKR,,FirmwareFilename,,test1.bin
+            HKR,,FirmwareFilename,,%13%\\test1.bin
 
             [tag2_Install.NT]
             CopyFiles = tag2_CopyFiles
@@ -614,7 +614,7 @@ class InfFileTest(unittest.TestCase):
             [tag2_AddReg]
             HKR,,FirmwareId,,{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000002
-            HKR,,FirmwareFilename,,test2.bin
+            HKR,,FirmwareFilename,,%13%\\test2.bin
 
             [SourceDisksNames]
             1 = %DiskName%
@@ -701,7 +701,7 @@ class InfFileTest(unittest.TestCase):
             [tag1_AddReg]
             HKR,,FirmwareId,,{34e094e9-4079-44cd-9450-3f2cb7824c97}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000001
-            HKR,,FirmwareFilename,,test1.bin
+            HKR,,FirmwareFilename,,%13%\\test1.bin
             HKR,,FirmwareIntegrityFilename,,integrity1.bin
 
             [tag2_Install.NT]
@@ -721,7 +721,7 @@ class InfFileTest(unittest.TestCase):
             [tag2_AddReg]
             HKR,,FirmwareId,,{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000002
-            HKR,,FirmwareFilename,,test2.bin
+            HKR,,FirmwareFilename,,%13%\\test2.bin
             HKR,,FirmwareIntegrityFilename,,integrity2.bin
 
             [SourceDisksNames]
