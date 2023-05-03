@@ -66,6 +66,7 @@ watch:
 nav:
   - Our Philosophy: index.md
   - Advanced Features:
+    - Edk2 Database: features/edk2_db.md
     - ANSI Logging: features/logging.ansi_handler.md
     - Get Host Info: features/utility_functions.GetHostInfo.md
     - Windows Firmware Policy: features/windows_firmware_policy.md
