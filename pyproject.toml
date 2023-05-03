@@ -13,6 +13,9 @@ dependencies = [
     "pyasn1 >= 0.4.8",
     "pyasn1-modules >= 0.2.8",
     "cryptography >= 39.0.1",
+    "tinydb == 4.7.1",
+    "joblib == 1.2.0",  
+    "tinyrecord == 0.2.0",
 ]
 classifiers=[
         "Programming Language :: Python :: 3",
