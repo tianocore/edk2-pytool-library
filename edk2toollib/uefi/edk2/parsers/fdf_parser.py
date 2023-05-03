@@ -131,6 +131,13 @@ class FdfParser(HashFileParser):
                     self.Logger.info("Key,values found:  %s = %s" % (tokens[0].strip(), tokens[1].strip()))
                     continue
 
+            # defining a local variable that is removed when entering a new section
+            elif sline.strip().startswith("DEFINE"):
+                tokens = sline.strip().replace("DEFINE", "").split('=', 1)
+                self.LocalVars[tokens[0].strip()] = tokens[1].strip()
+                self.Logger.info(f"Key,values found for local vars: {tokens[0].strip()}, {tokens[1].strip()}")
+                continue
+
             elif InFdSection:
                 for section in self.CurrentSection:
                     if section not in self.FVs:
