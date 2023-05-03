@@ -7,6 +7,7 @@
 ##
 """Code to help parse EDK2 INF files."""
 import os
+import re
 
 from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 
@@ -35,6 +36,9 @@ class InfParser(HashFileParser):
 
     NOTE: Key / Value pairs determined by lines that contain a single =
     """
+    SECTION_REGEX = re.compile(r"\[(.*)\]")
+    SECTION_LIBRARY = "libraryclasses"
+
     def __init__(self):
         """Inits an empty parser."""
         HashFileParser.__init__(self, 'ModuleInfParser')
@@ -45,6 +49,7 @@ class InfParser(HashFileParser):
         self.SupportedPhases = []
         self.PackagesUsed = []
         self.LibrariesUsed = []
+        self.ScopedLibraryDict = {}
         self.ProtocolsUsed = []
         self.GuidsUsed = []
         self.PpisUsed = []
@@ -52,6 +57,14 @@ class InfParser(HashFileParser):
         self.Sources = []
         self.Binaries = []
         self.Path = ""
+
+    def get_libraries(self, archs: list[str]):
+        """Returns a list of libraries depending on the requested archs."""
+        libraries = self.ScopedLibraryDict.get("common", []).copy()
+
+        for arch in archs:
+            libraries + self.ScopedLibraryDict.get(arch, []).copy()
+        return list(set(libraries))
 
     def ParseFile(self, filepath):
         """Parses the INF file provided."""
@@ -191,4 +204,40 @@ class InfParser(HashFileParser):
             elif sline.strip().lower().startswith('[binaries'):
                 InBinariesSection = True
 
+        # Create scoped_library_dict
+        current_section = ""
+        arch = ""
+
+        for line in self.Lines:
+            match = self.SECTION_REGEX.match(line)
+
+            if line.strip() == "":
+                continue
+
+            if line.strip().startswith("#"):
+                continue
+
+            # Match the current section we are in
+            if match:
+                section = match.group(1)
+                section = section.lower()
+
+                # A Library section
+                if section.startswith(self.SECTION_LIBRARY):
+                    if section.count(".") == 1:
+                        current_section, arch = tuple(section.split("."))
+                    else:
+                        current_section, arch = (section, "common")
+                # Some other section
+                else:
+                    current_section = ""
+                    arch = ""
+                continue
+
+            # Handle lines when we are in a library section
+            if current_section == self.SECTION_LIBRARY:
+                if arch in self.ScopedLibraryDict:
+                    self.ScopedLibraryDict[arch].append(line.split()[0].strip())
+                else:
+                    self.ScopedLibraryDict[arch] = [line.split()[0].strip()]
         self.Parsed = True

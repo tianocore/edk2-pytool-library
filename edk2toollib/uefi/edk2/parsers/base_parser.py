@@ -286,16 +286,30 @@ class BaseParser(object):
         else:
             return int(value, 10)
 
-    def PushConditional(self, v):
+    def PushConditional(self, v: bool, already_true: bool = False):
         """Push new value onto the conditional stack.
 
         Args:
-          v (obj): Value to push
+          v (bool): Value to push
+          already_true (bool): A boolean that specifies if this condition
+            (if/elseif/else) block has already been true.
+
+        !!! note
+            already_true is needed when calling PopConditional() to know if the next
+            part of the conditional block needs evaluated or not.
+
         """
-        self.ConditionalStack.append(v)
+        self.ConditionalStack.append((v, already_true))
 
     def PopConditional(self):
-        """Pops the current conditional and return the value."""
+        """Pops the current conditional and return the value.
+
+        Additionally returns a value specifying if the if/elseif/else block has already
+        returned true.  This is needed to know if the next part of the conditional block
+        needs evaluated or not.
+
+        Returns (bool, bool): (value, already_true)
+        """
         if (len(self.ConditionalStack) > 0):
             return self.ConditionalStack.pop()
         else:
@@ -315,10 +329,10 @@ class BaseParser(object):
         elif (v is None):
             return None
 
-        if (type(v) is bool):
+        if (isinstance(v, bool)):
             v = "true" if v else "false"
 
-        if (type(v) is str and (v.upper() == "TRUE" or v.upper() == "FALSE")):
+        if (isinstance(v, str) and (v.upper() == "TRUE" or v.upper() == "FALSE")):
             v = v.upper()
 
         return str(v)
@@ -378,7 +392,23 @@ class BaseParser(object):
         else:
             tokens = text.split()
         if (tokens[0].lower() == "!if"):
-            self.PushConditional(self.EvaluateConditional(text))
+            result = self.EvaluateConditional(text)
+            self.PushConditional(result, result)
+            return True
+
+        elif (tokens[0].lower() == "!elseif"):
+            if not self.InActiveCode():
+                (_, already_been_true) = self.PopConditional()
+
+                if already_been_true:
+                    self.PushConditional(False, True)
+                else:
+                    result = self.EvaluateConditional(text)
+                    self.PushConditional(result, result)
+            # already in active code, i.e. the previous if/elseif was true
+            else:
+                self.PopConditional()
+                self.PushConditional(False, True)
             return True
 
         elif (tokens[0].lower() == "!ifdef"):
@@ -399,9 +429,15 @@ class BaseParser(object):
             if len(tokens) != 1:
                 self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
                 raise RuntimeError("Invalid conditional", text)
-            v = self.PopConditional()
+            (value, already_been_true) = self.PopConditional()
             # TODO make sure we can't do multiple else statements
-            self.PushConditional(not v)
+
+            # If we've already hit a true condition, we need to be false,
+            # otherwise, lets process!
+            if already_been_true:
+                self.PushConditional(False, True)
+            else:
+                self.PushConditional(True, True)
             return True
 
         elif (tokens[0].lower() == "!endif"):
@@ -416,9 +452,13 @@ class BaseParser(object):
     def EvaluateConditional(self, text):
         """Uses a pushdown resolver."""
         text = str(text).strip()
-        if not text.lower().startswith("!if "):
+        if text.lower().startswith("!if "):
+            text = text[3:].strip()
+        elif text.lower().startswith("!elseif "):
+            text = text[7:].strip()
+        else:
             raise RuntimeError(f"Invalid conditional cannot be validated: {text}")
-        text = text[3:].strip()
+
         self.Logger.debug(f"STAGE 1: {text}")
         text = self.ReplaceVariables(text)
         self.Logger.debug(f"STAGE 2: {text}")
@@ -607,7 +647,7 @@ class BaseParser(object):
 
     @classmethod
     def _IsOperator(cls, token):
-        if type(token) is not str:
+        if not isinstance(token, str):
             return False
         if token.startswith("!+"):
             token = token[2:]
@@ -634,7 +674,7 @@ class BaseParser(object):
             (bool): result of the state of the conditional you are in.
         """
         ret = True
-        for a in self.ConditionalStack:
+        for (a, _) in self.ConditionalStack:
             if not a:
                 ret = False
                 break

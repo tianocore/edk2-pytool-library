@@ -6,7 +6,9 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Code to help parse DSC files."""
+import logging
 import os
+import re
 
 from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 
@@ -25,6 +27,11 @@ class DscParser(HashFileParser):
         LibraryClassToInstanceDict (dict): Key (Library class) Value (Instance)
         Pcds (list): List of Pcds
     """
+    SECTION_LIBRARY = "libraryclasses"
+    SECTION_COMPONENT = "components"
+    SECTION_REGEX = re.compile(r"\[(.*)\]")
+    OVERRIDE_REGEX = re.compile(r"\<(.*)\>")
+
     def __init__(self):
         """Init an empty Parser."""
         super(DscParser, self).__init__('DscParser')
@@ -34,18 +41,29 @@ class DscParser(HashFileParser):
         self.ThreeModsEnhanced = []
         self.OtherMods = []
         self.Libs = []
+        self.Components = []
         self.LibsEnhanced = []
+        self.ScopedLibraryDict = {}
         self.ParsingInBuildOption = 0
         self.LibraryClassToInstanceDict = {}
         self.Pcds = []
+        self.PcdValueDict = {}
         self._no_fail_mode = False
         self._dsc_file_paths = set()  # This includes the full paths for every DSC that makes up the file
+
+    def ReplacePcds(self, line: str) -> str:
+        """Attempts to replace a token if it is a PCD token."""
+        if line.startswith("!if"):
+            tokens = line.split()
+            if tokens[1] in self.PcdValueDict:
+                line = line.replace(tokens[1], self.PcdValueDict[tokens[1]])
+        return line
 
     def __ParseLine(self, Line, file_name=None, lineno=None):
         line_stripped = self.StripComment(Line).strip()
         if (len(line_stripped) < 1):
             return ("", [], None)
-
+        line_stripped = self.ReplacePcds(line_stripped)
         line_resolved = self.ReplaceVariables(line_stripped)
         if (self.ProcessConditional(line_resolved)):
             # was a conditional
@@ -93,6 +111,7 @@ class DscParser(HashFileParser):
                     # should be a pcd statement
                     p = line_resolved.partition('|')
                     self.Pcds.append(p[0].strip())
+                    self.PcdValueDict[p[0].strip()] = p[2].strip()
                     self.Logger.debug("Found a Pcd in a 64bit Module Override section: %s" % p[0].strip())
             else:
                 if (".inf" in line_resolved.lower()):
@@ -120,6 +139,7 @@ class DscParser(HashFileParser):
                     # should be a pcd statement
                     p = line_resolved.partition('|')
                     self.Pcds.append(p[0].strip())
+                    self.PcdValueDict[p[0].strip()] = p[2].strip()
                     self.Logger.debug("Found a Pcd in a 32bit Module Override section: %s" % p[0].strip())
 
             else:
@@ -147,6 +167,7 @@ class DscParser(HashFileParser):
                     # should be a pcd statement
                     p = line_resolved.partition('|')
                     self.Pcds.append(p[0].strip())
+                    self.PcdValueDict[p[0].strip()] = p[2].strip()
                     self.Logger.debug("Found a Pcd in a Module Override section: %s" % p[0].strip())
 
             else:
@@ -173,6 +194,7 @@ class DscParser(HashFileParser):
                 # should be a pcd statement
                 p = line_resolved.partition('|')
                 self.Pcds.append(p[0].strip())
+                self.PcdValueDict[p[0].strip()] = p[2].strip()
                 self.Logger.debug("Found a Pcd in a PCD section: %s" % p[0].strip())
             return (line_resolved, [], None)
         else:
@@ -305,6 +327,136 @@ class DscParser(HashFileParser):
                 if not self._no_fail_mode:
                     raise
 
+    def _parse_libraries(self):
+        """Builds a lookup table of all possible library instances depending on scope.
+
+        The following is the key/value pair:
+        key: The library class name with the scope appended. Examples below:
+            $(LIB_NAME).$(ARCH).$(MODULE_TYPE)
+            $(LIB_NAME).common.$(MODULE_TYPE)
+            $(LIB_NAME).$(ARCH)
+            $(LIB_NAME).common
+        """
+        current_scope = []
+        for line in self.Lines:
+            current_scope = self._get_current_scope(current_scope, line.lower(), self.SECTION_LIBRARY.lower())
+
+            # The current section is not SECTION_LIBRARY, so we have no valid scopes. continue to next line.
+            if not current_scope:
+                continue
+
+            # This line is starting a new section with a new scope. Start reading the new line
+            if self.SECTION_REGEX.match(line):
+                continue
+
+            if len(line.split("|")) != 2:
+                logging.debug("Unexpected Line in Library Section:")
+                logging.debug(f"  {line}")
+                continue
+
+            # We are in a valid section, so lets parse the line and add it to our dictionary.
+            lib, instance = tuple(line.split("|"))
+            for scope in current_scope:
+                key = f"{scope.strip()}.{lib.strip()}".lower()
+                value = instance.strip()
+                self.ScopedLibraryDict[key] = value
+
+        return
+
+    def _parse_components(self):
+        current_scope = []
+        lines = iter(self.Lines)
+
+        try:
+            while True:
+                line = next(lines)
+
+                current_scope = self._get_current_scope(current_scope, line.lower(), self.SECTION_COMPONENT)
+                library_override_dict = {"NULL": []}
+
+                # The current section is not SECTION_COMPONENT, so we have no valid scopes. continue to next line.
+                if not current_scope:
+                    continue
+
+                # This line is starting a new section with a new scope. Start reading the new line
+                if self.SECTION_REGEX.match(line.lower()):
+                    continue
+
+                # This component has overrides we need to handle
+                if line.strip().endswith("{"):
+                    line = str(line)
+                    logging.debug(f"Building Library Override Dictionary for Component: {line.strip(' {')}")
+                    library_override_dict = self._build_library_override_dictionary(lines)
+
+                for scope in current_scope:
+                    # Components without a specific scope (common or empty) are added to all current scopes
+                    if "common" in current_scope[0]:
+                        for arch in self.InputVars.get("TARGET_ARCH", "").split(" "):
+                            scope = current_scope[0].replace("common", arch).lower()
+                            self.Components.append((line.strip(" {"), scope, library_override_dict))
+                    else:
+                        self.Components.append((line.strip(" {"), current_scope[0].lower(), library_override_dict))
+
+        except StopIteration:
+            return
+
+    def _get_current_scope(self, scope_list: list[str], line, section_type: str) -> list[str]:
+        """Returns the list of scopes that this line is in, as long as the section_type is correct.
+
+        Scopes can be different depending on the section type. Component sections can only
+        contain a single scope, but library sections can contain multiple scopes.
+
+        !!! warning
+            The returned list of scopes does not include the section type.
+        """
+        match = self.SECTION_REGEX.match(line)
+
+        # If the line is not a section header, return the old section
+        if not match:
+            return scope_list
+
+        # If the line is a section header, but not the correct section type, return []
+        elif not match.group().startswith(f"[{section_type}"):
+            return []
+
+        # The line must be a section header and of the correct section type. Return it
+        current_section = []
+        section_list = match.group().strip("[]").split(",")
+
+        for section in section_list:
+            # Remove the section type and strip the leftover '.'. If it's empty after that, then it is actually "common"
+            section = section.replace(section_type, "").replace("Common", "common").strip().lstrip(".")
+            current_section.append(section or "common")
+        return current_section
+
+    def _build_library_override_dictionary(self, lines):
+        library_override_dictionary = {"NULL": []}
+        section = ""
+
+        for line in lines:
+            l_line = line.lower().strip()
+
+            if l_line == "}":
+                break
+
+            if self.OVERRIDE_REGEX.match(l_line):
+                if l_line == f"<{self.SECTION_LIBRARY}>":
+                    section = self.SECTION_LIBRARY
+                else: # Add more sections here if needed
+                    section = ""
+                continue
+
+            if section == self.SECTION_LIBRARY:
+                logging.debug(f"  Library Section Override: {line}")
+                lib, instance = map(str.strip, line.split("|"))
+                lib = lib.lower()
+
+                if lib == "null":
+                    library_override_dictionary["NULL"].append(instance)
+                else:
+                    library_override_dictionary[lib] = instance
+        return library_override_dictionary
+
     def SetNoFailMode(self, enabled=True):
         """The parser won't throw exceptions when this is turned on.
 
@@ -335,6 +487,9 @@ class DscParser(HashFileParser):
         self._PushTargetFile(sp)
         self.__ProcessMore(file_lines, file_name=sp)
         f.close()
+
+        self._parse_libraries()
+        self._parse_components()
         self.Parsed = True
 
     def _PushTargetFile(self, targetFile):
