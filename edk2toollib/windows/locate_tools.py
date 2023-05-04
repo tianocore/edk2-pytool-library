@@ -217,8 +217,8 @@ def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_versi
         if popen.wait() != 0:
             stderr = stderr.decode("mbcs")
             if stderr.startswith("The input line is too long"):
-                stderr = ".bat cmd can not handle args greater than 8191 chars; your total ENV var len exceeds 8191."\
-                         " Reduce the total length of your ENV variables to resolve this (Typically your PATH is "\
+                stderr = ".bat cmd can not handle args greater than 8191 chars; your total ENV var len exceeds 8191. "\
+                         "Reduce the total length of your ENV variables to resolve this (Typically your PATH is "\
                          "too long)."
             logging.error(stderr)
             raise Exception(stderr)
