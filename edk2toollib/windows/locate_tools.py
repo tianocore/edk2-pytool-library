@@ -205,8 +205,8 @@ def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_versi
 
     if len(os.environ['PATH']) > 8191:
         w = "Win32 Command prompt ignores any environment variables longer then 8191 characters, but your path is "\
-        f"{len(os.environ['PATH'])} characters. Due to this, PATH will not be used when searching for "\
-        f"[{interesting}]. This could result in missing keys."
+            f"{len(os.environ['PATH'])} characters. Due to this, PATH will not be used when searching for "\
+            f"[{interesting}]. This could result in missing keys."
         logging.warning(w)
 
     vcvarsall_path = os.path.join(vs_path, "VC", "Auxiliary", "Build", "vcvarsall.bat")
@@ -218,7 +218,8 @@ def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_versi
             stderr = stderr.decode("mbcs")
             if stderr.startswith("The input line is too long"):
                 stderr = ".bat cmd can not handle args greater than 8191 chars; your total ENV var len exceeds 8191."\
-                " Reduce the total length of your ENV variables to resolve this (Typically your PATH is too long)."
+                         " Reduce the total length of your ENV variables to resolve this (Typically your PATH is "\
+                         "too long)."
             logging.error(stderr)
             raise Exception(stderr)
         stdout = stdout.decode("mbcs")
