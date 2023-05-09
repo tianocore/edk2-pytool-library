@@ -129,7 +129,7 @@ details.
 [![docs]][_docs]
 
 Documentation for the most recent release of edk2-pytool-library is hosted on
-[tianocore.org/edk2-pytool-library](https://www.tianocore.org/edk2-pytool-library/)]).
+[tianocore.org/edk2-pytool-library](https://www.tianocore.org/edk2-pytool-library/).
 Raw documentation is located in the ```docs/``` folder and is split into two
 separate categories. The first is located at ```docs/user/``` and is
 documentation and API references for those that are using this package in their
@@ -137,7 +137,7 @@ own project. Users can generate a local copy of the documentation by executing t
 following command from the root of the project:
 
 ```cmd
-pip install --upgrade -r .\docs\user\requirements.txt
+pip install --upgrade -e[docs]
 mkdocs serve
 ```
 
