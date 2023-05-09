@@ -1,3 +1,0 @@
-[run]
-include = edk2toollib/*
-omit = edk2toollib/tests/*
