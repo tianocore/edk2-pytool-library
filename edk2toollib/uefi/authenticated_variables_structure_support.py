@@ -685,12 +685,12 @@ class EfiSignatureDatabase(object):
         Returns:
             (Tuple[EfiSignatureDatabase, EfiSignatureDatabase]): (canonical, duplicates)
 
-        NOTE:
-        canonical is an EfiSignatureDatabase where EfiSignatureLists are merged (where possible),
-            deduplicated, & sorted, and the EfiSignatureData elements are also deduplicated & sorted
-        duplicates is an EfiSignatureDatabase with EfiSignatureLists containing any duplicated
-            EfiSignatureData entries (only the data contents are checked for effective equality,
-            signature owner is ignored)
+        !!! note
+            canonical is an EfiSignatureDatabase where EfiSignatureLists are merged (where possible),
+                deduplicated, & sorted, and the EfiSignatureData elements are also deduplicated & sorted
+            duplicates is an EfiSignatureDatabase with EfiSignatureLists containing any duplicated
+                EfiSignatureData entries (only the data contents are checked for effective equality,
+                signature owner is ignored)
         """
         # First group EFI_SIGNATURE_LISTS by type, merging them where possible
 
