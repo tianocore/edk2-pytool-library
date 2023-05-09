@@ -4,4 +4,17 @@ exclude *.txt
 exclude .flake8
 exclude .coveragerc
 exclude .gitignore
+exclude .cspell.json
+exclude .markdownlint.yaml
+exclude BasicDevTests.py
+exclude ConfirmVersionAndTag.py
+exclude MANIFEST.in
+exclude .vscode
+prune docs
+prune tests.unit
+prune .githooks
+prune .github
+prune edk2_pytool_library.egg-info
+prune azure-pipelines
+
 include edk2toollib/bin/vswhere.exe
