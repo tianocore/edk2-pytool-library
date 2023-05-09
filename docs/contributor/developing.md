@@ -33,25 +33,19 @@
 
    6. change working directory to the root of the cloned repository.
 
-3. Install development dependencies into this virtual environment
-
-    ``` cmd
-    pip install --upgrade -r requirements.txt
-    ```
-
-4. Uninstall any copy of edk2-pytool-library
+3. Uninstall any copy of edk2-pytool-library
 
     ``` cmd
     pip uninstall edk2-pytool-library
     ```
 
-5. Install from local source (run command from root of repo)
+4. Install from local source (run command from root of repo)
 
     ``` cmd
-    pip install -e .
+    pip install -e .[dev]
     ```
 
-6. To support spell checking / validation NodeJs and cspell are used.
+5. To support spell checking / validation NodeJs and cspell are used.
 
     * Install NodeJS from <https://nodejs.org/en/>
     * Use npm to install cspell.
@@ -64,7 +58,7 @@
       * <https://github.com/streetsidesoftware/cspell>
       * <https://www.npmjs.com/package/cspell>
 
-7. To support linting the markdown files NodeJs and markdownlint are used.
+6. To support linting the markdown files NodeJs and markdownlint are used.
 
     * Install NodeJS from <https://nodejs.org/en/>
     * Use npm to install markdownlint-cli.
@@ -148,7 +142,7 @@ The following command will enable this pre-commit to prior to each commit. If it
 issues it will fail to commit until they are fixed.
 
 ```bash
-pre-commit install -c githooks/basic-pre-commit-config.yaml
+pre-commit install -c .githooks/basic-pre-commit-config.yaml
 ```
 
 #### Running across the entire repository (Manually)
@@ -156,7 +150,7 @@ pre-commit install -c githooks/basic-pre-commit-config.yaml
 This step is entirely manual but gives a good example of what the behavior of this tool will be.
 
 ```bash
-pre-commit run --all-files -c githooks/basic-pre-commit-config.yaml
+pre-commit run --all-files -c .githooks/basic-pre-commit-config.yaml
 ```
 
 #### Uninstalling
