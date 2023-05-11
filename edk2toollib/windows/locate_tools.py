@@ -221,7 +221,7 @@ def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_versi
                          "Reduce the total length of your ENV variables to resolve this (Typically your PATH is "\
                          "too long)."
             logging.error(stderr)
-            raise Exception(stderr)
+            raise RuntimeError(stderr)
         stdout = stdout.decode("mbcs")
         for line in stdout.split("\n"):
             if '=' not in line:
