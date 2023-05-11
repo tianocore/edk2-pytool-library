@@ -19,6 +19,12 @@ class Edk2Path(object):
 
     Class that helps perform path operations within an EDK workspace.
 
+    !!! warning
+        Edk2Path performs expensive packages path and package validation when
+        instantiated. If using the same Workspace root and packages path, it is
+        suggested that only a single Edk2Path instance is instantiated and
+        passed to any consumers.
+
     There are two OS environment variables that modify the behavior of this class with
     respect to nested package checking:
         PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES - converts errors about nested
