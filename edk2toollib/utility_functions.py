@@ -430,6 +430,7 @@ def hexdump(byte_list, offset_start=0, out_fs=sys.stdout, **kwargs) -> None:
         byte_list (bytearray): byte array to print
         offset_start (int): offset to print to the side of the hexdump
         out_fs (io.BytesIO): output file stream to print to
+        kwargs (any): keyword arguments expanded below.
 
     Keyword Arguments:
         include_ascii (bool): Option (Default: True) to include ascii
@@ -496,6 +497,7 @@ def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs) -> None:
         buffer_fs (io.BytesIO): buffer file stream to turn into a C style array
         variable_name (str): variable name to use for the C style array
         out_fs (io.StringIO): output filestream to write to
+        kwargs (any): keyword arguments expanded below.
 
     Keyword Arguments:
         data_type (str): The datatype of the array (Default: UINT8)
@@ -507,6 +509,7 @@ def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs) -> None:
         include_ascii (bool): includes a ascii comment to side of hex
         include_length (bool): includes length in the decleration of array
             (ex. "UINT8 TestVariable[13] = {")
+
     Return:
          None
 
