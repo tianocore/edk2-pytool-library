@@ -113,7 +113,7 @@ class GuidList():
 
         try:
             results.append(GuidListEntry(dec.Dict["PACKAGE_NAME"], dec.Dict["PACKAGE_GUID"], filename))
-        except:
+        except Exception:
             logging.warning("Failed to find Package Guid from dec file: " + filename)
         return results
 
@@ -131,6 +131,6 @@ class GuidList():
         inf.ParseFile(filename)
         try:
             return [GuidListEntry(inf.Dict["BASE_NAME"], inf.Dict["FILE_GUID"].upper(), filename)]
-        except:
+        except Exception:
             logging.warning("Failed to find info from INF file: " + filename)
         return []

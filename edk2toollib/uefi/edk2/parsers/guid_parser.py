@@ -99,7 +99,7 @@ class GuidParser():
                 int(guidValueList[9], 16),
                 int(guidValueList[10], 16)
             )
-        except:
+        except Exception:
             return ''
 
     @classmethod
