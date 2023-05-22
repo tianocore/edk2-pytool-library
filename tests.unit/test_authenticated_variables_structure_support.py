@@ -47,14 +47,14 @@ def sha256_esl_builder(initList: []):
 
 
 def x509_esl_builder(initList: []):
-    """
-    Creates an EfiSignatureList of type EFI_CERT_X509 from a tuple containing x509 and signatureowner hex strings
+    """Creates an EfiSignatureList of type EFI_CERT_X509 from a tuple containing x509 and signatureowner hex strings.
 
     initList is [ (hashString1, ownerGuidString1), ...]
-    NOTE: x509 EfiSignatureLists only support 1 data element, so initList should either be empty or 1 element.
+
+    !!! note
+    x509 EfiSignatureLists only support 1 data element, so initList should either be empty or 1 element.
     The interface is a List for consistency with other esl_builders
     """
-
     listSize = len(initList)
 
     if (listSize > 1):

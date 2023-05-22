@@ -1005,7 +1005,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
         Returns:
             (Tuple[EfiSignatureDatabase, EfiSignatureDatabase]): (canonical, duplicates)
 
-        Note:
+        !!! note
         canonical is an EfiSignatureDatabase where EfiSignatureLists are merged (where possible),
             deduplicated, & sorted, and the EfiSignatureData elements are also deduplicated & sorted
         duplicates is an EfiSignatureDatabase with EfiSignatureLists containing any duplicated
