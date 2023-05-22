@@ -68,6 +68,30 @@ class WinCertPkcs1(object):
         else:
             self.decode(filestream)
 
+    @property
+    def HashAlgorithm(self):
+        """Returns the HashAlgorithm."""
+        warn("HashAlgorithm is deprecated. Use hash_algorithm instead.", DeprecationWarning, 2)
+        return self.hash_algorithm
+
+    @HashAlgorithm.setter
+    def HashAlgorithm(self, value):
+        """Sets the HashAlgorithm."""
+        warn("HashAlgorithm is deprecated. Use hash_algorithm instead.", DeprecationWarning, 2)
+        self.hash_algorithm = value
+
+    @property
+    def CertData(self):
+        """Returns the CertData."""
+        warn("CertData is deprecated. Use cert_data instead.", DeprecationWarning, 2)
+        return self.cert_data
+
+    @CertData.setter
+    def CertData(self, value):
+        """Sets the CertData."""
+        warn("CertData is deprecated. Use cert_data instead.", DeprecationWarning, 2)
+        self.cert_data = value
+
     def add_cert_data(self, fs):
         """Adds the Cert Data to the struct.
 
@@ -258,21 +282,25 @@ class WinCertUefiGuid(object):
     @property
     def CertData(self):
         """Returns the CertData."""
+        warn("CertData is deprecated. Use cert_data instead.", DeprecationWarning, 2)
         return self.cert_data
 
     @CertData.setter
     def CertData(self, value):
         """Sets the CertData."""
+        warn("CertData is deprecated. Use cert_data instead.", DeprecationWarning, 2)
         self.cert_data = value
 
     @property
     def CertType(self):
         """Returns the CertType."""
+        warn("CertType is deprecated. Use cert_type instead.", DeprecationWarning, 2)
         return self.cert_type
 
     @CertType.setter
     def CertType(self, value):
         """Sets the CertType."""
+        warn("CertType is deprecated. Use cert_type instead.", DeprecationWarning, 2)
         self.cert_type = value
 
     def get_length(self):
