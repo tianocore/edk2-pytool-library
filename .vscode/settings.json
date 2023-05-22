@@ -1,7 +1,7 @@
 {
   "python.testing.pytestEnabled": true,
   "python.testing.pytestArgs": [
-    "${workspaceRoot}/edk2toollib/tests",
+    "${workspaceRoot}/tests.unit",
   ],
   "python.testing.unittestEnabled": false,
   "[python]": {
