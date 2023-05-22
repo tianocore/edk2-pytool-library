@@ -11,7 +11,7 @@ import io
 
 from edk2toollib.uefi.authenticated_variables_structure_support import EfiTime
 from edk2toollib.uefi.wincert import WinCert, WinCertPkcs1, WinCertUefiGuid
-from edk2toollib.tests.testdata.certificate_blobs import SHA256_FINGERPRINT, TEST_AUTH_VAR_PKCS7
+from testdata.certificate_blobs import SHA256_FINGERPRINT, TEST_AUTH_VAR_PKCS7
 
 
 class WinCertPkcs1Tests(unittest.TestCase):

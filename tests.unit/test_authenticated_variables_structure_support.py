@@ -21,7 +21,7 @@ from edk2toollib.uefi.authenticated_variables_structure_support import \
     EfiVariableAuthentication2, EfiVariableAuthentication2Builder, \
     EfiVariableAttributes
 
-from edk2toollib.tests.testdata.certificate_blobs import \
+from testdata.certificate_blobs import \
     DEBIAN_CERT, UBUNTU_CERT, HASHSTR, DBXFILE, \
     TEST_CERTIFICATE_PFX, TEST_CERTIFICATE_PASS
 
@@ -1009,5 +1009,5 @@ class EfiTimeTest(unittest.TestCase):
             self.assertEqual(efi_time.encode(), efi_time2.encode())
 
 
-if __name__ == "__main__":
-    unittest.main()
+#if __name__ == "__main__":
+#    unittest.main()
