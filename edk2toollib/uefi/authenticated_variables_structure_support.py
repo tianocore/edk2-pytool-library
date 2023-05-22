@@ -1005,7 +1005,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
         Returns:
             (Tuple[EfiSignatureDatabase, EfiSignatureDatabase]): (canonical, duplicates)
 
-        NOTE:
+        Note:
         canonical is an EfiSignatureDatabase where EfiSignatureLists are merged (where possible),
             deduplicated, & sorted, and the EfiSignatureData elements are also deduplicated & sorted
         duplicates is an EfiSignatureDatabase with EfiSignatureLists containing any duplicated
@@ -1429,6 +1429,7 @@ class EfiVariableAuthentication2Builder(object):
             signing_certificate (Certificate): x.509 format public key
             signing_private_key (RSAPrivateKey): x.509 format private key
             additional_certificates (list): list of x.509 format public keys to include
+            **kwargs (Keyword Arguments): see Keyword Arguments
 
         Keyword Arguments:
             hash_algorithm (cryptography.hazmat.primitives.hashes): accepts cryptography.hazmat.primitives.hashes types

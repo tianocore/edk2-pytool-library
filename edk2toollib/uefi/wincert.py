@@ -395,7 +395,7 @@ class WinCertUefiGuid(object):
         """Loads the struct with values from a buffer.
 
         Args:
-            Buffer (obj): Buffer containing serialized data
+            buffer (obj): Buffer containing serialized data
 
         Returns:
             (obj): Any remaining buffer

@@ -429,7 +429,7 @@ def hexdump(byte_list, offset_start=0, outfs=sys.stdout, **kwargs) -> None:
     Args:
         byte_list (bytearray): byte array to print
         offset_start (int): offset to print to the side of the hexdump
-        out_fs (io.BytesIO): output file stream to print to
+        outfs (io.BytesIO): output file stream to print to
         kwargs (any): keyword arguments expanded below.
 
     Keyword Arguments:
