@@ -145,6 +145,18 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
         warn("SignatureOwner is deprecated. Use signature_owner instead.", DeprecationWarning, 2)
         self.signature_owner = value
 
+    @property
+    def SignatureData(self) -> bytes:
+        """Returns the Signature Data."""
+        warn("SignatureData is deprecated. Use signature_data instead.", DeprecationWarning, 2)
+        return self.signature_data
+
+    @SignatureData.setter
+    def SignatureData(self, value: bytes) -> None:
+        """Sets the Signature Data."""
+        warn("SignatureData is deprecated. Use signature_data instead.", DeprecationWarning, 2)
+        self.signature_data = value
+
     def __lt__(self, other):
         """Less-than comparison for sorting. Looks at signature_data only, not signature_owner."""
         return self.signature_data < other.signature_data
@@ -316,6 +328,30 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
             self.signature_data = digest
         else:
             raise ValueError("Invalid Parameters - Not Supported")
+
+    @property
+    def SignatureOwner(self) -> uuid.UUID:
+        """Returns the Signature Owner as a uuid object."""
+        warn("SignatureOwner is deprecated. Use signature_owner instead.", DeprecationWarning, 2)
+        return self.signature_owner
+
+    @SignatureOwner.setter
+    def SignatureOwner(self, value: uuid.UUID) -> None:
+        """Sets the Signature Owner from a uuid object."""
+        warn("SignatureOwner is deprecated. Use signature_owner instead.", DeprecationWarning, 2)
+        self.signature_owner = value
+
+    @property
+    def SignatureData(self) -> bytes:
+        """Returns the Signature Data."""
+        warn("SignatureData is deprecated. Use signature_data instead.", DeprecationWarning, 2)
+        return self.signature_data
+
+    @SignatureData.setter
+    def SignatureData(self, value: bytes) -> None:
+        """Sets the Signature Data."""
+        warn("SignatureData is deprecated. Use signature_data instead.", DeprecationWarning, 2)
+        self.signature_data = value
 
     def decode(self, fs, decodesize: int = -1):
         """Decodes an object from a filestream.
@@ -564,6 +600,18 @@ class EfiSignatureList(CommonUefiStructure):
 
         else:
             self.decode(filestream)
+
+    @property
+    def SignatureData_List(self) -> list:
+        """Returns the Signature Data List."""
+        warn("SignatureData_List is deprecated. Use signature_data_list instead.", DeprecationWarning, 2)
+        return self.signature_data_list
+
+    @SignatureData_List.setter
+    def SignatureData_List(self, value: list) -> None:
+        """Sets the Signature Data List."""
+        warn("SignatureData_List is deprecated. Use signature_data_list instead.", DeprecationWarning, 2)
+        self.signature_data_list = value
 
     def decode(self, fs: BinaryIO):
         """Decodes a filestream and generates the structure.
