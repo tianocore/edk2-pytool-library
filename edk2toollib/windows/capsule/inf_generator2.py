@@ -215,7 +215,7 @@ class InfFirmware(object):
         # build integrity file string, if required.
         if (self.IntegrityFile is not None):
             IntegrityFile = f"{self.IntegrityFile}\n"
-            IntegrityFileReg = f"HKR,,FirmwareIntegrityFilename,,{self.IntegrityFile}\n"
+            IntegrityFileReg = f"HKR,,FirmwareIntegrityFilename,,%13%\\{self.IntegrityFile}\n"
         else:
             IntegrityFile = ""
             IntegrityFileReg = ""
