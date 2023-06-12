@@ -307,7 +307,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
 
         if self.IntegrityFilename != "":
             copy_files.Items.append(self.IntegrityFilename)
-            add_reg.Items.append("HKR,,FirmwareIntegrityFilename,,{file_name}".format(file_name=self.IntegrityFilename))
+            add_reg.Items.append("HKR,,FirmwareIntegrityFilename,,%13%\\{file_name}".format(file_name=self.IntegrityFilename))
             disks_files.Items.append("{file_name} = 1".format(file_name=self.IntegrityFilename))
 
         Content = InfGenerator.TEMPLATE.format(
