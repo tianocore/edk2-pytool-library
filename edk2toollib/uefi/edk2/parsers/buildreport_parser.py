@@ -6,8 +6,8 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Code to help parse an Edk2 Build Report."""
-import os
 import logging
+import os
 from enum import Enum
 
 import edk2toollib.uefi.edk2.path_utilities as pu

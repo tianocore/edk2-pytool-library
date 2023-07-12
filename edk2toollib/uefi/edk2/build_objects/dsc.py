@@ -8,6 +8,7 @@
 """Data model for the EDK II DSC."""
 # There will be some overlap between the objects for DSC files and FDF files
 import collections
+
 DEFAULT_SECTION_TYPE = "COMMON"
 
 

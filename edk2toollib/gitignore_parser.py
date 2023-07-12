@@ -2,11 +2,11 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 """Gitignore parser configured to work for edk2-pytool-library."""
-from pathlib import Path
-from os.path import dirname, abspath
-import re
-import os
 import collections
+import os
+import re
+from os.path import abspath, dirname
+from pathlib import Path
 
 """Original file is from
 https://github.com/mherrmann/gitignore_parser/blob/master/gitignore_parser.py

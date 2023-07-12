@@ -6,11 +6,11 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Contains classes and helper functions to modify variables in a UEFI ROM image."""
-import edk2toollib.uefi.pi_firmware_volume as PiFV
-import edk2toollib.uefi.edk2.variable_format as VF
-
-import os
 import mmap
+import os
+
+import edk2toollib.uefi.edk2.variable_format as VF
+import edk2toollib.uefi.pi_firmware_volume as PiFV
 
 
 class VariableStore(object):

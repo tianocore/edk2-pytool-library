@@ -6,12 +6,12 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Code to help convert Edk2, absolute, and relative file paths."""
-import os
-import logging
-import fnmatch
 import errno
-from typing import Iterable
+import fnmatch
+import logging
+import os
 from pathlib import Path
+from typing import Iterable
 
 
 class Edk2Path(object):

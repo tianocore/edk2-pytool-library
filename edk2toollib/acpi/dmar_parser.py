@@ -9,8 +9,8 @@
 """Module for converting a raw DMAR table into a struct."""
 
 import os
-import sys
 import struct
+import sys
 import xml.etree.ElementTree as ET
 
 DMARParserVersion = '1.01'

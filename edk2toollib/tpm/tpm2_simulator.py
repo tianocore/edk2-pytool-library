@@ -8,8 +8,9 @@
 """Module that contains transportation layer classes for interacting with the TPM 2.0 simulator."""
 import socket
 import struct
-import edk2toollib.tpm.tpm2_stream as t2s
+
 import edk2toollib.tpm.tpm2_defs as t2d
+import edk2toollib.tpm.tpm2_stream as t2s
 
 PLAT_COMMANDS = {
     'TPM_SIGNAL_POWER_ON': 1,

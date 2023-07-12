@@ -8,8 +8,8 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Contains classes to help with parsing INF files that may contain OVERRIDE information."""
-import os
 import datetime
+import os
 
 FORMAT_VERSION_1 = (1, 4)   # Version 1: #OVERRIDE : VERSION | PATH_TO_MODULE | HASH | YYYY-MM-DDThh-mm-ss
 

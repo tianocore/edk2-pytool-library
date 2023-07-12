@@ -11,15 +11,14 @@
 
 import io
 import struct
-import uuid
 import sys
-
+import uuid
 from warnings import warn
-
-from edk2toollib.utility_functions import hexdump
 
 from pyasn1.codec.der.decoder import decode as der_decode
 from pyasn1_modules import rfc2315
+
+from edk2toollib.utility_functions import hexdump
 
 
 class WinCertPkcs1(object):

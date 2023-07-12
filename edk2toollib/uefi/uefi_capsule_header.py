@@ -8,6 +8,7 @@
 
 import struct
 import uuid
+
 from edk2toollib.uefi.fmp_capsule_header import FmpCapsuleHeaderClass
 
 

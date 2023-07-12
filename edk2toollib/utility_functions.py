@@ -7,22 +7,21 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Module containing utility functions to support re-use in python scripts."""
-import re
-import os
-import stat
-import logging
 import datetime
-import time
+import importlib
+import inspect
+import locale
+import logging
+import os
+import platform
+import re
 import shutil
-import threading
+import stat
 import subprocess
 import sys
-import inspect
-import platform
-import importlib
+import threading
+import time
 from collections import namedtuple
-import locale
-
 from warnings import warn
 
 

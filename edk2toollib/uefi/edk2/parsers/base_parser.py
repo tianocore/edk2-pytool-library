@@ -6,10 +6,11 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Code to support parsing EDK2 files."""
-import os
 import logging
-from edk2toollib.uefi.edk2 import path_utilities
+import os
 from warnings import warn
+
+from edk2toollib.uefi.edk2 import path_utilities
 
 
 class BaseParser(object):

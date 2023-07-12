@@ -6,9 +6,10 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Module contains helper classes and functions to work with UEFI Variables."""
-import uuid
 import struct
 import sys
+import uuid
+
 import edk2toollib.uefi.uefi_multi_phase as ump
 
 #

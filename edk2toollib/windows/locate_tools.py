@@ -20,14 +20,16 @@
 
 NOTE: Has the capability to download VSwhere.
 """
-import pkg_resources
-import os
-import logging
 import glob
-import subprocess
-from edk2toollib.utility_functions import RunCmd
-from edk2toollib.utility_functions import GetHostInfo
+import logging
+import os
 import re
+import subprocess
+
+import pkg_resources
+
+from edk2toollib.utility_functions import GetHostInfo, RunCmd
+
 try:
     from StringIO import StringIO
 except ImportError:

@@ -7,8 +7,8 @@
 ##
 """Module for converting a raw IVRS table into a struct."""
 
-import sys
 import struct
+import sys
 import xml.etree.ElementTree as ET
 from enum import IntEnum
 

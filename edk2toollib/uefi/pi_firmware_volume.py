@@ -8,9 +8,9 @@
 ##
 """Module containing helper classes and functions for working with UEFI Fvs."""
 
-import uuid
 import struct
 import sys
+import uuid
 
 #
 # UEFI GUIDs

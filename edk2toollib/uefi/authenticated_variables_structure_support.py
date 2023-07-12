@@ -10,34 +10,29 @@
 Each object can be created and or populated from a file stream.
 Each object can be written to a filesteam as binary and printed to the console in text.
 """
-import logging
 import datetime
-import struct
 import hashlib
-import uuid
 import io
+import logging
+import struct
 import sys
-
-from typing import BinaryIO, List
+import uuid
+from abc import ABC, abstractmethod
 from operator import attrgetter
-
+from typing import BinaryIO, List
 from warnings import warn
 
-from abc import ABC, abstractmethod
-
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
-from cryptography.hazmat.primitives.serialization import pkcs7, Encoding
 from cryptography.hazmat.primitives.hashes import SHA256
+from cryptography.hazmat.primitives.serialization import Encoding, pkcs7
 from cryptography.x509.base import Certificate
-
 from pyasn1.codec.der.decoder import decode as der_decode
 from pyasn1.codec.der.encoder import encode as der_encode
 from pyasn1_modules import rfc2315
 
+from edk2toollib.uefi.uefi_multi_phase import EfiVariableAttributes
 from edk2toollib.uefi.wincert import WinCert, WinCertUefiGuid
 from edk2toollib.utility_functions import hexdump
-from edk2toollib.uefi.uefi_multi_phase import EfiVariableAttributes
-
 
 # spell-checker: ignore decodefs, createfs, deduplicated, deduplication
 
@@ -51,7 +46,6 @@ class CommonUefiStructure(ABC):
 
     def __init__(self):
         """Inits the object."""
-        pass
 
     @abstractmethod
     def write(self, fs: BinaryIO) -> None:
@@ -60,7 +54,6 @@ class CommonUefiStructure(ABC):
         Args:
             fs (BinaryIO): a filestream object to write the object to
         """
-        pass
 
     @abstractmethod
     def decode(self, fs: BinaryIO, decodesize: int) -> None:
@@ -70,7 +63,6 @@ class CommonUefiStructure(ABC):
             fs (BinaryIO | Bytes): a filestream object to read from
             decodesize (int): number of bytes to decode as the object
         """
-        pass
 
     @abstractmethod
     def encode(self) -> bytes:
@@ -79,12 +71,10 @@ class CommonUefiStructure(ABC):
         Returns:
             bytes: a binary object of the object
         """
-        pass
 
     @abstractmethod
     def print(self, outfs=sys.stdout) -> None:
         """Prints the object to the console."""
-        pass
 
 
 class EfiSignatureDataEfiCertX509(CommonUefiStructure):

@@ -12,8 +12,8 @@
 
 Some functionality copied from Tianocore/edk2 basetools.
 """
-import uuid
 import re
+import uuid
 
 
 class GuidParser():

@@ -10,8 +10,9 @@
 
 Based on a supplied inf file and uses the winsdk and command line tool Inf2Cat.exe
 """
-import os
 import logging
+import os
+
 from edk2toollib.utility_functions import RunCmd
 from edk2toollib.windows.locate_tools import FindToolInWinSdk
 

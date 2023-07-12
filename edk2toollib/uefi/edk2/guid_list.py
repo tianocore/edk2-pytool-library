@@ -9,8 +9,8 @@
 """Simple list of GuidListEntry objects parsed from edk2 specific files."""
 import logging
 import os
-from edk2toollib.gitignore_parser import parse_gitignore_lines
 
+from edk2toollib.gitignore_parser import parse_gitignore_lines
 from edk2toollib.uefi.edk2.parsers.dec_parser import DecParser
 from edk2toollib.uefi.edk2.parsers.inf_parser import InfParser
 

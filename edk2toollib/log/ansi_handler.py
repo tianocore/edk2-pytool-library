@@ -12,7 +12,9 @@ Will call into win32 commands as needed when needed
 """
 import logging
 import re
+
 from edk2toollib.utility_functions import GetHostInfo
+
 try:
     # try to import windows types from winDLL
     import ctypes
@@ -34,7 +36,7 @@ except (AttributeError, ImportError):
 else:
     # if we don't raise an exception when we import windows types
     # then execute this but don't catch an exception if raised
-    from ctypes import byref, Structure
+    from ctypes import Structure, byref
 
     # inspired by https://github.com/tartley/colorama/
     class CONSOLE_SCREEN_BUFFER_INFO(Structure):
