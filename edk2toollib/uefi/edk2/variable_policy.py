@@ -7,8 +7,9 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Module containing helper classes and functions to work with Variable Policy structures and substructures."""
-import uuid
 import struct
+import uuid
+
 from edk2toollib.uefi.uefi_multi_phase import EfiVariableAttributes
 
 

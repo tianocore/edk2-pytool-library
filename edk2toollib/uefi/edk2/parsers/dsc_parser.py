@@ -6,8 +6,9 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Code to help parse DSC files."""
-from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 import os
+
+from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 
 
 class DscParser(HashFileParser):

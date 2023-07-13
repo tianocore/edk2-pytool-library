@@ -6,9 +6,9 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Module containing helper classes and functions for working with UEFI FFs."""
-import uuid
 import struct
 import sys
+import uuid
 
 
 class EfiFirmwareFileSystemHeader(object):

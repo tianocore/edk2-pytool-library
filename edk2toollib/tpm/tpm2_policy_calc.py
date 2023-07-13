@@ -7,10 +7,10 @@
 ##
 """A module containing classes used to calculate TPM 2.0 policies."""
 
-import edk2toollib.tpm.tpm2_defs as t2d
 import hashlib
 import struct
 
+import edk2toollib.tpm.tpm2_defs as t2d
 
 # ========================================================================================
 ##

@@ -10,6 +10,7 @@
 
 import struct
 import uuid
+
 from edk2toollib.uefi.fmp_auth_header import FmpAuthHeaderClass
 
 

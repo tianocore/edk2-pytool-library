@@ -10,9 +10,9 @@
 
 Uses supplied information such as Name, Version, ESRT Guid, Rollback, etc.
 """
-import os
-import logging
 import datetime
+import logging
+import os
 import re
 import uuid
 

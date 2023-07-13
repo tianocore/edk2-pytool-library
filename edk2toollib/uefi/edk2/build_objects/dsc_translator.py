@@ -4,18 +4,21 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 """Translates a DSC object into a file."""
-import os
 import logging
-from edk2toollib.uefi.edk2.build_objects.dsc import dsc
-from edk2toollib.uefi.edk2.build_objects.dsc import sku_id
-from edk2toollib.uefi.edk2.build_objects.dsc import dsc_set
-from edk2toollib.uefi.edk2.build_objects.dsc import library_class
-from edk2toollib.uefi.edk2.build_objects.dsc import definition
-from edk2toollib.uefi.edk2.build_objects.dsc import component
-from edk2toollib.uefi.edk2.build_objects.dsc import pcd
-from edk2toollib.uefi.edk2.build_objects.dsc import pcd_typed
-from edk2toollib.uefi.edk2.build_objects.dsc import pcd_variable
-from edk2toollib.uefi.edk2.build_objects.dsc import build_option
+import os
+
+from edk2toollib.uefi.edk2.build_objects.dsc import (
+    build_option,
+    component,
+    definition,
+    dsc,
+    dsc_set,
+    library_class,
+    pcd,
+    pcd_typed,
+    pcd_variable,
+    sku_id,
+)
 
 
 class DscTranslator():

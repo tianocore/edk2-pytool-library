@@ -6,8 +6,8 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Module for handling basic logging by streaming into StringIO."""
-import logging
 import io
+import logging
 
 
 class StringStreamHandler(logging.StreamHandler):

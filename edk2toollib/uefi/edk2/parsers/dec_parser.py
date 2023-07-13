@@ -7,6 +7,7 @@
 ##
 """Code to help parse DEC files."""
 import os
+
 from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 from edk2toollib.uefi.edk2.parsers.guid_parser import GuidParser
 

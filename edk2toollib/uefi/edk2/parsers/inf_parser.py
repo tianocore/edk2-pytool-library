@@ -6,9 +6,9 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Code to help parse EDK2 INF files."""
-from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 import os
 
+from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 
 AllPhases = ["SEC", "PEIM", "PEI_CORE", "DXE_DRIVER", "DXE_CORE", "DXE_RUNTIME_DRIVER", "UEFI_DRIVER",
              "SMM_CORE", "DXE_SMM_DRIVER", "UEFI_APPLICATION"]

@@ -7,8 +7,8 @@
 ##
 """Module contains helper classes for working with FaultTolerant Working block content."""
 import struct
-import uuid
 import sys
+import uuid
 
 #
 # UEFI GUIDs
