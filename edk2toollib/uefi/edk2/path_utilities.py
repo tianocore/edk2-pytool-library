@@ -85,20 +85,19 @@ class Edk2Path(object):
                     # assume current working dir relative.  Will catch invalid dir when checking whole list
                     candidate_package_path_list.append(Path(os.getcwd(), a))
 
-        error = False
+        invalid_pp = []
         for a in candidate_package_path_list[:]:
             if not a.is_dir():
                 self.logger.log(logging.ERROR if error_on_invalid_pp else
                                 logging.WARNING,
                                 f"Invalid package path entry {a.resolve()}")
                 candidate_package_path_list.remove(a)
-                error = True
+                invalid_pp.append(str(a.resolve()))
 
         self.PackagePathList = [str(p) for p in candidate_package_path_list]
 
-        if error and error_on_invalid_pp:
-            raise NotADirectoryError(errno.ENOENT, os.strerror(errno.ENOENT),
-                                     a.resolve())
+        if invalid_pp and error_on_invalid_pp:
+            raise NotADirectoryError(errno.ENOENT, os.strerror(errno.ENOENT), invalid_pp)
 
         #
         # Nested package check - ensure packages do not exist in a linear
