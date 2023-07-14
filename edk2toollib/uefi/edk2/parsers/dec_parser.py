@@ -7,6 +7,7 @@
 ##
 """Code to help parse DEC files."""
 import os
+import re
 
 from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 from edk2toollib.uefi.edk2.parsers.guid_parser import GuidParser
@@ -123,7 +124,11 @@ class PcdDeclarationEntry():
         """Parses the PcdDeclaration Entry for one PCD."""
         sp = rawtext.partition(".")
         self.token_space_name = sp[0].strip()
-        op = sp[2].split("|")
+
+        # Regular expression pattern to match the symbol '|' that is not inside quotes
+        pattern = r'\|(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)'
+        op = re.split(pattern, sp[2])
+
         # if it's 2 long, we need to check that it's a structured PCD
         if (len(op) == 2 and op[0].count(".") > 0):
             pass

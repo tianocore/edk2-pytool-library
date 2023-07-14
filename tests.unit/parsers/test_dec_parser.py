@@ -7,15 +7,18 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
+import io
 import unittest
 import uuid
-import io
-from edk2toollib.uefi.edk2.parsers.dec_parser import LibraryClassDeclarationEntry
-from edk2toollib.uefi.edk2.parsers.dec_parser import GuidDeclarationEntry
-from edk2toollib.uefi.edk2.parsers.dec_parser import PpiDeclarationEntry
-from edk2toollib.uefi.edk2.parsers.dec_parser import ProtocolDeclarationEntry
-from edk2toollib.uefi.edk2.parsers.dec_parser import PcdDeclarationEntry
-from edk2toollib.uefi.edk2.parsers.dec_parser import DecParser
+
+from edk2toollib.uefi.edk2.parsers.dec_parser import (
+    DecParser,
+    GuidDeclarationEntry,
+    LibraryClassDeclarationEntry,
+    PcdDeclarationEntry,
+    PpiDeclarationEntry,
+    ProtocolDeclarationEntry,
+)
 
 
 class TestGuidDeclarationEntry(unittest.TestCase):
@@ -107,6 +110,22 @@ class TestPcdDeclarationEntry(unittest.TestCase):
         with self.assertRaises(Exception):
             PcdDeclarationEntry("testpkg", SAMPLE_DATA_DECL)
 
+    def test_string_containing_a_pipe(self):
+        SAMPLE_DATA_DECL = """gTestTokenSpaceGuid.PcdTestString | L"TestVal_1 | TestVal_2" | VOID* | 0x00010001"""
+        a = PcdDeclarationEntry("testpkg", SAMPLE_DATA_DECL)
+        self.assertEqual(a.token_space_name, "gTestTokenSpaceGuid")
+        self.assertEqual(a.name, "PcdTestString")
+        self.assertEqual(a.default_value, "L\"TestVal_1 | TestVal_2\"")
+        self.assertEqual(a.type, "VOID*")
+        self.assertEqual(a.id, "0x00010001")
+
+        SAMPLE_DATA_DECL = """gTestTokenSpaceGuid.PcdTestString | L'TestVal_1 | TestVal_2' | VOID* | 0x00010001"""
+        a = PcdDeclarationEntry("testpkg", SAMPLE_DATA_DECL)
+        self.assertEqual(a.token_space_name, "gTestTokenSpaceGuid")
+        self.assertEqual(a.name, "PcdTestString")
+        self.assertEqual(a.default_value, "L'TestVal_1 | TestVal_2'")
+        self.assertEqual(a.type, "VOID*")
+        self.assertEqual(a.id, "0x00010001")
 
 class TestDecParser(unittest.TestCase):
 
