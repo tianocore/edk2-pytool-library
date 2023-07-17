@@ -61,9 +61,9 @@ class TPM2_COMMAND_HEADER(Tpm2StreamElement):
     """Tpm2 Command header.
 
     Attributes:
-        tag
-        code
-        size
+        tag: The Tag
+        code: The Code
+        size: The size of the code
     """
     def __init__(self, tag: str, size: str, code: str) -> None:
         """Init a Tpm2 command."""
