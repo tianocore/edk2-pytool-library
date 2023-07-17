@@ -9,6 +9,7 @@
 import logging
 import os
 import re
+from typing import List, Optional
 
 from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 
@@ -39,7 +40,7 @@ class DscParser(HashFileParser):
     SECTION_REGEX = re.compile(r"\[(.*)\]")
     OVERRIDE_REGEX = re.compile(r"\<(.*)\>")
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Init an empty Parser."""
         super(DscParser, self).__init__('DscParser')
         self.SixMods = []
@@ -66,7 +67,7 @@ class DscParser(HashFileParser):
                 line = line.replace(tokens[1], self.PcdValueDict[tokens[1]])
         return line
 
-    def __ParseLine(self, Line, file_name=None, lineno=None):
+    def __ParseLine(self, Line: str, file_name: Optional[str]=None, lineno: int=None) -> tuple:
         line_stripped = self.StripComment(Line).strip()
         if (len(line_stripped) < 1):
             return ("", [], None)
@@ -187,7 +188,7 @@ class DscParser(HashFileParser):
         else:
             return (line_resolved, [], None)
 
-    def __ParseDefineLine(self, Line):
+    def __ParseDefineLine(self, Line: str) -> tuple:
         line_stripped = self.StripComment(Line).strip()
         if (len(line_stripped) < 1):
             return ("", [])
@@ -251,7 +252,7 @@ class DscParser(HashFileParser):
         else:
             return (line_resolved, [])
 
-    def ParseInfPathLib(self, line):
+    def ParseInfPathLib(self, line: str) -> str:
         """Parses a line with an INF path Lib."""
         if (line.count("|") > 0):
             line_parts = []
@@ -266,11 +267,11 @@ class DscParser(HashFileParser):
         else:
             return line.strip().split()[0]
 
-    def ParseInfPathMod(self, line):
+    def ParseInfPathMod(self, line: str) -> str:
         """Parses a line with an INF path."""
         return line.strip().split()[0].rstrip("{")
 
-    def __ProcessMore(self, lines, file_name=None):
+    def __ProcessMore(self, lines: list, file_name: Optional[str]=None) -> None:
         """Runs after ProcessDefines and does a full parsing of the DSC.
 
         Everything is resolved to a final state
@@ -294,7 +295,7 @@ class DscParser(HashFileParser):
                     self.Logger.warning(f"DSC Parser (No-Fail Mode): {raw_line}")
                     self.Logger.warning(e)
 
-    def __ProcessDefines(self, lines):
+    def __ProcessDefines(self, lines: list) -> None:
         """Goes through a file once to look for [Define] sections.
 
         Only Sections, DEFINE, X = Y, and !includes are resolved
@@ -318,7 +319,7 @@ class DscParser(HashFileParser):
         # Reset the PcdValueDict as this was just to find any Defines.
         self.PcdValueDict = {}
 
-    def _parse_libraries(self):
+    def _parse_libraries(self) -> None:
         """Builds a lookup table of all possible library instances depending on scope.
 
         The following is the key/value pair:
@@ -359,7 +360,7 @@ class DscParser(HashFileParser):
 
         return
 
-    def _parse_components(self):
+    def _parse_components(self) -> None:
         current_scopes = []
         lines = iter(self.Lines)
 
@@ -397,7 +398,7 @@ class DscParser(HashFileParser):
         except StopIteration:
             return
 
-    def _get_current_scope(self, scope_list: list[str], line, section_type: str) -> list[str]:
+    def _get_current_scope(self, scope_list: list[str], line: str, section_type: str) -> list[str]:
         """Returns the list of scopes that this line is in, as long as the section_type is correct.
 
         Scopes can be different depending on the section type. Component sections can only
@@ -426,7 +427,7 @@ class DscParser(HashFileParser):
             current_section.append(section or "common")
         return current_section
 
-    def _build_library_override_dictionary(self, lines):
+    def _build_library_override_dictionary(self, lines: List[str]) -> None:
         library_override_dictionary = {"NULL": []}
         section = ""
 
@@ -457,21 +458,21 @@ class DscParser(HashFileParser):
                     library_override_dictionary[lib] = instance
         return library_override_dictionary
 
-    def SetNoFailMode(self, enabled=True):
+    def SetNoFailMode(self, enabled: bool=True) -> None:
         """The parser won't throw exceptions when this is turned on.
 
         WARNING: This can result in some weird behavior
         """
         self._no_fail_mode = enabled
 
-    def ResetParserState(self):
+    def ResetParserState(self) -> None:
         """Resets the parser."""
         #
         # add more DSC parser based state reset here, if necessary
         #
         super(DscParser, self).ResetParserState()
 
-    def ParseFile(self, filepath):
+    def ParseFile(self, filepath: str) -> None:
         """Parses the DSC file at the provided path."""
         self.Logger.debug("Parsing file: %s" % filepath)
         sp = self.FindPath(filepath)
@@ -492,34 +493,34 @@ class DscParser(HashFileParser):
         self._parse_components()
         self.Parsed = True
 
-    def _PushTargetFile(self, targetFile):
+    def _PushTargetFile(self, targetFile: str) -> None:
         self.TargetFilePath = os.path.abspath(targetFile)
         self._dsc_file_paths.add(self.TargetFilePath)
 
-    def GetMods(self):
+    def GetMods(self) -> list:
         """Returns a list with all Mods."""
         return self.ThreeMods + self.SixMods
 
-    def GetModsEnhanced(self):
+    def GetModsEnhanced(self) -> list:
         """Returns a list with all ModsEnhanced."""
         return self.ThreeModsEnhanced + self.SixModsEnhanced
 
-    def GetLibs(self):
+    def GetLibs(self) -> list:
         """Returns a list with all Libs."""
         return self.Libs
 
-    def GetLibsEnhanced(self):
+    def GetLibsEnhanced(self) -> list:
         """Returns a list with all LibsEnhanced."""
         return self.LibsEnhanced
 
-    def GetAllDscPaths(self):
+    def GetAllDscPaths(self) -> set:
         """Returns a list with all the paths that this DSC uses (the base file and any includes).
 
         They are not all guaranteed to be DSC files
         """
         return self._dsc_file_paths
 
-    def RegisterPcds(self, line):
+    def RegisterPcds(self, line: str) -> None:
         """Reads the line and registers any PCDs found."""
         if ("tokenspaceguid" in line.lower() and
             line.count('|') > 0 and

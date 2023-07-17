@@ -15,7 +15,7 @@ import errno
 import logging
 import os
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Tuple
 
 
 class Edk2Path(object):
@@ -36,8 +36,8 @@ class Edk2Path(object):
         passed to any consumers.
     """
 
-    def __init__(self, ws: str, package_path_list: Iterable[str],
-                 error_on_invalid_pp: bool = True):
+    def __init__(self, ws: os.PathLike, package_path_list: Iterable[os.PathLike],
+                 error_on_invalid_pp: bool = True) -> None:
         """Constructor.
 
         Args:
@@ -142,7 +142,7 @@ class Edk2Path(object):
         """List of package paths as strings."""
         return [str(p) for p in self._package_path_list]
 
-    def GetEdk2RelativePathFromAbsolutePath(self, *abspath: str) -> str:
+    def GetEdk2RelativePathFromAbsolutePath(self, *abspath: Tuple[str, ...]) -> str:
         """Transforms an absolute path to an edk2 path relative to the workspace or a packages path.
 
         Args:
@@ -199,7 +199,9 @@ class Edk2Path(object):
         self.logger.error(f'AbsolutePath: {abspath}')
         return None
 
-    def GetAbsolutePathOnThisSystemFromEdk2RelativePath(self, *relpath: str, log_errors: Optional[bool]=True) -> str:
+    def GetAbsolutePathOnThisSystemFromEdk2RelativePath(
+        self, *relpath: Tuple[str, ...], log_errors: Optional[bool]=True
+    ) -> str:
         """Given a relative path return an absolute path to the file in this workspace.
 
         Args:

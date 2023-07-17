@@ -8,6 +8,7 @@
 
 import struct
 import uuid
+from io import BytesIO
 
 from edk2toollib.uefi.fmp_capsule_header import FmpCapsuleHeaderClass
 
@@ -25,7 +26,7 @@ class UefiCapsuleHeaderClass (object):
         PersistAcrossReset (bool):  Flag pulled from OemFlags
         PopulateSystemTable (bool): Flag pulled from OemFlags
         InitiateReset (bool):       Flag pulled from OemFlags
-        Payload (str):              string representing packed data as bytes (i.e. b'\x01\x00\x03')
+        Payload (bytes):              string representing packed data as bytes (i.e. b'\x01\x00\x03')
         FmpCapsuleHeader (FmpCapsuleHeaderClass): Fmp Capsule Header
 
     ```
@@ -50,7 +51,7 @@ class UefiCapsuleHeaderClass (object):
     _CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE = 0x00020000
     _CAPSULE_FLAGS_INITIATE_RESET = 0x00040000
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Inits an empty object."""
         self.CapsuleGuid = self.EFI_FIRMWARE_MANAGEMENT_CAPSULE_ID_GUID
         self.HeaderSize = self._StructSize
@@ -62,11 +63,11 @@ class UefiCapsuleHeaderClass (object):
         self.Payload = b''
         self.FmpCapsuleHeader = None
 
-    def Encode(self):
+    def Encode(self) -> bytes:
         r"""Serializes the Header + payload.
 
         Returns:
-            (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
+            (bytes): string representing packed data as bytes (i.e. b'\x01\x00\x03')
         """
         Flags = self.OemFlags
         if self.PersistAcrossReset:
@@ -93,7 +94,7 @@ class UefiCapsuleHeaderClass (object):
 
         return UefiCapsuleHeader + self.Payload
 
-    def Decode(self, Buffer):
+    def Decode(self, Buffer: BytesIO) -> bytes:
         """Loads data into the Object by parsing a buffer.
 
         Args:
@@ -131,7 +132,7 @@ class UefiCapsuleHeaderClass (object):
 
         return self.Payload
 
-    def DumpInfo(self):
+    def DumpInfo(self) -> None:
         """Prints payload header information."""
         Flags = self.OemFlags
         if self.PersistAcrossReset:

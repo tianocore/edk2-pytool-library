@@ -9,6 +9,7 @@
 import struct
 import sys
 import uuid
+from typing import IO
 
 #
 # UEFI GUIDs
@@ -32,7 +33,7 @@ class EfiFtwWorkingBlockHeader(object):
         UINT64    WriteQueueSize;
     } EFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER;
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes an empty object."""
         self.StructString = "=16sLBBBBQ"  # spell-checker: disable-line
         self.Signature = None
@@ -43,7 +44,7 @@ class EfiFtwWorkingBlockHeader(object):
         self.Reserved3 = None
         self.WriteQueueSize = None
 
-    def load_from_file(self, file):
+    def load_from_file(self, file: IO) -> 'EfiFtwWorkingBlockHeader':
         """Loads an EFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER from a file.
 
         Args:
@@ -77,7 +78,7 @@ class EfiFtwWorkingBlockHeader(object):
 
         return self
 
-    def serialize(self):
+    def serialize(self) -> bytes:
         r"""Serializes the EFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER.
 
         Returns:
@@ -103,7 +104,7 @@ class EfiFtwWriteHeader(object):
         UINT64    PrivateDataSize;
     } EFI_FAULT_TOLERANT_WRITE_HEADER;
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes an empty object."""
         self.StructString = "=BBBB16sLQQ"
         self.StatusBits = None
@@ -115,7 +116,7 @@ class EfiFtwWriteHeader(object):
         self.NumberOfWrites = None
         self.PrivateDataSize = None
 
-    def load_from_file(self, file):
+    def load_from_file(self, file: IO) -> 'EfiFtwWriteHeader':
         """Loads an EFI_FAULT_TOLERANT_WRITE_HEADER from a file.
 
         Args:
@@ -137,7 +138,7 @@ class EfiFtwWriteHeader(object):
 
         return self
 
-    def serialize(self):
+    def serialize(self) -> bytes:
         r"""Serializes the EFI_FAULT_TOLERANT_WRITE_HEADER.
 
         Returns:
@@ -164,7 +165,7 @@ class EfiFtwWriteRecord(object):
         INT64   RelativeOffset;
     } EFI_FAULT_TOLERANT_WRITE_RECORD;
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes an empty object."""
         self.StructString = "=BBBBLQQQQ"  # spell-checker: disable-line
         self.StatusBits = None
@@ -177,7 +178,7 @@ class EfiFtwWriteRecord(object):
         self.Length = None
         self.RelativeOffset = None
 
-    def load_from_file(self, file):
+    def load_from_file(self, file: IO) -> 'EfiFtwWriteRecord':
         """Loads an EFI_FAULT_TOLERANT_WRITE_RECORD from a file.
 
         Args:
@@ -198,7 +199,7 @@ class EfiFtwWriteRecord(object):
 
         return self
 
-    def serialize(self):
+    def serialize(self) -> bytes:
         r"""Serializes the EFI_FAULT_TOLERANT_WRITE_RECORD.
 
         Returns:

@@ -88,9 +88,16 @@ class Rule(object):
     StructFormat = '<IIII'
     StructSize = struct.calcsize(StructFormat)
 
-    def __init__(self, RootKey: int, SubKeyName: str, ValueName: str,
-                 Value, OffsetToSubKeyName: int = 0, OffsetToValueName: int = 0,
-                 OffsetToValue: int = 0) -> None:
+    def __init__(
+        self,
+        RootKey: int,
+        SubKeyName: str,
+        ValueName: str,
+        Value: 'PolicyValue',
+        OffsetToSubKeyName: int = 0,
+        OffsetToValueName: int = 0,
+        OffsetToValue: int = 0
+) -> None:
         """Inits the Rule Object.
 
         Args:
@@ -110,7 +117,7 @@ class Rule(object):
         self.ValueName = ValueName
         self.Value = PolicyValue(Value.valueType, Value.value)
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: 'Rule') -> bool:
         """Rule table offsets are not considered for equivalency, only the actual key/value."""
         if (self.RootKey == other.RootKey
             and self.SubKeyName == other.SubKeyName
@@ -121,7 +128,7 @@ class Rule(object):
             return False
 
     @classmethod
-    def FromFsAndVtOffset(cls, fs: BinaryIO, vtOffset: int):
+    def FromFsAndVtOffset(cls: 'Rule', fs: BinaryIO, vtOffset: int) -> 'Rule':
         """Construct a Rule initialized from a deserialized stream and vtOffset.
 
         Args:
@@ -147,7 +154,7 @@ class Rule(object):
                    SubKeyName=SubKeyName, ValueName=ValueName, Value=Value)
 
     @classmethod
-    def FromFsAndVtBytes(cls, fs: BinaryIO, vt: bytes):
+    def FromFsAndVtBytes(cls: 'Rule', fs: BinaryIO, vt: bytes) -> 'Rule':
         """Contstruct a Rule initialized from a deserialized stream and value table.
 
         Args:
@@ -169,7 +176,7 @@ class Rule(object):
                    OffsetToValueName=OffsetToValueName, OffsetToValue=OffsetToValue,
                    SubKeyName=SubKeyName, ValueName=ValueName, Value=Value)
 
-    def Print(self, prefix: str = ''):
+    def Print(self, prefix: str = '') -> None:
         """Prints the contents of the Rule.
 
         Args:
@@ -184,7 +191,7 @@ class Rule(object):
         self.ValueName.Print(prefix=prefix + '  ValueName ')
         self.Value.Print(prefix=prefix + '  ')
 
-    def Serialize(self, ruleOut: bytearray, valueOut: bytearray, offsetInVT: int):
+    def Serialize(self, ruleOut: bytearray, valueOut: bytearray, offsetInVT: int) -> None:
         """Serialize Rule.
 
         Args:
@@ -235,7 +242,7 @@ class PolicyValueType():
                            POLICY_VALUE_TYPE_QWORD,
                            POLICY_VALUE_TYPE_STRING}
 
-    def __init__(self, Type):
+    def __init__(self, Type: int) -> None:
         """Inits the PolicyValueType.
 
         Args:
@@ -254,7 +261,7 @@ class PolicyValueType():
         self.vt = Type
 
     @classmethod
-    def FromFileStream(cls, fs: BinaryIO, fsOffset: int = None):
+    def FromFileStream(cls: 'PolicyValueType', fs: BinaryIO, fsOffset: int = None) -> 'PolicyValueType':
         """Load a Policy Value Type from a file stream.
 
         NOTE: if fsOffset is not specified, stream fs position is at beginning of struct.
@@ -269,7 +276,7 @@ class PolicyValueType():
         return cls(valueType)
 
     @classmethod
-    def FromBytes(cls, b: bytes, bOffset: int = 0):
+    def FromBytes(cls: 'PolicyValueType', b: bytes, bOffset: int = 0) -> 'PolicyValueType':
         """Inits a PolicyStringValue from a filestream.
 
         Args:
@@ -279,7 +286,7 @@ class PolicyValueType():
         valueType = struct.unpack_from(cls.StructFormat, b, bOffset)[0]
         return cls(valueType)
 
-    def Print(self, prefix: str = ''):
+    def Print(self, prefix: str = '') -> None:
         """Prints the contents of the Policy String Type.
 
         Args:
@@ -287,7 +294,7 @@ class PolicyValueType():
         """
         print('%s%s%s' % (prefix, 'ValueType: ', self.vt))
 
-    def Serialize(self, valueOut: bytearray):
+    def Serialize(self, valueOut: bytearray) -> None:
         """Serialize the Policy String Type.
 
         Args:
@@ -295,7 +302,7 @@ class PolicyValueType():
         """
         valueOut += struct.pack(self.StructFormat, self.vt)
 
-    def Get(self):
+    def Get(self: 'PolicyValueType') -> int:
         """Returns the value type."""
         return self.vt
 
@@ -319,7 +326,7 @@ class PolicyString():
     StringLengthFormat = '<H'
     StringLengthSize = struct.calcsize(StringLengthFormat)
 
-    def __init__(self, String: str = None):
+    def __init__(self, String: str = None) -> None:
         """Inits PolicyStructure.
 
         Args:
@@ -332,7 +339,7 @@ class PolicyString():
         return
 
     @classmethod
-    def FromFileStream(cls, fs: BinaryIO, fsOffset: int = None):
+    def FromFileStream(cls: 'PolicyString', fs: BinaryIO, fsOffset: int = None) -> 'PolicyString':
         """Inits a PolicyString from a file stream.
 
         Args:
@@ -352,7 +359,7 @@ class PolicyString():
         return cls(String=LocalString)
 
     @classmethod
-    def FromBytes(cls, b: bytes, bOffset: int = 0):
+    def FromBytes(cls: 'PolicyString', b: bytes, bOffset: int = 0) -> 'PolicyString':
         """Inits a PolicyString from a filestream.
 
         Args:
@@ -370,7 +377,7 @@ class PolicyString():
             raise Exception('String length mismatch')
         return cls(String=LocalString)
 
-    def Print(self, prefix: str = ''):
+    def Print(self, prefix: str = '') -> None:
         """Prints the contents of the Policy String.
 
         Args:
@@ -378,7 +385,7 @@ class PolicyString():
         """
         print('%s%s%s' % (prefix, 'String:  ', self.String))
 
-    def Serialize(self, valueOut: bytearray):
+    def Serialize(self, valueOut: bytearray) -> None:
         """Serialize the Policy String.
 
         Args:
@@ -400,7 +407,7 @@ class PolicyValue():
         valueType (PolicyValueType): Policy Value Type
         value (struct): Policy String, dword, qword
     """
-    def __init__(self, valueType, value):
+    def __init__(self, valueType: PolicyValueType, value: str) -> None:
         """Inits a Policy Value.
 
         Args:
@@ -411,7 +418,7 @@ class PolicyValue():
         self.value = value
 
     @classmethod
-    def FromFileStream(cls, fs: BinaryIO, fsOffset: int = None):
+    def FromFileStream(cls: 'PolicyValue', fs: BinaryIO, fsOffset: int = None) -> 'PolicyValue':
         """Load a Policy Value from a file stream.
 
         NOTE: if fsOffset is not specified, stream fs position is at beginning of struct.
@@ -442,7 +449,7 @@ class PolicyValue():
         return cls(valueType=valueType, value=value)
 
     @classmethod
-    def FromBytes(cls, b: bytes, bOffset: int = 0):
+    def FromBytes(cls: 'PolicyValue', b: bytes, bOffset: int = 0) -> 'PolicyValue':
         """Load a Policy Value from bytes.
 
         Args:
@@ -465,11 +472,11 @@ class PolicyValue():
 
         return cls(valueType=valueType, value=value)
 
-    def GetValueType(self):
+    def GetValueType(self) -> str:
         """Returns the value type."""
         return self.valueType
 
-    def Print(self, prefix: str = ''):
+    def Print(self, prefix: str = '') -> None:
         """Prints the contents of the object.
 
         Args:
@@ -483,7 +490,7 @@ class PolicyValue():
         else:
             print('%s%s"%s"' % (prefix, 'Value:  ', str(self.value)))
 
-    def Serialize(self, valueOut: bytearray):
+    def Serialize(self, valueOut: bytearray) -> None:
         """Serializes the object to valueOut.
 
         Args:
@@ -519,7 +526,7 @@ class Reserved2(object):
     StructFormat = '<III'
     StructSize = struct.calcsize(StructFormat)
 
-    def __init__(self, fs: BinaryIO = None, vtOffset: int = 0):
+    def __init__(self, fs: BinaryIO = None, vtOffset: int = 0) -> None:
         """Initializes the Reserved2 structure.
 
         Args:
@@ -537,7 +544,7 @@ class Reserved2(object):
         if (STRICT is True):
             raise Exception(errorMessage)
 
-    def PopulateFromFileStream(self, fs: BinaryIO, vtOffset: int = 0):
+    def PopulateFromFileStream(self, fs: BinaryIO, vtOffset: int = 0) -> None:
         """Initializes the Reserved2 structure from a filestream.
 
         Args:
@@ -558,7 +565,7 @@ class Reserved2(object):
         if (STRICT is True):
             raise Exception(errorMessage)
 
-    def Print(self, prefix: str = ''):
+    def Print(self, prefix: str = '') -> None:
         """Prints the Reserved2 structure.
 
         Args:
@@ -569,7 +576,7 @@ class Reserved2(object):
         print('%s  Element:  %x' % (prefix, self.Element))
         print('%s  ValueOffset:  %x' % (prefix, self.OffsetToValue))
 
-    def Serialize(self, ruleOut: bytearray, valueOut: bytearray = None, offsetInVT: int = 0):
+    def Serialize(self, ruleOut: bytearray, valueOut: bytearray = None, offsetInVT: int = 0) -> None:
         """Serialize Reserved2 rule.
 
         Args:
@@ -628,7 +635,7 @@ class FirmwarePolicy(object):
         FW_POLICY_VALUE_STATE_TBD: "To Be Defined Placeholder"
     }
 
-    def __init__(self, fs: BinaryIO = None):
+    def __init__(self, fs: BinaryIO = None) -> None:
         """Initializes a Firmware Policy object.
 
         Args:
@@ -671,7 +678,7 @@ class FirmwarePolicy(object):
         self.RulesCount += 1
         return True
 
-    def SetDevicePolicy(self, policy: int):
+    def SetDevicePolicy(self, policy: int) -> None:
         """Adds a Rule for the 64-bit policy value bitfield.
 
         NOTE: The "key" is a well-known constant assigned in the body of this method
@@ -688,7 +695,7 @@ class FirmwarePolicy(object):
                     ValueName=ValueName, Value=Value)
         self.AddRule(rule)
 
-    def SetDeviceTarget(self, target: dict):
+    def SetDeviceTarget(self, target: dict) -> None:
         """Sets the device target dictionary.
 
         Args:
@@ -707,7 +714,7 @@ class FirmwarePolicy(object):
                         ValueName=ValueName, Value=Value)
             self.AddRule(rule)
 
-    def SerializeToStream(self, stream: BinaryIO):
+    def SerializeToStream(self, stream: BinaryIO) -> None:
         """Serializes the Firmware Policy to a stream.
 
         Args:
@@ -717,7 +724,7 @@ class FirmwarePolicy(object):
         self.Serialize(output=ba)
         stream.write(ba)
 
-    def Serialize(self, output: bytearray):
+    def Serialize(self, output: bytearray) -> None:
         """Serializes the Firmware Policy to a bytearray.
 
         Args:
@@ -771,7 +778,7 @@ class FirmwarePolicy(object):
         output += serial
         self.ValueTableFromFile = False
 
-    def FromFileStream(self, fs: BinaryIO, parseByBytes: bool = True):
+    def FromFileStream(self, fs: BinaryIO, parseByBytes: bool = True) -> None:
         """Initializes the Firmware Policy from a FileStream.
 
         Args:
@@ -853,7 +860,7 @@ class FirmwarePolicy(object):
                 RegRule = Rule.FromFsAndVtOffset(fs=fs, vtOffset=self.ValueTableOffset)
             self.Rules.append(RegRule)
 
-    def PrintDevicePolicy(self, devicePolicy: int, prefix: str = ''):
+    def PrintDevicePolicy(self, devicePolicy: int, prefix: str = '') -> None:
         """Prints the device policy."""
         prefix = prefix + '    '
         for bit in self.FW_POLICY_VALUE_ACTION_STRINGS.keys():

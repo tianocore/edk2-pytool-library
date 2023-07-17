@@ -10,6 +10,7 @@
 """Module for encoding and decoding EFI_FIRMWARE_IMAGE_AUTHENTICATION with certificate data and payload data."""
 
 import struct
+from typing import IO
 
 from edk2toollib.uefi.edk2.fmp_payload_header import FmpPayloadHeaderClass
 from edk2toollib.uefi.wincert import WinCertUefiGuid
@@ -37,18 +38,18 @@ class FmpAuthHeaderClass (object):
     _MonotonicCountFormat = '<Q'
     _MonotonicCountSize = struct.calcsize(_MonotonicCountFormat)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Inits an empty object."""
         self.MonotonicCount = 0
         self.AuthInfo = WinCertUefiGuid()
         self.Payload = b''
         self.FmpPayloadHeader = None
 
-    def Encode(self):
+    def Encode(self) -> bytes:
         r"""Serializes the Auth header + AuthInfo + Payload/FmpPayloadHeader.
 
         Returns:
-            (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
+            (bytes): string representing packed data as bytes (i.e. b'\x01\x00\x03')
         """
         FmpAuthHeader = struct.pack(
             self._MonotonicCountFormat,
@@ -60,7 +61,7 @@ class FmpAuthHeaderClass (object):
         else:
             return FmpAuthHeader + self.AuthInfo.Encode() + self.Payload
 
-    def Decode(self, Buffer):
+    def Decode(self, Buffer: IO) -> bytes:
         """Loads data into the Object by parsing a buffer.
 
         Args:
@@ -86,7 +87,7 @@ class FmpAuthHeaderClass (object):
             self.FmpPayloadHeader.Decode(self.Payload)
         return self.Payload
 
-    def IsSigned(self, Buffer):
+    def IsSigned(self, Buffer: IO) -> bool:
         """Parses the buffer and returns if the Cert is signed or not.
 
         Returns:
@@ -102,7 +103,7 @@ class FmpAuthHeaderClass (object):
             return False
         return True
 
-    def DumpInfo(self):
+    def DumpInfo(self) -> None:
         """Prints object to console."""
         print('EFI_FIRMWARE_IMAGE_AUTHENTICATION.MonotonicCount                = {MonotonicCount:016X}'
               .format(MonotonicCount=self.MonotonicCount))

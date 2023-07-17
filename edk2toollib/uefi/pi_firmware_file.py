@@ -9,6 +9,7 @@
 import struct
 import sys
 import uuid
+from typing import IO, Self
 
 
 class EfiFirmwareFileSystemHeader(object):
@@ -27,7 +28,7 @@ class EfiFirmwareFileSystemHeader(object):
     } EFI_FFS_FILE_HEADER;
     ```
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """Inits an empty object."""
         self.StructString = "=16sHBBBBBB"  # spell-checker: disable-line
         self.FileSystemGuid = None
@@ -38,11 +39,11 @@ class EfiFirmwareFileSystemHeader(object):
         self.Type = None
         self.State = None
 
-    def get_size(self):
+    def get_size(self) -> int:
         """Returns the size of the header."""
         return self.Size0 + (self.Size1 << 8) + (self.Size2 << 16)
 
-    def load_from_file(self, file):
+    def load_from_file(self, file: IO) -> Self:
         """Loads data into the object from a filestream.
 
         Args:
@@ -67,11 +68,11 @@ class EfiFirmwareFileSystemHeader(object):
 
         return self
 
-    def serialize(self):
+    def serialize(self) -> bytes:
         r"""Serializes the object.
 
         Returns:
-            (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
+            (bytes): string representing packed data as bytes (i.e. b'\x01\x00\x03')
         """
         file_system_guid_bin = self.FileSystemGuid.bytes if sys.byteorder == 'big' else self.FileSystemGuid.bytes_le
         return struct.pack(self.StructString, file_system_guid_bin, self.Checksum,

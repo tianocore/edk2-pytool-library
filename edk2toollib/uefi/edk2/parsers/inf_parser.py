@@ -41,7 +41,7 @@ class InfParser(HashFileParser):
     SECTION_LIBRARY = re.compile(r'libraryclasses(?:\.([^,.\]]+))?[,.\]]', re.IGNORECASE)
     SECTION_SOURCE = re.compile(r'sources(?:\.([^,.\]]+))?[,.\]]', re.IGNORECASE)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Inits an empty parser."""
         HashFileParser.__init__(self, 'ModuleInfParser')
         self.Lines = []
@@ -61,7 +61,7 @@ class InfParser(HashFileParser):
         self.Binaries = []
         self.Path = ""
 
-    def get_libraries(self, arch_list: list[str]):
+    def get_libraries(self, arch_list: list[str]) -> list[str]:
         """Returns a list of libraries depending on the requested archs."""
         libraries = self.ScopedLibraryDict.get("common", []).copy()
 
@@ -69,7 +69,7 @@ class InfParser(HashFileParser):
             libraries = libraries + self.ScopedLibraryDict.get(arch.lower(), []).copy()
         return list(set(libraries))
 
-    def get_sources(self, arch_list: list[str]):
+    def get_sources(self, arch_list: list[str]) -> list[str]:
         """Returns a list of sources depending on the requested archs."""
         sources = self.ScopedSourceDict.get("common", []).copy()
 
@@ -77,7 +77,7 @@ class InfParser(HashFileParser):
             sources = sources + self.ScopedSourceDict.get(arch.lower(), []).copy()
         return list(set(sources))
 
-    def ParseFile(self, filepath):
+    def ParseFile(self, filepath: str) -> None:
         """Parses the INF file provided."""
         self.Logger.debug("Parsing file: %s" % filepath)
         if (not os.path.isabs(filepath)):

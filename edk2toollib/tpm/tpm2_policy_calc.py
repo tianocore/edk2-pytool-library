@@ -9,6 +9,7 @@
 
 import hashlib
 import struct
+from typing import Optional, Union
 
 import edk2toollib.tpm.tpm2_defs as t2d
 
@@ -29,7 +30,7 @@ import edk2toollib.tpm.tpm2_defs as t2d
 
 class PolicyHasher(object):
     """An object used to hash TPM 2.0 policies with a specified hash."""
-    def __init__(self, hash_type):
+    def __init__(self, hash_type: str) -> None:
         """Init the hasher with the specified hash.
 
         Args:
@@ -47,11 +48,11 @@ class PolicyHasher(object):
             'sha384': 48
         }[hash_type]
 
-    def get_size(self):
+    def get_size(self) -> int:
         """Returns the size of the hash."""
         return self.hash_size
 
-    def hash(self, data):
+    def hash(self, data: str) -> bytes:
         """Hashes the data using the specified type."""
         hash_obj = None
         if self.hash_type == 'sha256':
@@ -77,7 +78,7 @@ class PolicyCalculator(object): # noqa
 
 class PolicyTreeOr(object):
     """Object representing an OR junction in a policy tree."""
-    def __init__(self, components):
+    def __init__(self, components: Union['PolicyTreeAnd', 'PolicyTreeOr', 'PolicyTreeSolo']) -> None:
         """Inits the policy tree junction with a list of connected components.
 
         Args:
@@ -93,11 +94,11 @@ class PolicyTreeOr(object):
 
         self.components = components
 
-    def get_type(self):
+    def get_type(self) -> str:
         """Returns the type of junction."""
         return 'or'
 
-    def validate(self):
+    def validate(self) -> bool:
         """Validates all components have the correct attributes."""
         result = True
 
@@ -112,21 +113,21 @@ class PolicyTreeOr(object):
 
         return result
 
-    def get_policy_buffer(self, hash_obj):
+    def get_policy_buffer(self, hash_obj: Union['PolicyTreeAnd', 'PolicyTreeOr', 'PolicyTreeSolo']) -> bytes:
         """Creates and returns a buffer representing the policy."""
         concat_policy_buffer = b'\x00' * hash_obj.get_size()
         concat_policy_buffer += struct.pack(">L", t2d.TPM_CC_PolicyOR)
         concat_policy_buffer += b''.join([component.get_policy(hash_obj) for component in self.components])
         return concat_policy_buffer
 
-    def get_policy(self, hash_obj):
+    def get_policy(self, hash_obj: Union['PolicyTreeAnd', 'PolicyTreeOr', 'PolicyTreeSolo']) -> int:
         """Returns a hashed policy buffer."""
         return hash_obj.hash(self.get_policy_buffer(hash_obj))
 
 
 class PolicyTreeAnd(object):
     """Object representing an AND junction in a policy tree."""
-    def __init__(self, components):
+    def __init__(self, components: list[Union['PolicyTreeAnd', 'PolicyTreeOr', 'PolicyTreeSolo']]) -> None:
         """Inits the policy tree junction with a list of connected components."""
         # ANDs must only be composed of primitives. For simplicity, I guess.
         # Honestly, this has spiralled out of control, but something is better than nothing.
@@ -136,15 +137,16 @@ class PolicyTreeAnd(object):
 
         self.components = components
 
-    def get_type(self):
+    def get_type(self) -> str:
         """Returns the type of junction."""
         return 'and'
 
-    def validate(self): # noqa
+    def validate(self) -> bool:
+        """Validate."""
         # Not sure why don't validate here instead of in the init?
         return True
 
-    def get_policy(self, hash_obj):
+    def get_policy(self, hash_obj: Union['PolicyTreeAnd', 'PolicyTreeOr', 'PolicyTreeSolo']) -> bytes:
         """Returns a hashed policy buffer."""
         current_digest = b'\x00' * hash_obj.get_size()
         for component in self.components:
@@ -155,26 +157,27 @@ class PolicyTreeAnd(object):
 class PolicyTreeSolo(object):
     """This object should only be used to put a single policy claim under an OR."""
 
-    def __init__(self, policy_obj):
+    def __init__(self, policy_obj: Union['PolicyTreeAnd', 'PolicyTreeOr', 'PolicyTreeSolo']) -> None:
         """Inits the policy tree junction."""
         if not hasattr(policy_obj, 'get_buffer_for_digest'):
             raise ValueError("Supplied policy object is missing required functionality!")
 
         self.policy_obj = policy_obj
 
-    def get_type(self):
+    def get_type(self) -> str:
         """Returns the type of junction."""
         return 'solo'
 
-    def validate(self): # noqa
+    def validate(self) -> bool:
+        """Validate."""
         # Not sure why don't validate here instead of in the init?
         return True
 
-    def get_policy_buffer(self, hash_obj):
+    def get_policy_buffer(self, hash_obj: Union['PolicyTreeAnd', 'PolicyTreeOr', 'PolicyTreeSolo']) -> bytes:
         """Creates and returns a buffer representing the policy."""
         return (b'\x00' * hash_obj.get_size()) + self.policy_obj.get_buffer_for_digest()
 
-    def get_policy(self, hash_obj):
+    def get_policy(self, hash_obj: Union['PolicyTreeAnd', 'PolicyTreeOr']) -> int:
         """Returns a hashed policy buffer."""
         return hash_obj.hash(self.get_policy_buffer(hash_obj))
 
@@ -190,7 +193,7 @@ class PolicyTreeSolo(object):
 
 class PolicyLocality(object):
     """Policy Primitive to describe a single assertion to create complex assertions."""
-    def __init__(self, localities):
+    def __init__(self, localities: list[int]) -> None:
         """Init with the requested localities."""
         # Update the bitfield with the requested localities.
         if localities is not None:
@@ -198,11 +201,11 @@ class PolicyLocality(object):
         else:
             self.bitfield = 0b00000000
 
-    def get_bitfield(self):
+    def get_bitfield(self) -> int:
         """Return the bitfield attribute."""
         return self.bitfield
 
-    def calc_bitfield_from_list(self, localities):
+    def calc_bitfield_from_list(self, localities: list[int]) -> int:
         """Calculate the bitfield from a list of localities."""
         bitfield = 0b00000000
 
@@ -230,7 +233,7 @@ class PolicyLocality(object):
 
         return bitfield
 
-    def get_buffer_for_digest(self):
+    def get_buffer_for_digest(self) -> str:
         r"""Serializes the primitive.
 
         Returns:
@@ -242,7 +245,7 @@ class PolicyLocality(object):
 
 class PolicyCommandCode(object):
     """Policy Primitive to describe a Command code."""
-    def __init__(self, command_code_string=None):
+    def __init__(self, command_code_string: Optional[str]=None) -> None:
         """Init with the requested command code string."""
         # Check to make sure that a command_code can be found.
         str_command_code_string = str(command_code_string)
@@ -251,11 +254,11 @@ class PolicyCommandCode(object):
             raise ValueError("Command code '%s' unknown!" % str_command_code_string)
         self.command_code_string = str_command_code_string
 
-    def get_code(self):
+    def get_code(self) -> str:
         """Returns the command_code_string attribute."""
         return self.command_code_string
 
-    def get_buffer_for_digest(self):
+    def get_buffer_for_digest(self) -> str:
         r"""Serializes the primitive.
 
         Returns:

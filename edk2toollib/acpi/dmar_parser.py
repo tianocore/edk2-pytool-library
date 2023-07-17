@@ -12,6 +12,7 @@ import os
 import struct
 import sys
 import xml.etree.ElementTree as ET
+from typing import Optional
 
 DMARParserVersion = '1.01'
 
@@ -26,7 +27,7 @@ class DMARTable(object):
     ANDDHeaderLength = 8
     DeviceScopeHeaderLength = 6
 
-    def __init__(self, data):
+    def __init__(self, data: bytes) -> None:
         """Inits the object."""
         self.dmar_table = self.AcpiTableHeader(data)
         self.data = data[DMARTable.DMARHeaderLength:]
@@ -58,7 +59,7 @@ class DMARTable(object):
 
         self.xml = self.toXml()
 
-    def toXml(self):
+    def toXml(self) -> ET.Element:
         """Converts the object to an xml representation."""
         root = ET.Element('DMAR Table')
         root.append(self.dmar_table.toXml())
@@ -67,7 +68,7 @@ class DMARTable(object):
 
         return root
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation of the object."""
         retval = str(self.dmar_table)
 
@@ -76,15 +77,15 @@ class DMARTable(object):
 
         return retval
 
-    def DMARBitEnabled(self):
+    def DMARBitEnabled(self) -> bool:
         """Returns the status of the DMAR Bit."""
         return bool(self.dmar_table.DMARBit)
 
-    def ANDDCount(self):
+    def ANDDCount(self) -> int:
         """Returns the amount of ANDD in the DMAR table."""
         return self.dmar_table.ANDDCount
 
-    def CheckRMRRCount(self, goldenxml=None):
+    def CheckRMRRCount(self, goldenxml: Optional[ET.Element]=None) -> bool:
         """Verifies all RMRR paths are in the golden XML."""
         goldenignores = set()
 
@@ -108,7 +109,7 @@ class DMARTable(object):
         STRUCT_FORMAT = '=4sIBB6s8sI4sIBB'
         size = struct.calcsize(STRUCT_FORMAT)
 
-        def __init__(self, header_byte_array):
+        def __init__(self, header_byte_array: bytes) -> None:
             """Inits the object."""
             (self.Signature,
              self.Length,
@@ -127,7 +128,7 @@ class DMARTable(object):
             self.RMRRlist = list()
             self.SubStructs = list()
 
-        def __str__(self):
+        def __str__(self) -> str:
             """String representation of the object."""
             return """\n  ACPI Table Header
     ------------------------------------------------------------------
@@ -145,7 +146,7 @@ class DMARTable(object):
                                           self.OEMID, self.OEMTableID, self.OEMRevision, self.CreatorID,
                                           self.CreatorRevision, self.HostAddressWidth, self.Flags)
 
-        def toXml(self):
+        def toXml(self) -> ET.Element:
             """Converts the object to an xml representation."""
             xml_repr = ET.Element('AcpiTableHeader')
             xml_repr.set('Signature', '%s' % self.Signature)
@@ -165,12 +166,12 @@ class DMARTable(object):
         """Generic remapping struct header."""
         STRUCT_FORMAT = '=HH'
 
-        def __init__(self, header_byte_array):
+        def __init__(self, header_byte_array: bytes) -> None:
             """Inits the object."""
             (self.Type,
              self.Length) = struct.unpack_from(DMARTable.RemappingStructHeader.STRUCT_FORMAT, header_byte_array)
 
-        def __str__(self):
+        def __str__(self) -> str:
             """String representation of the object."""
             return """\n  Remapping Struct Header
     ------------------------------------------------------------------
@@ -182,7 +183,7 @@ class DMARTable(object):
         """Object representing the DRHD struct."""
         STRUCT_FORMAT = '=HHBBHQ'  # spell-checker: disable-line
 
-        def __init__(self, header_byte_array, length):
+        def __init__(self, header_byte_array: bytes, length: int) -> None:
             """Inits the object."""
             (self.Type,
              self.Length,
@@ -201,7 +202,7 @@ class DMARTable(object):
                 bytes_left -= device_scope.Length
                 self.DeviceScope.append(device_scope)
 
-        def toXml(self):
+        def toXml(self) -> ET.Element:
             """Converts the object to an xml representation."""
             xml_repr = ET.Element('DRHD')
             xml_repr.set('Type', '0x%X' % self.Type)
@@ -222,7 +223,7 @@ class DMARTable(object):
 
             return xml_repr
 
-        def __str__(self):
+        def __str__(self) -> str:
             """String representation of the object."""
             retstring = """\n  DRHD
     ------------------------------------------------------------------
@@ -243,7 +244,7 @@ class DMARTable(object):
         """Object representing the RMRR struct."""
         STRUCT_FORMAT = '=HHHHQQ'  # spell-checker: disable-line
 
-        def __init__(self, header_byte_array, length):
+        def __init__(self, header_byte_array: bytes, length: int) -> None:
             """Inits the object."""
             (self.Type,
              self.Length,
@@ -263,7 +264,7 @@ class DMARTable(object):
                 bytes_left -= device_scope.Length
                 self.DeviceScope.append(device_scope)
 
-        def getPath(self):
+        def getPath(self) -> str:
             """Generates and returns the path."""
             retString = ""
             for index, item in enumerate(self.DeviceScope):
@@ -272,7 +273,7 @@ class DMARTable(object):
                     retString += ", "
             return retString
 
-        def toXml(self):
+        def toXml(self) -> ET.Element:
             """Converts the object to an xml representation."""
             xml_repr = ET.Element('RMRR')
             xml_repr.set('Type', '0x%X' % self.Type)
@@ -293,7 +294,7 @@ class DMARTable(object):
 
             return xml_repr
 
-        def __str__(self):
+        def __str__(self) -> str:
             """String representation of the object."""
             retstring = """\n  RMRR
     ------------------------------------------------------------------
@@ -315,7 +316,7 @@ class DMARTable(object):
         """Object representing the ANDD struct."""
         STRUCT_FORMAT = '=HHBBH'  # spell-checker: disable-line
 
-        def __init__(self, header_byte_array, length):
+        def __init__(self, header_byte_array: bytes, length: int) -> None:
             """Inits the object."""
             (self.Type,
              self.Length,
@@ -333,7 +334,7 @@ class DMARTable(object):
                 bytes_left -= device_scope.Length
                 self.DeviceScope.append(device_scope)
 
-        def toXml(self):
+        def toXml(self) -> ET.Element:
             """Converts the object to an xml representation."""
             xml_repr = ET.Element('ASTR')
             xml_repr.set('Type', '0x%X' % self.Type)
@@ -353,7 +354,7 @@ class DMARTable(object):
 
             return xml_repr
 
-        def __str__(self):
+        def __str__(self) -> str:
             """String representation of the object."""
             retstring = """\n  ASTR
     ------------------------------------------------------------------
@@ -373,7 +374,7 @@ class DMARTable(object):
         """Object representing the RHSA struct."""
         STRUCT_FORMAT = '=HHIQI'  # spell-checker: disable-line
 
-        def __init__(self, header_byte_array, length):
+        def __init__(self, header_byte_array: bytes, length: int) -> None:
             """Inits the object."""
             (self.Type,
              self.Length,
@@ -381,7 +382,7 @@ class DMARTable(object):
              self.RegisterBaseAddress,
              self.ProximityDomain) = struct.unpack_from(DMARTable.RHSAStruct.STRUCT_FORMAT, header_byte_array)
 
-        def toXml(self):
+        def toXml(self) -> ET.Element:
             """Converts the object to an xml representation."""
             xml_repr = ET.Element('RHSA')
             xml_repr.set('Type', '0x%X' % self.Type)
@@ -392,7 +393,7 @@ class DMARTable(object):
 
             return xml_repr
 
-        def __str__(self):
+        def __str__(self) -> str:
             """String representation of the object."""
             return """\n  RHSA
     ------------------------------------------------------------------
@@ -407,7 +408,7 @@ class DMARTable(object):
         """Object representing the ANDD struct."""
         header_format = '=HH'
 
-        def __init__(self, header_byte_array, length):
+        def __init__(self, header_byte_array: bytes, length: int) -> None:
             """Inits the object."""
             self.STRUCT_FORMAT = '=B'
             (self.Type,
@@ -425,7 +426,7 @@ class DMARTable(object):
             (self.ACPIDeviceNumber,
              self.ACPIObjectName) = struct.unpack_from(self.STRUCT_FORMAT, header_byte_array)
 
-        def toXml(self):
+        def toXml(self) -> ET.Element:
             """Converts the object to an xml representation."""
             xml_repr = ET.Element('ANDD')
             xml_repr.set('Type', '0x%X' % self.Type)
@@ -436,7 +437,7 @@ class DMARTable(object):
 
             return xml_repr
 
-        def __str__(self):
+        def __str__(self) -> str:
             """String representation of the object."""
             return """\n  ANDD
     ------------------------------------------------------------------
@@ -451,7 +452,7 @@ class DMARTable(object):
         """Object representing a Device Scope."""
         STRUCT_FORMAT = '=BBHBB'  # spell-checker: disable-line
 
-        def __init__(self, header_byte_array):
+        def __init__(self, header_byte_array: bytes) -> None:
             """Inits a DeviceScopeStruct."""
             (self.Type,
              self.Length,
@@ -484,7 +485,7 @@ class DMARTable(object):
                 offset += 2
                 number_path_entries -= 1
 
-        def getPath(self):
+        def getPath(self) -> str:
             """Returns the path."""
             retstring = "%02d" % self.StartBusNumber + ":"
 
@@ -495,7 +496,7 @@ class DMARTable(object):
 
             return retstring
 
-        def __str__(self):
+        def __str__(self) -> str:
             """String representation."""
             retstring = """\n\t\t  %s
     \t\t--------------------------------------------------

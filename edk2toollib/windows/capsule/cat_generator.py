@@ -12,6 +12,7 @@ Based on a supplied inf file and uses the winsdk and command line tool Inf2Cat.e
 """
 import logging
 import os
+from typing import Optional
 
 from edk2toollib.utility_functions import RunCmd
 from edk2toollib.windows.locate_tools import FindToolInWinSdk
@@ -37,7 +38,7 @@ class CatGenerator(object):
                     'serverrs4': 'ServerRS4'
                     }
 
-    def __init__(self, arch, os):
+    def __init__(self, arch: str, os: str) -> None:
         """Inits a Cat Generator.
 
         Args:
@@ -48,12 +49,12 @@ class CatGenerator(object):
         self.OperatingSystem = os
 
     @property
-    def Arch(self):
+    def Arch(self) -> str:
         """Returns the attribute arch."""
         return self._arch
 
     @Arch.setter
-    def Arch(self, value):
+    def Arch(self, value: str) -> None:
         """Validates the arch before setting it.
 
         Raises:
@@ -71,12 +72,12 @@ class CatGenerator(object):
             raise ValueError("Unsupported Architecture")
 
     @property
-    def OperatingSystem(self):
+    def OperatingSystem(self) -> str:
         """Returns the Operating system attribute."""
         return self._operatingsystem
 
     @OperatingSystem.setter
-    def OperatingSystem(self, value):
+    def OperatingSystem(self, value: str) -> None:
         """Validates the OS is supported before setting the attribute.
 
         Raises:
@@ -88,7 +89,7 @@ class CatGenerator(object):
             raise ValueError("Unsupported Operating System")
         self._operatingsystem = CatGenerator.SUPPORTED_OS[key]
 
-    def MakeCat(self, OutputCatFile, PathToInf2CatTool=None):
+    def MakeCat(self, OutputCatFile: str, PathToInf2CatTool: Optional[str]=None) -> int:
         """Generates a cat file to the outputcatfile directory.
 
         Args:

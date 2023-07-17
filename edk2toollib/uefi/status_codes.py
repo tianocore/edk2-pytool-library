@@ -56,7 +56,7 @@ class UefiStatusCode(object):
         value = int(hexstring, 16)
         return self.Convert64BitToString(value)
 
-    def ConvertHexString32ToString(self, hexstring):
+    def ConvertHexString32ToString(self, hexstring: str) -> str:
         """Convert 32 bit hexstring in 0x format to a UEFI status code."""
         value = int(hexstring, 16)
         return self.Convert32BitToString(value)

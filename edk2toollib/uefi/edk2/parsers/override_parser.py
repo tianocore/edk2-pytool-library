@@ -10,6 +10,7 @@
 """Contains classes to help with parsing INF files that may contain OVERRIDE information."""
 import datetime
 import os
+from typing import Optional
 
 FORMAT_VERSION_1 = (1, 4)   # Version 1: #OVERRIDE : VERSION | PATH_TO_MODULE | HASH | YYYY-MM-DDThh-mm-ss
 
@@ -21,14 +22,14 @@ class OpParseError(Exception):
     PE_HASH = 'HASH'
     PE_DATE = 'DATE'
 
-    def __init__(self, my_type):
+    def __init__(self, my_type: str) -> None:
         """Verifies type is a valid OpParseError type."""
         if my_type not in (OpParseError.PE_VER, OpParseError.PE_PATH,
                            OpParseError.PE_HASH, OpParseError.PE_DATE):
             raise ValueError("Unknown type '%s'" % my_type)
         self.type = my_type
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation of the OpParseError type."""
         return repr(self.type)
 
@@ -53,12 +54,12 @@ class OverrideParser(object):
           parsers. The pros and cons of this should also be weighed during
           any parser refactor.
     """
-    def __init__(self, file_path=None, inf_contents=None):
+    def __init__(self, file_path: Optional[str]=None, inf_contents: Optional[str]=None) -> None:
         """Inits and parses either a file or already parsed contents.
 
         Args:
-            file_path (:obj:`PathLike`, optional): Path to an INF file
-            inf_contents (:obj:`str`, optional): Parsed lines as a string
+            file_path: Path to an INF file
+            inf_contents: Parsed lines as a string
 
         NOTE: Either file_path or inf_contents must be provided.
         """
@@ -100,7 +101,7 @@ class OverrideParser(object):
                                  (pe, override_line['lineno'], override_line['line']))
 
     @staticmethod
-    def get_override_lines(parse_contents):
+    def get_override_lines(parse_contents: str) -> list:
         """Parses contents and returns only lines that start with #OVERRIDE.
 
         Returns:
@@ -116,7 +117,7 @@ class OverrideParser(object):
         return result
 
     @staticmethod
-    def parse_override_line(line_contents):
+    def parse_override_line(line_contents: str) -> dict:
         """Parses an override_line.
 
         Args:

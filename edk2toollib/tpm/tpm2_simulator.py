@@ -42,7 +42,7 @@ PLAT_COMMANDS = {
 
 class TpmSimulator(object):
     """An object for interacting with the Tpm Simulator."""
-    def __init__(self, host='localhost', port=2321):
+    def __init__(self, host: str='localhost', port: int=2321) -> None:
         """Initialize the simulator on the requested host (ip) and port."""
         super(TpmSimulator, self).__init__()
 
@@ -61,18 +61,18 @@ class TpmSimulator(object):
         # Enable the NV space.
         self.platSock.send(struct.pack(">L", PLAT_COMMANDS['TPM_SIGNAL_NV_ON']))
 
-    def send_raw_data(self, data):
+    def send_raw_data(self, data: str) -> None:
         """Send raw data to the TPM simulator."""
         print("RAW -->: " + str(data).encode('hex'))
         self.tpmSock.send(data)
 
-    def read_raw_data(self, count):
+    def read_raw_data(self, count: int) -> bytes:
         """Read raw data from the TPM simulator."""
         data = self.tpmSock.recv(count)
         print("RAW <--: " + str(data).encode('hex'))
         return data
 
-    def send_data(self, data):
+    def send_data(self, data: str) -> bytes:
         """Send data to the TPM simulator."""
         # Send the "I'm about to send data" command.
         self.send_raw_data(struct.pack(">L", PLAT_COMMANDS['TPM_SEND_COMMAND']))
@@ -94,7 +94,7 @@ class TpmSimulator(object):
 
         return self.read_raw_data(result_size)
 
-    def startup(self, type):
+    def startup(self, type: str) -> bytes:
         """Initialize the connection to the TPM simulator."""
         stream = t2s.Tpm2CommandStream(t2d.TPM_ST_NO_SESSIONS, 0x00, t2d.TPM_CC_Startup)
         stream.add_element(t2s.Tpm2StreamPrimitive(t2d.TPM_SU_Size, type))

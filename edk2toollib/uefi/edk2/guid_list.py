@@ -9,6 +9,7 @@
 """Simple list of GuidListEntry objects parsed from edk2 specific files."""
 import logging
 import os
+from typing import IO
 
 from edk2toollib.gitignore_parser import parse_gitignore_lines
 from edk2toollib.uefi.edk2.parsers.dec_parser import DecParser
@@ -23,7 +24,7 @@ class GuidListEntry():
         guid (str): registry format guid in string format
         filepath (str): absolute path to file where this guid was found
     """
-    def __init__(self, name: str, guid: str, filepath: str):
+    def __init__(self, name: str, guid: str, filepath: str) -> None:
         """Create GuidListEntry for later review and compare.
 
         Args:
@@ -35,7 +36,7 @@ class GuidListEntry():
         self.guid = guid
         self.absfilepath = filepath
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation of the guid."""
         return f"GUID: {self.guid} NAME: {self.name} FILE: {self.absfilepath}"
 
@@ -91,12 +92,12 @@ class GuidList():
             return []
 
     @staticmethod
-    def parse_guids_from_dec(stream, filename: str) -> list:
+    def parse_guids_from_dec(stream: IO, filename: str) -> list:
         """Find all guids in a dec file contents contained with stream.
 
         Args:
-            stream (obj): lines of dec file content
-            filename (str): abspath to dec file
+            stream: lines of dec file content
+            filename: abspath to dec file
 
         Returns:
             (list[GuidListEntry]): Guids

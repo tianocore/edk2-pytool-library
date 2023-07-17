@@ -47,12 +47,12 @@ class InfHeader(object):
         InfStrings.AddLocalizableString("MfgName", Manufacturer)
 
     @property
-    def Name(self):
+    def Name(self) -> str:
         """Returns the Name attribute."""
         return self._name
 
     @Name.setter
-    def Name(self, value):
+    def Name(self, value: str) -> None:
         """Validates a Name string before setting the attribute.
 
         Raises:
@@ -64,12 +64,12 @@ class InfHeader(object):
         self._name = value
 
     @property
-    def VersionStr(self):
+    def VersionStr(self) -> str:
         """Returns the VersionStr attribute."""
         return self._versionstr
 
     @VersionStr.setter
-    def VersionStr(self, value):
+    def VersionStr(self, value: str) -> None:
         """Validates the VersionStr before setting the attribute.
 
         Raises:
@@ -81,22 +81,22 @@ class InfHeader(object):
         self._versionstr = value
 
     @property
-    def Date(self):
+    def Date(self) -> str:
         """Returns the Date attribute, a datetime object."""
         return self._date
 
     @Date.setter
-    def Date(self, value):
+    def Date(self, value: str) -> None:
         """Sets the Date attribute as a datetime object, from a str."""
         self._date = datetime.strptime(value, "%m/%d/%Y").strftime("%m/%d/%Y")
 
     @property
-    def Arch(self):
+    def Arch(self) -> str:
         """Returns the Architecture."""
         return self._arch
 
     @Arch.setter
-    def Arch(self, value):
+    def Arch(self, value: str) -> str:
         """Validates the Architecture before setting the attribute."""
         key = value.lower()
         if (key not in SUPPORTED_ARCH.keys()):
@@ -162,12 +162,12 @@ class InfFirmware(object):
         InfStrings.AddNonLocalizableString("REG_DWORD", "0x00010001")
 
     @property
-    def Tag(self):
+    def Tag(self) -> str:
         """Returns the Tag value."""
         return self._tag
 
     @Tag.setter
-    def Tag(self, value):
+    def Tag(self, value: str) -> None:
         """Verifies a valid tag before setting.
 
         Raises:
@@ -179,23 +179,23 @@ class InfFirmware(object):
         self._tag = value
 
     @property
-    def EsrtGuid(self):
+    def EsrtGuid(self) -> uuid.UUID:
         """Returns the EsrtGuid value."""
         return self._esrt_guid
 
     @EsrtGuid.setter
-    def EsrtGuid(self, value):
+    def EsrtGuid(self, value: uuid.UUID) -> None:
         """Transforms string into actual guid object before setting."""
         uuid.UUID(value)
         self._esrt_guid = value
 
     @property
-    def VersionInt(self):
+    def VersionInt(self) -> int:
         """Returns the VersionInt value."""
         return self._version_int
 
     @VersionInt.setter
-    def VersionInt(self, value):
+    def VersionInt(self, value: int) -> None:
         """Sets the VersionInt value from a string."""
         self._version_int = int(value, base=0)
 
@@ -261,12 +261,12 @@ class InfFirmwareSections(object):
         self.InfStrings = InfStrings
 
     @property
-    def Arch(self):
+    def Arch(self) -> str:
         """Returns the Architecture."""
         return self._arch
 
     @Arch.setter
-    def Arch(self, value):
+    def Arch(self, value: str) -> str:
         """Validates the Architecture before setting the attribute."""
         key = value.lower()
         if (key not in SUPPORTED_ARCH.keys()):
