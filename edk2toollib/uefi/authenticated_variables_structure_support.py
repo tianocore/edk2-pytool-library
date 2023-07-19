@@ -1459,7 +1459,7 @@ class EfiVariableAuthentication2Builder(object):
         """Returns the Signature of the digest (PKCS#7 ContentInfo or SignedData structure)."""
         return self.signature
 
-    def update_payload(self, payload: Union[io.ByteIO, bytes]) -> None:
+    def update_payload(self, payload: Union[io.BytesIO, bytes]) -> None:
         """Updates the authenticated variables payload and ultimately the digest.
 
         Args:
