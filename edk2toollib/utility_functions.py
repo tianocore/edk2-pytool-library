@@ -10,7 +10,6 @@
 import datetime
 import importlib
 import inspect
-import locale
 import logging
 import os
 import platform
@@ -70,9 +69,8 @@ def reader(filepath, outstream, stream, logging_level=logging.INFO, encodingErro
     if (filepath):
         f = open(filepath, "w")
 
-    (_, encoding) = locale.getdefaultlocale()
     while True:
-        s = stream.readline().decode(encoding or 'utf-8', errors=encodingErrors)
+        s = stream.readline().decode(sys.stdout.encoding)
         if not s:
             break
         if (f is not None):
