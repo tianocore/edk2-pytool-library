@@ -9,7 +9,7 @@
 import struct
 import sys
 import uuid
-from typing import IO, Self
+from typing import IO
 
 
 class EfiFirmwareFileSystemHeader(object):
@@ -43,7 +43,7 @@ class EfiFirmwareFileSystemHeader(object):
         """Returns the size of the header."""
         return self.Size0 + (self.Size1 << 8) + (self.Size2 << 16)
 
-    def load_from_file(self, file: IO) -> Self:
+    def load_from_file(self, file: IO) -> 'EfiFirmwareFileSystemHeader':
         """Loads data into the object from a filestream.
 
         Args:

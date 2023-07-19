@@ -9,7 +9,6 @@
 import struct
 import sys
 import uuid
-from typing import Self
 
 import edk2toollib.uefi.uefi_multi_phase as ump
 
@@ -58,7 +57,7 @@ class VariableStoreHeader(object):
         self.Reserved1 = None
         self.Type = 'Var'
 
-    def load_from_file(self, file: str) -> Self:
+    def load_from_file(self, file: str) -> 'VariableStoreHeader':
         """Load the structure from a file."""
         # This function assumes that the file has been seeked
         # to the correct starting location.
@@ -129,7 +128,7 @@ class VariableHeader(object):
         (self.StartId, self.State, reserved, self.Attributes, self.NameSize,
             self.DataSize, self.VendorGuid) = struct.unpack(self.StructString, in_bytes)
 
-    def load_from_bytes(self, in_bytes: bytes) -> Self:
+    def load_from_bytes(self, in_bytes: bytes) -> 'VariableHeader':
         """Load the structure from a bytes."""
         # Load this object with the contents of the data.
         self.populate_structure_fields(in_bytes[0:self.StructSize])
@@ -153,7 +152,7 @@ class VariableHeader(object):
 
         return self
 
-    def load_from_file(self, file: str) -> Self:
+    def load_from_file(self, file: str) -> 'VariableHeader':
         """Load the struct from a file."""
         # This function assumes that the file has been seeked
         # to the correct starting location.
