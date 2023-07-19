@@ -292,7 +292,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         """Setter for the IntegrityFile name."""
         self._integrityfile = value
 
-    def MakeInf(self, OutputInfFilePath: os.Pathlike, FirmwareBinFileName: str, Rollback: bool=False) -> int:
+    def MakeInf(self, OutputInfFilePath: os.PathLike, FirmwareBinFileName: str, Rollback: bool=False) -> int:
         """Generates the INF with provided information.
 
         Args:
