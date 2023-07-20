@@ -14,7 +14,7 @@ import struct
 import sys
 import uuid
 from io import BytesIO, StringIO
-from typing import Optional
+from typing import Optional, Union
 from warnings import warn
 
 from pyasn1.codec.der.decoder import decode as der_decode
@@ -583,7 +583,7 @@ class WinCert(object):
     REVISION = 0x200
 
     @staticmethod
-    def factory(fs: BytesIO) -> WinCertUefiGuid | WinCertPkcs1:
+    def factory(fs: BytesIO) -> Union[WinCertUefiGuid, WinCertPkcs1]:
         """Generates a specific Cert Type depending on parsed Hdr_wCertificationType from the fs.
 
         Args:
@@ -627,7 +627,7 @@ class WinCert(object):
     #
 
     @staticmethod
-    def Factory(fs: BytesIO) -> WinCertUefiGuid | WinCertPkcs1:
+    def Factory(fs: BytesIO) -> Union[WinCertUefiGuid, WinCertPkcs1]:
         """Generates a specific Cert Type depending on parsed Hdr_wCertificationType from the fs.
 
         Args:
