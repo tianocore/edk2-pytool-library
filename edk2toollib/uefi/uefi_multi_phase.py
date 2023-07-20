@@ -9,7 +9,7 @@
 """Module for working with UEFI Authenticated Variable Atrributes."""
 
 import struct
-from typing import IO
+from typing import IO, Union
 
 EFI_VARIABLE_NON_VOLATILE = 0x00000001
 EFI_VARIABLE_BOOTSERVICE_ACCESS = 0x00000002
@@ -48,7 +48,7 @@ class EfiVariableAttributes(object):
     }
     INVERSE_STRING_MAP = {v: k for k, v in STRING_MAP.items()}
 
-    def __init__(self, attributes: int | str=0x0000_0000, decodefs: IO=None) -> None:
+    def __init__(self, attributes: Union[int, str]=0x0000_0000, decodefs: IO=None) -> None:
         """Creates a EfiVariableAttributes object.
 
         Args:
@@ -63,7 +63,7 @@ class EfiVariableAttributes(object):
         else:
             self.update(attributes)
 
-    def update(self, attributes: int | str = 0x0000_00000) -> None:
+    def update(self, attributes: Union[int, str] = 0x0000_00000) -> None:
         """Updates instance to provided attributes.
 
         Args:
