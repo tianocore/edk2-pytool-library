@@ -5,19 +5,29 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-"""Code to help convert Edk2, absolute, and relative file paths."""
+r"""A module for managing Edk2 file paths agnostic to OS path separators ("/" vs "\").
+
+This module converts all windows style paths to Posix file paths internally, but will return
+the OS specific path with the exception of of any function that returns an Edk2 style path,
+which will always return Posix form.
+"""
 import errno
-import fnmatch
 import logging
 import os
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 
 
 class Edk2Path(object):
     """Represents edk2 file paths.
 
     Class that helps perform path operations within an EDK workspace.
+
+    Attributes:
+        WorkspacePath (str): Absolute path to the workspace root.
+        PackagePathList (List[str]): List of absolute paths to a package.
+
+    Attributes are initialized by the constructor and are read-only.
 
     !!! warning
         Edk2Path performs expensive packages path and package validation when
@@ -36,34 +46,29 @@ class Edk2Path(object):
 
     """
 
-    def __init__(self, ws: os.PathLike, package_path_list: Iterable[os.PathLike],
+    def __init__(self, ws: str, package_path_list: Iterable[str],
                  error_on_invalid_pp: bool = True):
         """Constructor.
 
         Args:
-            ws (os.PathLike): absolute path or cwd relative path of the workspace.
-            package_path_list (Iterable[os.PathLike]): list of packages path.
-                Entries can be Absolute path, workspace relative path, or CWD relative.
-            error_on_invalid_pp (bool): default value is True. If packages path
-                                        value is invalid raise exception.
+            ws: absolute path or cwd relative path of the workspace.
+            package_path_list: list of packages path. Entries can be Absolute path, workspace relative path, or CWD
+                relative.
+            error_on_invalid_pp: default value is True. If packages path value is invalid raise exception.
 
         Raises:
             (NotADirectoryError): Invalid workspace or package path directory.
         """
-        self.WorkspacePath = ws
         self.logger = logging.getLogger("Edk2Path")
 
         # Other code is dependent the following types, so keep it that way:
         #   - self.PackagePathList: List[str]
         #   - self.WorkspacePath: str
-
-        self.PackagePathList = []
-        self.WorkspacePath = ""
-
+        ws = ws.replace("\\", "/")
         workspace_candidate_path = Path(ws)
 
         if not workspace_candidate_path.is_absolute():
-            workspace_candidate_path = Path(os.getcwd(), ws)
+            workspace_candidate_path = Path.cwd() / ws
 
         if not workspace_candidate_path.is_dir():
             raise NotADirectoryError(
@@ -71,19 +76,19 @@ class Edk2Path(object):
                 os.strerror(errno.ENOENT),
                 workspace_candidate_path.resolve())
 
-        self.WorkspacePath = str(workspace_candidate_path)
+        self._workspace_path = workspace_candidate_path
 
         candidate_package_path_list = []
-        for a in package_path_list:
-            if os.path.isabs(a):
-                candidate_package_path_list.append(Path(a))
+        for a in [Path(path.replace("\\", "/")) for path in package_path_list]:
+            if a.is_absolute():
+                candidate_package_path_list.append(a)
             else:
-                wsr = Path(self.WorkspacePath, a)
+                wsr = self._workspace_path / a
                 if wsr.is_dir():
                     candidate_package_path_list.append(wsr)
                 else:
                     # assume current working dir relative.  Will catch invalid dir when checking whole list
-                    candidate_package_path_list.append(Path(os.getcwd(), a))
+                    candidate_package_path_list.append(Path.cwd() / a)
 
         invalid_pp = []
         for a in candidate_package_path_list[:]:
@@ -94,7 +99,7 @@ class Edk2Path(object):
                 candidate_package_path_list.remove(a)
                 invalid_pp.append(str(a.resolve()))
 
-        self.PackagePathList = [str(p) for p in candidate_package_path_list]
+        self._package_path_list = candidate_package_path_list
 
         if invalid_pp and error_on_invalid_pp:
             raise NotADirectoryError(errno.ENOENT, os.strerror(errno.ENOENT), invalid_pp)
@@ -111,9 +116,9 @@ class Edk2Path(object):
         # 3. Raise an Exception if two packages are found to be nested.
         #
         package_path_packages = {}
-        for package_path in candidate_package_path_list:
+        for package_path in self._package_path_list:
             package_path_packages[package_path] = \
-                [Path(p).parent for p in package_path.glob('**/*.dec')]
+                [p.parent for p in package_path.glob('**/*.dec')]
 
         # Note: The ability to ignore this function raising an exception on
         #       nested packages is temporary. Do not plan on this variable
@@ -170,22 +175,30 @@ class Edk2Path(object):
                                 f"environment variable to \"true\" as a temporary workaround "
                                 f"until you fix the packages so they are no longer nested.")
 
-    def GetEdk2RelativePathFromAbsolutePath(self, abspath):
+    @property
+    def WorkspacePath(self):
+        """Workspace Path as a string."""
+        return str(self._workspace_path)
+
+    @property
+    def PackagePathList(self):
+        """List of package paths as strings."""
+        return [str(p) for p in self._package_path_list]
+
+    def GetEdk2RelativePathFromAbsolutePath(self, abspath: str):
         """Given an absolute path return a edk2 path relative to workspace or packagespath.
 
-        Note: absolute path must be in the OS specific path form
-        Note: the relative path will be in POSIX-like path form
-
         Args:
-            abspath (os.PathLike): absolute path to a file or directory. Path must contain OS specific separator.
+            abspath: absolute path to a file or directory. Supports both Windows and Posix style paths
 
         Returns:
-            (os.PathLike): POSIX-like relative path to workspace or packagespath
+            (str): POSIX-like relative path to workspace or packagespath
             (None): abspath is none
             (None): path is not valid
         """
         if abspath is None:
             return None
+        abspath = Path(abspath.replace("\\", "/"))
 
         relpath = None
         found = False
@@ -196,23 +209,23 @@ class Edk2Path(object):
         # Sort the package paths from from longest to shortest. This handles the case where a package and a package
         # path are in the same directory. See the following path_utilities_test for a detailed explanation of the
         # scenario: test_get_relative_path_when_folder_is_next_to_package
-        for packagepath in sorted((os.path.normcase(p) for p in self.PackagePathList), reverse=True):
+        for packagepath in sorted(self._package_path_list, reverse=True):
 
             # If a match is found, use the original string to avoid change in case
-            if os.path.normcase(abspath).startswith(packagepath):
+            if abspath.is_relative_to(packagepath):
                 self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using PackagePath")
-                relpath = abspath[len(packagepath):]
+                relpath = abspath.relative_to(packagepath)
                 found = True
                 break
 
         # If a match was not found, check if absolute path is based on the workspace root.
-        if not found and os.path.normcase(abspath).startswith(os.path.normcase(self.WorkspacePath)):
+        if not found and abspath.is_relative_to(self._workspace_path):
             self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using WorkspacePath")
-            relpath = abspath[len(self.WorkspacePath):]
+            relpath = abspath.relative_to(self._workspace_path)
             found = True
 
         if found:
-            relpath = relpath.replace(os.sep, "/").strip("/")
+            relpath = relpath.as_posix()
             self.logger.debug(f'[{abspath}] -> [{relpath}]')
             return relpath
 
@@ -221,29 +234,29 @@ class Edk2Path(object):
         self.logger.error(f'AbsolutePath: {abspath}')
         return None
 
-    def GetAbsolutePathOnThisSystemFromEdk2RelativePath(self, relpath, log_errors=True):
+    def GetAbsolutePathOnThisSystemFromEdk2RelativePath(self, relpath: str, log_errors: Optional[bool]=True):
         """Given a edk2 relative path return an absolute path to the file in this workspace.
 
         Args:
-            relpath (os.PathLike): POSIX-like path
-            log_errors (:obj:`bool`, optional): whether to log errors
+            relpath: Relative path to convert. Supports both Windows and Posix style paths.
+            log_errors: whether to log errors
 
         Returns:
-            (os.PathLike): absolute path in the OS specific form
+            (str): absolute path in the OS specific form
             (None): invalid relpath
             (None): Unable to get the absolute path
         """
         if relpath is None:
             return None
-        relpath = relpath.replace("/", os.sep)
-        abspath = os.path.join(self.WorkspacePath, relpath)
-        if os.path.exists(abspath):
-            return abspath
+        relpath = relpath.replace("\\", "/")
+        abspath = self._workspace_path / relpath
+        if abspath.exists():
+            return str(abspath)
 
-        for a in self.PackagePathList:
-            abspath = os.path.join(a, relpath)
-            if (os.path.exists(abspath)):
-                return abspath
+        for a in self._package_path_list:
+            abspath = a / relpath
+            if abspath.exists():
+                return str(abspath)
         if log_errors:
             self.logger.error("Failed to convert Edk2Relative Path to an Absolute Path on this system.")
             self.logger.error("Relative Path: %s" % relpath)
@@ -255,51 +268,45 @@ class Edk2Path(object):
 
         This isn't perfect but at least identifies the directory consistently.
 
-        Note: The inputPath must be in the OS specific path form.
-
         Args:
-            InputPath (str): absolute path to a file, directory, or module.
-                             supports both windows and linux like paths.
+            InputPath: absolute path to a file, directory, or module. Supports both windows and linux like paths.
 
         Returns:
             (str): name of the package that the module is in.
         """
         self.logger.debug("GetContainingPackage: %s" % InputPath)
+        InputPath = Path(InputPath.replace("\\", "/"))
         # Make a list that has the path case normalized for comparison.
         # Note: This only does anything on Windows
-        package_paths = [os.path.normcase(x) for x in self.PackagePathList]
-        workspace_path = os.path.normcase(self.WorkspacePath)
 
         # 1. Handle the case that InputPath is not in the workspace tree
         path_root = None
-        if workspace_path not in os.path.normcase(InputPath):
-            for p in package_paths:
-                if p in os.path.normcase(InputPath):
+        if not InputPath.is_relative_to(self._workspace_path):
+            for p in self._package_path_list:
+                if InputPath.is_relative_to(p):
                     path_root = p
                     break
             if not path_root:
                 return None
+        else:
+            path_root = self._workspace_path
 
         # 2. Determine if the path is under a package in the workspace
 
         # Start the search within the first available directory. If provided InputPath is a directory, start there,
         # else (if InputPath is a file) move to it's parent directory and start there.
-        if os.path.isdir(InputPath):
-            dirpath = str(InputPath)
+        if InputPath.is_dir():
+            dirpath = InputPath
         else:
-            dirpath = os.path.dirname(InputPath)
+            dirpath = InputPath.parent
 
-        if not path_root:
-            path_root = workspace_path
+        while not path_root.samefile(dirpath):
+            if dirpath.exists():
+                for f in dirpath.iterdir():
+                    if f.suffix.lower() =='.dec':
+                        return dirpath.name
 
-        while path_root != os.path.normcase(dirpath):
-            if os.path.exists(dirpath):
-                for f in os.listdir(dirpath):
-                    if fnmatch.fnmatch(f.lower(), '*.dec'):
-                        a = os.path.basename(dirpath)
-                        return a
-
-            dirpath = os.path.dirname(dirpath)
+            dirpath = dirpath.parent
 
         return None
 
@@ -318,23 +325,21 @@ class Edk2Path(object):
           will be returned in a list of file path strings.
 
         Args:
-            input_path (str): Absolute path to a file, directory, or module.
-                              Supports both Windows and Linux like paths.
+            input_path: Absolute path to a file, directory, or module.
+                              Supports both Windows and Posix like paths.
 
         Returns:
             (list[str]): Absolute paths of .inf files that could be the
                          containing module.
         """
-        input_path = Path(input_path)
+        input_path = Path(input_path.replace("\\", "/"))
         if not input_path.is_absolute():
             # Todo: Return a more specific exception type when
             # https://github.com/tianocore/edk2-pytool-library/issues/184 is
             # implemented.
             raise Exception("Module path must be absolute.")
 
-        package_paths = [Path(os.path.normcase(x)) for x in self.PackagePathList]
-        workspace_path = Path(os.path.normcase(self.WorkspacePath))
-        all_root_paths = package_paths + [workspace_path]
+        all_root_paths = self._package_path_list + [self._workspace_path]
 
         # For each root path, find the maximum allowed root in its hierarchy.
         maximum_root_paths = all_root_paths
@@ -357,7 +362,7 @@ class Edk2Path(object):
             return []
 
         modules = []
-        if input_path.suffix == '.inf':
+        if input_path.suffix.lower() == '.inf':
             # Return the file path given since it is a module .inf file
             modules = [str(input_path)]
 

@@ -174,13 +174,13 @@ class PathUtilitiesTest(unittest.TestCase):
         (ws / "good_path").mkdir()
 
         with self.assertRaises(NotADirectoryError) as context:
-            Edk2Path(ws, ["bad_pp_path", "bad_pp_path2", "good_path"], error_on_invalid_pp=True)
+            Edk2Path(str(ws), ["bad_pp_path", "bad_pp_path2", "good_path"], error_on_invalid_pp=True)
         self.assertTrue('bad_pp_path' in str(context.exception))
         self.assertTrue('bad_pp_path2' in str(context.exception))
         self.assertTrue('good_path' not in str(context.exception))
 
         # Make sure we don't throw an exception unless we mean to
-        Edk2Path(ws, ["bad_pp_path", "bad_pp_path2", "good_path"], error_on_invalid_pp=False)
+        Edk2Path(str(ws), ["bad_pp_path", "bad_pp_path2", "good_path"], error_on_invalid_pp=False)
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_basic_init_ws_abs_different_case(self):
@@ -1116,6 +1116,39 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_pkg_abs, "PPTestPkg.dec")
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p),
                          f"{folder_extra_rel}/{ws_p_name}/{ws_p_name}.dec")
+
+    def test_get_edk2_relative_path_with_windows_path_on_linux(self):
+        '''Test basic usage of GetEdk2RelativePathFromAbsolutePath when the
+        provided path is a Windows path, but the code is running on linux.
+
+        File layout:
+
+         root/                  <-- current working directory (self.tmp)
+            folder_ws/           <-- workspace root
+                folder_pp/       <-- packages path
+                    folder_extra/
+                        PPTestPkg/   <-- A edk2 package
+                            PPTestPkg.DEC
+        '''
+        ws_rel = "folder_ws"
+        ws_abs = os.path.join(self.tmp, ws_rel)
+        os.mkdir(ws_abs)
+
+        folder_pp_rel = "folder_pp"
+        folder_pp_abs = os.path.join(ws_abs, folder_pp_rel)
+        os.mkdir(folder_pp_abs)
+
+        folder_extra_rel = "folder_extra"
+        folder_extra_abs = os.path.join(folder_pp_abs, folder_extra_rel)
+        os.mkdir(folder_extra_abs)
+
+        ws_p_name = "PPTestPkg"
+        ws_pkg_abs = self._make_edk2_package_helper(folder_extra_abs, ws_p_name)
+        pathobj = Edk2Path(ws_abs, [folder_pp_abs])
+
+        p = f"{ws_pkg_abs}\\module2\\X64\\TestFile.c"
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p),
+                         f"{folder_extra_rel}/PPTestPkg/module2/X64/TestFile.c")
 
     def test_get_absolute_path_on_this_system_from_edk2_relative_path(self):
         '''Test basic usage of GetAbsolutePathOnThisSystemFromEdk2RelativePath with packages path nested
