@@ -224,7 +224,6 @@ class ColoredFormatter(logging.Formatter):
 
         record.levelname = levelname
         record.msg = org_message
-
         return result
 
 
@@ -441,6 +440,5 @@ class ColoredStreamHandler(logging.StreamHandler):
             self.write(str(msg))
             self.write(self.terminator)
             self.flush()
-        except Exception as e:
-            print(e)
+        except Exception:
             self.handleError(record)
