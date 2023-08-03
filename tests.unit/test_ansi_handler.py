@@ -5,10 +5,10 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-import unittest
 import logging
-from edk2toollib.log.ansi_handler import ColoredFormatter
-from edk2toollib.log.ansi_handler import ColoredStreamHandler
+import unittest
+
+from edk2toollib.log.ansi_handler import ColoredFormatter, ColoredStreamHandler
 
 try:
     from StringIO import StringIO
@@ -26,6 +26,15 @@ class AnsiHandlerTest(unittest.TestCase):
     record2 = logging.makeLogRecord({"name": "", "level": logging.INFO, "levelno": logging.INFO,
                                      "levelname": "INFO", "path": "test_path", "lineno": 0,
                                      "msg": "Test message"})
+    record3 = logging.makeLogRecord({"name": "", "level": logging.ERROR, "levelno": logging.ERROR,
+                                     "levelname": "ERROR", "path": "test_path", "lineno": 0,
+                                     "msg": ['Logging', 'A', 'List']})
+    record4 = logging.makeLogRecord({"name": "", "level": logging.ERROR, "levelno": logging.ERROR,
+                                     "levelname": "ERROR", "path": "test_path", "lineno": 0,
+                                     "msg": ('Logging', 'A', 'Tuple')})
+    record5 = logging.makeLogRecord({"name": "", "level": logging.ERROR, "levelno": logging.ERROR,
+                                     "levelname": "ERROR", "path": "test_path", "lineno": 0,
+                                     "msg": iter(('Logging', 'A', 'Iter'))})
 
     def test_colored_formatter_init(self):
         formatter = ColoredFormatter("%(levelname)s - %(message)s")
@@ -82,3 +91,22 @@ class AnsiHandlerTest(unittest.TestCase):
             if CSI in line:
                 found_csi = True
         self.assertTrue(found_csi, "We are supposed to to have found an ANSI control character %s" % lines)
+
+    def test_ansi_handler_with_list(self):
+        """Tests that the ANSI handler can handle Iterables in the message."""
+        stream = StringIO()
+        formatter = ColoredFormatter("%(levelname)s - %(message)s")
+        handler = ColoredStreamHandler(stream, strip=False, convert=False)
+        handler.setFormatter(formatter)
+        handler.setLevel(logging.INFO)
+
+        handler.emit(AnsiHandlerTest.record3)
+        handler.emit(AnsiHandlerTest.record4)
+        handler.emit(AnsiHandlerTest.record5)
+        handler.flush()
+
+        stream.seek(0)
+        lines = stream.readlines()
+        CSI = '\033[31m'
+        for line in lines:
+            assert CSI in line

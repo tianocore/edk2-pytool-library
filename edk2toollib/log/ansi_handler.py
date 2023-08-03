@@ -203,7 +203,7 @@ class ColoredFormatter(logging.Formatter):
     def format(self, record):
         """Formats the given record and returns it."""
         levelname = record.levelname
-        org_message = record.msg
+        message = record.getMessage()
 
         if not self.use_azure and levelname in ColoredFormatter.COLORS:
             # just color the level name
@@ -212,7 +212,7 @@ class ColoredFormatter(logging.Formatter):
             # otherwise color the wholes message
             else:
                 levelname_color = get_ansi_string(ColoredFormatter.COLORS[levelname]) + levelname
-                record.msg += get_ansi_string()
+                message += get_ansi_string()
             record.levelname = levelname_color
 
         if self.use_azure and levelname in ColoredFormatter.AZURE_COLORS:
@@ -223,7 +223,7 @@ class ColoredFormatter(logging.Formatter):
         result = logging.Formatter.format(self, record)
 
         record.levelname = levelname
-        record.msg = org_message
+        record.msg = message
         return result
 
 
@@ -440,5 +440,6 @@ class ColoredStreamHandler(logging.StreamHandler):
             self.write(str(msg))
             self.write(self.terminator)
             self.flush()
-        except Exception:
+        except Exception as e:
+            print(e)
             self.handleError(record)
