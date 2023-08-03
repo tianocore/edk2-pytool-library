@@ -261,7 +261,7 @@ class Edk2Path(object):
             if abspath.exists():
                 return str(abspath)
         if log_errors:
-            self.logger.error("Failed to convert Edk2Relative Path to an Absolute Path on this system.", stack_info=True)
+            self.logger.error("Failed to convert Edk2Relative Path to an Absolute Path on this system.")
             self.logger.error("Relative Path: %s" % relpath)
 
         return None
@@ -278,7 +278,7 @@ class Edk2Path(object):
         Returns:
             (str): name of the package that the path is in.
         """
-        self.logger.debug("get_package: %s" % InputPath)
+        self.logger.debug("GetContainingPackage: %s" % InputPath)
         InputPath = Path(InputPath.replace("\\", "/"))
         # Make a list that has the path case normalized for comparison.
         # Note: This only does anything on Windows
@@ -320,7 +320,7 @@ class Edk2Path(object):
         Note: This function only accepts absolute paths. An exception will
               be raised if a non-absolute path is given.
 
-        Note: If path does not exist in the filesystem, this function
+        Note: If input_path does not exist in the filesystem, this function
               will try to return the likely containing module(s) but if the
               entire module has been deleted, this isn't possible.
 
@@ -330,7 +330,7 @@ class Edk2Path(object):
 
         Args:
             input_path: Absolute path to a file, directory, or module.
-                  Supports both Windows and Posix like paths.
+                Supports both Windows and Posix like paths.
 
         Returns:
             (list[str]): Absolute paths of .inf files that could be the
