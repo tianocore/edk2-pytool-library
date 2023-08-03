@@ -70,7 +70,7 @@ def reader(filepath, outstream, stream, logging_level=logging.INFO, encodingErro
         f = open(filepath, "w")
 
     while True:
-        s = stream.readline().decode(sys.stdout.encoding, errors=encodingErrors)
+        s = stream.readline().decode(sys.stdout.encoding or 'utf-8', errors=encodingErrors)
         if not s:
             break
         if (f is not None):
