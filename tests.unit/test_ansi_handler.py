@@ -100,7 +100,6 @@ class AnsiHandlerTest(unittest.TestCase):
         handler.setFormatter(formatter)
         handler.setLevel(logging.INFO)
 
-        handler.emit(AnsiHandlerTest.record5)
         handler.emit(AnsiHandlerTest.record3)
         handler.emit(AnsiHandlerTest.record4)
         handler.emit(AnsiHandlerTest.record5)
