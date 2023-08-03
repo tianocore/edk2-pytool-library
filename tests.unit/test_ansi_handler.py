@@ -34,7 +34,7 @@ class AnsiHandlerTest(unittest.TestCase):
                                      "msg": ('Logging', 'A', 'Tuple')})
     record5 = logging.makeLogRecord({"name": "", "level": logging.ERROR, "levelno": logging.ERROR,
                                      "levelname": "ERROR", "path": "test_path", "lineno": 0,
-                                     "msg": iter(('Logging', 'A', 'Iter'))})
+                                     "msg": "Testing This Works: %s", "args": ("Test",)})
 
     def test_colored_formatter_init(self):
         formatter = ColoredFormatter("%(levelname)s - %(message)s")
@@ -100,6 +100,7 @@ class AnsiHandlerTest(unittest.TestCase):
         handler.setFormatter(formatter)
         handler.setLevel(logging.INFO)
 
+        handler.emit(AnsiHandlerTest.record5)
         handler.emit(AnsiHandlerTest.record3)
         handler.emit(AnsiHandlerTest.record4)
         handler.emit(AnsiHandlerTest.record5)
@@ -107,6 +108,7 @@ class AnsiHandlerTest(unittest.TestCase):
 
         stream.seek(0)
         lines = stream.readlines()
-        CSI = '\033[31m'
+        CSI = '\033[31m' # Red
+        CSI2 = '\033[39m' # Reset
         for line in lines:
-            assert CSI in line
+            assert CSI in line and CSI2 in line
