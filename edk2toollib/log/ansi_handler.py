@@ -212,7 +212,7 @@ class ColoredFormatter(logging.Formatter):
             # otherwise color the wholes message
             else:
                 levelname_color = get_ansi_string(ColoredFormatter.COLORS[levelname]) + levelname
-                record.msg += get_ansi_string()
+                record.msg = str(org_message) + get_ansi_string()
             record.levelname = levelname_color
 
         if self.use_azure and levelname in ColoredFormatter.AZURE_COLORS:
