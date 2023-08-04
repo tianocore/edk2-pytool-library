@@ -186,7 +186,7 @@ class Edk2Path(object):
         return [str(p) for p in self._package_path_list]
 
     def GetEdk2RelativePathFromAbsolutePath(self, *abspath: str) -> str:
-        """Transforms an abolute path to an edk2 path relative to the workspace or a packages path.
+        """Transforms an absolute path to an edk2 path relative to the workspace or a packages path.
 
         Args:
             *abspath: absolute path to a file or directory. Can be the entire path or parts of the path provided
@@ -196,6 +196,12 @@ class Edk2Path(object):
             (str): POSIX-like path relative to the workspace or packages path
             (None): abspath is None
             (None): path is not valid
+
+        Example:
+            ```python
+                rel_path = edk2path.GetEdk2RelativePathFromAbsolutePath("C:/Workspace/edk2/MdePkg/Include")
+                rel_path = edk2path.GetEdk2RelativePathFromAbsolutePath("C:/Workspace", "edk2", "MdePkg", "Include")
+            ```
         """
         if abspath == (None,):
             return None
@@ -247,6 +253,12 @@ class Edk2Path(object):
             (str): absolute path in the OS specific form
             (None): invalid relpath
             (None): Unable to get the absolute path
+
+        Example:
+            ```python
+                abs_path = edk2path.GetAbsolutePathOnThisSystemFromEdk2RelativePath("MdePkg/Include")
+                abs_path = edk2path.GetAbsolutePathOnThisSystemFromEdk2RelativePath("MdePkg", "Include")
+            ```
         """
         if relpath == (None,):
             return None
