@@ -403,6 +403,50 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(folder_pp1_abs, "testfile.c")
         self.assertIsNone(pathobj.GetContainingPackage(p), folder_pp_rel)
 
+    def test_get_containing_package_with_nonexistent_path(self):
+        '''Test basic usage of GetContainingPackage when the file path does not exist.
+
+        File layout:
+
+         root/                  <-- current working directory (self.tmp)
+            folder_ws/           <-- workspace root
+                folder_pp/       <-- packages path
+                    PPTestPkg/   <-- A edk2 package
+                        PPTestPkg.DEC
+                        module1/
+                            module1.INF
+                        module2/
+                            module2.INF
+                            X64/
+                                TestFile.c
+                WSTestPkg/   <-- A edk2 package
+                    WSTestPkg.dec
+                    module1/
+                        module1.inf
+                    module2/
+                        module2.inf
+                        X64/
+                            TestFile.c
+        '''
+        ws_rel = "folder_ws"
+        ws_abs = os.path.join(self.tmp, ws_rel)
+        wsi_abs = os.path.join(self.tmp, ws_rel)
+        os.mkdir(ws_abs)
+        folder_pp_rel = "pp1"
+        folder_pp1_abs = os.path.join(ws_abs, folder_pp_rel)
+        os.mkdir(folder_pp1_abs)
+        ws_p_name = "WSTestPkg"
+        ws_pkg_abs = self._make_edk2_package_helper(ws_abs, ws_p_name)
+        pp_p_name = "PPTestPkg"
+        pp_pkg_abs = self._make_edk2_package_helper(folder_pp1_abs, pp_p_name, extension_case_lower=False)
+        pathobj = Edk2Path(wsi_abs, [folder_pp1_abs])
+
+        p = os.path.join(pp_pkg_abs, "subfolder", "testfile2.c")
+        self.assertEqual(pathobj.GetContainingPackage(p), pp_p_name)
+
+        p = os.path.join(ws_pkg_abs, "subfolder", "testfile2.c")
+        self.assertEqual(pathobj.GetContainingPackage(p), ws_p_name)
+
     def test_get_containing_modules_with_relative_path(self):
         """Test that a relative path raises an exception.
 

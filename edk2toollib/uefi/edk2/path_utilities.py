@@ -316,7 +316,7 @@ class Edk2Path(object):
         else:
             dirpath = InputPath.parent
 
-        while not path_root.samefile(dirpath):
+        while path_root != dirpath:
             if dirpath.exists():
                 for f in dirpath.iterdir():
                     if f.suffix.lower() =='.dec':
