@@ -123,24 +123,31 @@ def rule_from_pattern(pattern, base_path=None, source=None):
     anchored = '/' in pattern[:-1]
     if pattern[0] == '/':
         pattern = pattern[1:]
-    if pattern[0] == '*' and pattern[1] == '*':
+    if pattern[0] == '*' and len(pattern) >= 2 and pattern[1] == '*':
         pattern = pattern[2:]
         anchored = False
     if pattern[0] == '/':
         pattern = pattern[1:]
     if pattern[-1] == '/':
         pattern = pattern[:-1]
+    # patterns with leading hashes are escaped with a backslash in front, unescape it
+    if pattern[0] == '\\' and pattern[1] == '#':
+        pattern = pattern[1:]
+    # trailing spaces are ignored unless they are escaped with a backslash
+    i = len(pattern)-1
+    striptrailingspaces = True
+    while i > 1 and pattern[i] == ' ':
+        if pattern[i-1] == '\\':
+            pattern = pattern[:i-1] + pattern[i:]
+            i = i - 1
+            striptrailingspaces = False
+        else:
+            if striptrailingspaces:
+                pattern = pattern[:i]
+        i = i - 1
     regex = fnmatch_pathname_to_regex(
-        pattern
+        pattern, directory_only, negation, anchored=bool(anchored)
     )
-    if anchored:
-        # DeprecationWarning: Flags not at the start of the expression
-        # Must ensure (?ms) is at the front of the regex, so we can no
-        # longer put ^ in the beginning of a regex string.
-        # OLD example: ^(?ms)\.eggs$
-        # NEW Example: (?ms)^\.eggs$
-        # regex = ''.join(['^', regex])
-        regex = regex[:5] + '^' + regex[5:]
     return IgnoreRule(
         pattern=orig_pattern,
         regex=regex,
@@ -176,9 +183,13 @@ class IgnoreRule(collections.namedtuple('IgnoreRule_', IGNORE_RULE_FIELDS)):
         """Returns True or False if the path matches the rule."""
         matched = False
         if self.base_path:
-            rel_path = str(Path(abs_path).relative_to(self.base_path))
+            rel_path = str(Path(abs_path).resolve().relative_to(self.base_path))
         else:
             rel_path = str(Path(abs_path))
+        # Path() strips the trailing slash, so we need to preserve it
+        # in case of directory-only negation
+        if self.negation and type(abs_path) == str and abs_path[-1] == '/':
+            rel_path += '/'
         if rel_path.startswith('./'):
             rel_path = rel_path[2:]
         if re.search(self.regex, rel_path):
@@ -188,7 +199,9 @@ class IgnoreRule(collections.namedtuple('IgnoreRule_', IGNORE_RULE_FIELDS)):
 
 # Frustratingly, python's fnmatch doesn't provide the FNM_PATHNAME
 # option that .gitignore's behavior depends on.
-def fnmatch_pathname_to_regex(pattern):
+def fnmatch_pathname_to_regex(
+    pattern, directory_only: bool, negation: bool, anchored: bool = False
+):
     """Implements fnmatch style-behavior, as though with FNM_PATHNAME flagged.
 
     WARNING: the path seperator will not match shell-style '*' and '.' wildcards.
@@ -198,8 +211,8 @@ def fnmatch_pathname_to_regex(pattern):
     seps = [re.escape(os.sep)]
     if os.altsep is not None:
         seps.append(re.escape(os.altsep))
-    seps_group = r'[{}]'.format(''.join(seps))
-    nonsep = r'[^{}]'.format(''.join(seps))
+    seps_group = '[' + '|'.join(seps) + ']'
+    nonsep = r'[^{}]'.format('|'.join(seps))
 
     res = []
     while i < n:
@@ -241,6 +254,13 @@ def fnmatch_pathname_to_regex(pattern):
                 res.append('[{}]'.format(stuff))
         else:
             res.append(re.escape(c))
+    if anchored:
+        res.insert(0, '^')
     res.insert(0, '(?ms)')
-    res.append('$')
+    if not directory_only:
+        res.append('$')
+    elif directory_only and negation:
+        res.append('/$')
+    else:
+        res.append('($|\\/)')
     return ''.join(res)

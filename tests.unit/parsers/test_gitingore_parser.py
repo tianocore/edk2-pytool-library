@@ -7,10 +7,12 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-import unittest
-import tempfile
-import edk2toollib.gitignore_parser as gitignore_parser
 import os
+import tempfile
+import unittest
+from pathlib import Path
+
+import edk2toollib.gitignore_parser as gitignore_parser
 
 
 def BuildGitIgnore(root):
@@ -42,12 +44,11 @@ def BuildGitIgnore(root):
 class GitIgnoreParserTest(unittest.TestCase):
 
     def test_gitignoreparser_filter(self):
-        '''
-        Ensure the gitignore parser filters files and folders correctly per
+        '''Ensure the gitignore parser filters files and folders correctly per
         what is specified in the parsed .gitignore file.
         '''
         with tempfile.TemporaryDirectory() as root:
-
+            root = Path(root).resolve()
             gitignore_path = BuildGitIgnore(root)
             rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path)
 
@@ -56,40 +57,40 @@ class GitIgnoreParserTest(unittest.TestCase):
 
             # Example line in a .gitignore
             # /Build/
-            self.assertTrue(rule_tester(os.path.join(root, "Build")))
-            self.assertFalse(rule_tester(os.path.join(root, "T", "Build")))
+            self.assertTrue(rule_tester(root / "Build"))
+            self.assertFalse(rule_tester(root / "T" / "Build"))
 
             # Test a rule which specifies that a specific folder is not
             # filtered, but the contents of the folder is filtered
 
             # Example ine in a .gitignore
             # /reader/*
-            self.assertFalse(rule_tester(os.path.join(root, "reader")))
-            self.assertTrue(rule_tester(os.path.join(root, "reader", "testing.txt")))
+            self.assertFalse(rule_tester(root / "reader"))
+            self.assertTrue(rule_tester(root / "reader" / "testing.txt"))
 
             # Test a rule which specifies that a folder at any depth from the
             # root is correctly filtered.
 
             # Example line in a .gitignore
             # **/Test/
-            self.assertTrue(rule_tester(os.path.join(root, "Test")))
-            self.assertTrue(rule_tester(os.path.join(root, "T", "Test")))
+            self.assertTrue(rule_tester(root / "Test"))
+            self.assertTrue(rule_tester(root / "T" / "Test"))
 
             # Test a rule which specifies that a folder containing a specific
             # string at any depth is correctly filtered.
 
             # Example line in a .gitignore
             # *_extdep
-            self.assertTrue(rule_tester(os.path.join(root, 'test_extdep')))
-            self.assertTrue(rule_tester(os.path.join(root, 'T', 'test_extdep')))
+            self.assertTrue(rule_tester(root / 'test_extdep'))
+            self.assertTrue(rule_tester(root / 'T' / 'test_extdep'))
 
             # Test a rule which specifies that a file of a specific type at any
             # depth is correctly filtered.
 
             # Example line in a .gitignore
             # .DS_Store
-            self.assertTrue(rule_tester(os.path.join(root, "file.DS_Store")))
-            self.assertTrue(rule_tester(os.path.join(root, "T", "file.DS_Store")))
+            self.assertTrue(rule_tester(root / "file.DS_Store"))
+            self.assertTrue(rule_tester(root / "T" / "file.DS_Store"))
 
             # Test a rule which specifies an exception for a previous rule is
             # correctly filtered.
@@ -97,20 +98,20 @@ class GitIgnoreParserTest(unittest.TestCase):
             # Example line in a .gitignore
             # *.exe
             # !important.exe
-            self.assertTrue(rule_tester(os.path.join(root, 'test.exe')))
-            self.assertTrue(rule_tester(os.path.join(root, 'T', 'test.exe')))
-            self.assertFalse(rule_tester(os.path.join(root, 'important.exe')))
-            self.assertFalse(rule_tester(os.path.join(root, 'T', 'important.exe')))
+            self.assertTrue(rule_tester(root / 'test.exe'))
+            self.assertTrue(rule_tester(root / 'T' / 'test.exe'))
+            self.assertFalse(rule_tester(root / 'important.exe'))
+            self.assertFalse(rule_tester(root / 'T' / 'important.exe'))
 
             # Test a rule which specifies a file type in any directory under a
             # specific folder are correctly filtered.
 
             # Example line in a .gitignore
             # /docs/**/*.txt
-            self.assertTrue(rule_tester(os.path.join(root, 'docs', 'notes.txt')))
-            self.assertFalse(rule_tester(os.path.join(root, 'docs', 'Readme.md')))
-            self.assertTrue(rule_tester(os.path.join(root, 'docs', 'developing', 'notes.txt')))
-            self.assertFalse(rule_tester(os.path.join(root, 'docs', 'developing', 'Readme.md')))
+            self.assertTrue(rule_tester(root / 'docs' / 'notes.txt'))
+            self.assertFalse(rule_tester(root / 'docs' / 'Readme.md'))
+            self.assertTrue(rule_tester(root / 'docs' / 'developing' / 'notes.txt'))
+            self.assertFalse(rule_tester(root / 'docs' / 'developing' / 'Readme.md'))
 
             # Test a rule which specifies a file with a specific naming convention be
             # correctly filtered
@@ -118,19 +119,19 @@ class GitIgnoreParserTest(unittest.TestCase):
             # Example line in a .gitignore
             # out?.log
 
-            self.assertTrue(rule_tester(os.path.join(root, 'out1.log')))
-            self.assertTrue(rule_tester(os.path.join(root, 'outF.log')))
-            self.assertFalse(rule_tester(os.path.join(root, 'out11.log')))
+            self.assertTrue(rule_tester(root / 'out1.log'))
+            self.assertTrue(rule_tester(root / 'outF.log'))
+            self.assertFalse(rule_tester(root / 'out11.log'))
 
             # log[0-9].txt
-            self.assertTrue(rule_tester(os.path.join(root, 'log1.txt')))
-            self.assertFalse(rule_tester(os.path.join(root, 'logF.txt')))
-            self.assertFalse(rule_tester(os.path.join(root, 'log11.txt')))
+            self.assertTrue(rule_tester(root / 'log1.txt'))
+            self.assertFalse(rule_tester(root / 'logF.txt'))
+            self.assertFalse(rule_tester(root / 'log11.txt'))
 
             # log0[!a-z].txt
-            self.assertTrue(rule_tester(os.path.join(root, 'log01.txt')))
-            self.assertFalse(rule_tester(os.path.join(root, 'log0a.txt')))
-            self.assertTrue(rule_tester(os.path.join(root, 'log0A.txt')))
+            self.assertTrue(rule_tester(root / 'log01.txt'))
+            self.assertFalse(rule_tester(root / 'log0a.txt'))
+            self.assertTrue(rule_tester(root / 'log0A.txt'))
 
     def test_rule_from_pattern(self):
 
@@ -142,3 +143,20 @@ class GitIgnoreParserTest(unittest.TestCase):
             self.assertIsNone(gitignore_parser.rule_from_pattern("# Comment", root))
             self.assertIsNone(gitignore_parser.rule_from_pattern(" ", root))
             self.assertIsNone(gitignore_parser.rule_from_pattern("***", root))
+
+def test_ignore_no_extensions(tmp_path):
+        """Tests that files without an extension can be ignored."""
+        root = tmp_path.resolve()
+        gitignore_path = root / ".gitignore"
+        with open(gitignore_path, 'w') as f:
+            f.write("*\n")
+            f.write("!*.*\n")
+            f.write("!*/\n")
+
+        rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path)
+
+        assert rule_tester(root / "File.txt") is False
+        assert rule_tester(root / "executable") is True
+
+        assert rule_tester(root / "files" / "file.txt") is False
+        assert rule_tester(root / "bins" / "run_me") is True
