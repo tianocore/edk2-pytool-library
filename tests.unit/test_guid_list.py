@@ -7,10 +7,11 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-import unittest
 import os
-import tempfile
 import shutil
+import tempfile
+import unittest
+
 from edk2toollib.uefi.edk2.guid_list import GuidList, GuidListEntry
 
 
@@ -134,7 +135,7 @@ TestDecFile
 
     def prep_workspace(self):
         self.clean_workspace()
-        self.test_dir = tempfile.mkdtemp()
+        self.test_dir = os.path.realpath(tempfile.mkdtemp())
 
     def clean_workspace(self):
         if self.test_dir is None:
