@@ -174,3 +174,33 @@ def test_pound_in_filename(tmp_path):
 
     assert rule_tester(root / "file.txt") is False
     assert rule_tester(root / "#file.txt") is True
+
+def test_trailing_whitespace(tmp_path):
+    """Tests that trailing whitespace is properly ignored.
+
+    Taken somewhat from "Test_trailingspaces" test from upstream
+    """
+    root = tmp_path.resolve()
+    gitignore_path = root / ".gitignore"
+
+    with open(gitignore_path, 'w') as f:
+        f.write('file1 \n')
+        f.write('file2\\  \n')
+        f.write('file3 \\  \n')
+        f.write('file4\\ \\ \\ ')
+
+    rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path)
+
+    assert rule_tester(root / "file1") is True
+
+    assert rule_tester(root / "file2 ") is True
+    assert rule_tester(root / "file2") is False
+
+    assert rule_tester(root / "file3  ") is True
+    assert rule_tester(root / "file3 ") is False
+    assert rule_tester(root / "file3") is False
+
+    assert rule_tester(root / "file4   ") is True
+    assert rule_tester(root / "file4  ") is False
+    assert rule_tester(root / "file4 ") is False
+    assert rule_tester(root / "file4") is False
