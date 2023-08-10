@@ -10,7 +10,7 @@ from pathlib import Path
 
 """Original file is from
 https://github.com/mherrmann/gitignore_parser/blob/master/gitignore_parser.py
-sha hash: 31407327e4a10d122632c5f03c7a705b010e5fbd
+sha hash: 133bd62562622be096f495fbca7b37a1faac3ab7
 
 Original License:
 
