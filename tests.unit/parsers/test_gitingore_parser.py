@@ -160,3 +160,17 @@ def test_ignore_no_extensions(tmp_path):
 
         assert rule_tester(root / "files" / "file.txt") is False
         assert rule_tester(root / "bins" / "run_me") is True
+
+def test_pound_in_filename(tmp_path):
+    """Tests that a # symbol is escaped if prefixed with a \\."""
+    root = tmp_path.resolve()
+    gitignore_path = root / ".gitignore"
+
+    with open(gitignore_path, 'w') as f:
+        f.write("#file.txt\n")
+        f.write("\\#file.txt\n" )
+
+    rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path)
+
+    assert rule_tester(root / "file.txt") is False
+    assert rule_tester(root / "#file.txt") is True
