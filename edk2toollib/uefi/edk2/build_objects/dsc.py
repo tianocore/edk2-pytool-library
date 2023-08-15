@@ -555,7 +555,7 @@ class pcd_variable(pcd):
         self.var_offset = var_offset
         self.default = default
 
-        if type(attributes) is str:
+        if isinstance(attributes, str):
             attributes = attributes.split(",")
         attributes = [str(x).upper().strip() for x in attributes]
         if any([x not in pcd_variable_attributes for x in attributes]):
