@@ -168,7 +168,7 @@ class AnsiColor(object):
     @classmethod
     def __contains__(self, item):
         """Verifies we contain the color."""
-        if type(item) is str and hasattr(self, item):
+        if isinstance(item, str) and hasattr(self, item):
             return True
         # check if we contain the color number
         for attr_name in dir(self):
