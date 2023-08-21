@@ -209,7 +209,7 @@ def test_scoped_libraries2(empty_tree: Tree):
         if "COMPONENT" not in row:
             assert row["NAME"].replace("Driver", "Lib") in row["LIBRARIES_USED"][0]
 
-def test_missing_library(empty_tree: Tree):
+def test_missing_library(empty_tree: Tree, caplog):
     """Test when a library is missing."""
     edk2path = Edk2Path(str(empty_tree.ws), [])
     db = Edk2DB(Edk2DB.MEM_RW, pathobj=edk2path)
@@ -227,8 +227,12 @@ def test_missing_library(empty_tree: Tree):
         "TARGET_ARCH": "IA32 X64",
         "TARGET": "DEBUG",
     })
-    with pytest.raises(RuntimeError):
+
+    with caplog.at_level(logging.WARNING):
         inf_table.parse(db)
+
+        assert len(caplog.records) == 1
+        assert 'testcls' in caplog.records[0].message
 
 def test_skip_library_with_unsupported_module_type(empty_tree: Tree):
     """Library class INFs can specify what module types they support.

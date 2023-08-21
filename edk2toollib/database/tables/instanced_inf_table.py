@@ -119,6 +119,9 @@ class InstancedInfTable(TableGenerator):
 
         Will immediately return if the INF has already been visited.
         """
+        if inf is None:
+            return []
+
         logging.debug(f"  Parsing Library: [{inf}]")
         visited.append(inf)
         library_instances = []
@@ -139,6 +142,8 @@ class InstancedInfTable(TableGenerator):
         # Append all NULL library instances
         for null_lib in override_dict["NULL"]:
             library_instances.append(null_lib)
+
+        library_instances = list(filter(lambda lib: lib is not None, library_instances))
 
         # Time to visit in libraries that we have not visited yet.
         to_return = []
@@ -216,8 +221,8 @@ class InstancedInfTable(TableGenerator):
         logging.debug(f'scoped library contents: {library_dict}')
         logging.debug(f'override dictionary: {override_dict}')
         e = f'Cannot find library class [{library_class_name}] for scope [{scope}] when evaluating {self.dsc}'
-        logging.error(e)
-        raise RuntimeError(e)
+        logging.warn(e)
+        return None
 
     def _reduce_lib_instances(self, module: str, library_instance_list: list[str]) -> str:
         """For a DSC, multiple library instances for the same library class can exist.
