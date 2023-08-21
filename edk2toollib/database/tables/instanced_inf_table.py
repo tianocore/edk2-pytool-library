@@ -43,6 +43,19 @@ class InstancedInfTable(TableGenerator):
         self.arch = self.env["TARGET_ARCH"].split(" ")  # REQUIRED
         self.target = self.env["TARGET"]  # REQUIRED
 
+        # Prevent parsing the same INF multiple times
+        self._parsed_infs = {}
+
+    def inf(self, inf: str) -> InfP:
+        """Returns a parsed INF object."""
+        if inf in self._parsed_infs:
+            infp = self._parsed_infs[inf]
+        else:
+            infp = InfP().SetEdk2Path(self.pathobj)
+            infp.ParseFile(inf)
+            self._parsed_infs[inf] = infp
+        return infp
+
     def parse(self, db: Edk2DB) -> None:
         """Parse the workspace and update the database."""
         self.pathobj = db.pathobj
@@ -114,8 +127,7 @@ class InstancedInfTable(TableGenerator):
         # 0. Use the existing parser to parse the INF file. This parser parses an INF as an independent file
         #    and does not take into account the context of a DSC.
         #
-        infp = InfP().SetEdk2Path(self.pathobj)
-        infp.ParseFile(inf)
+        infp = self.inf(inf)
 
         #
         # 1. Convert all libraries to their actual instances for this component. This takes into account
@@ -158,39 +170,68 @@ class InstancedInfTable(TableGenerator):
         """
         arch, module = tuple(scope.split("."))
 
+        # NOTE: it is recognized that the below code could be reduced to have less repetitiveness,
+        # but I personally believe that the below makes it more clear the order in which we search
+        # for matches, and that the order is quite important.
+
         # https://tianocore-docs.github.io/edk2-DscSpecification/release-1.28/2_dsc_overview/27_[libraryclasses]_section_processing.html#27-libraryclasses-section-processing
 
         # 1. If a Library class instance (INF) is specified in the Edk2 II [Components] section (an override),
-        #    then it will be used
+        #    and the library supports the module, then it will be used.
         if library_class_name in override_dict:
             return override_dict[library_class_name]
 
         # 2/3. If the Library Class instance (INF) is defined in the [LibraryClasses.$(ARCH).$(MODULE_TYPE)] section,
-        #    then it will be used.
+        #      and the library supports the module, then it will be used.
         lookup = f'{arch}.{module}.{library_class_name}'
         if lookup in library_dict:
-            return library_dict[lookup]
+            library_instance = self._reduce_lib_instances(module, library_dict[lookup])
+            if library_instance is not None:
+                return library_instance
 
         # 4. If the Library Class instance (INF) is defined in the [LibraryClasses.common.$(MODULE_TYPE)] section,
-        #   then it will be used.
+        #    and the library supports the module, then it will be used.
         lookup = f'common.{module}.{library_class_name}'
         if lookup in library_dict:
-            return library_dict[lookup]
+            library_instance = self._reduce_lib_instances(module, library_dict[lookup])
+            if library_instance is not None:
+                return library_instance
 
         # 5. If the Library Class instance (INF) is defined in the [LibraryClasses.$(ARCH)] section,
-        #    then it will be used.
+        #    and the library supports the module, then it will be used.
         lookup = f'{arch}.{library_class_name}'
         if lookup in library_dict:
-            return library_dict[lookup]
+            library_instance = self._reduce_lib_instances(module, library_dict[lookup])
+            if library_instance is not None:
+                return library_instance
 
         # 6. If the Library Class Instance (INF) is defined in the [LibraryClasses] section,
-        #    then it will be used.
+        #    and the library supports the module, then it will be used.
         lookup = f'common.{library_class_name}'
         if lookup in library_dict:
-            return library_dict[lookup]
+            library_instance = self._reduce_lib_instances(module, library_dict[lookup])
+            if library_instance is not None:
+                return library_instance
 
         logging.debug(f'scoped library contents: {library_dict}')
         logging.debug(f'override dictionary: {override_dict}')
         e = f'Cannot find library class [{library_class_name}] for scope [{scope}] when evaluating {self.dsc}'
         logging.error(e)
         raise RuntimeError(e)
+
+    def _reduce_lib_instances(self, module: str, library_instance_list: list[str]) -> str:
+        """For a DSC, multiple library instances for the same library class can exist.
+
+        This is either due to a mistake by the developer, or because the library class
+        instance only supports certain modules. That is to say a library class instance
+        defining `MyLib| PEIM` and one defining `MyLib| PEI_CORE` both being defined in
+        the same LibraryClasses section is acceptable.
+
+        Due to this, we need to filter to the first library class instance that supports
+        the module type.
+        """
+        for library_instance in library_instance_list:
+            infp = self.inf(library_instance)
+            if module.lower() in [phase.lower() for phase in infp.SupportedPhases]:
+                return library_instance
+        return None

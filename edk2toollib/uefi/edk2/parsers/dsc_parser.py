@@ -24,8 +24,15 @@ class DscParser(HashFileParser):
         OtherMods (list): list of other Mods that are not IA32, X64 specific
         Libs (list): list of Libs (the line in the file)
         LibsEnhanced (list): Better parsed (in a dict) list of Libs
+        ScopedLibraryDict (dict): key (library class) value (list of instances)
         LibraryClassToInstanceDict (dict): Key (Library class) Value (Instance)
         Pcds (list): List of Pcds
+
+    !!! note
+        ScopedLibraryDict can have multiple library instances for the same scope because the INF
+        can also filter the module types it supports. For example, two library instances could be
+        in the scope of "common", but one filters to only PEI (MyLib| PEI_CORE) and the other
+        filters to PEIM (MyLib| PEIM).
     """
     SECTION_LIBRARY = "libraryclasses"
     SECTION_COMPONENT = "components"
@@ -359,7 +366,10 @@ class DscParser(HashFileParser):
             for scope in current_scope:
                 key = f"{scope.strip()}.{lib.strip()}".lower()
                 value = instance.strip()
-                self.ScopedLibraryDict[key] = value
+                if key in self.ScopedLibraryDict and value not in self.ScopedLibraryDict[key]:
+                    self.ScopedLibraryDict[key].insert(0, value)
+                else:
+                    self.ScopedLibraryDict[key] = [value]
 
         return
 
