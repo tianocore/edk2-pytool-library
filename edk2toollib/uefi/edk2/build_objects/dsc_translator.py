@@ -41,7 +41,7 @@ class DscTranslator():
         org_depth = depth
         depth += 2
 
-        if type(obj) is list or type(obj) is set or type(obj) is dsc_set:
+        if isinstance(obj, (list, set, dsc_set)):
             for item in obj:
                 lines += cls._GetDscLinesFromDscObj(item, org_depth)
         elif type(obj) is dsc:
