@@ -71,9 +71,9 @@ class dsc_dict(collections.OrderedDict):
             raise ValueError(f"Cannot add {type(key)} to restricted set: {self._allowed_key_classes}")
 
         if len(self._allowed_value_classes) > 0:
-            if type(val) == set and len(val) == 0:  # if it's an empty set, convert it to a dsc_set
+            if isinstance(val, set) and len(val) == 0:  # if it's an empty set, convert it to a dsc_set
                 val = dsc_set(allowed_classes=self._allowed_value_classes)
-            if type(val) == dsc_set:
+            if isinstance(val, dsc_set):
                 if val._allowed_classes != self._allowed_value_classes:
                     raise ValueError(
                         f"Cannot add set:{val._allowed_classes} to restricted dict: {self._allowed_value_classes}")
