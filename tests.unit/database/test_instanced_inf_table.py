@@ -128,8 +128,8 @@ def test_library_override(empty_tree: Tree):
     # Ensure the Test Driver is using TestLib2 from the override and the NULL library was added
     for row in db.table("instanced_inf").all():
         if (row["NAME"] == Path(comp1).stem
-            and Path(lib2).as_posix() in row["LIBRARIES_USED"]
-            and Path(lib3).as_posix() in row["LIBRARIES_USED"]):
+            and ("TestCls", Path(lib2).as_posix()) in row["LIBRARIES_USED"]
+            and ("NULL", Path(lib3).as_posix()) in row["LIBRARIES_USED"]):
             break
     else:
         assert False
@@ -172,7 +172,7 @@ def test_scoped_libraries1(empty_tree: Tree):
     # For each driver, verify that the the driver number (1, 2, 3) uses the corresponding lib number (1, 2, 3)
     for row in db.table("instanced_inf").all():
         if "COMPONENT" not in row:  # Only care about looking at drivers, which do not have a component
-            assert row["NAME"].replace("Driver", "Lib") in row["LIBRARIES_USED"][0]
+            assert row["NAME"].replace("Driver", "Lib") in row["LIBRARIES_USED"][0][1]
 
 def test_scoped_libraries2(empty_tree: Tree):
     """Ensure that the correct libraries in regards to scoping.
@@ -207,7 +207,7 @@ def test_scoped_libraries2(empty_tree: Tree):
 
     for row in db.table("instanced_inf").all():
         if "COMPONENT" not in row:
-            assert row["NAME"].replace("Driver", "Lib") in row["LIBRARIES_USED"][0]
+            assert row["NAME"].replace("Driver", "Lib") in row["LIBRARIES_USED"][0][1]
 
 def test_missing_library(empty_tree: Tree, caplog):
     """Test when a library is missing."""
@@ -294,4 +294,4 @@ def test_skip_library_with_unsupported_module_type(empty_tree: Tree):
     component_list = db.table("instanced_inf").search(~Query().COMPONENT.exists())
     assert len(component_list) == 2
     for component in component_list:
-        assert component["LIBRARIES_USED"][0] == Path(testlib2).as_posix()
+        assert component["LIBRARIES_USED"][0] == ("TestCls", Path(testlib2).as_posix())

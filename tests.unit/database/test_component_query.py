@@ -71,7 +71,7 @@ def test_simple_component(empty_tree: Tree):
     result = db.search(ComponentQuery(component = "TestDriver1"))
     assert len(result) == 1
 
-    assert sorted(result[0]['LIBRARIES_USED']) == sorted(['TestPkg/Library/TestLib2.inf', 'TestPkg/Library/TestLib3.inf'])
+    assert sorted(result[0]['LIBRARIES_USED']) == sorted([('TestCls','TestPkg/Library/TestLib2.inf'), ('NULL','TestPkg/Library/TestLib3.inf')])
 
     result = db.search(ComponentQuery(component = "NonExistantDriver"))
     assert len(result) == 0
