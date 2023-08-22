@@ -25,9 +25,9 @@ class InstancedInfTable(TableGenerator):
 
     ``` py
     table_name = "instanced_inf"
-    |----------------------------------------------------------------------------------------------------------------------------------|
-    | DSC | GUID | LIBRARY_CLASS | PATH | PHASES | SOURCES_USED | LIBRARIES_USED | PROTOCOLS_USED | GUIDS_USED | PPIS_USED | PCDS_USED |
-    |----------------------------------------------------------------------------------------------------------------------------------|
+    |----------------------------------------------------------------------------------------------------------------------------------------------|
+    | DSC | PATH | NAME | LIBRARY_CLASS | COMPONENT | MODULE_TYPE | ARCH | SOURCES_USED | LIBRARIES_USED | PROTOCOLS_USED | GUIDS_USED | PCDS_USED |
+    |----------------------------------------------------------------------------------------------------------------------------------------------|
     ```
     """  # noqa: E501
     SECTION_LIBRARY = "LibraryClasses"
@@ -167,6 +167,7 @@ class InstancedInfTable(TableGenerator):
             "DSC": Path(self.dsc).name,
             "PATH": Path(inf).as_posix(),
             "NAME": infp.Dict["BASE_NAME"],
+            "LIBRARY_CLASS": infp.LibraryClass,
             "COMPONENT": Path(component).as_posix(),
             "MODULE_TYPE": infp.Dict["MODULE_TYPE"],
             "ARCH": scope.split(".")[0].upper(),
