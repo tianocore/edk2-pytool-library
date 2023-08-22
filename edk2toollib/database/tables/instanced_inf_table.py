@@ -124,7 +124,9 @@ class InstancedInfTable(TableGenerator):
 
         logging.debug(f"  Parsing Library: [{inf}]")
         visited.append(inf)
-        library_instances = []
+        library_instance_list = []
+        library_class_list = []
+
 
         #
         # 0. Use the existing parser to parse the INF file. This parser parses an INF as an independent file
@@ -137,19 +139,28 @@ class InstancedInfTable(TableGenerator):
         #    any overrides for this component
         #
         for lib in infp.get_libraries(self.arch):
-            lib = lib.split(" ")[0].lower()
-            library_instances.append(self._lib_to_instance(lib, scope, library_dict, override_dict))
+            lib = lib.split(" ")[0]
+            library_instance_list.append(self._lib_to_instance(lib.lower(), scope, library_dict, override_dict))
+            library_class_list.append(lib)
         # Append all NULL library instances
         for null_lib in override_dict["NULL"]:
-            library_instances.append(null_lib)
+            library_instance_list.append(null_lib)
+            library_class_list.append("NULL")
 
-        library_instances = list(filter(lambda lib: lib is not None, library_instances))
+        to_parse = list(filter(lambda lib: lib is not None, library_instance_list))
 
         # Time to visit in libraries that we have not visited yet.
         to_return = []
-        for library in filter(lambda lib: lib not in visited, library_instances):
+        for library in filter(lambda lib: lib not in visited, to_parse):
             to_return += self._parse_inf_recursively(library, component,
                                                      library_dict, override_dict, scope, visited)
+
+        # Transform path to edk2 relative form (POSIX)
+        def to_posix(path):
+            if path is None:
+                return None
+            return Path(path).as_posix()
+        library_instance_list = list(map(to_posix, library_instance_list))
 
         # Return Paths as posix paths, which is Edk2 standard.
         to_return.append({
@@ -160,7 +171,7 @@ class InstancedInfTable(TableGenerator):
             "MODULE_TYPE": infp.Dict["MODULE_TYPE"],
             "ARCH": scope.split(".")[0].upper(),
             "SOURCES_USED": list(map(lambda p: Path(p).as_posix(), infp.Sources)),
-            "LIBRARIES_USED": list(map(lambda p: Path(p).as_posix(), library_instances)),
+            "LIBRARIES_USED": list(zip(library_class_list, library_instance_list)),
             "PROTOCOLS_USED": [],  # TODO
             "GUIDS_USED": [],  # TODO
             "PPIS_USED": [],  # TODO

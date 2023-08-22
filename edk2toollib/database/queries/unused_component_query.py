@@ -91,4 +91,4 @@ class UnusedComponentQuery(AdvancedQuery):
                 library_list.append(inf)
 
             for inf in result["LIBRARIES_USED"]:
-                self._recurse_inf(inf, table, library_list)
+                self._recurse_inf(inf[1], table, library_list)
