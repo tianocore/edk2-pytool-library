@@ -170,7 +170,7 @@ def test_dsc_include_relative_paths2(tmp_path):
 
     Base DSC
     [PcdsFixedAtBuild]
-    gPlatformPkgTokenSpaceGuid.PcdSomethig
+    gPlatformPkgTokenSpaceGuid.PcdSomething
     !include includes/PCDs1.dsc.inc
     !include includes/PCDs2.dsc.inc
     """
@@ -190,7 +190,7 @@ def test_dsc_include_relative_paths2(tmp_path):
 
     with open(dsc, "w") as f:
         f.write("[PcdsFixedAtBuild]\n")
-        f.write("gPlatformPkgTokenSpaceGuid.PcdSomethig\n")
+        f.write("gPlatformPkgTokenSpaceGuid.PcdSomething\n")
         f.write("!include includes/PCDs1.dsc.inc\n")
         f.write("!include includes/PCDs2.dsc.inc\n")
 
