@@ -109,7 +109,7 @@ class OverrideParser(object):
         parse_lines = parse_contents.split('\n')
         result = []
 
-        for i in range(0, len(parse_lines)):
+        for i in range(len(parse_lines)):
             if parse_lines[i].strip().upper().startswith("#OVERRIDE"):
                 result.append({'lineno': i + 1, 'line': parse_lines[i].strip()})
 
