@@ -257,7 +257,7 @@ class BuildReport(object):
         # we do it after parsing region because we
         # can limit scope to 0 - first start
         #
-        for n in range(0, self._Regions[0][1]):  # loop thru from 0 to start of first region
+        for n in range(self._Regions[0][1]):  # loop thru from 0 to start of first region
             line = self._ReportContents[n].strip()
             line_partitioned = line.partition(':')
             if (line_partitioned[2] == ""):
