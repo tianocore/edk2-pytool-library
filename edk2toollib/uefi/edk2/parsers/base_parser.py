@@ -146,7 +146,7 @@ class BaseParser(object):
         Returns:
             (bool): True if there are still lines to parse, False otherwise.
         """
-        if len(self.FilePathStack) == 0:
+        if not self.FilePathStack:
             return False
         (abs_path, line_count) = self.FilePathStack[-1]
         if line_count - 1 > 0:
