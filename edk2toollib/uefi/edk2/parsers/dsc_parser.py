@@ -92,10 +92,10 @@ class DscParser(HashFileParser):
             if sp is None:
                 raise FileNotFoundError(include_file)
             self.Logger.debug("Opening Include File %s" % sp)
-            self._PushTargetFile(sp)
             lf = open(sp, "r")
             loc = lf.readlines()
             lf.close()
+            self.PushTargetFile(sp, len(loc))
             return ("", loc, sp)
 
         # check for new section
@@ -216,10 +216,10 @@ class DscParser(HashFileParser):
             sp = self.FindPath(include_file)
             if sp is None:
                 raise FileNotFoundError(include_file)
-            self._PushTargetFile(sp)
             lf = open(sp, "r")
             loc = lf.readlines()
             lf.close()
+            self.PushTargetFile(sp, len(loc))
             return ("", loc)
 
         # check for new section
@@ -293,6 +293,7 @@ class DscParser(HashFileParser):
                     # otherwise, let the user know that we failed in the DSC
                     self.Logger.warning(f"DSC Parser (No-Fail Mode): {raw_line}")
                     self.Logger.warning(e)
+            self.DecrementLinesParsed()
 
     def __ProcessDefines(self, lines):
         """Goes through a file once to look for [Define] sections.
@@ -315,6 +316,7 @@ class DscParser(HashFileParser):
                 # otherwise, raise the exception and act normally
                 if not self._no_fail_mode:
                     raise
+            self.DecrementLinesParsed()
         # Reset the PcdValueDict as this was just to find any Defines.
         self.PcdValueDict = {}
 
@@ -477,24 +479,20 @@ class DscParser(HashFileParser):
         sp = self.FindPath(filepath)
         if sp is None:
             raise FileNotFoundError(filepath)
-        self._PushTargetFile(sp)
         f = open(sp, "r")
         # expand all the lines and include other files
         file_lines = f.readlines()
+        self.PushTargetFile(sp, len(file_lines))
         self.__ProcessDefines(file_lines)
         # reset the parser state before processing more
         self.ResetParserState()
-        self._PushTargetFile(sp)
+        self.PushTargetFile(sp, len(file_lines))
         self.__ProcessMore(file_lines, file_name=sp)
         f.close()
 
         self._parse_libraries()
         self._parse_components()
         self.Parsed = True
-
-    def _PushTargetFile(self, targetFile):
-        self.TargetFilePath = os.path.abspath(targetFile)
-        self._dsc_file_paths.add(self.TargetFilePath)
 
     def GetMods(self):
         """Returns a list with all Mods."""
@@ -517,7 +515,7 @@ class DscParser(HashFileParser):
 
         They are not all guaranteed to be DSC files
         """
-        return self._dsc_file_paths
+        return self.ParsedFiles
 
     def RegisterPcds(self, line):
         """Reads the line and registers any PCDs found."""
