@@ -50,13 +50,16 @@ class FdfParser(HashFileParser):
         sline = self.StripComment(line)
 
         if (sline is None or len(sline) < 1):
+            self.DecrementLinesParsed()
             return self.GetNextLine()
 
         sline = self.ReplaceVariables(sline)
         if self.ProcessConditional(sline):
             # was a conditional so skip
+            self.DecrementLinesParsed()
             return self.GetNextLine()
         if not self.InActiveCode():
+            self.DecrementLinesParsed()
             return self.GetNextLine()
 
         self._BracketCount += sline.count("{")

@@ -42,7 +42,7 @@ class BaseParser(object):
         self.PPs = []
         self._Edk2PathUtil = None
         self.TargetFilePath = None  # the abs path of the target file
-        self.FilePathStack = []  # a stack containing a tuple of a file, and lines left to parse in that file
+        self.FilePathStack = []  # a stack containing a list of size 2: [filepath, line_count]
         self.ParsedFiles = set()
         self.CurrentLine = -1
         self._MacroNotDefinedValue = "0"  # value to used for undefined macro
@@ -137,7 +137,7 @@ class BaseParser(object):
 
     def PushTargetFile(self, abs_path, line_count):
         """Adds a target file to the stack."""
-        self.FilePathStack.append((abs_path, line_count))
+        self.FilePathStack.append([abs_path, line_count])
         self.ParsedFiles.add(abs_path)
 
     def DecrementLinesParsed(self) -> bool:
@@ -148,9 +148,9 @@ class BaseParser(object):
         """
         if not self.FilePathStack:
             return False
-        (abs_path, line_count) = self.FilePathStack[-1]
+        line_count = self.FilePathStack[-1][1]
         if line_count - 1 > 0:
-            self.FilePathStack[-1] = (abs_path, line_count - 1)
+            self.FilePathStack[-1][1] -= 1
             return True
 
         self.FilePathStack.pop()

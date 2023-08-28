@@ -106,6 +106,12 @@ def test_section_guided():
 def test_fdf_include_relative_paths(tmp_path):
     """This tests whether includes work properly with a relative path.
 
+    Tests the following scenarios:
+    1. include multiple files from the same directory
+    2. Properly decrement when a comment exists in the file
+    3. Properly decrement when a macro exists in the file
+    4. Properly decrement when in an inactive portion of a conditional macro
+
     Directory setup
     src
     └─ Platforms
@@ -129,7 +135,12 @@ def test_fdf_include_relative_paths(tmp_path):
     inc_dir.mkdir(parents=True)
 
     with open(inc_dir / "Libs1.dsc.inc", "w") as f:
-        f.write("Lib1|BaseLib1.inf\n")
+        f.write("# A Comment here.\n")
+        f.write("!if TRUE == TRUE\n")
+        f.write("  Lib1|BaseLib1.inf\n")
+        f.write("!else\n")
+        f.write("  Lib1|BaseLib3.inf\n")
+        f.write("!endif\n")
 
     with open(inc_dir / "Libs2.dsc.inc", "w") as f:
         f.write("Lib2|BaseLib2.inf\n")
