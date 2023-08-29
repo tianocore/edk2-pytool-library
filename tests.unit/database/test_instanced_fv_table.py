@@ -29,6 +29,7 @@ def test_valid_fdf(empty_tree: Tree):  # noqa: F811
     comp2 = empty_tree.create_component("TestDriver2", "DXE_DRIVER")
     comp3 = empty_tree.create_component("TestDriver3", "DXE_DRIVER")
     comp4 = str(Path('TestPkg','Extra Drivers','TestDriver4.inf'))
+    comp5 = empty_tree.create_component("TestDriver5", "DXE_DRIVER")
 
     dsc = empty_tree.create_dsc()
 
@@ -39,7 +40,8 @@ def test_valid_fdf(empty_tree: Tree):  # noqa: F811
             f"INF  {comp1}", # PP relative
             f'INF  {str(empty_tree.ws / comp2)}', # Absolute
             f'INF  RuleOverride=RESET_VECTOR {comp3}', # RuleOverride
-            f'INF  {comp4}' # Space in path
+            f'INF  {comp4}', # Space in path
+            f'INF  ruleoverride = RESET_VECTOR {comp5}', # RuleOverride lowercase & spaces
         ]
     )
 
@@ -62,5 +64,6 @@ def test_valid_fdf(empty_tree: Tree):  # noqa: F811
                 Path(comp1).as_posix(),
                 Path(comp2).as_posix(),
                 Path(comp3).as_posix(),
+                Path(comp5).as_posix(),
                 Path(comp4).as_posix(),
                 ])
