@@ -56,8 +56,6 @@ def main():
 
     with mkdocs_gen_files.open("api/.pages", "w") as f:
         print("title: API Reference", file=f)
-        print("nav:", file=f)
-        print("  - ...", file=f)
 
 
 main()

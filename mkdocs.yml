@@ -5,6 +5,9 @@ site_description: edk2toollib package documentation
 
 theme:
   name: material
+  features:
+    - navigation.tabs
+    - navigation.indexes
   palette:
     - scheme: default
       toggle:
@@ -73,11 +76,6 @@ watch:
   - 'edk2toollib/'
 
 nav:
-  - Our Philosophy: index.md
-  - Advanced Features:
-    - Edk2 Database: features/edk2_db.md
-    - ANSI Logging: features/logging.ansi_handler.md
-    - Get Host Info: features/utility_functions.GetHostInfo.md
-    - Windows Firmware Policy: features/windows_firmware_policy.md
-    - Build Objects: features/build_objects.md
-  - ...
+  - Home: index.md
+  - ... | features/**/*.md
+  - ... | api/**/*.md
