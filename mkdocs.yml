@@ -4,7 +4,16 @@ copyright: Copyright (c) Microsoft.  All rights reserved
 site_description: edk2toollib package documentation
 
 theme:
-  name: readthedocs
+  name: material
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
 
 docs_dir: docs/user
 
@@ -71,5 +80,4 @@ nav:
     - Get Host Info: features/utility_functions.GetHostInfo.md
     - Windows Firmware Policy: features/windows_firmware_policy.md
     - Build Objects: features/build_objects.md
-  - API Reference:
-    - ... | flat | api/**/*.md
+  - ...

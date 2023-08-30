@@ -14,7 +14,6 @@ from typing import Any, Optional, Type
 
 from edk2toollib.database.tables import EnvironmentTable
 from edk2toollib.database.tables.base_table import TableGenerator
-from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 CREATE_JUNCTION_TABLE = """
 CREATE TABLE IF NOT EXISTS junction (
@@ -58,9 +57,39 @@ class Edk2DB:
             db.register(Parser1(), Parser2(), Parser3())
             db.parse()
 
-            db.connection.execute("SELECT * FROM ?", table)
+        # Run using Memory storage
+        from edk2toollib.database.parsers import *
+        with Edk2DB(Edk2DB.MEM_RW, pathobj=edk2path) as db:
+            db.register(Parser1(), Parser2(), Parser3())
+            db.parse()
+
+        # Run some parsers in clear mode and some in append mode
+        from edk2toollib.database.parsers import *
+        with Edk2DB(Edk2DB.MEM_RW, pathobj=edk2path) as db:
+            db.register(Parser1())
+            db.parse()
+            db.clear_parsers()
+
+            db.register(Parser2(), Parser3())
+            for env in env_list:
+                db.parse(env=env, append=True)
+
+        # Run Queries on specific tables or on the database
+        from edk2toollib.database.queries import *
+        with Edk2DB(Edk2DB.FILE_RW, pathobj=edk2path, db_path=Path("path/to/db.db")) as db:
+            # Run a tinydb Query
+            # https://tinydb.readthedocs.io/en/latest/usage.html#queries
+            query_results = db.table("TABLENAME").search(Query().table_field == "value")
+
+            # Run an advanced query
+            query_results = db.search(AdvancedQuerySubclass(config1 = "x", config2 = "y"))
+        ```
     """
-    def __init__(self: 'Edk2DB', db_path: str, pathobj: Edk2Path = None, **kwargs: dict[str,Any]) -> 'Edk2DB':
+    FILE_RW = 1 # Mode: File storage, Read & Write
+    FILE_RO = 2 # Mode: File storage, Read Only
+    MEM_RW = 3  # Mode: Memory storage, Read & Write
+
+    def __init__(self, mode: int, **kwargs: dict[str,Any]):
         """Initializes the database.
 
         Args:
