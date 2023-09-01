@@ -10,26 +10,45 @@
 import logging
 import re
 from pathlib import Path
+from sqlite3 import Cursor
 
-from tinyrecord import transaction
-
-from edk2toollib.database.edk2_db import Edk2DB, TableGenerator
+from edk2toollib.database.tables.base_table import TableGenerator
 from edk2toollib.uefi.edk2.parsers.dsc_parser import DscParser as DscP
 from edk2toollib.uefi.edk2.parsers.inf_parser import InfParser as InfP
+from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
+CREATE_INSTANCED_INF_TABLE = '''
+CREATE TABLE IF NOT EXISTS instanced_inf (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    env INTEGER,
+    path TEXT,
+    class TEXT,
+    name TEXT,
+    arch TEXT,
+    dsc TEXT,
+    component TEXT,
+    FOREIGN KEY(env) REFERENCES environment(env)
+)
+'''
+
+INSERT_INSTANCED_INF_ROW = '''
+INSERT INTO instanced_inf (env, path, class, name, arch, dsc, component)
+VALUES (?, ?, ?, ?, ?, ?, ?)
+'''
+
+INSERT_JUNCTION_ROW = '''
+INSERT INTO junction (env, table1, key1, table2, key2)
+VALUES (?, ?, ?, ?, ?)
+'''
+
+GET_ROW_ID = '''
+SELECT id FROM instanced_inf
+WHERE env = ? and path = ? and dsc = ? and (class = ? OR class IS NULL)
+LIMIT 1
+'''
 
 class InstancedInfTable(TableGenerator):
-    """A Table Generator that parses a single DSC file and generates a table.
-
-    Generates a table with the following schema:
-
-    ``` py
-    table_name = "instanced_inf"
-    |----------------------------------------------------------------------------------------------------------------------------------------------|
-    | DSC | PATH | NAME | LIBRARY_CLASS | COMPONENT | MODULE_TYPE | ARCH | SOURCES_USED | LIBRARIES_USED | PROTOCOLS_USED | GUIDS_USED | PCDS_USED |
-    |----------------------------------------------------------------------------------------------------------------------------------------------|
-    ```
-    """  # noqa: E501
+    """A Table Generator that parses a single DSC file and generates a table."""
     SECTION_LIBRARY = "LibraryClasses"
     SECTION_COMPONENT = "Components"
     SECTION_REGEX = re.compile(r"\[(.*)\]")
@@ -37,11 +56,10 @@ class InstancedInfTable(TableGenerator):
 
     def __init__(self, *args, **kwargs):
         """Initialize the query with the specific settings."""
-        self.env = kwargs.pop("env")
-        self.dsc = self.env["ACTIVE_PLATFORM"] # REQUIRED
-        self.fdf = self.env.get("FLASH_DEFINITION", "")  # OPTIONAL
-        self.arch = self.env["TARGET_ARCH"].split(" ")  # REQUIRED
-        self.target = self.env["TARGET"]  # REQUIRED
+
+    def create_tables(self, db_cursor: Cursor) -> None:
+        """Create the tables necessary for this parser."""
+        db_cursor.execute(CREATE_INSTANCED_INF_TABLE)
 
         # Prevent parsing the same INF multiple times
         self._parsed_infs = {}
@@ -56,15 +74,22 @@ class InstancedInfTable(TableGenerator):
             self._parsed_infs[inf] = infp
         return infp
 
-    def parse(self, db: Edk2DB) -> None:
+    def parse(self, db_cursor: Cursor, pathobj: Edk2Path, id: str, env: dict) -> None:
         """Parse the workspace and update the database."""
-        self.pathobj = db.pathobj
+        self.pathobj = pathobj
         self.ws = Path(self.pathobj.WorkspacePath)
+        self.id = id
+        self.env = env
+        self.dsc = self.env["ACTIVE_PLATFORM"] # REQUIRED
+        self.fdf = self.env.get("FLASH_DEFINITION", "")  # OPTIONAL
+        self.arch = self.env["TARGET_ARCH"].split(" ")  # REQUIRED
+        self.target = self.env["TARGET"]  # REQUIRED
 
-        # Our DscParser subclass can now parse components, their scope, and their overrides
         dscp = DscP().SetEdk2Path(self.pathobj)
         dscp.SetInputVars(self.env)
         dscp.ParseFile(self.dsc)
+
+        # General Debugging
         logging.debug(f"All DSCs included in {self.dsc}:")
         for dsc in dscp.GetAllDscPaths():
             logging.debug(f"  {dsc}")
@@ -74,19 +99,37 @@ class InstancedInfTable(TableGenerator):
             logging.debug(f"  {line}")
         logging.debug("End of DSC")
 
-        # Create the instanced inf entries, including components and libraries. multiple entries
+        # Create the instanced inf entries, including components and libraries. Multiple entries
         # of the same library will exist if multiple components use it.
         #
         # This is where we merge DSC parser information with INF parser information.
         inf_entries = self._build_inf_table(dscp)
-        for entry in inf_entries:
-            if Path(entry["PATH"]).is_absolute():
-                entry["PATH"] = self.pathobj.GetEdk2RelativePathFromAbsolutePath(entry["PATH"])
+        for e in inf_entries:
+            if Path(e["PATH"]).is_absolute():
+                e["PATH"] = self.pathobj.GetEdk2RelativePathFromAbsolutePath(e["PATH"])
 
-        table_name = 'instanced_inf'
-        table = db.table(table_name, cache_size=None)
-        with transaction(table) as tr:
-            tr.insert_multiple(inf_entries)
+        # add instanced_inf entries
+        for e in inf_entries:
+            row = (id, e["PATH"], e["LIBRARY_CLASS"], e["NAME"], e["ARCH"], e["DSC"], e["COMPONENT"])
+            db_cursor.execute(INSERT_INSTANCED_INF_ROW, row)
+
+        for e in inf_entries:
+            inf_id = db_cursor.execute(GET_ROW_ID, (id, e["PATH"], e["DSC"], e["LIBRARY_CLASS"])).fetchone()[0]
+
+            # Add junction entries to link source the source files used by an INF
+            for source in e["SOURCES_USED"]:
+                row = (id, "instanced_inf", inf_id, "source", source)
+                db_cursor.execute(INSERT_JUNCTION_ROW, row)
+
+            # Add junction entires to link libraries / components to the libraries they consume.
+            for cls, instance in e["LIBRARIES_USED"]:
+                if instance is None:
+                    used_inf_id = None  # no library instance found for this library class
+                else:
+                    used_inf_id = db_cursor.execute(GET_ROW_ID, (id, instance, e["DSC"], cls)).fetchone()[0]
+
+                row = (id, "instanced_inf", inf_id, "instanced_inf", used_inf_id)
+                db_cursor.execute(INSERT_JUNCTION_ROW, row)
 
     def _build_inf_table(self, dscp: DscP):
 
@@ -104,17 +147,20 @@ class InstancedInfTable(TableGenerator):
             if "MODULE_TYPE" in infp.Dict:
                 scope += f".{infp.Dict['MODULE_TYPE']}".lower()
 
-            inf_entries += self._parse_inf_recursively(inf, inf, dscp.ScopedLibraryDict, overrides, scope, [])
-
-        # Move entries to correct table
-        for entry in inf_entries:
-            if entry["PATH"] == entry["COMPONENT"]:
-                del entry["COMPONENT"]
+            inf_entries += self._parse_inf_recursively(inf, None, inf, dscp.ScopedLibraryDict, overrides, scope, [])
 
         return inf_entries
 
     def _parse_inf_recursively(
-            self, inf: str, component: str, library_dict: dict, override_dict: dict, scope: str, visited):
+        self,
+        inf: str,
+        lib_cls: str,
+        component: str,
+        library_dict: dict,
+        override_dict: dict,
+        scope: str,
+        visited: list[str]
+    ):
         """Recurses down all libraries starting from a single INF.
 
         Will immediately return if the INF has already been visited.
@@ -142,19 +188,24 @@ class InstancedInfTable(TableGenerator):
             lib = lib.split(" ")[0]
             library_instance_list.append(self._lib_to_instance(lib.lower(), scope, library_dict, override_dict))
             library_class_list.append(lib)
-        # Append all NULL library instances
+
+        #
+        # 2. Append all NULL library instances
+        #
         for null_lib in override_dict["NULL"]:
             library_instance_list.append(null_lib)
             library_class_list.append("NULL")
 
-        to_parse = list(filter(lambda lib: lib is not None, library_instance_list))
-
-        # Time to visit in libraries that we have not visited yet.
+        #
+        # 3. Recursively parse used libraries
+        #
         to_return = []
-        for library in filter(lambda lib: lib not in visited, to_parse):
-            to_return += self._parse_inf_recursively(library, component,
-                                                     library_dict, override_dict, scope, visited)
-
+        for cls, instance in zip(library_class_list, library_instance_list):
+            if instance is None or instance in visited:
+                continue
+            to_return += self._parse_inf_recursively(
+                            instance, cls, component, library_dict, override_dict, scope, visited
+                        )
         # Transform path to edk2 relative form (POSIX)
         def to_posix(path):
             if path is None:
@@ -166,8 +217,9 @@ class InstancedInfTable(TableGenerator):
         to_return.append({
             "DSC": Path(self.dsc).name,
             "PATH": Path(inf).as_posix(),
+            "GUID": infp.Dict.get("FILE_GUID", ""),
             "NAME": infp.Dict["BASE_NAME"],
-            "LIBRARY_CLASS": infp.LibraryClass,
+            "LIBRARY_CLASS": lib_cls,
             "COMPONENT": Path(component).as_posix(),
             "MODULE_TYPE": infp.Dict["MODULE_TYPE"],
             "ARCH": scope.split(".")[0].upper(),

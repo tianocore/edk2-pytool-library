@@ -7,62 +7,75 @@
 ##
 # ruff: noqa: F811
 """Tests for build an inf file table."""
-import os
 from datetime import date
-from edk2toollib.database.tables import EnvironmentTable
+
 from edk2toollib.database import Edk2DB
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
-def test_environment_no_version():
+
+def test_environment_no_version(tmp_path):
     """Test that version is set if not found in the environment variables."""
-    edk2path = Edk2Path(os.getcwd(), [])
-    db = Edk2DB(Edk2DB.MEM_RW, pathobj=edk2path)
-    env_table = EnvironmentTable(env={})
+    edk2path = Edk2Path(str(tmp_path), [])
+    db = Edk2DB(tmp_path / "db.db", pathobj=edk2path)
 
-    env_table.parse(db)
-    table = db.table("environment")
+    db.parse({})
 
-    assert len(table) == 1
-    row = table.all()[0]
+    rows = list(db.connection.cursor().execute("SELECT * FROM environment"))
 
-    assert row['VERSION'] == 'UNKNOWN'
-    assert row["DATE"] == str(date.today())
-    assert row["ENV"] == {}
+    assert len(rows) == 1
+    _, actual_date, actual_version = rows[0]
 
-def test_environment_version():
+    assert actual_version == 'UNKNOWN'
+    assert actual_date.split(" ")[0] == str(date.today())
+
+    rows = list(db.connection.cursor().execute("SELECT key, value FROM environment_values"))
+    assert len(rows) == 0
+
+def test_environment_version(tmp_path):
     """Test that version is detected out of environment variables."""
-    edk2path = Edk2Path(os.getcwd(), [])
-    db = Edk2DB(Edk2DB.MEM_RW, pathobj=edk2path)
-    env = {"VERSION": "abcdef1"}
-    env_table = EnvironmentTable(env=env)
+    edk2path = Edk2Path(str(tmp_path), [])
+    db = Edk2DB(tmp_path / "db.db", pathobj=edk2path)
 
-    env_table.parse(db)
-    table = db.table("environment")
+    db.parse({})
 
-    assert len(table) == 1
-    row = table.all()[0]
+    rows = list(db.connection.cursor().execute("SELECT * FROM environment"))
 
-    assert row['VERSION'] == 'abcdef1'
-    assert row["DATE"] == str(date.today())
-    assert row["ENV"] == {}
+    assert len(rows) == 1
+    _, actual_date, actual_version = rows[0]
+
+    assert actual_date.split(" ")[0] == str(date.today())
+    assert actual_version == 'UNKNOWN'
+
+    rows = list(db.connection.cursor().execute("SELECT key, value FROM environment_values"))
+    assert len(rows) == 0
 
 
-def test_environment_with_vars():
+def test_environment_with_vars(tmp_path):
     """Tests that environment variables are recorded."""
-    edk2path = Edk2Path(os.getcwd(), [])
-    db = Edk2DB(Edk2DB.MEM_RW, pathobj=edk2path)
     env = {
         "ACTIVE_PLATFORM": "TestPkg/TestPkg.dsc",
         "TARGET_ARCH": "X64",
         "TOOL_CHAIN_TAG": "VS2019",
         "FLASH_DEFINITION": "TestPkg/TestPkg.fdf",
     }
-    env_table = EnvironmentTable(env = env)
-    env_table.parse(db)
+    edk2path = Edk2Path(str(tmp_path), [])
+    db = Edk2DB(tmp_path / "db.db", pathobj=edk2path)
 
-    assert len(db.table("environment")) == 1
-    row = db.table("environment").all()[0]
+    db.parse(env)
 
-    assert row['VERSION'] == 'UNKNOWN'
-    assert row["DATE"] == str(date.today())
-    assert row["ENV"] == env
+    rows = list(db.connection.cursor().execute("SELECT * FROM environment"))
+
+    assert len(rows) == 1
+    _, actual_date, actual_version = rows[0]
+
+    assert actual_date.split(" ")[0] == str(date.today())
+    assert actual_version == 'UNKNOWN'
+
+    rows = list(db.connection.cursor().execute("SELECT key, value FROM environment_values WHERE id = 1"))
+    assert len(rows) == 4
+
+    db.parse(env)
+
+    rows = list(db.connection.cursor().execute("SELECT * FROM environment"))
+
+    assert len(rows) == 2

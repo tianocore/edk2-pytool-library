@@ -7,8 +7,4 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Core classes and methods used to interact with the database module inside edk2-pytool-library."""
-
-from tinydb import Query, where  # noqa: F401
-from tinyrecord import transaction  # noqa: F401
-
-from .edk2_db import AdvancedQuery, Edk2DB, TableGenerator  # noqa: F401
+from .edk2_db import Edk2DB  # noqa: F401

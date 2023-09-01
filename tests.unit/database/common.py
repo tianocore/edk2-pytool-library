@@ -10,18 +10,8 @@ import uuid
 from pathlib import Path
 
 import pytest
-from edk2toollib.database import Edk2DB, Query, transaction
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
-
-def correlate_env(db: Edk2DB):
-    """Correlates the environment table with the other tables."""
-    idx = len(db.table("environment")) - 1
-    for table in filter(lambda table: table != "environment", db.tables()):
-        table = db.table(table)
-
-        with transaction(table) as tr:
-            tr.update({'ENVIRONMENT_ID': idx}, ~Query().ENVIRONMENT_ID.exists())
 
 def write_file(file, contents):
     """Writes contents to a file."""
@@ -44,7 +34,7 @@ def make_edk2_cfg_file(*args, **kwargs)->str:
     out += "[Defines]\n"
 
     for key, value in kwargs["defines"].items():  # Must exist
-        out += f'  {key} = {value}\n'
+        out += f'  {key.split(" ")[0]} = {value}\n'
 
     for key, values in kwargs.items():
         if key == "defines":
