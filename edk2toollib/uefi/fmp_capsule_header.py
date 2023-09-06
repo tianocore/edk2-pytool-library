@@ -274,7 +274,7 @@ class FmpCapsuleHeaderClass (object):
         # Parse the ItemOffsetList values
         #
         Offset = self._StructSize
-        for Index in range(0, EmbeddedDriverCount + PayloadItemCount):
+        for Index in range(EmbeddedDriverCount + PayloadItemCount):
             ItemOffset = struct.unpack(self._ItemOffsetFormat, Buffer[Offset:Offset + self._ItemOffsetSize])[0]
             if ItemOffset >= len(Buffer):
                 raise ValueError
@@ -285,7 +285,7 @@ class FmpCapsuleHeaderClass (object):
         #
         # Parse the EmbeddedDrivers
         #
-        for Index in range(0, EmbeddedDriverCount):
+        for Index in range(EmbeddedDriverCount):
             Offset = offset_list[Index]
             if Index < (len(offset_list) - 1):
                 Length = offset_list[Index + 1] - Offset

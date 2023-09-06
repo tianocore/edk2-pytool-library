@@ -295,7 +295,7 @@ class DscParser(HashFileParser):
         """
         if (len(lines) == 0):
             return
-        for index in range(0, len(lines)):
+        for index in range(len(lines)):
             # we try here so that we can catch exceptions from individual lines
             try:
                 raw_line = lines[index]
