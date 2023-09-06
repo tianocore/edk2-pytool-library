@@ -29,7 +29,7 @@ class InstancedFvTable(TableGenerator):
     ```
     """  # noqa: E501
 
-    RULEOVERRIDE = re.compile(r'RuleOverride\s*=.+\s+(.*\.inf)', re.IGNORECASE)
+    RULEOVERRIDE = re.compile(r'RuleOverride\s*=.+\s+(.+\.inf)', re.IGNORECASE)
 
     def __init__(self, *args, **kwargs):
         """Initialize the query with the specific settings."""

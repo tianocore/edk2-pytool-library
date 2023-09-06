@@ -12,7 +12,8 @@ import re
 from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 
 AllPhases = ["SEC", "PEIM", "PEI_CORE", "DXE_DRIVER", "DXE_CORE", "DXE_RUNTIME_DRIVER", "UEFI_DRIVER",
-             "SMM_CORE", "DXE_SMM_DRIVER", "UEFI_APPLICATION", "MM_STANDALONE", "MM_CORE_STANDALONE"]
+             "SMM_CORE", "DXE_SMM_DRIVER", "UEFI_APPLICATION", "MM_STANDALONE", "MM_CORE_STANDALONE",
+             "HOST_APPLICATION",]
 
 
 class InfParser(HashFileParser):
