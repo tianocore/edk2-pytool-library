@@ -11,8 +11,8 @@ import logging
 from pathlib import Path
 
 import pytest
-from common import Tree, empty_tree  # noqa: F401
-from edk2toollib.database import Edk2DB
+from common import Tree, create_inf_file, empty_tree  # noqa: F401
+from edk2toollib.database import Edk2DB, Query
 from edk2toollib.database.tables import InstancedInfTable
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
@@ -128,8 +128,8 @@ def test_library_override(empty_tree: Tree):
     # Ensure the Test Driver is using TestLib2 from the override and the NULL library was added
     for row in db.table("instanced_inf").all():
         if (row["NAME"] == Path(comp1).stem
-            and Path(lib2).as_posix() in row["LIBRARIES_USED"]
-            and Path(lib3).as_posix() in row["LIBRARIES_USED"]):
+            and ("TestCls", Path(lib2).as_posix()) in row["LIBRARIES_USED"]
+            and ("NULL", Path(lib3).as_posix()) in row["LIBRARIES_USED"]):
             break
     else:
         assert False
@@ -172,7 +172,7 @@ def test_scoped_libraries1(empty_tree: Tree):
     # For each driver, verify that the the driver number (1, 2, 3) uses the corresponding lib number (1, 2, 3)
     for row in db.table("instanced_inf").all():
         if "COMPONENT" not in row:  # Only care about looking at drivers, which do not have a component
-            assert row["NAME"].replace("Driver", "Lib") in row["LIBRARIES_USED"][0]
+            assert row["NAME"].replace("Driver", "Lib") in row["LIBRARIES_USED"][0][1]
 
 def test_scoped_libraries2(empty_tree: Tree):
     """Ensure that the correct libraries in regards to scoping.
@@ -207,9 +207,9 @@ def test_scoped_libraries2(empty_tree: Tree):
 
     for row in db.table("instanced_inf").all():
         if "COMPONENT" not in row:
-            assert row["NAME"].replace("Driver", "Lib") in row["LIBRARIES_USED"][0]
+            assert row["NAME"].replace("Driver", "Lib") in row["LIBRARIES_USED"][0][1]
 
-def test_missing_library(empty_tree: Tree):
+def test_missing_library(empty_tree: Tree, caplog):
     """Test when a library is missing."""
     edk2path = Edk2Path(str(empty_tree.ws), [])
     db = Edk2DB(Edk2DB.MEM_RW, pathobj=edk2path)
@@ -227,5 +227,71 @@ def test_missing_library(empty_tree: Tree):
         "TARGET_ARCH": "IA32 X64",
         "TARGET": "DEBUG",
     })
-    with pytest.raises(RuntimeError):
+
+    with caplog.at_level(logging.WARNING):
         inf_table.parse(db)
+
+        assert len(caplog.records) == 1
+        assert 'testcls' in caplog.records[0].message
+
+def test_skip_library_with_unsupported_module_type(empty_tree: Tree):
+    """Library class INFs can specify what module types they support.
+
+    In situations where a library class is in the [LibraryClasses] section, it may not necessarily
+    support all module types as the LIBRARY_CLASS section of the INF may limit its supported
+    module types. This test ensures that a library instance is ignored if the library instance
+    itself states it does not support a module type.
+
+    i.e. LIBRARY_CLASS = TestCls| PEIM only supports PEIM's, even if it is in the [LibraryClasses] section.
+    """
+    edk2path = Edk2Path(str(empty_tree.ws), [])
+    db = Edk2DB(Edk2DB.MEM_RW, pathobj=edk2path)
+
+    testlib1 = empty_tree.create_library("TestLib1", "TestCls",
+        defines = {
+            "LIBRARY_CLASS": "TestCls| PEIM"
+        }
+    )
+    testlib2 = empty_tree.create_library("TestLib2", "TestCls")
+    comp1 = empty_tree.create_component("TestDriver1", "DXE_DRIVER", libraryclasses = ["TestCls"])
+
+    # Generate the DSC with testlib1 first
+    dsc1 = empty_tree.create_dsc(
+        libraryclasses = [
+            f'TestCls|{testlib1}',
+            f'TestCls|{testlib2}',
+
+        ],
+        components = [comp1],
+    )
+
+    # Generate the DSC with testlib2 first
+    dsc2 = empty_tree.create_dsc(
+        libraryclasses = [
+            f'TestCls|{testlib2}',
+            f'TestCls|{testlib1}',
+
+        ],
+        components = [comp1],
+    )
+
+    inf_table = InstancedInfTable(env = {
+        "ACTIVE_PLATFORM": dsc1,
+        "TARGET_ARCH": "X64",
+        "TARGET": "DEBUG",
+    })
+
+    inf_table.parse(db)
+
+    inf_table = InstancedInfTable(env = {
+        "ACTIVE_PLATFORM": dsc2,
+        "TARGET_ARCH": "X64",
+        "TARGET": "DEBUG",
+    })
+
+    inf_table.parse(db)
+
+    component_list = db.table("instanced_inf").search(~Query().COMPONENT.exists())
+    assert len(component_list) == 2
+    for component in component_list:
+        assert component["LIBRARIES_USED"][0] == ("TestCls", Path(testlib2).as_posix())

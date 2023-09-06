@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """A module to generate a table containing fv information."""
+import re
 from pathlib import Path
 
 from tinyrecord import transaction
@@ -27,6 +28,9 @@ class InstancedFvTable(TableGenerator):
     |------------------------------------------------------|
     ```
     """  # noqa: E501
+
+    RULEOVERRIDE = re.compile(r'RuleOverride\s*=.+\s+(.+\.inf)', re.IGNORECASE)
+
     def __init__(self, *args, **kwargs):
         """Initialize the query with the specific settings."""
         self.env = kwargs.pop("env")
@@ -54,7 +58,7 @@ class InstancedFvTable(TableGenerator):
             inf_list = []  # Some INF's start with RuleOverride. We only need the INF
             for inf in fdfp.FVs[fv]["Infs"]:
                 if inf.lower().startswith("ruleoverride"):
-                    inf = inf.split(" ", 1)[-1]
+                    inf = InstancedFvTable.RULEOVERRIDE.findall(inf)[0]
                 if Path(inf).is_absolute():
                     inf = str(Path(self.pathobj.GetEdk2RelativePathFromAbsolutePath(inf)))
                 inf_list.append(Path(inf).as_posix())

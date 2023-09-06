@@ -156,12 +156,13 @@ class Tree:
     def create_library(self, name: str, lib_cls: str, **kwargs):
         """Creates a Library INF in the empty tree."""
         path = self.library_folder / f'{name}.inf'
-        kwargs["defines"] = {
+        default = {
             "FILE_GUID": str(uuid.uuid4()),
             "MODULE_TYPE": "BASE",
             "BASE_NAME": name,
             "LIBRARY_CLASS": lib_cls,
         }
+        kwargs["defines"] = {**default, **kwargs.get("defines", {})}
         create_inf_file(path, **kwargs)
         self.library_list.append(str(path))
         return str(path.relative_to(self.ws))
