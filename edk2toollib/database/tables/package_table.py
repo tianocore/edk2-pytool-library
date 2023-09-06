@@ -32,10 +32,8 @@ class PackageTable(TableGenerator):
 
         Args:
             args (any): non-keyword arguments
-            kwargs (any): keyword arguments described below
+            kwargs (any): None
 
-        Keyword Arguments:
-            None
         """
 
     def create_tables(self, db_cursor: Cursor) -> None:

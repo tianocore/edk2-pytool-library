@@ -26,6 +26,6 @@ class TableGenerator:
         """Create the tables necessary for this parser."""
         raise NotImplementedError
 
-    def parse(self, db_cursor: sqlite3.Cursor, pathobj: Edk2Path) -> None:
+    def parse(self, db_cursor: sqlite3.Cursor, pathobj: Edk2Path, id: str, env: dict) -> None:
         """Execute the parser and update the database."""
         raise NotImplementedError

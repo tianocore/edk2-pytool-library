@@ -278,7 +278,7 @@ def test_multiple_library_class(empty_tree: Tree):
 
     results = db.connection.execute("SELECT key1, key2 FROM junction").fetchall()
 
-    # Verify that TestDrver1 uses TestLib acting as TestCls1
+    # Verify that TestDriver1 uses TestLib acting as TestCls1
     assert results[0] == ('2','1') # idx 2 is TestDriver1, idx1 is TestLib1 acting as TestCsl1
     assert ("TestLib", "TestCls1") == db.connection.execute("SELECT name, class FROM instanced_inf where id = 1").fetchone()
     assert ("TestDriver1",) == db.connection.execute("SELECT name FROM instanced_inf where id = 2").fetchone()

@@ -30,7 +30,7 @@ class Edk2DB:
     """A SQLite3 database manager for a EDKII workspace.
 
     This class provides the ability to register parsers that will create / update tables in the database. This will
-    create a SQLite dabase file that can be queried using any SQLite3 client. VSCode provides multiple extensions
+    create a SQLite datbase file that can be queried using any SQLite3 client. VSCode provides multiple extensions
     for viewing and interacting with the database. Queries can also be created and run in python using the sqlite3
     module that comes with python.
 
@@ -61,10 +61,7 @@ class Edk2DB:
         Args:
             db_path: Path to create or load the database from
             pathobj: Edk2Path object for the workspace
-            **kwargs: see Keyword Arguments
-
-        Keyword Arguments:
-            None
+            **kwargs: None
         """
         self.pathobj = pathobj
         self.clear_parsers()
@@ -96,7 +93,8 @@ class Edk2DB:
         """Runs all registered table parsers against the database.
 
         !!! note
-        An environment table and row is always added to the database. This allows for filtering based on the environment.
+        An environment table and row is always added to the database. This allows for filtering based on the
+        environment.
         """
         self.connection.execute(CREATE_JUNCTION_TABLE)
         id = str(uuid.uuid4().hex)
