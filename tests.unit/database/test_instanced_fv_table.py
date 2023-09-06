@@ -62,4 +62,10 @@ def test_valid_fdf(empty_tree: Tree):  # noqa: F811
     rows = db.connection.execute("SELECT key2 FROM junction where key1 == ?", (fv_id,)).fetchall()
 
     assert len(rows) == 5
-    assert sorted(rows) == sorted([(comp1,), (comp2,), (comp3,), (comp4,), (comp5,)])
+    assert sorted(rows) == sorted([
+        (Path(comp1).as_posix(),),
+        (Path(comp2).as_posix(),),
+        (Path(comp3).as_posix(),),
+        (Path(comp4).as_posix(),),
+        (Path(comp5).as_posix(),),
+    ])
