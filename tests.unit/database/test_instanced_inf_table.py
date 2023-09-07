@@ -141,7 +141,7 @@ def test_library_override(empty_tree: Tree):
     library_list = db.connection.cursor().execute(GET_USED_LIBRARIES_QUERY, ("TestDriver1", "IA32"))
 
     for path, in library_list:
-        assert path in [lib2, lib3]
+        assert path in [Path(lib2).as_posix(), Path(lib3).as_posix()]
 
 def test_scoped_libraries1(empty_tree: Tree):
     """Ensure that the correct libraries in regards to scoping.

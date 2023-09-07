@@ -7,6 +7,8 @@
 ##
 # ruff: noqa: F811
 """Tests for build an inf file table."""
+from pathlib import Path
+
 from common import Tree, empty_tree  # noqa: F401
 from edk2toollib.database import Edk2DB
 from edk2toollib.database.tables import InfTable
@@ -51,7 +53,7 @@ def test_valid_inf(empty_tree: Tree):
     assert len(rows) == 2
 
     for path, library_class in rows:
-        assert path in [lib1, lib2]
+        assert path in [Path(lib1).as_posix(), Path(lib2).as_posix()]
         assert library_class == "TestCls"
 
     for inf in [lib1, lib2]:

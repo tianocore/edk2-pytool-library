@@ -285,7 +285,7 @@ class InstancedInfTable(TableGenerator):
         logging.debug(f'scoped library contents: {library_dict}')
         logging.debug(f'override dictionary: {override_dict}')
         e = f'Cannot find library class [{library_class_name}] for scope [{scope}] when evaluating {self.dsc}'
-        logging.warn(e)
+        logging.warning(e)
         return None
 
     def _reduce_lib_instances(self, module: str, library_instance_list: list[str]) -> str:
