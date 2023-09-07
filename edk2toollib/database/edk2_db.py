@@ -55,7 +55,7 @@ class Edk2DB:
 
             db.connection.execute(f"SELECT * FROM {table}", table)
     """
-    def __init__(self, db_path: str, pathobj: Edk2Path, **kwargs: dict[str,Any]):
+    def __init__(self, db_path: str, pathobj: Edk2Path = None, **kwargs: dict[str,Any]):
         """Initializes the database.
 
         Args:
