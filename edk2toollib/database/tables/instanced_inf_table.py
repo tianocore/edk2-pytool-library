@@ -126,7 +126,11 @@ class InstancedInfTable(TableGenerator):
                 if instance is None:
                     used_inf_id = None  # no library instance found for this library class
                 else:
-                    used_inf_id = db_cursor.execute(GET_ROW_ID, (id, instance, e["DSC"], cls)).fetchone()[0]
+                    try:
+                        used_inf_id = db_cursor.execute(GET_ROW_ID, (id, instance, e["DSC"], cls)).fetchone()[0]
+                    except Exception:
+                        logging.warning(f"Failed to get row id for {id},{instance},{e['DSC']}{cls}")
+                        used_inf_id = None
 
                 row = (id, "instanced_inf", inf_id, "instanced_inf", used_inf_id)
                 db_cursor.execute(INSERT_JUNCTION_ROW, row)
