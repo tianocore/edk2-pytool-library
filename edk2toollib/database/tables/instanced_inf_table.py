@@ -43,7 +43,7 @@ VALUES (?, ?, ?, ?, ?)
 
 GET_ROW_ID = '''
 SELECT id FROM instanced_inf
-WHERE env = ? and path = ? and dsc = ? and (class = ? OR class IS NULL)
+WHERE env = ? and path = ? and component = ?
 LIMIT 1
 '''
 
@@ -114,7 +114,7 @@ class InstancedInfTable(TableGenerator):
             db_cursor.execute(INSERT_INSTANCED_INF_ROW, row)
 
         for e in inf_entries:
-            inf_id = db_cursor.execute(GET_ROW_ID, (id, e["PATH"], e["DSC"], e["LIBRARY_CLASS"])).fetchone()[0]
+            inf_id = db_cursor.execute(GET_ROW_ID, (id, e["PATH"], e["COMPONENT"])).fetchone()[0]
 
             # Add junction entries to link source the source files used by an INF
             for source in e["SOURCES_USED"]:
@@ -126,11 +126,7 @@ class InstancedInfTable(TableGenerator):
                 if instance is None:
                     used_inf_id = None  # no library instance found for this library class
                 else:
-                    try:
-                        used_inf_id = db_cursor.execute(GET_ROW_ID, (id, instance, e["DSC"], cls)).fetchone()[0]
-                    except Exception:
-                        logging.warning(f"Failed to get row id for {id},{instance},{e['DSC']}{cls}")
-                        used_inf_id = None
+                    used_inf_id = db_cursor.execute(GET_ROW_ID, (id, instance, e["COMPONENT"])).fetchone()[0]
 
                 row = (id, "instanced_inf", inf_id, "instanced_inf", used_inf_id)
                 db_cursor.execute(INSERT_JUNCTION_ROW, row)
