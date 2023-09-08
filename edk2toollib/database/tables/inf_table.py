@@ -102,7 +102,7 @@ class InfTable(TableGenerator):
             path = path[path.find(pkg):]
         data = {}
         data["GUID"] = inf_parser.Dict.get("FILE_GUID", "")
-        data["LIBRARY_CLASS"] = inf_parser.LibraryClass
+        data["LIBRARY_CLASS"] = inf_parser.LibraryClass or None
         data["PATH"] = Path(path).as_posix()
         data["PHASES"] = inf_parser.SupportedPhases
         data["SOURCES_USED"] = inf_parser.Sources

@@ -55,5 +55,5 @@ class EnvironmentTable(TableGenerator):
         db_cursor.execute("INSERT INTO environment (id, date,version) VALUES (?, ?, ?)", entry)
 
         # Insert into environment_values table
-        data = [(db_cursor.lastrowid, key, value) for key, value in env.items()]
+        data = [(id, key, value) for key, value in env.items()]
         db_cursor.executemany("INSERT INTO environment_values VALUES (?, ?, ?)", data)

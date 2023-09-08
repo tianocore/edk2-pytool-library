@@ -110,7 +110,7 @@ class InstancedInfTable(TableGenerator):
 
         # add instanced_inf entries
         for e in inf_entries:
-            row = (id, e["PATH"], e["LIBRARY_CLASS"], e["NAME"], e["ARCH"], e["DSC"], e["COMPONENT"])
+            row = (id, e["PATH"], e["LIBRARY_CLASS"] or None, e["NAME"], e["ARCH"], e["DSC"], e["COMPONENT"])
             db_cursor.execute(INSERT_INSTANCED_INF_ROW, row)
 
         for e in inf_entries:
