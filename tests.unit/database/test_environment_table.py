@@ -71,7 +71,7 @@ def test_environment_with_vars(tmp_path):
     assert actual_date.split(" ")[0] == str(date.today())
     assert actual_version == 'UNKNOWN'
 
-    rows = list(db.connection.cursor().execute("SELECT key, value FROM environment_values WHERE id = 1"))
+    rows = list(db.connection.cursor().execute("SELECT * FROM environment_values"))
     assert len(rows) == 4
 
     db.parse(env)
