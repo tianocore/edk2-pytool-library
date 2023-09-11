@@ -25,7 +25,7 @@ def test_load_existing_db(empty_tree: Tree):
     assert db_path.exists() is False
 
     with Edk2DB(db_path, pathobj=edk2path) as db:
-        db.register(InfTable())
+        db.register(InfTable(n_jobs = 1))
         db.parse({})
         result = db.connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", ("inf",)).fetchone()
         assert result is not None
