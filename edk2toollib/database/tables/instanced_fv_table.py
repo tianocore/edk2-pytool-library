@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """A module to generate a table containing fv information."""
+import logging
 import re
 import sqlite3
 from pathlib import Path
@@ -53,10 +54,14 @@ class InstancedFvTable(TableGenerator):
         self.pathobj = pathobj
         self.ws = Path(self.pathobj.WorkspacePath)
         self.env = env
-        self.dsc = self.env["ACTIVE_PLATFORM"]
-        self.fdf = self.env["FLASH_DEFINITION"]
+        self.dsc = self.env.get("ACTIVE_PLATFORM", None)
+        self.fdf = self.env.get("FLASH_DEFINITION", None)
         self.arch = self.env["TARGET_ARCH"].split(" ")
         self.target = self.env["TARGET"]
+
+        if self.dsc is None or self.fdf is None:
+            logging.debug("DSC or FDF not found in environment. Skipping InstancedFvTable")
+            return
 
         # Our DscParser subclass can now parse components, their scope, and their overrides
         fdfp = FdfP().SetEdk2Path(self.pathobj)
