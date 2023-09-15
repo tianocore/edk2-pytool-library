@@ -86,9 +86,7 @@ class InfTable(TableGenerator):
                 db_cursor.execute(INSERT_JUNCTION_ROW, row)
 
             for source in inf["SOURCES_USED"]:
-                source_path = pathobj.GetEdk2RelativePathFromAbsolutePath(
-                    (Path(inf["PATH"]).parent / source).resolve().as_posix()
-                )
+                source_path = (Path(inf["PATH"]).parent / source).as_posix()
                 row = (env_id, "inf", inf["PATH"], "source", source_path)
                 db_cursor.execute(INSERT_JUNCTION_ROW, row)
 

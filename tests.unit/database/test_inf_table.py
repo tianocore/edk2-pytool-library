@@ -62,6 +62,6 @@ def test_valid_inf(empty_tree: Tree):
         assert path in [Path(lib1).as_posix(), Path(lib2).as_posix()]
         assert library_class == "TestCls"
 
-    for inf in [lib1, lib2]:
+    for inf in [Path(lib1).as_posix(), Path(lib2).as_posix()]:
         rows = db.connection.execute("SELECT * FROM junction WHERE key1 = ? AND table2 = 'source'", (inf,)).fetchall()
         assert len(rows) == 3
