@@ -37,6 +37,8 @@ and `db.connection.close()` to cleanly close the database.
 
 ``` python
 db = Edk2DB(db_path, pathobj=pathobj)
+db.commit()
+db.close()
 
 with Edk2DB(db_path, pathobj=pathobj) as db:
    ...

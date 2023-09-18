@@ -8,6 +8,7 @@
 """Unittest for the InstancedFv table generator."""
 from pathlib import Path
 
+import logging
 import pytest
 from common import Tree, empty_tree  # noqa: F401
 from edk2toollib.database import Edk2DB
@@ -25,11 +26,6 @@ def test_valid_fdf(empty_tree: Tree):  # noqa: F811
     edk2path = Edk2Path(str(empty_tree.ws), [])
     db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
     db.register(InstancedFvTable())
-
-    # raise exception if the Table generator is missing required information to
-    # Generate the table.
-    with pytest.raises(KeyError):
-        db.parse({})
 
     comp1 = empty_tree.create_component("TestDriver1", "DXE_DRIVER")
     comp2 = empty_tree.create_component("TestDriver2", "DXE_DRIVER")
@@ -69,3 +65,25 @@ def test_valid_fdf(empty_tree: Tree):  # noqa: F811
         (Path(comp4).as_posix(),),
         (Path(comp5).as_posix(),),
     ])
+
+def test_missing_dsc_and_fdf(empty_tree: Tree, caplog):
+    """Tests that the table generator is skipped if missing the necessary information"""
+    with caplog.at_level(logging.DEBUG):
+        edk2path = Edk2Path(str(empty_tree.ws), [])
+        db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
+        db.register(InstancedFvTable())
+
+        # raise exception if the Table generator is missing required information to Generate the table.
+        with pytest.raises(KeyError):
+            db.parse({})
+
+        db.parse({"TARGET_ARCH": "", "TARGET": "DEBUG"})
+        db.parse({"TARGET_ARCH": "", "TARGET": "DEBUG", "ACTIVE_PLATFORM": "Pkg.dsc"})
+
+        # check that we skipped (instead of asserting) twice, once for missing ACTIVE_PLATFORM and once for the
+        # missing FLASH_DEFINITION
+        count = 0
+        for _, _, record in caplog.record_tuples:
+            if record.startswith("DSC or FDF not found"):
+                count += 1
+        assert count == 2

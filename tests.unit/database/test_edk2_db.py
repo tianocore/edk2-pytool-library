@@ -44,10 +44,16 @@ def test_catch_bad_parser_and_query(empty_tree: Tree):
     db_path = empty_tree.ws / "test.db"
     assert db_path.exists() is False
 
-    with pytest.raises(NotImplementedError):
-        with Edk2DB(db_path, pathobj=edk2path) as db:
-            db.register(TableGenerator())
+
+    with Edk2DB(db_path, pathobj=edk2path) as db:
+        parser = TableGenerator()
+        db.register(parser)
+
+        with pytest.raises(NotImplementedError):
             db.parse({})
+
+        with pytest.raises(NotImplementedError):
+            parser.parse(db.connection.cursor(), db.pathobj, 0, {})
 
 def test_clear_parsers(empty_tree: Tree):
     """Test that we can clear all parsers. EnvironmentTable should always persist."""

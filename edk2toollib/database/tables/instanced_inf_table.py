@@ -104,9 +104,9 @@ class InstancedInfTable(TableGenerator):
         #
         # This is where we merge DSC parser information with INF parser information.
         inf_entries = self._build_inf_table(dscp)
-        for e in inf_entries:
-            if Path(e["PATH"]).is_absolute():
-                e["PATH"] = self.pathobj.GetEdk2RelativePathFromAbsolutePath(e["PATH"])
+        # for e in inf_entries:
+        #     if Path(e["PATH"]).is_absolute():
+        #         e["PATH"] = self.pathobj.GetEdk2RelativePathFromAbsolutePath(e["PATH"])
 
         # add instanced_inf entries
         for e in inf_entries:

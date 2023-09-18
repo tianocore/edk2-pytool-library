@@ -35,8 +35,8 @@ class Edk2DB:
     module that comes with python.
 
     Edk2DB can, and should, be used as a context manager to ensure that the database is closed properly. If
-    not using as a context manager, the `close()` method must be used to ensure that the database is closed properly
-    and any changes are saved.
+    not using as a context manager, the `db.connection.commit()` and `db.connection.close()` must be used to cleanly
+    close the database.
 
     Attributes:
         connection (sqlite3.Connection): The connection to the database
@@ -93,8 +93,8 @@ class Edk2DB:
         """Runs all registered table parsers against the database.
 
         !!! note
-        An environment table and row is always added to the database. This allows for filtering based on the
-        environment.
+            To enable queries to differentiate between two parses, an environment table is always created if it does
+            not exist, and a row is added for each call of this command.
         """
         self.connection.execute(CREATE_JUNCTION_TABLE)
         id = str(uuid.uuid4().hex)
