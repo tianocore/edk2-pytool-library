@@ -6,13 +6,16 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Tests for building a package table."""
+import sys
+
 import git
-from common import Tree, empty_tree  # noqa: F401
+import pytest
 from edk2toollib.database import Edk2DB
 from edk2toollib.database.tables import PackageTable
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Linux only")
 def test_basic_parse(tmp_path):
     """Tests basic PackageTable functionality."""
     # Clone the repo and init a single submodule.
