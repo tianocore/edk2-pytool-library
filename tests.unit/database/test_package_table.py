@@ -18,6 +18,7 @@ def test_basic_parse(tmp_path):
     """Tests basic PackageTable functionality."""
     # Clone the repo and init a single submodule.
     repo_path = tmp_path / "mu_tiano_platforms"
+    repo_path.mkdir()
     with git.Repo.clone_from("https://github.com/microsoft/mu_tiano_platforms", repo_path) as repo:
         if repo is None:
             raise Exception("Failed to clone mu_tiano_platforms")
