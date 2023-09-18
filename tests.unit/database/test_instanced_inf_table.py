@@ -287,35 +287,3 @@ def test_multiple_library_class(empty_tree: Tree):
     assert results[1] == ('4', '3')  # idx 4 is TestDriver2, idx 3 is TestLib1 acting as TestCls2
     assert ("TestLib", "TestCls2") == db.connection.execute("SELECT name, class FROM instanced_inf where id = 3").fetchone()
     assert ("TestDriver2",) == db.connection.execute("SELECT name FROM instanced_inf where id = 4").fetchone()
-
-def test_absolute_path_for_library(empty_tree: Tree):
-    """Test that a library INF in the dsc works if the INF path is aboslute."""
-    edk2path = Edk2Path(str(empty_tree.ws), [])
-    db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
-    db.register(InstancedInfTable())
-
-    lib1 = empty_tree.create_library("TestLib", "TestCls")
-    lib2 = empty_tree.create_library("NullLib", "NullCls")
-
-    comp1 = empty_tree.create_component("TestDriver1", "DXE_RUNTIME_DRIVER", libraryclasses = ["TestCls"])
-    x = str(empty_tree.ws / comp1)
-    dsc = empty_tree.create_dsc(
-        libraryclasses = [
-            f'TestCls|{str(empty_tree.ws / lib1)}'
-        ],
-        components = [
-            f'{str(empty_tree.ws / comp1)} {{',
-            '<LibraryClasses>',
-            f'NULL|{str(empty_tree.ws / lib2)}',
-            '}',
-        ]
-    )
-
-    env = {
-        "ACTIVE_PLATFORM": dsc,
-        "TARGET_ARCH": "X64",
-        "TARGET": "DEBUG",
-    }
-
-    db.parse(env)
-    print("HELLO")
