@@ -155,9 +155,9 @@ def test_scoped_libraries1(empty_tree: Tree):
     db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
     db.register(InstancedInfTable())
 
-    lib1 = empty_tree.create_library("TestLib1", "TestCls")
-    lib2 = empty_tree.create_library("TestLib2", "TestCls")
-    lib3 = empty_tree.create_library("TestLib3", "TestCls")
+    lib1 = empty_tree.create_library("TestLib1", "TestCls", sources = ["File1.c"])
+    lib2 = empty_tree.create_library("TestLib2", "TestCls", sources = ["File2.c"])
+    lib3 = empty_tree.create_library("TestLib3", "TestCls", sources = ["File3.c"])
 
     comp1 = empty_tree.create_component("TestDriver1", "PEIM", libraryclasses = ["TestCls"])
     comp2 = empty_tree.create_component("TestDriver2", "SEC", libraryclasses = ["TestCls"])
@@ -183,6 +183,11 @@ def test_scoped_libraries1(empty_tree: Tree):
         for component, in db.connection.execute("SELECT name FROM instanced_inf WHERE component IS NULL and arch is ?;", (arch,)):
             component_lib = db.connection.execute(GET_USED_LIBRARIES_QUERY, (component, arch)).fetchone()[0]
             assert component.replace("Driver", "Lib") in component_lib
+
+    results = db.connection.execute('SELECT key2 FROM junction WHERE table1 = "instanced_inf" AND table2 = "source"').fetchall()
+    assert len(results) == 3
+    for source, in results:
+        assert source in ["File1.c", "File2.c", "File3.c"]
 
 def test_scoped_libraries2(empty_tree: Tree):
     """Ensure that the correct libraries in regards to scoping.
