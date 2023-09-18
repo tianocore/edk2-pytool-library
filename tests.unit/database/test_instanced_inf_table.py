@@ -287,3 +287,32 @@ def test_multiple_library_class(empty_tree: Tree):
     assert results[1] == ('4', '3')  # idx 4 is TestDriver2, idx 3 is TestLib1 acting as TestCls2
     assert ("TestLib", "TestCls2") == db.connection.execute("SELECT name, class FROM instanced_inf where id = 3").fetchone()
     assert ("TestDriver2",) == db.connection.execute("SELECT name FROM instanced_inf where id = 4").fetchone()
+
+def test_absolute_paths_in_dsc(empty_tree: Tree):
+    edk2path = Edk2Path(str(empty_tree.ws), [])
+    db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
+    db.register(InstancedInfTable())
+
+    lib1 = empty_tree.create_library("TestLib", "TestCls")
+    comp1 = empty_tree.create_component("TestDriver", "DXE_DRIVER", libraryclasses=["TestCls"])
+
+    dsc = empty_tree.create_dsc(
+        libraryclasses = [
+            f'TestCls| {str(empty_tree.ws / lib1)}',
+        ],
+        components = [
+            str(empty_tree.ws / comp1),
+        ],
+    )
+
+    env = {
+        "ACTIVE_PLATFORM": dsc,
+        "TARGET_ARCH": "X64",
+        "TARGET": "DEBUG",
+    }
+
+    db.parse(env)
+
+    results = db.connection.execute("SELECT path FROM instanced_inf").fetchall()
+    assert results[0] == (Path(lib1).as_posix(),)
+    assert results[1] == (Path(comp1).as_posix(),)
