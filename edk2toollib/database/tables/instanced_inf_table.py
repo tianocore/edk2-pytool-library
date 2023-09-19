@@ -41,12 +41,6 @@ INSERT INTO junction (env, table1, key1, table2, key2)
 VALUES (?, ?, ?, ?, ?)
 '''
 
-GET_ROW_ID = '''
-SELECT id FROM instanced_inf
-WHERE env = ? and path = ? and component = ?
-LIMIT 1
-'''
-
 class InstancedInfTable(TableGenerator):
     """A Table Generator that parses a single DSC file and generates a table."""
     SECTION_LIBRARY = "LibraryClasses"
@@ -56,16 +50,17 @@ class InstancedInfTable(TableGenerator):
 
     def __init__(self, *args, **kwargs):
         """Initialize the query with the specific settings."""
+        self._parsed_infs = {}
 
     def create_tables(self, db_cursor: Cursor) -> None:
         """Create the tables necessary for this parser."""
         db_cursor.execute(CREATE_INSTANCED_INF_TABLE)
 
-        # Prevent parsing the same INF multiple times
-        self._parsed_infs = {}
-
     def inf(self, inf: str) -> InfP:
-        """Returns a parsed INF object."""
+        """Returns a parsed INF object.
+
+        Caches the parsed inf information to reduce multiple re-parses.
+        """
         if inf in self._parsed_infs:
             infp = self._parsed_infs[inf]
         else:
@@ -79,10 +74,9 @@ class InstancedInfTable(TableGenerator):
         self.pathobj = pathobj
         self.ws = Path(self.pathobj.WorkspacePath)
         self.env = env
-        self.dsc = self.env["ACTIVE_PLATFORM"] # REQUIRED
-        self.fdf = self.env.get("FLASH_DEFINITION", "")  # OPTIONAL
-        self.arch = self.env["TARGET_ARCH"].split(" ")  # REQUIRED
-        self.target = self.env["TARGET"]  # REQUIRED
+        self.dsc = self.env["ACTIVE_PLATFORM"]
+        self.arch = self.env["TARGET_ARCH"].split(" ")
+        self.target = self.env["TARGET"]
 
         dscp = DscP().SetEdk2Path(self.pathobj)
         dscp.SetInputVars(self.env)
@@ -98,6 +92,7 @@ class InstancedInfTable(TableGenerator):
             logging.debug(f"  {line}")
         logging.debug("End of DSC")
 
+        # Parse and insert
         inf_entries = self._build_inf_table(dscp)
         return self._insert_db_rows(db_cursor, env_id, inf_entries)
 
@@ -107,7 +102,7 @@ class InstancedInfTable(TableGenerator):
         Inserts all inf's into the instanced_inf table and links source files and used libraries via the junction
         table.
         """
-        # Must use "execute" so that lastrowid is updated.
+        # Must use "execute" so that db_cursor.lastrowid is updated.
         rows = [
             (env_id, e["PATH"], e["LIBRARY_CLASS"] or None, e["NAME"], e["ARCH"], e["DSC"], e["COMPONENT"])
             for e in inf_entries
@@ -122,6 +117,7 @@ class InstancedInfTable(TableGenerator):
         for idx, e in enumerate(inf_entries):
             id_mapping[e["PATH"], e["COMPONENT"]] = last_inserted_id - len(inf_entries) + 1 + idx
 
+        # Insert rows into the tables
         for idx, e in enumerate(inf_entries):
             inf_id = last_inserted_id - len(inf_entries) + 1 + idx
 
@@ -163,7 +159,7 @@ class InstancedInfTable(TableGenerator):
     def _parse_inf_recursively(
         self,
         inf: str,
-        lib_cls: str,
+        library_class: str,
         component: str,
         library_dict: dict,
         override_dict: dict,
@@ -181,7 +177,6 @@ class InstancedInfTable(TableGenerator):
         visited.append(inf)
         library_instance_list = []
         library_class_list = []
-
 
         #
         # 0. Use the existing parser to parse the INF file. This parser parses an INF as an independent file
@@ -228,7 +223,7 @@ class InstancedInfTable(TableGenerator):
             "PATH": Path(inf).as_posix(),
             "GUID": infp.Dict.get("FILE_GUID", ""),
             "NAME": infp.Dict["BASE_NAME"],
-            "LIBRARY_CLASS": lib_cls,
+            "LIBRARY_CLASS": library_class,
             "COMPONENT": Path(component).as_posix(),
             "MODULE_TYPE": infp.Dict["MODULE_TYPE"],
             "ARCH": scope.split(".")[0].upper(),
