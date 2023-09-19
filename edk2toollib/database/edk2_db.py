@@ -43,7 +43,7 @@ class Edk2DB:
 
     !!! note
         Edk2DB provides a table called `junction` that can be used to make associations between tables. It has the
-        following schema: `table1, key1, table2, key2`.
+        following schema: `env_id, table1, key1, table2, key2`.
 
     Example:
         ```python
