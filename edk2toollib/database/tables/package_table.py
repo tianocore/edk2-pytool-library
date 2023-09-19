@@ -1,4 +1,4 @@
-# @file repository_table.py
+# @file package_table.py
 # A module to associate the packages in a workspace with the repositories they come from.
 ##
 # Copyright (c) Microsoft Corporation
