@@ -53,7 +53,7 @@ class Edk2DB:
             db.register(Parser1(), Parser2(), Parser3())
             db.parse()
 
-            db.connection.execute(f"SELECT * FROM {table}", table)
+            db.connection.execute("SELECT * FROM ?", table)
     """
     def __init__(self, db_path: str, pathobj: Edk2Path = None, **kwargs: dict[str,Any]):
         """Initializes the database.
