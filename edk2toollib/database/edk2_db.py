@@ -106,6 +106,7 @@ class Edk2DB:
         # Fill all tables
         for table in self._parsers:
             logging.debug(f"[{table.__class__.__name__}] starting...")
-            time.time()
+            t = time.time()
             table.parse(self.connection.cursor(), self.pathobj, id, env)
             self.connection.commit()
+            logging.debug(f"Finished in {round(time.time() - t, 2)}")

@@ -74,11 +74,10 @@ class InstancedInfTable(TableGenerator):
             self._parsed_infs[inf] = infp
         return infp
 
-    def parse(self, db_cursor: Cursor, pathobj: Edk2Path, id: str, env: dict) -> None:
+    def parse(self, db_cursor: Cursor, pathobj: Edk2Path, env_id: str, env: dict) -> None:
         """Parse the workspace and update the database."""
         self.pathobj = pathobj
         self.ws = Path(self.pathobj.WorkspacePath)
-        self.id = id
         self.env = env
         self.dsc = self.env["ACTIVE_PLATFORM"] # REQUIRED
         self.fdf = self.env.get("FLASH_DEFINITION", "")  # OPTIONAL
@@ -107,15 +106,15 @@ class InstancedInfTable(TableGenerator):
 
         # add instanced_inf entries
         for e in inf_entries:
-            row = (id, e["PATH"], e["LIBRARY_CLASS"] or None, e["NAME"], e["ARCH"], e["DSC"], e["COMPONENT"])
+            row = (env_id, e["PATH"], e["LIBRARY_CLASS"] or None, e["NAME"], e["ARCH"], e["DSC"], e["COMPONENT"])
             db_cursor.execute(INSERT_INSTANCED_INF_ROW, row)
 
         for e in inf_entries:
-            inf_id = db_cursor.execute(GET_ROW_ID, (id, e["PATH"], e["COMPONENT"])).fetchone()[0]
+            inf_id = db_cursor.execute(GET_ROW_ID, (env_id, e["PATH"], e["COMPONENT"])).fetchone()[0]
 
             # Add junction entries to link source the source files used by an INF
             for source in e["SOURCES_USED"]:
-                row = (id, "instanced_inf", inf_id, "source", source)
+                row = (env_id, "instanced_inf", inf_id, "source", source)
                 db_cursor.execute(INSERT_JUNCTION_ROW, row)
 
             # Add junction entires to link libraries / components to the libraries they consume.
@@ -123,9 +122,9 @@ class InstancedInfTable(TableGenerator):
                 if instance is None:
                     used_inf_id = None  # no library instance found for this library class
                 else:
-                    used_inf_id = db_cursor.execute(GET_ROW_ID, (id, instance, e["COMPONENT"])).fetchone()[0]
+                    used_inf_id = db_cursor.execute(GET_ROW_ID, (env_id, instance, e["COMPONENT"])).fetchone()[0]
 
-                row = (id, "instanced_inf", inf_id, "instanced_inf", used_inf_id)
+                row = (env_id, "instanced_inf", inf_id, "instanced_inf", used_inf_id)
                 db_cursor.execute(INSERT_JUNCTION_ROW, row)
 
     def _build_inf_table(self, dscp: DscP):
