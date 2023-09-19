@@ -104,7 +104,7 @@ class InstancedInfTable(TableGenerator):
         """
         # Must use "execute" so that db_cursor.lastrowid is updated.
         rows = [
-            (env_id, e["PATH"], e["LIBRARY_CLASS"] or None, e["NAME"], e["ARCH"], e["DSC"], e["COMPONENT"])
+            (env_id, e["PATH"], e.get("LIBRARY_CLASS"), e["NAME"], e["ARCH"], e["DSC"], e["COMPONENT"])
             for e in inf_entries
         ]
         for row in rows:
@@ -118,19 +118,19 @@ class InstancedInfTable(TableGenerator):
             id_mapping[e["PATH"], e["COMPONENT"]] = last_inserted_id - len(inf_entries) + 1 + idx
 
         # Insert rows into the tables
+        rows = []
         for idx, e in enumerate(inf_entries):
             inf_id = last_inserted_id - len(inf_entries) + 1 + idx
 
             # Link all source files to this instanced_inf
-            rows = [(env_id, "instanced_inf", inf_id, "source", source) for source in e["SOURCES_USED"]]
-            db_cursor.executemany(INSERT_JUNCTION_ROW, rows)
+            rows += [(env_id, "instanced_inf", inf_id, "source", source) for source in e["SOURCES_USED"]]
 
             # link other libraries used by this instanced_inf
-            rows = [
+            rows += [
                 (env_id, "instanced_inf", inf_id, "instanced_inf", id_mapping.get((library, e["COMPONENT"]), None))
                 for library in e["LIBRARIES_USED"]
             ]
-            db_cursor.executemany(INSERT_JUNCTION_ROW, rows)
+        db_cursor.executemany(INSERT_JUNCTION_ROW, rows)
 
     def _build_inf_table(self, dscp: DscP):
         """Create the instanced inf entries, including components and libraries.
