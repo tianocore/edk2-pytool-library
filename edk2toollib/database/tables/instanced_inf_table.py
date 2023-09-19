@@ -98,37 +98,50 @@ class InstancedInfTable(TableGenerator):
             logging.debug(f"  {line}")
         logging.debug("End of DSC")
 
-        # Create the instanced inf entries, including components and libraries. Multiple entries
-        # of the same library will exist if multiple components use it.
-        #
-        # This is where we merge DSC parser information with INF parser information.
         inf_entries = self._build_inf_table(dscp)
+        return self._insert_db_rows(db_cursor, env_id, inf_entries)
 
-        # add instanced_inf entries
-        for e in inf_entries:
-            row = (env_id, e["PATH"], e["LIBRARY_CLASS"] or None, e["NAME"], e["ARCH"], e["DSC"], e["COMPONENT"])
+    def _insert_db_rows(self, db_cursor, env_id, inf_entries) -> int:
+        """Inserts data into the database.
+
+        Inserts all inf's into the instanced_inf table and links source files and used libraries via the junction
+        table.
+        """
+        # Must use "execute" so that lastrowid is updated.
+        rows = [
+            (env_id, e["PATH"], e["LIBRARY_CLASS"] or None, e["NAME"], e["ARCH"], e["DSC"], e["COMPONENT"])
+            for e in inf_entries
+        ]
+        for row in rows:
             db_cursor.execute(INSERT_INSTANCED_INF_ROW, row)
+        last_inserted_id = db_cursor.lastrowid
 
-        for e in inf_entries:
-            inf_id = db_cursor.execute(GET_ROW_ID, (env_id, e["PATH"], e["COMPONENT"])).fetchone()[0]
+        # Mapping used for linking libraries together in the junction table so that the value does not need to be
+        # queried, which reduces performance greatly.
+        id_mapping = {}
+        for idx, e in enumerate(inf_entries):
+            id_mapping[e["PATH"], e["COMPONENT"]] = last_inserted_id - len(inf_entries) + 1 + idx
 
-            # Add junction entries to link source the source files used by an INF
-            for source in e["SOURCES_USED"]:
-                row = (env_id, "instanced_inf", inf_id, "source", source)
-                db_cursor.execute(INSERT_JUNCTION_ROW, row)
+        for idx, e in enumerate(inf_entries):
+            inf_id = last_inserted_id - len(inf_entries) + 1 + idx
 
-            # Add junction entires to link libraries / components to the libraries they consume.
-            for cls, instance in e["LIBRARIES_USED"]:
-                if instance is None:
-                    used_inf_id = None  # no library instance found for this library class
-                else:
-                    used_inf_id = db_cursor.execute(GET_ROW_ID, (env_id, instance, e["COMPONENT"])).fetchone()[0]
+            # Link all source files to this instanced_inf
+            rows = [(env_id, "instanced_inf", inf_id, "source", source) for source in e["SOURCES_USED"]]
+            db_cursor.executemany(INSERT_JUNCTION_ROW, rows)
 
-                row = (env_id, "instanced_inf", inf_id, "instanced_inf", used_inf_id)
-                db_cursor.execute(INSERT_JUNCTION_ROW, row)
+            # link other libraries used by this instanced_inf
+            rows = [
+                (env_id, "instanced_inf", inf_id, "instanced_inf", id_mapping.get((library, e["COMPONENT"]), None))
+                for library in e["LIBRARIES_USED"]
+            ]
+            db_cursor.executemany(INSERT_JUNCTION_ROW, rows)
 
     def _build_inf_table(self, dscp: DscP):
+        """Create the instanced inf entries, including components and libraries.
 
+        Multiple entries of the same library will exist if multiple components use it.
+        This is where we merge DSC parser information with INF parser information.
+        """
         inf_entries = []
         for (inf, scope, overrides) in dscp.Components:
             logging.debug(f"Parsing Component: [{inf}]")
@@ -220,7 +233,7 @@ class InstancedInfTable(TableGenerator):
             "MODULE_TYPE": infp.Dict["MODULE_TYPE"],
             "ARCH": scope.split(".")[0].upper(),
             "SOURCES_USED": list(map(lambda p: Path(p).as_posix(), infp.Sources)),
-            "LIBRARIES_USED": list(zip(library_class_list, library_instance_list)),
+            "LIBRARIES_USED": list(library_instance_list),
             "PROTOCOLS_USED": [],  # TODO
             "GUIDS_USED": [],  # TODO
             "PPIS_USED": [],  # TODO
