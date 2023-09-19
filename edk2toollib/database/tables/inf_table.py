@@ -27,12 +27,6 @@ CREATE TABLE IF NOT EXISTS inf (
 );
 '''
 
-CREATE_LIBRARY_CLASS_TABLE = '''
-CREATE TABLE IF NOT EXISTS library_class (
-    class TEXT
-)
-'''
-
 INSERT_JUNCTION_ROW = '''
 INSERT INTO junction (env, table1, key1, table2, key2)
 VALUES (?, ?, ?, ?, ?)
@@ -61,7 +55,6 @@ class InfTable(TableGenerator):
     def create_tables(self, db_cursor: Cursor) -> None:
         """Create the tables necessary for this parser."""
         db_cursor.execute(CREATE_INF_TABLE)
-        db_cursor.execute(CREATE_LIBRARY_CLASS_TABLE)
 
     def parse(self, db_cursor: Cursor, pathobj: Edk2Path, env_id: str, env: dict) -> None:
         """Parse the workspace and update the database."""
