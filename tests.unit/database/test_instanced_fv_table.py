@@ -8,22 +8,24 @@
 """Unittest for the InstancedFv table generator."""
 from pathlib import Path
 
+import logging
 import pytest
 from common import Tree, empty_tree  # noqa: F401
 from edk2toollib.database import Edk2DB
 from edk2toollib.database.tables import InstancedFvTable
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
+GET_INF_LIST_QUERY = """
+SELECT i.path
+FROM inf AS i
+JOIN junction AS j ON ? = j.key1 and j.table2 = "inf"
+"""
 
 def test_valid_fdf(empty_tree: Tree):  # noqa: F811
     """Tests that a typical fdf can be properly parsed."""
     edk2path = Edk2Path(str(empty_tree.ws), [])
-    db = Edk2DB(Edk2DB.MEM_RW, pathobj=edk2path)
-
-    # raise exception if the Table generator is missing required information to
-    # Generate the table.
-    with pytest.raises(KeyError):
-        fv_table = InstancedFvTable(env = {})
+    db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
+    db.register(InstancedFvTable())
 
     comp1 = empty_tree.create_component("TestDriver1", "DXE_DRIVER")
     comp2 = empty_tree.create_component("TestDriver2", "DXE_DRIVER")
@@ -44,26 +46,44 @@ def test_valid_fdf(empty_tree: Tree):  # noqa: F811
             f'INF  ruleoverride = RESET_VECTOR {comp5}', # RuleOverride lowercase & spaces
         ]
     )
-
-    fv_table = InstancedFvTable(env = {
+    env = {
         "ACTIVE_PLATFORM": dsc,
         "FLASH_DEFINITION": fdf,
         "TARGET_ARCH": "IA32 X64",
         "TARGET": "DEBUG",
-    })
-    # Parse the FDF
-    fv_table.parse(db)
+    }
+    db.parse(env)
 
-    # Ensure tests pass for expected output
-    for fv in db.table("instanced_fv").all():
+    fv_id = db.connection.execute("SELECT id FROM instanced_fv WHERE fv_name = 'infformat'").fetchone()[0]
+    rows = db.connection.execute("SELECT key2 FROM junction where key1 == ?", (fv_id,)).fetchall()
 
-        # Test INF's were parsed correctly. Paths should be posix as
-        # That is the EDK2 standard
-        if fv['FV_NAME'] == "infformat":
-            assert sorted(fv['INF_LIST']) == sorted([
-                Path(comp1).as_posix(),
-                Path(comp2).as_posix(),
-                Path(comp3).as_posix(),
-                Path(comp5).as_posix(),
-                Path(comp4).as_posix(),
-                ])
+    assert len(rows) == 5
+    assert sorted(rows) == sorted([
+        (Path(comp1).as_posix(),),
+        (Path(comp2).as_posix(),),
+        (Path(comp3).as_posix(),),
+        (Path(comp4).as_posix(),),
+        (Path(comp5).as_posix(),),
+    ])
+
+def test_missing_dsc_and_fdf(empty_tree: Tree, caplog):
+    """Tests that the table generator is skipped if missing the necessary information"""
+    with caplog.at_level(logging.DEBUG):
+        edk2path = Edk2Path(str(empty_tree.ws), [])
+        db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
+        db.register(InstancedFvTable())
+
+        # raise exception if the Table generator is missing required information to Generate the table.
+        with pytest.raises(KeyError):
+            db.parse({})
+
+        db.parse({"TARGET_ARCH": "", "TARGET": "DEBUG"})
+        db.parse({"TARGET_ARCH": "", "TARGET": "DEBUG", "ACTIVE_PLATFORM": "Pkg.dsc"})
+
+        # check that we skipped (instead of asserting) twice, once for missing ACTIVE_PLATFORM and once for the
+        # missing FLASH_DEFINITION
+        count = 0
+        for _, _, record in caplog.record_tuples:
+            if record.startswith("DSC or FDF not found"):
+                count += 1
+        assert count == 2

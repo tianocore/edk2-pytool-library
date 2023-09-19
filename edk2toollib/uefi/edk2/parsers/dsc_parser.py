@@ -366,6 +366,8 @@ class DscParser(HashFileParser):
             for scope in current_scope:
                 key = f"{scope.strip()}.{lib.strip()}".lower()
                 value = instance.strip()
+                if os.path.isabs(value):
+                    value = self._Edk2PathUtil.GetEdk2RelativePathFromAbsolutePath(value)
                 if key in self.ScopedLibraryDict and value not in self.ScopedLibraryDict[key]:
                     self.ScopedLibraryDict[key].insert(0, value)
                 else:
@@ -400,6 +402,8 @@ class DscParser(HashFileParser):
 
                 for scope in current_scope:
                     # Components without a specific scope (common or empty) are added to all current scopes
+                    if os.path.isabs(line.strip(" {")):
+                        line = self._Edk2PathUtil.GetEdk2RelativePathFromAbsolutePath(line.strip(" {"))
                     if "common" in current_scope[0]:
                         for arch in self.InputVars.get("TARGET_ARCH", "").split(" "):
                             scope = current_scope[0].replace("common", arch).lower()
@@ -459,8 +463,11 @@ class DscParser(HashFileParser):
             if section == self.SECTION_LIBRARY:
                 logging.debug(f"  Library Section Override: {line}")
                 lib, instance = map(str.strip, line.split("|"))
-                lib = lib.lower()
 
+                if os.path.isabs(instance):
+                    instance = self._Edk2PathUtil.GetEdk2RelativePathFromAbsolutePath(instance)
+
+                lib = lib.lower()
                 if lib == "null":
                     library_override_dictionary["NULL"].append(instance)
                 else:

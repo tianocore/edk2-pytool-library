@@ -7,52 +7,67 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """A module to generate a table containing fv information."""
+import logging
 import re
+import sqlite3
 from pathlib import Path
 
-from tinyrecord import transaction
-
-from edk2toollib.database import Edk2DB, TableGenerator
+from edk2toollib.database.tables.base_table import TableGenerator
 from edk2toollib.uefi.edk2.parsers.fdf_parser import FdfParser as FdfP
+from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
+CREATE_INSTANCED_FV_TABLE = """
+CREATE TABLE IF NOT EXISTS instanced_fv (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    env INTEGER,
+    fv_name TEXT,
+    fdf TEXT,
+    path TEXT
+)
+"""
+
+INSERT_INSTANCED_FV_ROW = """
+INSERT INTO instanced_fv (env, fv_name, fdf, path)
+VALUES (?, ?, ?, ?)
+"""
+
+INSERT_JUNCTION_ROW = '''
+INSERT INTO junction (env, table1, key1, table2, key2)
+VALUES (?, ?, ?, ?, ?)
+'''
 
 class InstancedFvTable(TableGenerator):
-    """A Table Generator that parses a single FDF file and generates a table containing FV information.
-
-    Generates a table with the following schema:
-
-    ``` py
-    table_name = "instanced_fv"
-    |------------------------------------------------------|
-    | FV_NAME | FDF | PATH | TARGET | INF_LIST | FILE_LIST |
-    |------------------------------------------------------|
-    ```
-    """  # noqa: E501
+    """A Table Generator that parses a single FDF file and generates a table containing FV information."""  # noqa: E501
 
     RULEOVERRIDE = re.compile(r'RuleOverride\s*=.+\s+(.+\.inf)', re.IGNORECASE)
 
     def __init__(self, *args, **kwargs):
         """Initialize the query with the specific settings."""
-        self.env = kwargs.pop("env")
-        self.dsc = self.env["ACTIVE_PLATFORM"]
-        self.fdf = self.env["FLASH_DEFINITION"]
+
+
+    def create_tables(self, db_cursor: sqlite3.Cursor) -> None:
+        """Create the tables necessary for this parser."""
+        db_cursor.execute(CREATE_INSTANCED_FV_TABLE)
+
+    def parse(self, db_cursor: sqlite3.Cursor, pathobj: Edk2Path, id, env) -> None:
+        """Parse the workspace and update the database."""
+        self.pathobj = pathobj
+        self.ws = Path(self.pathobj.WorkspacePath)
+        self.env = env
+        self.dsc = self.env.get("ACTIVE_PLATFORM", None)
+        self.fdf = self.env.get("FLASH_DEFINITION", None)
         self.arch = self.env["TARGET_ARCH"].split(" ")
         self.target = self.env["TARGET"]
 
-    def parse(self, db: Edk2DB) -> None:
-        """Parse the workspace and update the database."""
-        self.pathobj = db.pathobj
-        self.ws = Path(self.pathobj.WorkspacePath)
+        if self.dsc is None or self.fdf is None:
+            logging.debug("DSC or FDF not found in environment. Skipping InstancedFvTable")
+            return
 
         # Our DscParser subclass can now parse components, their scope, and their overrides
         fdfp = FdfP().SetEdk2Path(self.pathobj)
         fdfp.SetInputVars(self.env)
         fdfp.ParseFile(self.fdf)
 
-        table_name = 'instanced_fv'
-        table = db.table(table_name, cache_size=None)
-
-        entry_list = []
         for fv in fdfp.FVs:
 
             inf_list = []  # Some INF's start with RuleOverride. We only need the INF
@@ -63,13 +78,10 @@ class InstancedFvTable(TableGenerator):
                     inf = str(Path(self.pathobj.GetEdk2RelativePathFromAbsolutePath(inf)))
                 inf_list.append(Path(inf).as_posix())
 
-            entry_list.append({
-                "FV_NAME": fv,
-                "FDF": Path(self.fdf).name,
-                "PATH": self.fdf,
-                "INF_LIST": inf_list,
-                "FILE_LIST": fdfp.FVs[fv]["Files"]
-            })
+            row = (id, fv, Path(self.fdf).name, self.fdf)
+            db_cursor.execute(INSERT_INSTANCED_FV_ROW, row)
+            fv_id = db_cursor.lastrowid
 
-        with transaction(table) as tr:
-            tr.insert_multiple(entry_list)
+            for inf in inf_list:
+                row = (id, "instanced_fv", fv_id, "inf", inf)
+                db_cursor.execute(INSERT_JUNCTION_ROW, row)

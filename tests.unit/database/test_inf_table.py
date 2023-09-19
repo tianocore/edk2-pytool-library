@@ -7,7 +7,9 @@
 ##
 # ruff: noqa: F811
 """Tests for build an inf file table."""
-from common import Tree, empty_tree  # noqa: F401
+from pathlib import Path
+
+from common import Tree, empty_tree, write_file  # noqa: F401
 from edk2toollib.database import Edk2DB
 from edk2toollib.database.tables import InfTable
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
@@ -16,8 +18,8 @@ from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 def test_valid_inf(empty_tree: Tree):
     """Tests that a valid Inf with typical settings is properly parsed."""
     edk2path = Edk2Path(str(empty_tree.ws), [])
-    db = Edk2DB(Edk2DB.MEM_RW, pathobj=edk2path)
-    inf_table = InfTable(n_jobs = 1)
+    db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
+    db.register(InfTable(n_jobs = 1))
 
     # Configure inf
     libs = ["TestLib2", "TestLib3"]
@@ -36,14 +38,30 @@ def test_valid_inf(empty_tree: Tree):
         sources_ia32 = sources_ia32,
         sources_x64 = sources_x64,
     )
-    inf_table.parse(db)
-    table = db.table("inf")
+    lib2 = empty_tree.create_library(
+        "TestLib2", "TestCls",
+        libraryclasses = libs,
+        protocols = protocols,
+        guids = guids,
+        sources = sources,
+        sources_ia32 = sources_ia32,
+        sources_x64 = sources_x64,
+    )
 
-    assert len(table) == 1
-    row = table.all()[0]
+    (empty_tree.library_folder / "IA32").mkdir()
+    (empty_tree.library_folder / "X64").mkdir()
+    for file in sources + sources_ia32 + sources_x64:
+        write_file((empty_tree.library_folder / file).resolve(), "FILLER")
 
-    assert row['PATH'] in (empty_tree.ws / lib1).as_posix()
-    assert row['LIBRARIES_USED'] == libs
-    assert row['PROTOCOLS_USED'] == protocols
-    assert row['GUIDS_USED'] == guids
-    assert sorted(row['SOURCES_USED']) == sorted(sources + sources_ia32 + sources_x64)
+    db.parse({})
+
+    rows = list(db.connection.cursor().execute("SELECT path, library_class FROM inf"))
+    assert len(rows) == 2
+
+    for path, library_class in rows:
+        assert path in [Path(lib1).as_posix(), Path(lib2).as_posix()]
+        assert library_class == "TestCls"
+
+    for inf in [Path(lib1).as_posix(), Path(lib2).as_posix()]:
+        rows = db.connection.execute("SELECT * FROM junction WHERE key1 = ? AND table2 = 'source'", (inf,)).fetchall()
+        assert len(rows) == 3

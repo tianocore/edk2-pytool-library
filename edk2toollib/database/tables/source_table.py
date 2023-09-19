@@ -10,27 +10,35 @@ import logging
 import re
 import time
 from pathlib import Path
+from sqlite3 import Cursor
 
 from joblib import Parallel, delayed
-from tinyrecord import transaction
 
-from edk2toollib.database import Edk2DB, TableGenerator
+from edk2toollib.database.tables.base_table import TableGenerator
+from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 SOURCE_FILES = ["*.c", "*.h", "*.cpp", "*.asm", "*.s", "*.nasm", "*.masm", "*.rs"]
 
+CREATE_SOURCE_TABLE = '''
+CREATE TABLE IF NOT EXISTS source (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    path TEXT UNIQUE,
+    license TEXT,
+    total_lines INTEGER,
+    code_lines INTEGER,
+    comment_lines INTEGER,
+    blank_lines INTEGER
+)
+'''
+
+INSERT_SOURCE_ROW = '''
+INSERT OR REPLACE INTO source (path, license, total_lines, code_lines, comment_lines, blank_lines)
+VALUES (?, ?, ?, ?, ?, ?)
+'''
+
 
 class SourceTable(TableGenerator):
-    """A Table Generator that parses all c and h files in the workspace.
-
-    Generates a table with the following schema:
-
-    ``` py
-    table_name = "source"
-    |-------------------------------------------------------------------------|
-    | PATH | LICENSE | TOTAL_LINES | CODE_LINES | COMMENT_LINES | BLANK_LINES |
-    |-------------------------------------------------------------------------|
-    ```
-    """  # noqa: E501
+    """A Table Generator that parses all c and h files in the workspace."""
     def __init__(self, *args, **kwargs):
         """Initializes the Source Table Parser.
 
@@ -43,10 +51,14 @@ class SourceTable(TableGenerator):
         """
         self.n_jobs = kwargs.get("n_jobs", -1)
 
-    def parse(self, db: Edk2DB) -> None:
+    def create_tables(self, db_cursor: Cursor) -> None:
+        """Create the tables necessary for this parser."""
+        db_cursor.execute(CREATE_SOURCE_TABLE)
+
+    def parse(self, db_cursor: Cursor, pathobj: Edk2Path, id: str, env: dict) -> None:
         """Parse the workspace and update the database."""
-        ws = Path(db.pathobj.WorkspacePath)
-        src_table = db.table("source", cache_size=None)
+        ws = Path(pathobj.WorkspacePath)
+        self.pathobj = pathobj
 
         start = time.time()
         files = []
@@ -58,8 +70,7 @@ class SourceTable(TableGenerator):
             f"{self.__class__.__name__}: Parsed {len(src_entries)} files; "
             f"took {round(time.time() - start, 2)} seconds.")
 
-        with transaction(src_table) as tr:
-            tr.insert_multiple(src_entries)
+        db_cursor.executemany(INSERT_SOURCE_ROW, src_entries)
 
     def _parse_file(self, ws, filename: Path) -> dict:
         """Parse a C file and return the results."""
@@ -69,12 +80,11 @@ class SourceTable(TableGenerator):
                 match = re.search(r"SPDX-License-Identifier:\s*(.*)$", line)  # TODO: This is not a standard format.
                 if match:
                     license = match.group(1)
-
-        return {
-            "PATH": filename.relative_to(ws).as_posix(),
-            "LICENSE": license,
-            "TOTAL_LINES": 0,
-            "CODE_LINES": 0,
-            "COMMENT_LINES": 0,
-            "BLANK_LINES": 0,
-        }
+        return (
+            self.pathobj.GetEdk2RelativePathFromAbsolutePath(filename.as_posix()),  # path
+            license or "Unknown",  # license
+            0,  # total_lines
+            0,  # code_lines
+            0,  # comment_lines
+            0,  # blank_lines
+        )
