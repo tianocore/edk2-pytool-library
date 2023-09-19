@@ -52,7 +52,7 @@ class EnvironmentTable(TableGenerator):
 
         # Insert into environment table
         entry = (id,str(dtime),version,)
-        db_cursor.execute("INSERT INTO environment (id, date,version) VALUES (?, ?, ?)", entry)
+        db_cursor.execute("INSERT INTO environment (id, date, version) VALUES (?, ?, ?)", entry)
 
         # Insert into environment_values table
         data = [(id, key, value) for key, value in env.items()]
