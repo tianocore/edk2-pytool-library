@@ -28,7 +28,12 @@ CREATE TABLE IF NOT EXISTS instanced_inf (
     dsc TEXT,
     component TEXT,
     FOREIGN KEY(env) REFERENCES environment(env)
-)
+);
+'''
+
+CREATE_INSTANCED_INF_INDEX = '''
+CREATE INDEX IF NOT EXISTS instanced_inf_idx
+ON instanced_inf (env);
 '''
 
 INSERT_INSTANCED_INF_ROW = '''
@@ -55,6 +60,7 @@ class InstancedInfTable(TableGenerator):
     def create_tables(self, db_cursor: Cursor) -> None:
         """Create the tables necessary for this parser."""
         db_cursor.execute(CREATE_INSTANCED_INF_TABLE)
+        db_cursor.execute(CREATE_INSTANCED_INF_INDEX)
 
     def inf(self, inf: str) -> InfP:
         """Returns a parsed INF object.

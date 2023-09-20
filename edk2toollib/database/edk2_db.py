@@ -26,6 +26,11 @@ CREATE TABLE IF NOT EXISTS junction (
 )
 """
 
+CREATE_JUNCTION_INDEX = """
+CREATE INDEX IF NOT EXISTS junction_idx
+ON junction (env);
+"""
+
 class Edk2DB:
     """A SQLite3 database manager for a EDKII workspace.
 
@@ -97,6 +102,7 @@ class Edk2DB:
             not exist, and a row is added for each call of this command.
         """
         self.connection.execute(CREATE_JUNCTION_TABLE)
+        self.connection.execute(CREATE_JUNCTION_INDEX)
         id = str(uuid.uuid4().hex)
 
         # Create all tables
