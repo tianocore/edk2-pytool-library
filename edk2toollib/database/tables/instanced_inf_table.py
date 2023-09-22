@@ -19,7 +19,6 @@ from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 CREATE_INSTANCED_INF_TABLE = '''
 CREATE TABLE IF NOT EXISTS instanced_inf (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
     env INTEGER,
     path TEXT,
     class TEXT,

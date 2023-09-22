@@ -18,7 +18,6 @@ from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 CREATE_INSTANCED_FV_TABLE = """
 CREATE TABLE IF NOT EXISTS instanced_fv (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
     env INTEGER,
     fv_name TEXT,
     fdf TEXT,
