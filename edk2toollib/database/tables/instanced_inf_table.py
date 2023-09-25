@@ -19,7 +19,6 @@ from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 CREATE_INSTANCED_INF_TABLE = '''
 CREATE TABLE IF NOT EXISTS instanced_inf (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
     env INTEGER,
     path TEXT,
     class TEXT,
@@ -31,19 +30,45 @@ CREATE TABLE IF NOT EXISTS instanced_inf (
 );
 '''
 
-CREATE_INSTANCED_INF_INDEX = '''
-CREATE INDEX IF NOT EXISTS instanced_inf_idx
-ON instanced_inf (env);
+CREATE_INSTANCED_INF_TABLE_INDEX = '''
+CREATE INDEX IF NOT EXISTS instanced_inf_index ON instanced_inf (env);
+'''
+
+CREATE_INSTANCED_INF_TABLE_JUNCTION = '''
+CREATE TABLE IF NOT EXISTS instanced_inf_junction (
+    env INTEGER,
+    component TEXT,
+    instanced_inf1 TEXT,
+    instanced_inf2 TEXT,
+    FOREIGN KEY(env) REFERENCES environment(env)
+);
+'''
+
+CREATE_INSTANCED_INF_TABLE_JUNCTION_INDEX = '''
+CREATE INDEX IF NOT EXISTS instanced_inf_junction_index ON instanced_inf_junction (env);
+'''
+
+CREATE_INSTANCED_INF_SOURCE_TABLE_JUNCTION = '''
+CREATE TABLE IF NOT EXISTS instanced_inf_source_junction (env, component, instanced_inf, source);
+'''
+
+CREATE_INSTANCED_INF_SOURCE_TABLE_JUNCTION_INDEX = '''
+CREATE INDEX IF NOT EXISTS instanced_inf_source_junction_index ON instanced_inf_source_junction (env);
 '''
 
 INSERT_INSTANCED_INF_ROW = '''
 INSERT INTO instanced_inf (env, path, class, name, arch, dsc, component)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 '''
 
-INSERT_JUNCTION_ROW = '''
-INSERT INTO junction (env, table1, key1, table2, key2)
-VALUES (?, ?, ?, ?, ?)
+INSERT_INF_TABLE_JUNCTION_ROW = '''
+INSERT INTO instanced_inf_junction (env, component, instanced_inf1, instanced_inf2)
+VALUES (?, ?, ?, ?);
+'''
+
+INSERT_INF_TABLE_SOURCE_JUNCTION_ROW = '''
+INSERT INTO instanced_inf_source_junction (env, component, instanced_inf, source)
+VALUES (?, ?, ?, ?);
 '''
 
 class InstancedInfTable(TableGenerator):
@@ -60,7 +85,11 @@ class InstancedInfTable(TableGenerator):
     def create_tables(self, db_cursor: Cursor) -> None:
         """Create the tables necessary for this parser."""
         db_cursor.execute(CREATE_INSTANCED_INF_TABLE)
-        db_cursor.execute(CREATE_INSTANCED_INF_INDEX)
+        db_cursor.execute(CREATE_INSTANCED_INF_TABLE_INDEX)
+        db_cursor.execute(CREATE_INSTANCED_INF_TABLE_JUNCTION)
+        db_cursor.execute(CREATE_INSTANCED_INF_TABLE_JUNCTION_INDEX)
+        db_cursor.execute(CREATE_INSTANCED_INF_SOURCE_TABLE_JUNCTION)
+        db_cursor.execute(CREATE_INSTANCED_INF_SOURCE_TABLE_JUNCTION_INDEX)
 
     def inf(self, inf: str) -> InfP:
         """Returns a parsed INF object.
@@ -108,35 +137,24 @@ class InstancedInfTable(TableGenerator):
         Inserts all inf's into the instanced_inf table and links source files and used libraries via the junction
         table.
         """
-        # Must use "execute" so that db_cursor.lastrowid is updated.
+        # Insert all instanced INF rows
         rows = [
             (env_id, e["PATH"], e.get("LIBRARY_CLASS"), e["NAME"], e["ARCH"], e["DSC"], e["COMPONENT"])
             for e in inf_entries
         ]
-        for row in rows:
-            db_cursor.execute(INSERT_INSTANCED_INF_ROW, row)
-        last_inserted_id = db_cursor.lastrowid
+        db_cursor.executemany(INSERT_INSTANCED_INF_ROW, rows)
 
-        # Mapping used for linking libraries together in the junction table so that the value does not need to be
-        # queried, which reduces performance greatly.
-        id_mapping = {}
-        for idx, e in enumerate(inf_entries):
-            id_mapping[e["PATH"], e["COMPONENT"]] = last_inserted_id - len(inf_entries) + 1 + idx
-
-        # Insert rows into the tables
+        # Link instanced INF sources
         rows = []
-        for idx, e in enumerate(inf_entries):
-            inf_id = last_inserted_id - len(inf_entries) + 1 + idx
+        for e in inf_entries:
+            rows += [(env_id, e["COMPONENT"], e["PATH"], source) for source in e["SOURCES_USED"]]
+        db_cursor.executemany(INSERT_INF_TABLE_SOURCE_JUNCTION_ROW, rows)
 
-            # Link all source files to this instanced_inf
-            rows += [(env_id, "instanced_inf", inf_id, "source", source) for source in e["SOURCES_USED"]]
-
-            # link other libraries used by this instanced_inf
-            rows += [
-                (env_id, "instanced_inf", inf_id, "instanced_inf", id_mapping.get((library, e["COMPONENT"]), None))
-                for library in e["LIBRARIES_USED"]
-            ]
-        db_cursor.executemany(INSERT_JUNCTION_ROW, rows)
+        # Link instanced INF libraries
+        rows = []
+        for e in inf_entries:
+            rows += [(env_id, e["COMPONENT"], e["PATH"], library) for library in e["LIBRARIES_USED"]]
+        db_cursor.executemany(INSERT_INF_TABLE_JUNCTION_ROW, rows)
 
     def _build_inf_table(self, dscp: DscP):
         """Create the instanced inf entries, including components and libraries.

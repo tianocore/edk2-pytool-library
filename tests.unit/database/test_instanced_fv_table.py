@@ -54,8 +54,7 @@ def test_valid_fdf(empty_tree: Tree):  # noqa: F811
     }
     db.parse(env)
 
-    fv_id = db.connection.execute("SELECT id FROM instanced_fv WHERE fv_name = 'infformat'").fetchone()[0]
-    rows = db.connection.execute("SELECT key2 FROM junction where key1 == ?", (fv_id,)).fetchall()
+    rows = db.connection.execute("SELECT key2 FROM junction where key1 == 'infformat'").fetchall()
 
     assert len(rows) == 5
     assert sorted(rows) == sorted([

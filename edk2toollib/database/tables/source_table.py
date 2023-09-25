@@ -21,7 +21,6 @@ SOURCE_FILES = ["*.c", "*.h", "*.cpp", "*.asm", "*.s", "*.nasm", "*.masm", "*.rs
 
 CREATE_SOURCE_TABLE = '''
 CREATE TABLE IF NOT EXISTS source (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
     path TEXT UNIQUE,
     license TEXT,
     total_lines INTEGER,
