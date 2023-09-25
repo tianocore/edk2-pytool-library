@@ -18,7 +18,6 @@ from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 CREATE_INSTANCED_FV_TABLE = """
 CREATE TABLE IF NOT EXISTS instanced_fv (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
     env INTEGER,
     fv_name TEXT,
     fdf TEXT,
@@ -49,11 +48,12 @@ class InstancedFvTable(TableGenerator):
         """Create the tables necessary for this parser."""
         db_cursor.execute(CREATE_INSTANCED_FV_TABLE)
 
-    def parse(self, db_cursor: sqlite3.Cursor, pathobj: Edk2Path, id, env) -> None:
+    def parse(self, db_cursor: sqlite3.Cursor, pathobj: Edk2Path, env_id, env) -> None:
         """Parse the workspace and update the database."""
         self.pathobj = pathobj
         self.ws = Path(self.pathobj.WorkspacePath)
         self.env = env
+        self.env_id = env_id
         self.dsc = self.env.get("ACTIVE_PLATFORM", None)
         self.fdf = self.env.get("FLASH_DEFINITION", None)
         self.arch = self.env["TARGET_ARCH"].split(" ")
@@ -78,10 +78,9 @@ class InstancedFvTable(TableGenerator):
                     inf = str(Path(self.pathobj.GetEdk2RelativePathFromAbsolutePath(inf)))
                 inf_list.append(Path(inf).as_posix())
 
-            row = (id, fv, Path(self.fdf).name, self.fdf)
+            row = (self.env_id, fv, Path(self.fdf).name, self.fdf)
             db_cursor.execute(INSERT_INSTANCED_FV_ROW, row)
-            fv_id = db_cursor.lastrowid
 
             for inf in inf_list:
-                row = (id, "instanced_fv", fv_id, "inf", inf)
+                row = (self.env_id, "instanced_fv", fv, "inf", inf)
                 db_cursor.execute(INSERT_JUNCTION_ROW, row)
