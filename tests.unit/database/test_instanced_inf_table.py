@@ -28,6 +28,16 @@ WHERE j.key1 = (
 );
 """
 
+GET_USED_LIBRARIES_QUERY2 = """
+SELECT ii.path
+FROM instanced_inf AS ii
+JOIN instanced_inf_junction AS iij
+ON ii.path = iij.instanced_inf2
+WHERE
+    iij.component = ?
+    AND ii.arch = ?
+"""
+
 def test_valid_dsc(empty_tree: Tree):
     """Tests that a typical dsc can be correctly parsed."""
     edk2path = Edk2Path(str(empty_tree.ws), [])
@@ -50,7 +60,7 @@ def test_valid_dsc(empty_tree: Tree):
 
     rows = db.connection.cursor().execute("SELECT * FROM instanced_inf").fetchall()
     assert len(rows) == 1
-    assert rows[0][4] == Path(comp1).stem
+    assert rows[0][3] == Path(comp1).stem
 
 def test_no_active_platform(empty_tree: Tree, caplog):
     """Tests that the dsc table returns immediately when no ACTIVE_PLATFORM is defined."""
@@ -138,7 +148,7 @@ def test_library_override(empty_tree: Tree):
     }
     db.parse(env)
     db.connection.execute("SELECT * FROM junction").fetchall()
-    library_list = db.connection.cursor().execute(GET_USED_LIBRARIES_QUERY, ("TestDriver1", "IA32"))
+    library_list = db.connection.cursor().execute(f"SELECT instanced_inf2 FROM instanced_inf_junction WHERE instanced_inf1 = '{Path(comp1).as_posix()}'").fetchall()
 
     for path, in library_list:
         assert path in [Path(lib2).as_posix(), Path(lib3).as_posix()]
@@ -180,11 +190,11 @@ def test_scoped_libraries1(empty_tree: Tree):
     db.parse(env)
 
     for arch in ["IA32", "X64"]:
-        for component, in db.connection.execute("SELECT name FROM instanced_inf WHERE component IS NULL and arch is ?;", (arch,)):
-            component_lib = db.connection.execute(GET_USED_LIBRARIES_QUERY, (component, arch)).fetchone()[0]
-            assert component.replace("Driver", "Lib") in component_lib
+        for component, in db.connection.execute("SELECT path FROM instanced_inf WHERE component = path and arch is ?;", (arch,)):
+            component_lib = db.connection.execute(GET_USED_LIBRARIES_QUERY2, (component, arch)).fetchone()[0]
+            assert Path(component).name.replace("Driver", "Lib") == Path(component_lib).name
 
-    results = db.connection.execute('SELECT key2 FROM junction WHERE table1 = "instanced_inf" AND table2 = "source"').fetchall()
+    results = db.connection.execute('SELECT source FROM instanced_inf_source_junction').fetchall()
     assert len(results) == 3
     for source, in results:
         assert source in ["File1.c", "File2.c", "File3.c"]
@@ -246,7 +256,7 @@ def test_missing_library(empty_tree: Tree):
         "TARGET": "DEBUG",
     }
     db.parse(env)
-    key2 = db.connection.execute("SELECT key2 FROM junction").fetchone()[0]
+    key2 = db.connection.execute("SELECT instanced_inf2 FROM instanced_inf_junction").fetchone()[0]
     assert key2 is None  # This library class does not have an instance available, so key2 should be None
 
 def test_multiple_library_class(empty_tree: Tree):
@@ -281,17 +291,19 @@ def test_multiple_library_class(empty_tree: Tree):
 
     db.parse(env)
 
-    results = db.connection.execute("SELECT key1, key2 FROM junction").fetchall()
+    results = db.connection.execute("SELECT component, instanced_inf1, instanced_inf2 FROM instanced_inf_junction").fetchall()
 
     # Verify that TestDriver1 uses TestLib acting as TestCls1
-    assert results[0] == ('2','1') # idx 2 is TestDriver1, idx1 is TestLib1 acting as TestCsl1
-    assert ("TestLib", "TestCls1") == db.connection.execute("SELECT name, class FROM instanced_inf where id = 1").fetchone()
-    assert ("TestDriver1",) == db.connection.execute("SELECT name FROM instanced_inf where id = 2").fetchone()
+    assert results[0] == (Path(comp1).as_posix(), Path(comp1).as_posix(), Path(lib1).as_posix()) # idx 2 is TestDriver1, idx1 is TestLib1 acting as TestCsl1
+    assert ("TestLib", "TestCls1") == db.connection.execute(
+        "SELECT name, class FROM instanced_inf where path = ? AND component = ?",
+        (Path(lib1).as_posix(), Path(comp1).as_posix())).fetchone()
 
     # Verify that TestDriver2 uses TestLib acting as TestCls2
-    assert results[1] == ('4', '3')  # idx 4 is TestDriver2, idx 3 is TestLib1 acting as TestCls2
-    assert ("TestLib", "TestCls2") == db.connection.execute("SELECT name, class FROM instanced_inf where id = 3").fetchone()
-    assert ("TestDriver2",) == db.connection.execute("SELECT name FROM instanced_inf where id = 4").fetchone()
+    assert results[1] == (Path(comp2).as_posix(), Path(comp2).as_posix(), Path(lib1).as_posix())  # idx 4 is TestDriver2, idx 3 is TestLib1 acting as TestCls2
+    assert ("TestLib", "TestCls2") == db.connection.execute(
+        "SELECT name, class FROM instanced_inf where path = ? AND component = ?",
+        (Path(lib1).as_posix(), Path(comp2).as_posix())).fetchone()
 
 def test_absolute_paths_in_dsc(empty_tree: Tree):
     edk2path = Edk2Path(str(empty_tree.ws), [])
