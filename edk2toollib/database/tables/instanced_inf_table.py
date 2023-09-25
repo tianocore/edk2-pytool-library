@@ -52,7 +52,7 @@ CREATE_INSTANCED_INF_SOURCE_TABLE_JUNCTION = '''
 CREATE TABLE IF NOT EXISTS instanced_inf_source_junction (env, component, instanced_inf, source);
 '''
 
-CREATE_INSTNACED_INF_SOURCE_TABLE_JUNCTION_INDEX = '''
+CREATE_INSTANCED_INF_SOURCE_TABLE_JUNCTION_INDEX = '''
 CREATE INDEX IF NOT EXISTS instanced_inf_source_junction_index ON instanced_inf_source_junction (env);
 '''
 
@@ -89,7 +89,7 @@ class InstancedInfTable(TableGenerator):
         db_cursor.execute(CREATE_INSTANCED_INF_TABLE_JUNCTION)
         db_cursor.execute(CREATE_INSTANCED_INF_TABLE_JUNCTION_INDEX)
         db_cursor.execute(CREATE_INSTANCED_INF_SOURCE_TABLE_JUNCTION)
-        db_cursor.execute(CREATE_INSTNACED_INF_SOURCE_TABLE_JUNCTION_INDEX)
+        db_cursor.execute(CREATE_INSTANCED_INF_SOURCE_TABLE_JUNCTION_INDEX)
 
     def inf(self, inf: str) -> InfP:
         """Returns a parsed INF object.
@@ -144,7 +144,7 @@ class InstancedInfTable(TableGenerator):
         ]
         db_cursor.executemany(INSERT_INSTANCED_INF_ROW, rows)
 
-        # Link isnstaced INF sources
+        # Link instanced INF sources
         rows = []
         for e in inf_entries:
             rows += [(env_id, e["COMPONENT"], e["PATH"], source) for source in e["SOURCES_USED"]]
