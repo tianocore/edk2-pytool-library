@@ -17,18 +17,6 @@ from edk2toollib.database.tables import InstancedInfTable
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 GET_USED_LIBRARIES_QUERY = """
-SELECT i.path
-FROM instanced_inf AS i
-JOIN junction AS j ON i.id = j.key2 and j.table2 = "instanced_inf"
-WHERE j.key1 = (
-    SELECT id
-    FROM instanced_inf
-    WHERE name = ? AND arch = ?
-    LIMIT 1
-);
-"""
-
-GET_USED_LIBRARIES_QUERY2 = """
 SELECT ii.path
 FROM instanced_inf AS ii
 JOIN instanced_inf_junction AS iij
@@ -191,7 +179,7 @@ def test_scoped_libraries1(empty_tree: Tree):
 
     for arch in ["IA32", "X64"]:
         for component, in db.connection.execute("SELECT path FROM instanced_inf WHERE component = path and arch is ?;", (arch,)):
-            component_lib = db.connection.execute(GET_USED_LIBRARIES_QUERY2, (component, arch)).fetchone()[0]
+            component_lib = db.connection.execute(GET_USED_LIBRARIES_QUERY, (component, arch)).fetchone()[0]
             assert Path(component).name.replace("Driver", "Lib") == Path(component_lib).name
 
     results = db.connection.execute('SELECT source FROM instanced_inf_source_junction').fetchall()
@@ -232,9 +220,9 @@ def test_scoped_libraries2(empty_tree: Tree):
     db.parse(env)
 
     for arch in ["IA32", "X64"]:
-        for component, in db.connection.execute("SELECT name FROM instanced_inf WHERE component IS NULL and arch is ?;", (arch,)):
+        for component, in db.connection.execute("SELECT path FROM instanced_inf WHERE component = path and arch is ?;", (arch,)):
             component_lib = db.connection.execute(GET_USED_LIBRARIES_QUERY, (component, arch)).fetchone()[0]
-            assert component.replace("Driver", "Lib") in component_lib
+            assert Path(component).name.replace("Driver", "Lib") == Path(component_lib).name
 
 def test_missing_library(empty_tree: Tree):
     """Test when a library is missing."""
