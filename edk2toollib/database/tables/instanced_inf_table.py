@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS instanced_inf_junction (
     component TEXT,
     instanced_inf1 TEXT,
     instanced_inf2 TEXT,
-    FOREIGN KEY(env) REFERENCES environment(env),
+    FOREIGN KEY(env) REFERENCES environment(env)
 );
 '''
 
@@ -58,7 +58,7 @@ CREATE INDEX IF NOT EXISTS instanced_inf_source_junction_index ON instanced_inf_
 
 INSERT_INSTANCED_INF_ROW = '''
 INSERT INTO instanced_inf (env, path, class, name, arch, dsc, component)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 '''
 
 INSERT_INF_TABLE_JUNCTION_ROW = '''
