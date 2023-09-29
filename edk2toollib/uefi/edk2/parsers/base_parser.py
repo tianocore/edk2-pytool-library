@@ -240,12 +240,12 @@ class BaseParser(object):
             return (ivalue != ivalue2) and (value != value2)
 
         # check to make sure we only have digits from here on out
-        if not isinstance(value, int) and not str.isdigit(value):
+        if not isinstance(ivalue, int) and not str.isdigit(value):
             self.Logger.error(f"{self.__class__}: Unknown value: {value} {ivalue.__class__}")
             self.Logger.debug(f"{self.__class__}: Conditional: {value} {cond}{value2}")
             raise ValueError("Unknown value")
 
-        if not isinstance(value2, int) and not str.isdigit(value2):
+        if not isinstance(ivalue2, int) and not str.isdigit(value2):
             self.Logger.error(f"{self.__class__}: Unknown value: {value2} {ivalue2}")
             self.Logger.debug(f"{self.__class__}: Conditional: {value} {cond} {value2}")
             raise ValueError("Unknown value")
