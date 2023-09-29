@@ -229,6 +229,13 @@ class TestBaseParserConditionals(unittest.TestCase):
         self.assertTrue(parser.ProcessConditional("!IF 0x20 == 32"))
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!endif"))
+        # check that hex comparisons work
+        self.assertTrue(parser.ProcessConditional("!IF 0x20 > 0x20"))
+        self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
+        self.assertTrue(parser.ProcessConditional("!IF 0x20 >= 0x20"))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
 
     def test_process_conditional_greater_than(self):
         parser = BaseParser("")

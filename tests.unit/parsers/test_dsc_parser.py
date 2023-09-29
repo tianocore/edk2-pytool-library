@@ -154,28 +154,3 @@ class TestDscParserIncludes(unittest.TestCase):
             self.assertEqual(parser.LocalVars["INCLUDED"], "TRUE")  # make sure we got the defines
         finally:
             os.chdir(cwd)
-
-    def test_handle_integer_comparisons(self):
-        DSC_FILE = '''
-[Defines]
-DEFINE SERIAL_REGISTER_BASE = 0xFEDC9000
-[PcdsFixedAtBuild]
-!if $(SERIAL_REGISTER_BASE) == 0x3F8 OR $(SERIAL_REGISTER_BASE) == 0x3E8
-gEfiModulePkgTokenSpaceGuid.MyValue|0x04
-# UART0 is COM2/4 IRQ3
-!elseif $(SERIAL_REGISTER_BASE) == 0x2F8 OR $(SERIAL_REGISTER_BASE) == 0x2E8
-gEfiModulePkgTokenSpaceGuid.MyValue|0x03
-!endif
-!if $(SERIAL_REGISTER_BASE) >= 0x10000
-gEfiMdeModulePkgTokenSpaceGuid.PcdSerialUseMmio|TRUE
-gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterStride|4
-gEfiMdeModulePkgTokenSpaceGuid.PcdSerialClockRate|48000000
-!else
-'''
-        import pathlib
-        workspace = tempfile.mkdtemp()
-        dsc = pathlib.Path(workspace) / "dsc.dsc"
-        dsc.write_text(DSC_FILE)
-        parser = DscParser()
-        parser.SetEdk2Path(Edk2Path(workspace, []))
-        parser.ParseFile(dsc)
