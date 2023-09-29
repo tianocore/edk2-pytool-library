@@ -114,7 +114,7 @@ class DscParser(HashFileParser):
                     self.Libs.append(p)
                     self.Logger.debug("Found Library in a 64bit BuildOptions Section: %s" % p)
                 elif self.RegisterPcds(line_resolved):
-                    self.Logger.debug("Found a Pcd in a 64bit Module Override section: %s" % p[0].strip())
+                    self.Logger.debug("Found a Pcd in a 64bit Module Override section")
             else:
                 if (".inf" in line_resolved.lower()):
                     p = self.ParseInfPathMod(line_resolved)
@@ -137,7 +137,7 @@ class DscParser(HashFileParser):
                         self.LibsEnhanced.append({'file': os.path.normpath(file_name), 'lineno': lineno, 'data': p})
                     self.Logger.debug("Found Library in a 32bit BuildOptions Section: %s" % p)
                 elif self.RegisterPcds(line_resolved):
-                    self.Logger.debug("Found a Pcd in a 32bit Module Override section: %s" % p[0].strip())
+                    self.Logger.debug("Found a Pcd in a 32bit Module Override section")
 
             else:
                 if (".inf" in line_resolved.lower()):
@@ -160,7 +160,7 @@ class DscParser(HashFileParser):
                     self.Libs.append(p)
                     self.Logger.debug("Found Library in a BuildOptions Section: %s" % p)
                 elif self.RegisterPcds(line_resolved):
-                    self.Logger.debug("Found a Pcd in a Module Override section: %s" % p[0].strip())
+                    self.Logger.debug("Found a Pcd in a Module Override section")
 
             else:
                 if (".inf" in line_resolved.lower()):
@@ -182,7 +182,7 @@ class DscParser(HashFileParser):
         # process line in PCD section
         elif (self.CurrentSection.upper().startswith("PCDS")):
             if self.RegisterPcds(line_resolved):
-                self.Logger.debug("Found a Pcd in a PCD section: %s" % p[0].strip())
+                self.Logger.debug("Found a Pcd in a PCD section")
             return (line_resolved, [], None)
         else:
             return (line_resolved, [], None)
@@ -530,6 +530,6 @@ class DscParser(HashFileParser):
             p = line.partition('|')
             self.Pcds.append(p[0].strip())
             self.PcdValueDict[p[0].strip()] = p[2].strip()
-            self.Logger.debug("Found a Pcd in a 64bit Module Override section: %s" % p[0].strip())
+            self.Logger.debug("Found a Pcd: %s" % p[0].strip())
             return True
         return False
