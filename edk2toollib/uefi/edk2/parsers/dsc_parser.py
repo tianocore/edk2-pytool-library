@@ -113,13 +113,8 @@ class DscParser(HashFileParser):
                     p = self.ParseInfPathLib(line_resolved)
                     self.Libs.append(p)
                     self.Logger.debug("Found Library in a 64bit BuildOptions Section: %s" % p)
-                elif "tokenspaceguid" in line_resolved.lower() and \
-                        line_resolved.count('|') > 0 and line_resolved.count('.') > 0:
-                    # should be a pcd statement
-                    p = line_resolved.partition('|')
-                    self.Pcds.append(p[0].strip())
-                    self.PcdValueDict[p[0].strip()] = p[2].strip()
-                    self.Logger.debug("Found a Pcd in a 64bit Module Override section: %s" % p[0].strip())
+                elif self.RegisterPcds(line_resolved):
+                    self.Logger.debug("Found a Pcd in a 64bit Module Override section")
             else:
                 if (".inf" in line_resolved.lower()):
                     p = self.ParseInfPathMod(line_resolved)
@@ -141,13 +136,8 @@ class DscParser(HashFileParser):
                     if file_name is not None and lineno is not None:
                         self.LibsEnhanced.append({'file': os.path.normpath(file_name), 'lineno': lineno, 'data': p})
                     self.Logger.debug("Found Library in a 32bit BuildOptions Section: %s" % p)
-                elif "tokenspaceguid" in line_resolved.lower() and \
-                        line_resolved.count('|') > 0 and line_resolved.count('.') > 0:
-                    # should be a pcd statement
-                    p = line_resolved.partition('|')
-                    self.Pcds.append(p[0].strip())
-                    self.PcdValueDict[p[0].strip()] = p[2].strip()
-                    self.Logger.debug("Found a Pcd in a 32bit Module Override section: %s" % p[0].strip())
+                elif self.RegisterPcds(line_resolved):
+                    self.Logger.debug("Found a Pcd in a 32bit Module Override section")
 
             else:
                 if (".inf" in line_resolved.lower()):
@@ -169,13 +159,8 @@ class DscParser(HashFileParser):
                     p = self.ParseInfPathLib(line_resolved)
                     self.Libs.append(p)
                     self.Logger.debug("Found Library in a BuildOptions Section: %s" % p)
-                elif "tokenspaceguid" in line_resolved.lower() and \
-                        line_resolved.count('|') > 0 and line_resolved.count('.') > 0:
-                    # should be a pcd statement
-                    p = line_resolved.partition('|')
-                    self.Pcds.append(p[0].strip())
-                    self.PcdValueDict[p[0].strip()] = p[2].strip()
-                    self.Logger.debug("Found a Pcd in a Module Override section: %s" % p[0].strip())
+                elif self.RegisterPcds(line_resolved):
+                    self.Logger.debug("Found a Pcd in a Module Override section")
 
             else:
                 if (".inf" in line_resolved.lower()):
@@ -196,13 +181,8 @@ class DscParser(HashFileParser):
             return (line_resolved, [], None)
         # process line in PCD section
         elif (self.CurrentSection.upper().startswith("PCDS")):
-            if "tokenspaceguid" in line_resolved.lower() and \
-                    line_resolved.count('|') > 0 and line_resolved.count('.') > 0:
-                # should be a pcd statement
-                p = line_resolved.partition('|')
-                self.Pcds.append(p[0].strip())
-                self.PcdValueDict[p[0].strip()] = p[2].strip()
-                self.Logger.debug("Found a Pcd in a PCD section: %s" % p[0].strip())
+            if self.RegisterPcds(line_resolved):
+                self.Logger.debug("Found a Pcd in a PCD section")
             return (line_resolved, [], None)
         else:
             return (line_resolved, [], None)
@@ -213,6 +193,8 @@ class DscParser(HashFileParser):
             return ("", [])
 
         # this line needs to be here to resolve any symbols inside the !include lines, if any
+        self.RegisterPcds(line_stripped)
+        line_stripped = self.ReplacePcds(line_stripped)
         line_resolved = self.ReplaceVariables(line_stripped)
         if (self.ProcessConditional(line_resolved)):
             # was a conditional
@@ -333,6 +315,8 @@ class DscParser(HashFileParser):
                 # otherwise, raise the exception and act normally
                 if not self._no_fail_mode:
                     raise
+        # Reset the PcdValueDict as this was just to find any Defines.
+        self.PcdValueDict = {}
 
     def _parse_libraries(self):
         """Builds a lookup table of all possible library instances depending on scope.
@@ -535,3 +519,17 @@ class DscParser(HashFileParser):
         They are not all guaranteed to be DSC files
         """
         return self._dsc_file_paths
+
+    def RegisterPcds(self, line):
+        """Reads the line and registers any PCDs found."""
+        if ("tokenspaceguid" in line.lower() and
+            line.count('|') > 0 and
+            line.count('.') > 0):
+
+            # should be a pcd statement
+            p = line.partition('|')
+            self.Pcds.append(p[0].strip())
+            self.PcdValueDict[p[0].strip()] = p[2].strip()
+            self.Logger.debug("Found a Pcd: %s" % p[0].strip())
+            return True
+        return False
