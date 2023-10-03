@@ -328,12 +328,12 @@ class DscParser(HashFileParser):
             $(LIB_NAME).$(ARCH)
             $(LIB_NAME).common
         """
-        current_scope = []
+        current_scopes = []
         for line in self.Lines:
-            current_scope = self._get_current_scope(current_scope, line.lower(), self.SECTION_LIBRARY.lower())
+            current_scopes = self._get_current_scope(current_scopes, line.lower(), self.SECTION_LIBRARY.lower())
 
             # The current section is not SECTION_LIBRARY, so we have no valid scopes. continue to next line.
-            if not current_scope:
+            if not current_scopes:
                 continue
 
             # This line is starting a new section with a new scope. Start reading the new line
@@ -347,7 +347,7 @@ class DscParser(HashFileParser):
 
             # We are in a valid section, so lets parse the line and add it to our dictionary.
             lib, instance = tuple(line.split("|"))
-            for scope in current_scope:
+            for scope in current_scopes:
                 key = f"{scope.strip()}.{lib.strip()}".lower()
                 value = instance.strip()
                 if os.path.isabs(value):
@@ -360,18 +360,18 @@ class DscParser(HashFileParser):
         return
 
     def _parse_components(self):
-        current_scope = []
+        current_scopes = []
         lines = iter(self.Lines)
 
         try:
             while True:
                 line = next(lines)
 
-                current_scope = self._get_current_scope(current_scope, line.lower(), self.SECTION_COMPONENT)
+                current_scopes = self._get_current_scope(current_scopes, line.lower(), self.SECTION_COMPONENT)
                 library_override_dict = {"NULL": []}
 
                 # The current section is not SECTION_COMPONENT, so we have no valid scopes. continue to next line.
-                if not current_scope:
+                if not current_scopes:
                     continue
 
                 # This line is starting a new section with a new scope. Start reading the new line
@@ -384,16 +384,15 @@ class DscParser(HashFileParser):
                     logging.debug(f"Building Library Override Dictionary for Component: {line.strip(' {')}")
                     library_override_dict = self._build_library_override_dictionary(lines)
 
-                for scope in current_scope:
+                for scope in current_scopes:
                     # Components without a specific scope (common or empty) are added to all current scopes
                     if os.path.isabs(line.strip(" {")):
                         line = self._Edk2PathUtil.GetEdk2RelativePathFromAbsolutePath(line.strip(" {"))
-                    if "common" in current_scope[0]:
-                        for arch in self.InputVars.get("TARGET_ARCH", "").split(" "):
-                            scope = current_scope[0].replace("common", arch).lower()
-                            self.Components.append((line.strip(" {"), scope, library_override_dict))
+                    if scope == "common":
+                        for arch in self.LocalVars["SUPPORTED_ARCHITECTURES"].split("|"):
+                            self.Components.append((line.strip(" {"), arch, library_override_dict))
                     else:
-                        self.Components.append((line.strip(" {"), current_scope[0].lower(), library_override_dict))
+                        self.Components.append((line.strip(" {"), scope, library_override_dict))
 
         except StopIteration:
             return
