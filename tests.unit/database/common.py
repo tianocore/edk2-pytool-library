@@ -79,7 +79,7 @@ def create_fdf_file(file_path, **kwargs):
 def create_dsc_file(file_path, **kwargs):
     """Makes a DSC with default values that can be overwritten via kwargs."""
     # Make default values.
-    defines = {}
+    defines = {"SUPPORTED_ARCHITECTURES": "IA32|X64|AARCH64"}
     libs = ["TestLib|TestPkg/Library/TestLibNull.inf"]
     comps = ["TestPkg/Drivers/TestDriver.inf"]
 
