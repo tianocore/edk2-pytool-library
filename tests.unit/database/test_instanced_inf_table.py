@@ -185,7 +185,7 @@ def test_scoped_libraries1(empty_tree: Tree):
     results = db.connection.execute('SELECT source FROM instanced_inf_source_junction').fetchall()
     assert len(results) == 3
     for source, in results:
-        assert source in ["File1.c", "File2.c", "File3.c"]
+        assert Path(source).name in ["File1.c", "File2.c", "File3.c"]
 
 def test_scoped_libraries2(empty_tree: Tree):
     """Ensure that the correct libraries in regards to scoping.
