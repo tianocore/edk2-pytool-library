@@ -164,7 +164,12 @@ class InstancedInfTable(TableGenerator):
         """
         inf_entries = []
         for (inf, scope, overrides) in dscp.Components:
-            logging.debug(f"Parsing Component: [{inf}]")
+            # Ignore components built with an architecture that is not in TARGET_ARCH
+            arch = scope.split(".")[0].upper()
+            if arch not in self.arch:
+                continue
+
+            logging.debug(f"Parsing Component: [{arch}][{inf}]")
             infp = InfP().SetEdk2Path(self.pathobj)
             infp.ParseFile(inf)
 
