@@ -65,3 +65,26 @@ def test_valid_inf(empty_tree: Tree):
     for inf in [Path(lib1).as_posix(), Path(lib2).as_posix()]:
         rows = db.connection.execute("SELECT * FROM junction WHERE key1 = ? AND table2 = 'source'", (inf,)).fetchall()
         assert len(rows) == 3
+
+def test_source_path_with_dot_dot(empty_tree: Tree):
+    """Tests that paths with .. are correctly resolved."""
+    edk2path = Edk2Path(str(empty_tree.ws), [])
+    db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
+    db.register(InfTable(n_jobs = 1))
+    empty_tree.create_library(
+        "TestLib", "TestCls",
+        sources = [
+            "../Test1.c",
+            "Test2.c"
+        ]
+    )
+    file1 = empty_tree.package / "Test1.c"
+    file1.touch()
+    file2 = empty_tree.library_folder / "Test2.c"
+    file2.touch()
+
+    db.parse({})
+
+    # Ensure we resolve file1 as ws / Test1.c and file2 as ws / library/ test2.c
+    for path, in db.connection.execute("SELECT key2 FROM junction").fetchall():
+        assert Path(empty_tree.ws, path) in [file1, file2]

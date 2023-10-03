@@ -79,8 +79,7 @@ class InfTable(TableGenerator):
                 db_cursor.execute(INSERT_JUNCTION_ROW, row)
 
             for source in inf["SOURCES_USED"]:
-                source_path = (Path(inf["PATH"]).parent / source).as_posix()
-                row = (env_id, "inf", inf["PATH"], "source", source_path)
+                row = (env_id, "inf", inf["PATH"], "source", source)
                 db_cursor.execute(INSERT_JUNCTION_ROW, row)
 
     def _parse_file(self, filename, pathobj) -> dict:
@@ -89,6 +88,16 @@ class InfTable(TableGenerator):
 
         pkg = pathobj.GetContainingPackage(str(inf_parser.Path))
         path = Path(inf_parser.Path).as_posix()
+
+        # Resolve source file paths when they contain ".."
+        source_list = []
+        for source in inf_parser.Sources:
+            source = (Path(filename).parent / source).resolve().as_posix()
+            if pkg is not None:
+                source_list.append(source[source.find(pkg):])
+            else:
+                source_list.append(source)
+
         if pkg:
             path = path[path.find(pkg):]
         data = {}
@@ -96,7 +105,7 @@ class InfTable(TableGenerator):
         data["LIBRARY_CLASS"] = inf_parser.LibraryClass or None
         data["PATH"] = Path(path).as_posix()
         data["PHASES"] = inf_parser.SupportedPhases
-        data["SOURCES_USED"] = inf_parser.Sources
+        data["SOURCES_USED"] = source_list
         data["BINARIES_USED"] = inf_parser.Binaries
         data["LIBRARIES_USED"] = inf_parser.LibrariesUsed
         data["PROTOCOLS_USED"] = inf_parser.ProtocolsUsed
