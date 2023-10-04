@@ -206,6 +206,7 @@ class InstancedInfTable(TableGenerator):
         visited.append(inf)
         library_instance_list = []
         library_class_list = []
+        arch = scope.split(".")[0].upper()
 
         #
         # 0. Use the existing parser to parse the INF file. This parser parses an INF as an independent file
@@ -217,7 +218,7 @@ class InstancedInfTable(TableGenerator):
         # 1. Convert all libraries to their actual instances for this component. This takes into account
         #    any overrides for this component
         #
-        for lib in infp.get_libraries(self.arch):
+        for lib in infp.get_libraries([arch]):
             lib = lib.split(" ")[0]
             library_instance_list.append(self._lib_to_instance(lib.lower(), scope, library_dict, override_dict))
             library_class_list.append(lib)
@@ -246,6 +247,16 @@ class InstancedInfTable(TableGenerator):
             return Path(path).as_posix()
         library_instance_list = list(map(to_posix, library_instance_list))
 
+        source_list = []
+        full_inf = self.pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(inf)
+        pkg = self.pathobj.GetContainingPackage(full_inf)
+        for source in infp.get_sources([arch]):
+            source = (Path(inf).parent / source).resolve().as_posix()
+            if pkg is not None:
+                source_list.append(source[source.find(pkg):])
+            else:
+                source_list.append(source)
+
         # Return Paths as posix paths, which is Edk2 standard.
         to_return.append({
             "DSC": Path(self.dsc).name,
@@ -255,8 +266,8 @@ class InstancedInfTable(TableGenerator):
             "LIBRARY_CLASS": library_class,
             "COMPONENT": Path(component).as_posix(),
             "MODULE_TYPE": infp.Dict["MODULE_TYPE"],
-            "ARCH": scope.split(".")[0].upper(),
-            "SOURCES_USED": list(map(lambda p: Path(p).as_posix(), infp.Sources)),
+            "ARCH": arch,
+            "SOURCES_USED": source_list,
             "LIBRARIES_USED": list(library_instance_list),
             "PROTOCOLS_USED": [],  # TODO
             "GUIDS_USED": [],  # TODO

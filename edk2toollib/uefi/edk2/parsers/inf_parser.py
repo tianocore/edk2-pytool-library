@@ -38,7 +38,8 @@ class InfParser(HashFileParser):
     NOTE: Key / Value pairs determined by lines that contain a single =
     """
     SECTION_REGEX = re.compile(r"\[(.*)\]")
-    SECTION_LIBRARY = "libraryclasses"
+    SECTION_LIBRARY = re.compile(r'libraryclasses(?:\.([^,.\]]+))?[,.\]]', re.IGNORECASE)
+    SECTION_SOURCE = re.compile(r'sources(?:\.([^,.\]]+))?[,.\]]', re.IGNORECASE)
 
     def __init__(self):
         """Inits an empty parser."""
@@ -51,6 +52,7 @@ class InfParser(HashFileParser):
         self.PackagesUsed = []
         self.LibrariesUsed = []
         self.ScopedLibraryDict = {}
+        self.ScopedSourceDict = {}
         self.ProtocolsUsed = []
         self.GuidsUsed = []
         self.PpisUsed = []
@@ -59,13 +61,21 @@ class InfParser(HashFileParser):
         self.Binaries = []
         self.Path = ""
 
-    def get_libraries(self, archs: list[str]):
+    def get_libraries(self, arch_list: list[str]):
         """Returns a list of libraries depending on the requested archs."""
         libraries = self.ScopedLibraryDict.get("common", []).copy()
 
-        for arch in archs:
-            libraries + self.ScopedLibraryDict.get(arch, []).copy()
+        for arch in arch_list:
+            libraries = libraries + self.ScopedLibraryDict.get(arch.lower(), []).copy()
         return list(set(libraries))
+
+    def get_sources(self, arch_list: list[str]):
+        """Returns a list of sources depending on the requested archs."""
+        sources = self.ScopedSourceDict.get("common", []).copy()
+
+        for arch in arch_list:
+            sources = sources + self.ScopedSourceDict.get(arch.lower(), []).copy()
+        return list(set(sources))
 
     def ParseFile(self, filepath):
         """Parses the INF file provided."""
@@ -205,40 +215,51 @@ class InfParser(HashFileParser):
             elif sline.strip().lower().startswith('[binaries'):
                 InBinariesSection = True
 
-        # Create scoped_library_dict
+        # Re-parse for scoped information
+        # Hopefully eventually replace all of the above with this
+        # logic
         current_section = ""
-        arch = ""
+        arch_list = []
 
         for line in self.Lines:
-            match = self.SECTION_REGEX.match(line)
-
             if line.strip() == "":
                 continue
 
             if line.strip().startswith("#"):
                 continue
 
-            # Match the current section we are in
+            match = self.SECTION_LIBRARY.findall(line)
             if match:
-                section = match.group(1)
-                section = section.lower()
-
-                # A Library section
-                if section.startswith(self.SECTION_LIBRARY):
-                    if section.count(".") == 1:
-                        current_section, arch = tuple(section.split("."))
-                    else:
-                        current_section, arch = (section, "common")
-                # Some other section
-                else:
-                    current_section = ""
-                    arch = ""
+                current_section = "LibraryClasses"
+                arch_list = match
+                continue
+            match = self.SECTION_SOURCE.findall(line)
+            if match:
+                current_section = "Sources"
+                arch_list = match
                 continue
 
+            # Catch all others
+            match = self.SECTION_REGEX.match(line)
+            if match:
+                current_section = match.group(1)
+                arch_list = []
+
             # Handle lines when we are in a library section
-            if current_section == self.SECTION_LIBRARY:
-                if arch in self.ScopedLibraryDict:
-                    self.ScopedLibraryDict[arch].append(line.split()[0].strip())
-                else:
-                    self.ScopedLibraryDict[arch] = [line.split()[0].strip()]
+            if current_section == "LibraryClasses":
+                for arch in arch_list:
+                    arch = 'common' if arch == '' else arch.lower()
+                    if arch in self.ScopedLibraryDict:
+                        self.ScopedLibraryDict[arch].append(line.split()[0].strip())
+                    else:
+                        self.ScopedLibraryDict[arch] = [line.split()[0].strip()]
+
+            # Handle lines when we are in a source section
+            if current_section == "Sources":
+                for arch in arch_list:
+                    arch = 'common' if arch == '' else arch.lower()
+                    if arch in self.ScopedSourceDict:
+                        self.ScopedSourceDict[arch].append(line.split()[0].strip())
+                    else:
+                        self.ScopedSourceDict[arch] = [line.split()[0].strip()]
         self.Parsed = True
