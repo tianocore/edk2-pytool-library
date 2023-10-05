@@ -31,6 +31,7 @@ classifiers=[
     "Programming Language :: Python :: 3.11"
 ]
 ```
+
 ### bug_report.yml
 
 Update the supported python versions in the entry with `id: py_version`
