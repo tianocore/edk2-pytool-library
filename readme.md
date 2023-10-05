@@ -32,7 +32,7 @@ Supported Versions
 |  [Ubuntu-Latest]   |  Python 3.10  |  [![ci]][_ci]           |
 |  [Ubuntu-Latest]   |  Python 3.11  |  [![ci]][_ci]           |
 |  [Ubuntu-Latest]   |  Python 3.12  |  [![ci]][_ci]           |
-|  [MacOS-Latest]    |  Python 3.10   |  [![coming_soon]][_ci]  |
+|  [MacOS-Latest]    |  Python 3.10  |  [![coming_soon]][_ci]  |
 |  [MacOS-Latest]    |  Python 3.11  |  [![coming_soon]][_ci]  |
 |  [MacOS-Latest]    |  Python 3.12  |  [![coming_soon]][_ci]  |
 
