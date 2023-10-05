@@ -104,7 +104,15 @@ class InfParser(HashFileParser):
             if (sline is None or len(sline) < 1):
                 continue
 
-            if InDefinesSection:
+            sline = self.ReplaceVariables(sline)
+
+            if sline.strip().startswith("DEFINE"):
+                tokens = sline.strip().replace("DEFINE", "").split('=', 1)
+                self.LocalVars[tokens[0].strip()] = tokens[1].strip()
+                self.Logger.info(f"Key,values found for local vars: {tokens[0].strip()}, {tokens[1].strip()}")
+                continue
+
+            elif InDefinesSection:
                 if sline.strip()[0] == '[':
                     InDefinesSection = False
                 else:
@@ -222,11 +230,21 @@ class InfParser(HashFileParser):
         arch_list = []
 
         for line in self.Lines:
+            line = self.StripComment(line)
+
             if line.strip() == "":
                 continue
 
             if line.strip().startswith("#"):
                 continue
+
+            if line.strip().startswith("DEFINE"):
+                tokens = line.strip().replace("DEFINE", "").split('=', 1)
+                self.LocalVars[tokens[0].strip()] = tokens[1].strip()
+                self.Logger.info(f"Key,values found for local vars: {tokens[0].strip()}, {tokens[1].strip()}")
+                continue
+
+            line = self.ReplaceVariables(line)
 
             match = self.SECTION_LIBRARY.findall(line)
             if match:

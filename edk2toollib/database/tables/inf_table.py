@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS inf (
     path TEXT PRIMARY KEY,
     guid TEXT,
     library_class TEXT,
-    package TEXT
+    package TEXT,
+    module_type TEXT
 );
 '''
 
@@ -33,8 +34,8 @@ VALUES (?, ?, ?, ?, ?)
 '''
 
 INSERT_INF_ROW = '''
-INSERT OR REPLACE INTO inf (path, guid, library_class, package)
-VALUES (?, ?, ?, ?)
+INSERT OR REPLACE INTO inf (path, guid, library_class, package, module_type)
+VALUES (?, ?, ?, ?, ?)
 '''
 
 class InfTable(TableGenerator):
@@ -71,7 +72,7 @@ class InfTable(TableGenerator):
 
         # Insert the data into the database
         for inf in inf_entries:
-            row = (inf["PATH"], inf["GUID"], inf["LIBRARY_CLASS"], inf["PACKAGE"])
+            row = (inf["PATH"], inf["GUID"], inf["LIBRARY_CLASS"], inf["PACKAGE"], inf["MODULE_TYPE"])
             db_cursor.execute(INSERT_INF_ROW, row)
 
             for library in inf["LIBRARIES_USED"]:
@@ -113,5 +114,6 @@ class InfTable(TableGenerator):
         data["PPIS_USED"] = inf_parser.PpisUsed
         data["PCDS_USED"] = inf_parser.PcdsUsed
         data["PACKAGE"] = pkg
+        data["MODULE_TYPE"] = inf_parser.Dict.get("MODULE_TYPE", None)
 
         return data
