@@ -240,7 +240,8 @@ class BaseParser(object):
             return (ivalue != ivalue2) and (value != value2)
 
         # check to make sure we only have digits from here on out
-        if value.upper() in ["TRUE", "FALSE"] or value2.upper() in ["TRUE", "FALSE"]:
+        if (isinstance(value, str) and value.upper() in ["TRUE", "FALSE"]) \
+            or (isinstance(value, str) and value2.upper() in ["TRUE", "FALSE"]):
             self.Logger.error(f"Invalid comparison: {value} {cond} {value2}")
             self.Logger.debug(f"Invalid comparison: {value} {cond} {value2}")
             raise ValueError("Invalid comparison")
