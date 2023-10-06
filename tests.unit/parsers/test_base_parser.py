@@ -488,6 +488,28 @@ class TestBaseParserConditionals(unittest.TestCase):
 
         parser.ResetParserState()
 
+    def test_conditional_with_variable(self):
+        ''' Makes sure conversions are correct when using variables '''
+        parser = BaseParser("")
+        parser.LocalVars = {"MAX_SOCKET": '4', 'TARGET': 'DEBUG'}
+
+        self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET) <= 4'))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional('!endif'))
+
+        self.assertTrue(parser.ProcessConditional('!if $(TARGET) == "DEBUG" && $(MAX_SOCKET) <= 4'))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional('!endif'))
+
+        self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET) <= 3'))
+        self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional('!endif'))
+
+        self.assertTrue(parser.ProcessConditional('!if ($(TARGET) == "RELEASE") && ($(MAX_SOCKET) <= 4)'))
+        self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional('!endif'))
+
+
 
 class TestBaseParserGuids(unittest.TestCase):
 
