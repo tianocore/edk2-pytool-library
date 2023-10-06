@@ -510,7 +510,6 @@ class TestBaseParserConditionals(unittest.TestCase):
         self.assertTrue(parser.ProcessConditional('!endif'))
 
 
-
 class TestBaseParserGuids(unittest.TestCase):
 
     def test_is_guid(self):
