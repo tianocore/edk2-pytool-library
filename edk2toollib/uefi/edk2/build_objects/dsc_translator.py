@@ -133,7 +133,6 @@ class DscTranslator():
             for section, pcds in comp.pcds.items():
                 lines.append(f"{depth_pad}<{section}>")
                 lines += cls._GetDscLinesFromDscObj(pcds, depth)
-            pass
         if len(comp.library_classes) > 0:
             lines.append(f"{depth_pad}<LibraryClasses>")
             lines += cls._GetDscLinesFromDscObj(comp.library_classes, depth)

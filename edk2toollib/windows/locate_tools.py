@@ -118,7 +118,6 @@ def GetVsWherePath(fail_on_not_found: bool = True):
             _DownloadVsWhere(vswhere_dir)
         except Exception as exc:
             logging.warning("Tried to download VsWhere and failed with exception: %s", str(exc))
-            pass
 
     # if we're still hosed
     if not os.path.isfile(vswhere_path) and fail_on_not_found:
