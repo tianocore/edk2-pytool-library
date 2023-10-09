@@ -34,16 +34,6 @@ class Edk2Path(object):
         instantiated. If using the same Workspace root and packages path, it is
         suggested that only a single Edk2Path instance is instantiated and
         passed to any consumers.
-
-    There are two OS environment variables that modify the behavior of this class with
-    respect to nested package checking:
-        PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES - converts errors about nested
-            packages to warnings.
-        PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES - contains a comma-delimited list of
-            known bad packages. If a package matching a known bad package from the
-            list is encountered, an info-level message will be printed and the nested
-            package check will be skipped.
-
     """
 
     def __init__(self, ws: str, package_path_list: Iterable[str],
@@ -120,60 +110,18 @@ class Edk2Path(object):
             package_path_packages[package_path] = \
                 [p.parent for p in package_path.glob('**/*.dec')]
 
-        # Note: The ability to ignore this function raising an exception on
-        #       nested packages is temporary. Do not plan on this variable
-        #       being available long-term and try to resolve the nested
-        #       packages problem right away.
-        #
-        # Removal is tracked in the following GitHub issue:
-        # https://github.com/tianocore/edk2-pytool-library/issues/200
-        ignore_nested_packages = False
-        if "PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES" in os.environ and \
-            os.environ["PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES"].strip().lower() == \
-                "true":
-            ignore_nested_packages = True
-
-        if "PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES" in os.environ:
-            pkgs_to_ignore = os.environ["PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES"].split(",")
-        else:
-            pkgs_to_ignore = []
-
         for package_path, packages in package_path_packages.items():
-            packages_to_check = []
-            for package in packages:
-                if any(x in str(package) for x in pkgs_to_ignore):
-                    self.logger.log(
-                        logging.INFO,
-                        f"Ignoring nested package check for known-bad package "
-                        f"[{str(package)}].")
-                else:
-                    packages_to_check.append(package)
-            for i, package in enumerate(packages_to_check):
-                for j in range(i + 1, len(packages_to_check)):
-                    comp_package = packages_to_check[j]
+            for i, package in enumerate(packages):
+                for j in range(i + 1, len(packages)):
+                    comp_package = packages[j]
                     if (package.is_relative_to(comp_package)
                             or comp_package.is_relative_to(package)):
-                        if ignore_nested_packages:
-                            self.logger.log(
-                                logging.WARNING,
-                                f"Nested packages not allowed. The packages "
-                                f"[{str(package)}] and [{str(comp_package)}] are "
-                                f"nested.")
-                            self.logger.log(
-                                logging.WARNING,
-                                "Note 1: Nested packages are being ignored right now because the "
-                                "\"PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES\" environment variable "
-                                "is set. Do not depend on this variable long-term.")
-                            self.logger.log(
-                                logging.WARNING,
-                                "Note 2: Some pytool features may not work as expected with nested packages.")
-                        else:
-                            raise Exception(
-                                f"Nested packages not allowed. The packages "
-                                f"[{str(package)}] and [{str(comp_package)}] are "
-                                f"nested. Set the \"PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES\" "
-                                f"environment variable to \"true\" as a temporary workaround "
-                                f"until you fix the packages so they are no longer nested.")
+                        self.logger.log(
+                            logging.DEBUG,
+                            f"[{str(package)}] and [{str(comp_package)}] are nested. Nested packages are not allowed "
+                            "and may result in incorrect converions from absolute path to edk2 package path relative "
+                            "paths."
+                        )
 
     @property
     def WorkspacePath(self):
