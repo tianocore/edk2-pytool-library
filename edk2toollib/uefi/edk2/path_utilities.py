@@ -119,7 +119,7 @@ class Edk2Path(object):
                         self.logger.log(
                             logging.DEBUG,
                             f"[{str(package)}] and [{str(comp_package)}] are nested. Nested packages are not allowed "
-                            "and may result in incorrect converions from absolute path to edk2 package path relative "
+                            "and may result in incorrect conversions from absolute path to edk2 package path relative "
                             "paths."
                         )
 
