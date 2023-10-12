@@ -480,7 +480,7 @@ class InfFileTest(unittest.TestCase):
             CatalogFile=CapsuleName.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64
+            %MfgName% = Firmware,NTamd64.10.0...16299
 
             [Firmware.NTamd64.10.0...16299]
             %tag1Desc% = tag1_Install,UEFI\\RES_{34e094e9-4079-44cd-9450-3f2cb7824c97}
@@ -574,7 +574,7 @@ class InfFileTest(unittest.TestCase):
             CatalogFile=CapsuleName.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64
+            %MfgName% = Firmware,NTamd64.10.0...16299
 
             [Firmware.NTamd64.10.0...16299]
             %tag1Desc% = tag1_Install,UEFI\\RES_{34e094e9-4079-44cd-9450-3f2cb7824c97}
@@ -678,7 +678,7 @@ class InfFileTest(unittest.TestCase):
             CatalogFile=CapsuleName.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64
+            %MfgName% = Firmware,NTamd64.10.0...16299
 
             [Firmware.NTamd64.10.0...16299]
             %tag1Desc% = tag1_Install,UEFI\\RES_{34e094e9-4079-44cd-9450-3f2cb7824c97}
