@@ -33,7 +33,7 @@ class InfHeaderTest(unittest.TestCase):
             CatalogFile=InfTest.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64
+            %MfgName% = Firmware,NTamd64.10.0...16299
 
             """)
         self.assertEqual(ExpectedStr, str(Header))
@@ -258,7 +258,7 @@ class InfFirmwareSectionsTest(unittest.TestCase):
         Sections.AddSection(Firmware)
 
         ExpectedStr = textwrap.dedent("""\
-            [Firmware.NTamd64]
+            [Firmware.NTamd64.10.0...16299]
             %tagDesc% = tag_Install,UEFI\\RES_{34e094e9-4079-44cd-9450-3f2cb7824c97}
 
             [tag_Install.NT]
@@ -312,7 +312,7 @@ class InfFirmwareSectionsTest(unittest.TestCase):
         Sections.AddSection(Firmware2)
 
         ExpectedStr = textwrap.dedent("""\
-            [Firmware.NTamd64]
+            [Firmware.NTamd64.10.0...16299]
             %tag1Desc% = tag1_Install,UEFI\\RES_{34e094e9-4079-44cd-9450-3f2cb7824c97}
             %tag2Desc% = tag2_Install,UEFI\\RES_{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
 
@@ -480,9 +480,9 @@ class InfFileTest(unittest.TestCase):
             CatalogFile=CapsuleName.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64
+            %MfgName% = Firmware,NTamd64.10.0...16299
 
-            [Firmware.NTamd64]
+            [Firmware.NTamd64.10.0...16299]
             %tag1Desc% = tag1_Install,UEFI\\RES_{34e094e9-4079-44cd-9450-3f2cb7824c97}
             %tag2Desc% = tag2_Install,UEFI\\RES_{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
 
@@ -574,9 +574,9 @@ class InfFileTest(unittest.TestCase):
             CatalogFile=CapsuleName.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64
+            %MfgName% = Firmware,NTamd64.10.0...16299
 
-            [Firmware.NTamd64]
+            [Firmware.NTamd64.10.0...16299]
             %tag1Desc% = tag1_Install,UEFI\\RES_{34e094e9-4079-44cd-9450-3f2cb7824c97}
             %tag2Desc% = tag2_Install,UEFI\\RES_{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
 
@@ -678,9 +678,9 @@ class InfFileTest(unittest.TestCase):
             CatalogFile=CapsuleName.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64
+            %MfgName% = Firmware,NTamd64.10.0...16299
 
-            [Firmware.NTamd64]
+            [Firmware.NTamd64.10.0...16299]
             %tag1Desc% = tag1_Install,UEFI\\RES_{34e094e9-4079-44cd-9450-3f2cb7824c97}
             %tag2Desc% = tag2_Install,UEFI\\RES_{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
 
