@@ -105,6 +105,15 @@ class Edk2Path(object):
         #    is relative (nested) to each other.
         # 3. Raise an Exception if two packages are found to be nested.
         #
+        if "PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES" in os.environ:
+            warning = "PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES is no longer used by edk2-pytool-library, but is "\
+                      "detected in your environment. Please remove this environment variable."
+            self.Logger.log(logging.WARNING, warning)
+        if "PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES" == os.environ:
+            warning = "PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES is no longer used by edk2-pytool-library, but is " \
+                      "detected in your environment. Please remove this environment variable."
+            self.Logger.log(logging.WARNING, warning)
+
         package_path_packages = {}
         for package_path in self._package_path_list:
             package_path_packages[package_path] = \
