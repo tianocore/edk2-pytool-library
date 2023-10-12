@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
+import logging
 import os
 import shutil
 import sys
@@ -1010,35 +1011,11 @@ class PathUtilitiesTest(unittest.TestCase):
         self._make_edk2_package_helper(folder_pp2_abs, pp2_name)
 
         # Nested packages should raise an exception by default
-        self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs])
-        self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
+        with self.assertLogs(logger="Edk2Path", level=logging.DEBUG) as logs:
+            Edk2Path(folder_ws_abs, [folder_pp1_abs])
+            Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
+            self.assertEqual(len(logs.records), 2)
 
-        # Nested packages should no longer raise an exception
-        # Note: These tests can be removed when support for
-        #       PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES is removed.
-        os.environ["PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES"] = "true"
-        Edk2Path(folder_ws_abs, [folder_pp1_abs])
-        Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
-
-        # Remove the environment variable now that the test above is complete
-        os.environ.pop("PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES")
-
-        # Nested packages should no longer raise an exception if explicitly
-        # marked as known-bad.
-        os.environ["PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES"] = "SomeOtherPkg,PPTestPkg1"
-        Edk2Path(folder_ws_abs, [folder_pp1_abs])
-        Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
-
-        os.environ["PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES"] = "SomeOtherPkg,PPTestPkg2"
-        Edk2Path(folder_ws_abs, [folder_pp1_abs])
-        Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
-
-        os.environ["PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES"] = "SomeOtherPkg,SomeOtherPkg2"
-        self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs])
-        self.assertRaises(Exception, Edk2Path, folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
-
-        # Remove the environment variable now that the test above is complete
-        os.environ.pop("PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES")
 
     def test_get_relative_path_when_folder_is_next_to_package(self):
         '''Test usage of GetEdk2RelativePathFromAbsolutePath when a folder containing a package is in the same
