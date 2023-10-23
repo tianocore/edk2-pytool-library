@@ -89,8 +89,10 @@ class GitIgnoreParserTest(unittest.TestCase):
 
             # Example line in a .gitignore
             # .DS_Store
-            self.assertTrue(rule_tester(root / "file.DS_Store"))
-            self.assertTrue(rule_tester(root / "T" / "file.DS_Store"))
+            self.assertTrue(rule_tester(root / ".DS_Store"))
+            self.assertTrue(rule_tester(root / "T" / ".DS_Store"))
+            self.assertFalse(rule_tester(root / "file.DS_Store"))
+            self.assertFalse(rule_tester(root / "T" / "file.DS_Store"))
 
             # Test a rule which specifies an exception for a previous rule is
             # correctly filtered.
@@ -142,7 +144,6 @@ class GitIgnoreParserTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             self.assertIsNone(gitignore_parser.rule_from_pattern("# Comment", root))
             self.assertIsNone(gitignore_parser.rule_from_pattern(" ", root))
-            self.assertIsNone(gitignore_parser.rule_from_pattern("***", root))
 
 def test_ignore_no_extensions(tmp_path):
         """Tests that files without an extension can be ignored."""
@@ -204,3 +205,116 @@ def test_trailing_whitespace(tmp_path):
     assert rule_tester(root / "file4  ") is False
     assert rule_tester(root / "file4 ") is False
     assert rule_tester(root / "file4") is False
+
+def test_slash_in_range_does_not_match_dirs(tmp_path):
+    """Tests that a slash in a range does not match directories."""
+    root = tmp_path.resolve()
+    gitignore_path = root / ".gitignore"
+
+    with open(gitignore_path, 'w') as f:
+        f.write('abc[X-Z/]def\n')
+
+    rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path, base_dir = '/home/tmp')
+
+    assert rule_tester('/home/tmp/abcdef') is False
+    assert rule_tester('/home/tmp/abcXdef') is True
+    assert rule_tester('/home/tmp/abcYdef') is True
+    assert rule_tester('/home/tmp/abcZdef') is True
+    assert rule_tester('/home/tmp/abc/def') is False
+    assert rule_tester('/home/tmp/abcXYZdef') is False
+
+def test_incomplete_filename(tmp_path):
+    root = tmp_path.resolve()
+    gitignore_path = root / ".gitignore"
+
+    with open(gitignore_path, 'w') as f:
+        f.write('o.py\n')
+
+    rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path, base_dir = '/home/tmp')
+
+    assert rule_tester('/home/tmp/o.py') is True
+    assert rule_tester('/home/tmp/foo.py') is False
+    assert rule_tester('/home/tmp/o.pyc') is False
+    assert rule_tester('/home/tmp/dir/o.py') is True
+    assert rule_tester('/home/tmp/dir/foo.py') is False
+    assert rule_tester('/home/tmp/dir/o.pyc') is False
+
+def test_double_asterisks(tmp_path):
+    root = tmp_path.resolve()
+    gitignore_path = root / ".gitignore"
+
+    with open(gitignore_path, 'w') as f:
+        f.write('foo/**/Bar\n')
+
+    rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path, base_dir='/home/tmp')
+    assert rule_tester('/home/tmp/foo/hello/Bar') is True
+    assert rule_tester('/home/tmp/foo/world/Bar') is True
+    assert rule_tester('/home/tmp/foo/Bar') is True
+    assert rule_tester('/home/tmp/foo/BarBar') is False
+
+def test_double_asterisk_without_slashes_handled_like_single_asterisk(tmp_path):
+    root = tmp_path.resolve()
+    gitignore_path = root / ".gitignore"
+
+    with open(gitignore_path, 'w') as f:
+        f.write('a/b**c/d\n')
+
+    rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path, base_dir='/home/tmp')
+    assert rule_tester('/home/tmp//a/bc/d') is True
+    assert rule_tester('/home/tmp//a/bXc/d') is True
+    assert rule_tester('/home/tmp//a/bbc/d') is True
+    assert rule_tester('/home/tmp//a/bcc/d') is True
+    assert rule_tester('/home/tmp//a/bcd') is False
+    assert rule_tester('/home/tmp//a/b/c/d') is False
+    assert rule_tester('/home/tmp//a/bb/cc/d') is False
+    assert rule_tester('/home/tmp//a/bb/XX/cc/d') is False
+
+def test_more_asterisks_handled_like_single_asterisk(tmp_path):
+    root = tmp_path.resolve()
+    gitignore_path = root / ".gitignore"
+
+    with open(gitignore_path, 'w') as f:
+        f.write('***a/b\n')
+
+    rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path, base_dir='/home/tmp')
+    assert rule_tester('/home/tmp//XYZa/b') is True
+    assert rule_tester('/home/tmp//foo/a/b') is False
+
+    gitignore_path = root / ".gitignore2"
+
+    with open(gitignore_path, 'w') as f:
+        f.write('a/b***\n')
+
+    rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path, base_dir='/home/tmp')
+
+    assert rule_tester('/home/tmp//a/bXYZ') is True
+    assert rule_tester('/home/tmp//a/b/foo') is False
+
+def test_symlink_to_another_directory():
+    """Test the behavior of a symlink to another directory.
+
+    The issue https://github.com/mherrmann/gitignore_parser/issues/29 describes how
+    a symlink to another directory caused an exception to be raised during matching.
+    This test ensures that the issue is now fixed.
+    """
+    with tempfile.TemporaryDirectory() as project_dir, tempfile.TemporaryDirectory() as another_dir:
+        gitignore_path = Path(project_dir, ".gitignore")
+
+        with open(gitignore_path, 'w') as f:
+            f.write('link\n')
+
+        rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path, base_dir=project_dir)
+
+        # Create a symlink to another directory.
+        link = Path(project_dir, 'link')
+        target = Path(another_dir, 'target')
+        try:
+            link.symlink_to(target)
+        except OSError: # Missing permisisons to do a symlink
+            return
+
+        # Check the intended behavior according to
+        # https://git-scm.com/docs/gitignore#_notes:
+        # Symbolic links are not followed and are matched as if they were regular
+        # files.
+        assert rule_tester(link) is True

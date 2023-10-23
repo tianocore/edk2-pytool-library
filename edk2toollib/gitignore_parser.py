@@ -7,10 +7,11 @@ import os
 import re
 from os.path import abspath, dirname
 from pathlib import Path
+from typing import Union
 
 """Original file is from
 https://github.com/mherrmann/gitignore_parser/blob/master/gitignore_parser.py
-sha hash: 133bd62562622be096f495fbca7b37a1faac3ab7
+sha hash: 1b51ef1f058efc8bcdcb063bf7b16d1394f03fc6
 
 Original License:
 
@@ -96,22 +97,16 @@ def rule_from_pattern(pattern, base_path=None, source=None):
     # Discard comments and seperators
     if pattern.strip() == '' or pattern[0] == '#':
         return
-    # Discard anything with more than two consecutive asterisks
-    if pattern.find('***') > -1:
-        return
     # Strip leading bang before examining double asterisks
     if pattern[0] == '!':
         negation = True
         pattern = pattern[1:]
     else:
         negation = False
-    # Discard anything with invalid double-asterisks -- they can appear
-    # at the start or the end, or be surrounded by slashes
-    for m in re.finditer(r'\*\*', pattern):
-        start_index = m.start()
-        if (start_index != 0 and start_index != len(pattern) - 2
-            and (pattern[start_index - 1] != '/' or pattern[start_index + 2] != '/')): # noqa
-            return
+    # Multi-asterisks not surrounded by slashes (or at the start/end) should
+    # be treated like single-asterisks.
+    pattern = re.sub(r'([^/])\*{2,}', r'\1*', pattern)
+    pattern = re.sub(r'\*{2,}([^/])', r'*\1', pattern)
 
     # Special-casing '/', which doesn't match any files or directories
     if pattern.rstrip() == '/':
@@ -154,12 +149,10 @@ def rule_from_pattern(pattern, base_path=None, source=None):
         negation=negation,
         directory_only=directory_only,
         anchored=anchored,
-        base_path=Path(base_path) if base_path else None,
+        base_path=_normalize_path(base_path) if base_path else None,
         source=source
     )
 
-
-whitespace_re = re.compile(r'(\\ )+$')
 
 IGNORE_RULE_FIELDS = [
     'pattern', 'regex',  # Basic values
@@ -183,9 +176,9 @@ class IgnoreRule(collections.namedtuple('IgnoreRule_', IGNORE_RULE_FIELDS)):
         """Returns True or False if the path matches the rule."""
         matched = False
         if self.base_path:
-            rel_path = str(Path(abs_path).resolve().relative_to(self.base_path))
+            rel_path = str(_normalize_path(abs_path).relative_to(self.base_path))
         else:
-            rel_path = str(Path(abs_path))
+            rel_path = str(_normalize_path(abs_path))
         # Path() strips the trailing slash, so we need to preserve it
         # in case of directory-only negation
         if self.negation and isinstance(abs_path, str) and abs_path[-1] == '/':
@@ -222,10 +215,11 @@ def fnmatch_pathname_to_regex(
             try:
                 if pattern[i] == '*':
                     i += 1
-                    res.append('.*')
-                    if pattern[i] == '/':
+                    if i < n and pattern[i] == '/':
                         i += 1
-                        res.append(''.join([seps_group, '?']))
+                        res.append(''.join(['(.*', seps_group, ')?']))
+                    else:
+                        res.append('.*')
                 else:
                     res.append(''.join([nonsep, '*']))
             except IndexError:
@@ -245,7 +239,7 @@ def fnmatch_pathname_to_regex(
             if j >= n:
                 res.append('\\[')
             else:
-                stuff = pattern[i:j].replace('\\', '\\\\')
+                stuff = pattern[i:j].replace('\\', '\\\\').replace('/', '')
                 i = j + 1
                 if stuff[0] == '!':
                     stuff = ''.join(['^', stuff[1:]])
@@ -256,7 +250,8 @@ def fnmatch_pathname_to_regex(
             res.append(re.escape(c))
     if anchored:
         res.insert(0, '^')
-    res.insert(0, '(?ms)')
+    else:
+        res.insert(0, f"(^|{seps_group})")
     if not directory_only:
         res.append('$')
     elif directory_only and negation:
@@ -264,3 +259,11 @@ def fnmatch_pathname_to_regex(
     else:
         res.append('($|\\/)')
     return ''.join(res)
+
+def _normalize_path(path: Union[str, Path]) -> Path:
+    """Normalize a path without resolving symlinks.
+    This is equivalent to `Path.resolve()` except that it does not resolve symlinks.
+    Note that this simplifies paths by removing double slashes, `..`, `.` etc. like
+    `Path.resolve()` does.
+    """
+    return Path(abspath(path))
