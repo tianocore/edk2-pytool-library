@@ -310,7 +310,7 @@ def test_symlink_to_another_directory():
         target = Path(another_dir, 'target')
         try:
             link.symlink_to(target)
-        except OSError: # Missing permisisons to do a symlink
+        except OSError: # Missing permissions to do a symlink
             return
 
         # Check the intended behavior according to

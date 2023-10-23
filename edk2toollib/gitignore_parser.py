@@ -262,6 +262,7 @@ def fnmatch_pathname_to_regex(
 
 def _normalize_path(path: Union[str, Path]) -> Path:
     """Normalize a path without resolving symlinks.
+
     This is equivalent to `Path.resolve()` except that it does not resolve symlinks.
     Note that this simplifies paths by removing double slashes, `..`, `.` etc. like
     `Path.resolve()` does.
