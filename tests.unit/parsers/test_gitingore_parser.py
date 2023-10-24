@@ -296,7 +296,9 @@ def test_symlink_to_another_directory():
     This test ensures that the issue is now fixed.
     """
     with tempfile.TemporaryDirectory() as project_dir, tempfile.TemporaryDirectory() as another_dir:
-        gitignore_path = Path(project_dir, ".gitignore")
+        project_dir = Path(project_dir).resolve()
+        another_dir = Path(another_dir).resolve()
+        gitignore_path = project_dir / ".gitignore"
 
         with open(gitignore_path, 'w') as f:
             f.write('link\n')
@@ -304,8 +306,8 @@ def test_symlink_to_another_directory():
         rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path, base_dir=project_dir)
 
         # Create a symlink to another directory.
-        link = Path(project_dir, 'link')
-        target = Path(another_dir, 'target')
+        link = project_dir / 'link'
+        target = another_dir / 'target'
         try:
             link.symlink_to(target)
         except OSError: # Missing permissions to do a symlink

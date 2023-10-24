@@ -5,6 +5,7 @@
 import collections
 import os
 import re
+import sys
 from os.path import abspath, dirname
 from pathlib import Path
 from typing import Union
@@ -182,7 +183,8 @@ class IgnoreRule(collections.namedtuple('IgnoreRule_', IGNORE_RULE_FIELDS)):
         else:
             rel_path = str(_normalize_path(abs_path))
 
-        rel_path += " " * _count_trailing_whitespace(abs_path)
+        if sys.platform.startswith('win'):
+            rel_path += " " * _count_trailing_whitespace(abs_path)
         # Path() strips the trailing slash, so we need to preserve it
         # in case of directory-only negation
         if self.negation and isinstance(abs_path, str) and abs_path[-1] == '/':
@@ -279,4 +281,5 @@ def _count_trailing_whitespace(text: str):
         if char.isspace():
             count += 1
         else:
-            return count
+            break
+    return count
