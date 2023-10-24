@@ -142,6 +142,7 @@ class GitIgnoreParserTest(unittest.TestCase):
 
         # Test ignoring comments, line separators, and incorrect astrick count
         with tempfile.TemporaryDirectory() as root:
+            root = Path(root).resolve()
             self.assertIsNone(gitignore_parser.rule_from_pattern("# Comment", root))
             self.assertIsNone(gitignore_parser.rule_from_pattern(" ", root))
 
@@ -176,35 +177,32 @@ def test_pound_in_filename(tmp_path):
     assert rule_tester(root / "file.txt") is False
     assert rule_tester(root / "#file.txt") is True
 
-def test_trailing_whitespace(tmp_path):
-    """Tests that trailing whitespace is properly ignored.
-
-    Taken somewhat from "Test_trailingspaces" test from upstream
-    """
+def test_test_trailingspace(tmp_path):
     root = tmp_path.resolve()
     gitignore_path = root / ".gitignore"
 
     with open(gitignore_path, 'w') as f:
-        f.write('file1 \n')
-        f.write('file2\\  \n')
-        f.write('file3 \\  \n')
-        f.write('file4\\ \\ \\ ')
+        f.write('ignoretrailingspace \n')
+        f.write('notignoredspace\\ \n')
+        f.write('partiallyignoredspace\\  \n')
+        f.write('partiallyignoredspace2 \\  \n')
+        f.write('notignoredmultiplespace\\ \\ \\ ')
 
-    rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path)
+    rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path, base_dir='/home/tmp')
 
-    assert rule_tester(root / "file1") is True
-
-    assert rule_tester(root / "file2 ") is True
-    assert rule_tester(root / "file2") is False
-
-    assert rule_tester(root / "file3  ") is True
-    assert rule_tester(root / "file3 ") is False
-    assert rule_tester(root / "file3") is False
-
-    assert rule_tester(root / "file4   ") is True
-    assert rule_tester(root / "file4  ") is False
-    assert rule_tester(root / "file4 ") is False
-    assert rule_tester(root / "file4") is False
+    assert rule_tester('/home/tmp/ignoretrailingspace') is True
+    assert rule_tester('/home/tmp/ignoretrailingspace ') is False
+    assert rule_tester('/home/tmp/partiallyignoredspace ') is True
+    assert rule_tester('/home/tmp/partiallyignoredspace  ') is False
+    assert rule_tester('/home/tmp/partiallyignoredspace') is False
+    assert rule_tester('/home/tmp/partiallyignoredspace2  ') is True
+    assert rule_tester('/home/tmp/partiallyignoredspace2   ') is False
+    assert rule_tester('/home/tmp/partiallyignoredspace2 ') is False
+    assert rule_tester('/home/tmp/partiallyignoredspace2') is False
+    assert rule_tester('/home/tmp/notignoredspace ') is True
+    assert rule_tester('/home/tmp/notignoredspace') is False
+    assert rule_tester('/home/tmp/notignoredmultiplespace   ') is True
+    assert rule_tester('/home/tmp/notignoredmultiplespace') is False
 
 def test_slash_in_range_does_not_match_dirs(tmp_path):
     """Tests that a slash in a range does not match directories."""

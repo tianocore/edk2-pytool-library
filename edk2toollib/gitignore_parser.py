@@ -46,14 +46,10 @@ def handle_negation(file_path, rules):
     Otherwise `matched` cannot be overwritten with an exception.
     Used for ensuring rules with ! will override a previous true result back to false.
     """
-    matched = False
-    for rule in rules:
+    for rule in reversed(rules):
         if rule.match(file_path):
-            if rule.negation:
-                matched = False
-            else:
-                matched = True
-    return matched
+            return not rule.negation
+    return False
 
 
 def parse_gitignore_file(full_path, base_dir=None):
@@ -72,11 +68,16 @@ def parse_gitignore_lines(lines: list, full_path: str, base_dir: str):
     for line in lines:
         counter += 1
         line = line.rstrip('\n')
-        rule = rule_from_pattern(line, Path(base_dir).resolve(),
+        rule = rule_from_pattern(line, base_path=Path(base_dir).resolve(),
                                  source=(full_path, counter))
         if rule:
             rules.append(rule)
-    return lambda file_path: handle_negation(file_path, rules)
+    if not any(r.negation for r in rules):
+        return lambda file_path: any(r.match(file_path) for r in rules)
+    else:
+        # We have negation rules. We can't use a simple "any" to evaluate them.
+        # Later rules override earlier rules.
+        return lambda file_path: handle_negation(file_path, rules)
 
 
 def rule_from_pattern(pattern, base_path=None, source=None):
@@ -94,7 +95,7 @@ def rule_from_pattern(pattern, base_path=None, source=None):
     # Store the exact pattern for our repr and string functions
     orig_pattern = pattern
     # Early returns follow
-    # Discard comments and seperators
+    # Discard comments and separators
     if pattern.strip() == '' or pattern[0] == '#':
         return
     # Strip leading bang before examining double asterisks
@@ -125,7 +126,8 @@ def rule_from_pattern(pattern, base_path=None, source=None):
         pattern = pattern[1:]
     if pattern[-1] == '/':
         pattern = pattern[:-1]
-    # patterns with leading hashes are escaped with a backslash in front, unescape it
+    # patterns with leading hashes or exclamation marks are escaped with a
+    # backslash in front, unescape it
     if pattern[0] == '\\' and pattern[1] in ('#', '!'):
         pattern = pattern[1:]
     # trailing spaces are ignored unless they are escaped with a backslash
@@ -149,7 +151,7 @@ def rule_from_pattern(pattern, base_path=None, source=None):
         negation=negation,
         directory_only=directory_only,
         anchored=anchored,
-        base_path=Path(base_path) if base_path else None,
+        base_path=_normalize_path(base_path) if base_path else None,
         source=source
     )
 
@@ -176,9 +178,9 @@ class IgnoreRule(collections.namedtuple('IgnoreRule_', IGNORE_RULE_FIELDS)):
         """Returns True or False if the path matches the rule."""
         matched = False
         if self.base_path:
-            rel_path = str(Path(abs_path).resolve().relative_to(self.base_path))
+            rel_path = str(_normalize_path(abs_path).relative_to(self.base_path))
         else:
-            rel_path = str(Path(abs_path))
+            rel_path = str(_normalize_path(abs_path))
         # Path() strips the trailing slash, so we need to preserve it
         # in case of directory-only negation
         if self.negation and isinstance(abs_path, str) and abs_path[-1] == '/':
