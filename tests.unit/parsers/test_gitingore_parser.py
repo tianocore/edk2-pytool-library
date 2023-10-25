@@ -13,6 +13,7 @@ import unittest
 from pathlib import Path
 
 import edk2toollib.gitignore_parser as gitignore_parser
+from pytest import skip
 
 
 def BuildGitIgnore(root):
@@ -311,7 +312,7 @@ def test_symlink_to_another_directory():
         try:
             link.symlink_to(target)
         except OSError: # Missing permissions to do a symlink
-            return
+            skip("Current user does not have permissions to perform symlink.")
 
         # Check the intended behavior according to
         # https://git-scm.com/docs/gitignore#_notes:
