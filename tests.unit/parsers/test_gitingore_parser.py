@@ -243,7 +243,7 @@ def test_incomplete_filename(tmp_path):
     assert rule_tester('/home/tmp/dir/o.pyc') is False
 
 def test_double_asterisks(tmp_path):
-    """Test that double astricks match any number of directories."""
+    """Test that double asterisk match any number of directories."""
     root = tmp_path.resolve()
     gitignore_path = root / ".gitignore"
 
@@ -275,7 +275,7 @@ def test_double_asterisk_without_slashes_handled_like_single_asterisk(tmp_path):
     assert rule_tester('/home/tmp//a/bb/XX/cc/d') is False
 
 def test_more_asterisks_handled_like_single_asterisk(tmp_path):
-    """Test that multiple astricks in a row are treated as a single astrick."""
+    """Test that multiple asterisk in a row are treated as a single astrick."""
     root = tmp_path.resolve()
     gitignore_path = root / ".gitignore"
 
