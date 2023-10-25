@@ -17,6 +17,7 @@ from pytest import skip
 
 
 def BuildGitIgnore(root):
+    """Builds a .gitignore file in the root directory."""
     path = os.path.join(root, ".gitignore")
     with open(path, "w") as gitignore:
         gitignore.write("/Build/\n")
@@ -43,11 +44,12 @@ def BuildGitIgnore(root):
 
 
 class GitIgnoreParserTest(unittest.TestCase):
-
+    """Tests for the gitignore parser."""
     def test_gitignoreparser_filter(self):
-        '''Ensure the gitignore parser filters files and folders correctly per
-        what is specified in the parsed .gitignore file.
-        '''
+        """Ensure the gitignore parser filters files and folders correctly.
+
+        This is per what is specified in the parsed .gitignore file.
+        """
         with tempfile.TemporaryDirectory() as root:
             root = Path(root).resolve()
             gitignore_path = BuildGitIgnore(root)
@@ -137,7 +139,7 @@ class GitIgnoreParserTest(unittest.TestCase):
             self.assertTrue(rule_tester(root / 'log0A.txt'))
 
     def test_rule_from_pattern(self):
-
+        """Tests general expected functionality of rule_from_pattern."""
         # Test bad basepath
         self.assertRaises(ValueError, gitignore_parser.rule_from_pattern, "", "Test")
 
@@ -165,7 +167,7 @@ def test_ignore_no_extensions(tmp_path):
         assert rule_tester(root / "bins" / "run_me") is True
 
 def test_pound_in_filename(tmp_path):
-    """Tests that a # symbol is escaped if prefixed with a \\."""
+    r"""Tests that a # symbol is escaped if prefixed with a \\."""
     root = tmp_path.resolve()
     gitignore_path = root / ".gitignore"
 
@@ -179,6 +181,7 @@ def test_pound_in_filename(tmp_path):
     assert rule_tester(root / "#file.txt") is True
 
 def test_test_trailingspace(tmp_path):
+    """Tests that trailing spaces are not ignored."""
     root = tmp_path.resolve()
     gitignore_path = root / ".gitignore"
 
@@ -223,6 +226,7 @@ def test_slash_in_range_does_not_match_dirs(tmp_path):
     assert rule_tester('/home/tmp/abcXYZdef') is False
 
 def test_incomplete_filename(tmp_path):
+    """Tests that an incomplete filename is not matched."""
     root = tmp_path.resolve()
     gitignore_path = root / ".gitignore"
 
@@ -239,6 +243,7 @@ def test_incomplete_filename(tmp_path):
     assert rule_tester('/home/tmp/dir/o.pyc') is False
 
 def test_double_asterisks(tmp_path):
+    """Test that double astricks match any number of directories."""
     root = tmp_path.resolve()
     gitignore_path = root / ".gitignore"
 
@@ -252,6 +257,7 @@ def test_double_asterisks(tmp_path):
     assert rule_tester('/home/tmp/foo/BarBar') is False
 
 def test_double_asterisk_without_slashes_handled_like_single_asterisk(tmp_path):
+    """Test that a double asterisk without slashes is treated like a single asterisk."""
     root = tmp_path.resolve()
     gitignore_path = root / ".gitignore"
 
@@ -269,6 +275,7 @@ def test_double_asterisk_without_slashes_handled_like_single_asterisk(tmp_path):
     assert rule_tester('/home/tmp//a/bb/XX/cc/d') is False
 
 def test_more_asterisks_handled_like_single_asterisk(tmp_path):
+    """Test that multiple astricks in a row are treated as a single astrick."""
     root = tmp_path.resolve()
     gitignore_path = root / ".gitignore"
 
