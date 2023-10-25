@@ -179,12 +179,14 @@ class IgnoreRule(collections.namedtuple('IgnoreRule_', IGNORE_RULE_FIELDS)):
         """Returns True or False if the path matches the rule."""
         matched = False
         if self.base_path:
-            rel_path = str(_normalize_path(abs_path).relative_to(self.base_path))
+            rel_path = _normalize_path(abs_path).relative_to(self.base_path).as_posix()
         else:
-            rel_path = str(_normalize_path(abs_path))
-
+            rel_path = _normalize_path(abs_path).as_posix()
+        # Path() strips the trailing following symbols on windows, so we need to
+        # preserve it: ' ', '.'
         if sys.platform.startswith('win'):
-            rel_path += " " * _count_trailing_whitespace(abs_path)
+            rel_path += ' ' * _count_trailing_symbol(' ', abs_path)
+            rel_path += '.' * _count_trailing_symbol('.', abs_path)
         # Path() strips the trailing slash, so we need to preserve it
         # in case of directory-only negation
         if self.negation and isinstance(abs_path, str) and abs_path[-1] == '/':
@@ -275,10 +277,12 @@ def _normalize_path(path: Union[str, Path]) -> Path:
     """
     return Path(abspath(path))
 
-def _count_trailing_whitespace(text: str):
+
+def _count_trailing_symbol(symbol: str, text: str) -> int:
+    """Count the number of trailing characters in a string."""
     count = 0
     for char in reversed(str(text)):
-        if char.isspace():
+        if char == symbol:
             count += 1
         else:
             break
