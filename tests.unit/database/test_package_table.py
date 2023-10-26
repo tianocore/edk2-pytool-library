@@ -35,9 +35,9 @@ def test_basic_parse(tmp_path):
     results = db.connection.cursor().execute("SELECT * FROM package").fetchall()
 
     to_pass = {
-        ("QemuPkg", "BASE"): False,
-        ("QemuSbsaPkg", "BASE"): False,
-        ("QemuQ35Pkg", "BASE"): False,
+        ("QemuPkg", "MU_TIANO_PLATFORMS"): False,
+        ("QemuSbsaPkg", "MU_TIANO_PLATFORMS"): False,
+        ("QemuQ35Pkg", "MU_TIANO_PLATFORMS"): False,
         ("SetupDataPkg", "Features/CONFIG"): False,
     }
     for result in results:
