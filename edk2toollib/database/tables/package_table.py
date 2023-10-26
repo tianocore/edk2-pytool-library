@@ -50,6 +50,10 @@ class PackageTable(TableGenerator):
         for file in Path(pathobj.WorkspacePath).rglob("*.dec"):
             pkg = pathobj.GetContainingPackage(str(file))
             containing_repo = "BASE"
+            if "origin" in repo.remotes:
+                containing_repo = repo.remotes.origin.url.split("/")[-1].split(".git")[0].upper()
+            elif len(repo.remotes) > 0:
+                containing_repo = repo.remotes[0].url.split("/")[-1].split(".git")[0].upper()
             if repo:
                 for submodule in repo.submodules:
                     if submodule.abspath in str(file):
