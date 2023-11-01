@@ -11,7 +11,6 @@ import io
 import os
 import sys
 import unittest
-import winreg
 
 import edk2toollib.utility_functions as utilities
 import pytest
@@ -283,6 +282,8 @@ class TestRemoveTree:
     pytest.mark.skipif(not sys.platform.startswith('win'), reason="Long Paths are only an issue on Windows")
     def test_long_path_remove_tree(self, tmp_path):
         """Tests RemoveTree's ability to remove a directory on a Windows System with LongPaths Disabled."""
+        import winreg
+
         sub_key = r"SYSTEM\CurrentControlSet\Control\FileSystem"
         value_name = "LongPathsEnabled"
 
