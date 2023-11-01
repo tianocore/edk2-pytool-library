@@ -391,15 +391,19 @@ def RemoveTree(dir_path: str, ignore_errors: bool = False) -> None:
         dir_path (str): Path to directory to remove.
         ignore_errors (bool): ignore errors during removal
     """
-    # TODO actually make this private with _
-    def remove_readonly(func, path, _):
+    # Allows for finding paths over the 260 character limit, even if the registry key (LongPathsEnabled)
+    # Is not enabled.
+    if sys.platform.startswith('win'):
+        dir_path = '\\\\?\\' + os.path.abspath(dir_path)
+
+    def _remove_readonly(func, path, _):
         """Private function to attempt to change permissions on file/folder being deleted."""
         os.chmod(path, stat.S_IWRITE)
         func(path)
 
     for _ in range(3):  # retry up to 3 times
         try:
-            shutil.rmtree(dir_path, ignore_errors=ignore_errors, onerror=remove_readonly)
+            shutil.rmtree(dir_path, ignore_errors=ignore_errors, onerror=_remove_readonly)
         except OSError as err:
             logging.warning(f"Failed to fully remove {dir_path}: {err}")
         else:
