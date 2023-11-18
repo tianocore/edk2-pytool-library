@@ -39,15 +39,15 @@ class TestBaseParser(unittest.TestCase):
         parser = HashFileParser("")
 
         lines_to_test = [
-            ("Test \t# this shouldn't show up", "Test"),
-            ("Test # test", "Test"),
-            ("MagicLib|Include/Magic \t# this shouldn't show up", "MagicLib|Include/Magic"),
-            ("MagicLib|Include/Magic # test", "MagicLib|Include/Magic"),
-            ("# this is a comment", ""),
-            ("gMyPkgTokenSpaceGuid.MyThing|'Value'|VOID*|0x10000000 # My Comment", "gMyPkgTokenSpaceGuid.MyThing|'Value'|VOID*|0x10000000"),
-            ('gMyPkgTokenSpaceGuid.MyThing|"Value"|VOID*|0x10000000 # My Comment', 'gMyPkgTokenSpaceGuid.MyThing|"Value"|VOID*|0x10000000'),
-            ('gMyPkgTokenSpaceGuid.MyThing|"#Value"|VOID*|0x10000000 # My Comment', 'gMyPkgTokenSpaceGuid.MyThing|"#Value"|VOID*|0x10000000'),
+            ("Test", "\t# this shouldn't show up"),
+            ("Test", " # test"),
+            ("MagicLib|Include/Magic", "\t# this shouldn't show up"),
+            ("MagicLib|Include/Magic", "# test"),
+            ("", "# this is a comment"),
+            ("gMyPkgTokenSpaceGuid.MyThing|'Value'|VOID*|0x10000000", " # My Comment"),
+            ('gMyPkgTokenSpaceGuid.MyThing|"Value"|VOID*|0x10000000', "# My Comment"),
+            ('gMyPkgTokenSpaceGuid.MyThing|"#Value"|VOID*|0x10000000', "# My Comment"),
         ]
 
         for line in lines_to_test:
-            self.assertEqual(parser.StripComment(line[0]), line[1])
+            self.assertEqual(parser.StripComment(line[0]+line[1]), line[0])
