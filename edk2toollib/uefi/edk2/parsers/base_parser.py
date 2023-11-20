@@ -811,9 +811,10 @@ class HashFileParser(BaseParser):
         result = []
         inside_quotes = False
         quote_char = None
+        escaped = False
 
         for char in line:
-            if char in ('"', "'"):
+            if char in ('"', "'") and not escaped:
                 if not inside_quotes:
                     inside_quotes = True
                     quote_char = char
@@ -822,6 +823,10 @@ class HashFileParser(BaseParser):
                     quote_char = None
             elif char == '#' and not inside_quotes:
                 break
+            elif char == '\\' and not escaped:
+                escaped = True
+            else:
+                escaped = False
 
             result.append(char)
 
