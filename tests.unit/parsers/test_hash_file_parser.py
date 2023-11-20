@@ -51,7 +51,7 @@ class TestBaseParser(unittest.TestCase):
             ("file_data = 'DEFINE TEST DEFINE = \"DEFINE_VALUE\"'", ' # "Test String" # Test String'),
             ('file_data = "DEFINE TEST DEFINE = \"DEFINE_VALUE\" \' more to check \'"', ' # "Test String" # Test String'),
             ('file_data = \'DEFINE\" # TEMP \" UPDATE \'', "# Found a quote"),
-            (r'test = \"', ' # Temp \"'),
+            (r'test = \"', r' # Temp \"'),
             ('file_data = "DEFINE TEST DEFINE = \"DEFINE\\"_VALUE\""', ' # "Test String" # Test String'),
             ('file_data = "DEFINE TEST DEFINE = \"DEFINE\\\'_VALUE\""', ' # "Test String" # Test String'),
         ]
