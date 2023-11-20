@@ -807,7 +807,27 @@ class HashFileParser(BaseParser):
         Args:
           line (str): line with a comment (#)
         """
-        return re.split(self.COMMENT_PATTERN, line)[0].strip()
+        if "#" not in line:
+            return line.strip()
+
+        result = []
+        inside_quotes = False
+        quote_char = None
+
+        for char in line:
+            if char in ('"', "'"):
+                if not inside_quotes:
+                    inside_quotes = True
+                    quote_char = char
+                elif char == quote_char:
+                    inside_quotes = False
+                    quote_char = None
+            elif char == '#' and not inside_quotes:
+                break
+
+            result.append(char)
+
+        return ''.join(result).rstrip()
 
     def ParseNewSection(self, line):
         """Parses a new section line.
