@@ -8,7 +8,6 @@
 """Code to support parsing EDK2 files."""
 import logging
 import os
-import re
 from warnings import warn
 
 from edk2toollib.uefi.edk2 import path_utilities
@@ -795,7 +794,6 @@ class BaseParser(object):
 
 class HashFileParser(BaseParser):
     """Base class for Edk2 build files that use # for comments."""
-    COMMENT_PATTERN = re.compile(r'(?<!["\'])#(?!["\'])')
 
     def __init__(self, log):
         """Inits an empty Parser for files that use # for comments.."""
@@ -807,7 +805,32 @@ class HashFileParser(BaseParser):
         Args:
           line (str): line with a comment (#)
         """
-        return re.split(self.COMMENT_PATTERN, line)[0].strip()
+        if "#" not in line:
+            return line.strip()
+
+        result = []
+        inside_quotes = False
+        quote_char = None
+        escaped = False
+
+        for char in line:
+            if char in ('"', "'") and not escaped:
+                if not inside_quotes:
+                    inside_quotes = True
+                    quote_char = char
+                elif char == quote_char:
+                    inside_quotes = False
+                    quote_char = None
+            elif char == '#' and not inside_quotes:
+                break
+            elif char == '\\' and not escaped:
+                escaped = True
+            else:
+                escaped = False
+
+            result.append(char)
+
+        return ''.join(result).rstrip()
 
     def ParseNewSection(self, line):
         """Parses a new section line.
