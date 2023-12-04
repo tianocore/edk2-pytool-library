@@ -48,6 +48,7 @@ class ModuleSummary(object):
         inPcdSection = False
         inLibSection = False
         inDepSection = False
+        inOverallDepex = False
         nextLineSection = False
         tokenspace = ""
 
@@ -81,6 +82,11 @@ class ModuleSummary(object):
                     elif (line == "Final Dependency Expression (DEPEX) Instructions"):
                         inDepSection = True
                         i += 1  # add additional line to skip the dashed line
+                    elif (line == "Dependency Expression (DEPEX) from INF"):
+                        # For some reason, "Final Dependency Expression (DEPEX) Instructions" does not exist
+                        # For all modules, so we need to check for this as well.
+                        inDepSection = True
+                        inOverallDepex = True
                     else:
                         logging.debug("Unsupported Section: " + line)
                         inPcdSection = False
@@ -141,8 +147,13 @@ class ModuleSummary(object):
                                 line += self._RawContent[i].rstrip()
 
                     elif (inDepSection):
-                        pass
-                        # not implemented right now
+                        if line == "Dependency Expression (DEPEX) from INF":
+                            inOverallDepex = True
+                        elif line.startswith("-----"):
+                            inOverallDepex = False
+
+                        elif inOverallDepex:
+                            self.Depex += " " + line
 
                     else:
                         # not in section...Must be header section
