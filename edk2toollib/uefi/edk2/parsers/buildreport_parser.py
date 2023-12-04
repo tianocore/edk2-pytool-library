@@ -154,7 +154,6 @@ class ModuleSummary(object):
 
                         elif inOverallDepex:
                             self.Depex += " " + line
-                        # not implemented right now
 
                     else:
                         # not in section...Must be header section
