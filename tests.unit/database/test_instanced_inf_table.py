@@ -321,3 +321,47 @@ def test_absolute_paths_in_dsc(empty_tree: Tree):
     results = db.connection.execute("SELECT path FROM instanced_inf").fetchall()
     assert results[0] == (Path(lib1).as_posix(),)
     assert results[1] == (Path(comp1).as_posix(),)
+
+def test_closest_packagepath(empty_tree: Tree):
+    common_folder = empty_tree.ws / "Common"
+    common_folder.mkdir()
+    sub_folder = common_folder / "SubFolder"
+    sub_folder.mkdir()
+
+    (sub_folder / "Library").mkdir()
+    (sub_folder / "Drivers").mkdir()
+
+    empty_tree.create_library("TestLib", "TestCls")
+    empty_tree.create_component("TestDriver", "DXE_DRIVER", libraryclasses=["TestCls"])
+
+    # Move the files into our subfolder that has two levels of package paths
+    (empty_tree.library_folder / "TestLib.inf").rename(sub_folder / "Library" / "TestLib.inf")
+    (empty_tree.component_folder / "TestDriver.inf").rename(sub_folder / "Drivers" / "TestDriver.inf")
+
+    # Specify the file paths to be relative to the farther away package path
+    dsc = empty_tree.create_dsc(
+        libraryclasses = [
+            'TestCls|SubFolder/Library/TestLib.inf',
+        ],
+        components = [
+            'SubFolder/Drivers/TestDriver.inf',
+        ],
+    )
+
+    edk2path = Edk2Path(str(empty_tree.ws), ["Common", "Common/SubFolder"])
+    db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
+    db.register(InstancedInfTable())
+
+    env = {
+        "ACTIVE_PLATFORM": dsc,
+        "TARGET_ARCH": "X64",
+        "TARGET": "DEBUG",
+    }
+
+    db.parse(env)
+
+    rows = db.connection.execute("SELECT path FROM instanced_inf").fetchall()
+
+    # Ensure that we convert the path to be relative to the clostest package path.
+    for row in rows:
+        assert row[0].startswith("Library") or row[0].startswith("Drivers")

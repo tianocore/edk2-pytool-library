@@ -169,6 +169,11 @@ class InstancedInfTable(TableGenerator):
             if arch not in self.arch:
                 continue
 
+            # Developers can set an inf path to be relative to any package path. Convert it to be the closest
+            # package path relative path to the INF, which is done by `GetEdk2RelativePathFromAbsolutePath`
+            inf = self.pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(inf)
+            inf = self.pathobj.GetEdk2RelativePathFromAbsolutePath(inf)
+
             logging.debug(f"Parsing Component: [{arch}][{inf}]")
             infp = InfP().SetEdk2Path(self.pathobj)
             infp.ParseFile(inf)
@@ -346,5 +351,8 @@ class InstancedInfTable(TableGenerator):
         for library_instance in library_instance_list:
             infp = self.inf(library_instance)
             if module.lower() in [phase.lower() for phase in infp.SupportedPhases]:
+                # Ensure the returned path is relative to the closest package path
+                library_instance = self.pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(library_instance)
+                library_instance = self.pathobj.GetEdk2RelativePathFromAbsolutePath(library_instance)
                 return library_instance
         return None
