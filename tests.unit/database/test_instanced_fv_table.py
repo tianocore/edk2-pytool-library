@@ -6,9 +6,9 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Unittest for the InstancedFv table generator."""
+import logging
 from pathlib import Path
 
-import logging
 import pytest
 from common import Tree, empty_tree  # noqa: F401
 from edk2toollib.database import Edk2DB
@@ -43,7 +43,7 @@ def test_valid_fdf(empty_tree: Tree):  # noqa: F811
             f'INF  {str(empty_tree.ws / comp2)}', # Absolute
             f'INF  RuleOverride=RESET_VECTOR {comp3}', # RuleOverride
             f'INF  {comp4}', # Space in path
-            f'INF  ruleoverride = RESET_VECTOR {comp5}', # RuleOverride lowercase & spaces
+            f'INF  ruleoverride = RESET_VECTOR {comp5}', # RuleOverride lowercase & spaces'
         ]
     )
     env = {
@@ -66,7 +66,7 @@ def test_valid_fdf(empty_tree: Tree):  # noqa: F811
     ])
 
 def test_missing_dsc_and_fdf(empty_tree: Tree, caplog):
-    """Tests that the table generator is skipped if missing the necessary information"""
+    """Tests that the table generator is skipped if missing the necessary information."""
     with caplog.at_level(logging.DEBUG):
         edk2path = Edk2Path(str(empty_tree.ws), [])
         db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
@@ -86,3 +86,38 @@ def test_missing_dsc_and_fdf(empty_tree: Tree, caplog):
             if record.startswith("DSC or FDF not found"):
                 count += 1
         assert count == 2
+
+def test_non_closest_inf_path(empty_tree: Tree):
+    dsc = empty_tree.create_dsc()
+    fdf = empty_tree.create_fdf(
+        fv_testfv = [
+            "INF Common/Subfolder/Drivers/TestDriver1.inf",
+        ]
+    )
+
+    # Create the Common folder, which will be a package path
+    common_folder = empty_tree.ws / "Common"
+    common_folder.mkdir()
+
+    # Create a subfolder of common folder, which is also a package path
+    sub_folder = common_folder / "SubFolder"
+    sub_folder.mkdir()
+    edk2path = Edk2Path(str(empty_tree.ws), ["Common", "Common/SubFolder"])
+
+    # Make the INF we want to make sure we get the closest match of
+    (sub_folder / "Drivers").mkdir()
+    (sub_folder / "Drivers" / "TestDriver1.inf").touch()
+
+    db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
+    db.register(InstancedFvTable())
+    env = {
+        "ACTIVE_PLATFORM": dsc,
+        "FLASH_DEFINITION": fdf,
+        "TARGET_ARCH": "IA32 X64",
+        "TARGET": "DEBUG",
+    }
+    db.parse(env)
+
+    rows = db.connection.execute("SELECT key2 FROM junction where key1 == 'testfv'").fetchall()
+    assert len(rows) == 1
+    assert rows[0][0] == "Drivers/TestDriver1.inf"
