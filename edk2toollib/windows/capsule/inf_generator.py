@@ -61,6 +61,9 @@ CopyFiles = Firmware_CopyFiles
 {Rollback}
 {FirmwareCopyFilesSection}
 
+[Firmware_Install.NT.Services]
+AddService=,2
+
 [Firmware_Install.NT.Hw]
 AddReg = Firmware_AddReg
 

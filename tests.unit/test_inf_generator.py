@@ -6,10 +6,11 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-import unittest
-import tempfile
-import os
 import datetime
+import os
+import tempfile
+import unittest
+
 from edk2toollib.windows.capsule.inf_generator import InfGenerator, InfSection
 
 
@@ -161,6 +162,9 @@ CopyFiles = Firmware_CopyFiles
 
 [Firmware_CopyFiles]
 TestFirmwareRom.bin
+
+[Firmware_Install.NT.Services]
+AddService=,2
 
 [Firmware_Install.NT.Hw]
 AddReg = Firmware_AddReg
