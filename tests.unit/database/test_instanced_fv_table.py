@@ -92,7 +92,7 @@ def test_non_closest_inf_path(empty_tree: Tree):
     dsc = empty_tree.create_dsc()
     fdf = empty_tree.create_fdf(
         fv_testfv = [
-            "INF Common/Subfolder/Drivers/TestDriver1.inf",
+            "INF Common/SubFolder/Drivers/TestDriver1.inf",
         ]
     )
 
