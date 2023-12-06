@@ -74,8 +74,15 @@ class InstancedFvTable(TableGenerator):
             for inf in fdfp.FVs[fv]["Infs"]:
                 if inf.lower().startswith("ruleoverride"):
                     inf = InstancedFvTable.RULEOVERRIDE.findall(inf)[0]
-                if Path(inf).is_absolute():
-                    inf = str(Path(self.pathobj.GetEdk2RelativePathFromAbsolutePath(inf)))
+
+                # Convert to absolute, and back to relative to ensure we get the closest pp relative path
+                # i.e. if we have two package paths: ("MyPP", and "MyPP/Subfolder"), in the FDF, devs
+                # can specify INFs are either ("Subfolder/MyPkg/../MyPkg.inf" or "MyPkg/../MyPkg.inf")
+                # However in the database, we want the closest match, i.e. "MyPkg/../MyPkg.inf", even if
+                # they are providing ("Subfolder/MyPkg/../MyPkg.inf"). "GetEdk2RelativePathFromAbsolutePath"
+                # always returns the relative path from the closest package path.
+                inf = self.pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(inf)
+                inf = self.pathobj.GetEdk2RelativePathFromAbsolutePath(inf)
                 inf_list.append(Path(inf).as_posix())
 
             row = (self.env_id, fv, Path(self.fdf).name, self.fdf)
