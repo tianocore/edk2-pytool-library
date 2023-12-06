@@ -103,7 +103,7 @@ def test_non_closest_inf_path(empty_tree: Tree):
     # Create a subfolder of common folder, which is also a package path
     sub_folder = common_folder / "SubFolder"
     sub_folder.mkdir()
-    edk2path = Edk2Path(str(empty_tree.ws), ["Common", "Common/SubFolder"])
+    edk2path = Edk2Path(str(empty_tree.ws), ["Common", str(sub_folder)])
 
     # Make the INF we want to make sure we get the closest match of
     (sub_folder / "Drivers").mkdir()
