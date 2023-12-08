@@ -6,10 +6,17 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-import unittest
 import textwrap
-from edk2toollib.windows.capsule.inf_generator2 import InfHeader, InfStrings, InfSourceFiles, InfFirmware
-from edk2toollib.windows.capsule.inf_generator2 import InfFirmwareSections, InfFile
+import unittest
+
+from edk2toollib.windows.capsule.inf_generator2 import (
+    InfFile,
+    InfFirmware,
+    InfFirmwareSections,
+    InfHeader,
+    InfSourceFiles,
+    InfStrings,
+)
 
 
 class InfHeaderTest(unittest.TestCase):
@@ -85,6 +92,9 @@ class InfFirmwareTest(unittest.TestCase):
             [tag_CopyFiles]
             test.bin
 
+            [tag_Install.NT.Services]
+            AddService=,2
+
             [tag_Install.NT.Hw]
             AddReg = tag_AddReg
 
@@ -125,6 +135,9 @@ class InfFirmwareTest(unittest.TestCase):
 
             [tag_CopyFiles]
             test.bin
+
+            [tag_Install.NT.Services]
+            AddService=,2
 
             [tag_Install.NT.Hw]
             AddReg = tag_AddReg
@@ -168,6 +181,9 @@ class InfFirmwareTest(unittest.TestCase):
             [tag_CopyFiles]
             test.bin
             test2.bin
+
+            [tag_Install.NT.Services]
+            AddService=,2
 
             [tag_Install.NT.Hw]
             AddReg = tag_AddReg
@@ -267,6 +283,9 @@ class InfFirmwareSectionsTest(unittest.TestCase):
             [tag_CopyFiles]
             test.bin
 
+            [tag_Install.NT.Services]
+            AddService=,2
+
             [tag_Install.NT.Hw]
             AddReg = tag_AddReg
 
@@ -286,6 +305,7 @@ class InfFirmwareSectionsTest(unittest.TestCase):
         self.assertEqual("0x00010001", Strings.NonLocalizableStrings['REG_DWORD'])
 
     def test_two_sections(self):
+        self.maxDiff = None
         Strings = InfStrings()
         SourceFiles = InfSourceFiles("diskname", Strings)
 
@@ -322,6 +342,9 @@ class InfFirmwareSectionsTest(unittest.TestCase):
             [tag1_CopyFiles]
             test1.bin
 
+            [tag1_Install.NT.Services]
+            AddService=,2
+
             [tag1_Install.NT.Hw]
             AddReg = tag1_AddReg
 
@@ -335,6 +358,9 @@ class InfFirmwareSectionsTest(unittest.TestCase):
 
             [tag2_CopyFiles]
             test2.bin
+
+            [tag2_Install.NT.Services]
+            AddService=,2
 
             [tag2_Install.NT.Hw]
             AddReg = tag2_AddReg
@@ -492,6 +518,9 @@ class InfFileTest(unittest.TestCase):
             [tag1_CopyFiles]
             test1.bin
 
+            [tag1_Install.NT.Services]
+            AddService=,2
+
             [tag1_Install.NT.Hw]
             AddReg = tag1_AddReg
 
@@ -505,6 +534,9 @@ class InfFileTest(unittest.TestCase):
 
             [tag2_CopyFiles]
             test2.bin
+
+            [tag2_Install.NT.Services]
+            AddService=,2
 
             [tag2_Install.NT.Hw]
             AddReg = tag2_AddReg
@@ -590,6 +622,9 @@ class InfFileTest(unittest.TestCase):
             [tag1_CopyFiles]
             test1.bin
 
+            [tag1_Install.NT.Services]
+            AddService=,2
+
             [tag1_Install.NT.Hw]
             AddReg = tag1_AddReg
 
@@ -607,6 +642,9 @@ class InfFileTest(unittest.TestCase):
 
             [tag2_CopyFiles]
             test2.bin
+
+            [tag2_Install.NT.Services]
+            AddService=,2
 
             [tag2_Install.NT.Hw]
             AddReg = tag2_AddReg
@@ -695,6 +733,9 @@ class InfFileTest(unittest.TestCase):
             test1.bin
             integrity1.bin
 
+            [tag1_Install.NT.Services]
+            AddService=,2
+
             [tag1_Install.NT.Hw]
             AddReg = tag1_AddReg
 
@@ -714,6 +755,9 @@ class InfFileTest(unittest.TestCase):
             [tag2_CopyFiles]
             test2.bin
             integrity2.bin
+
+            [tag2_Install.NT.Services]
+            AddService=,2
 
             [tag2_Install.NT.Hw]
             AddReg = tag2_AddReg

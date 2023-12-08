@@ -231,6 +231,10 @@ class InfFirmware(object):
             """)
         outstr += IntegrityFile
         outstr += textwrap.dedent(f"""
+            [{self.Tag}_Install.NT.Services]
+            AddService=,2
+            """)
+        outstr += textwrap.dedent(f"""
             [{self.Tag}_Install.NT.Hw]
             AddReg = {self.Tag}_AddReg
 
