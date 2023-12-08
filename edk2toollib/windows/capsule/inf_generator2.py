@@ -229,8 +229,8 @@ class InfFirmware(object):
             [{self.Tag}_CopyFiles]
             {self.FirmwareFile}
             """)
-        outstr += IntegrityFile + "\n"
-        outstr += textwrap.dedent(f"""\
+        outstr += IntegrityFile
+        outstr += textwrap.dedent(f"""
             [{self.Tag}_Install.NT.Services]
             AddService=,2
             """)
