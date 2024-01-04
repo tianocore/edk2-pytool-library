@@ -9,69 +9,15 @@
 """A module to run the InstancedInf table generator against a dsc, adding instanced inf information to the database."""
 import logging
 import re
-import sqlite3
 from pathlib import Path
-from sqlite3 import Cursor
 from typing import Any
 
-from edk2toollib.database.tables.base_table import TableGenerator
+from edk2toollib.database import InstancedInf, Package, Repository, Session, Source
+from edk2toollib.database.tables import TableGenerator
 from edk2toollib.uefi.edk2.parsers.dsc_parser import DscParser as DscP
 from edk2toollib.uefi.edk2.parsers.inf_parser import InfParser as InfP
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
-CREATE_INSTANCED_INF_TABLE = '''
-CREATE TABLE IF NOT EXISTS instanced_inf (
-    env INTEGER,
-    path TEXT,
-    class TEXT,
-    name TEXT,
-    arch TEXT,
-    dsc TEXT,
-    component TEXT,
-    FOREIGN KEY(env) REFERENCES environment(env)
-);
-'''
-
-CREATE_INSTANCED_INF_TABLE_INDEX = '''
-CREATE INDEX IF NOT EXISTS instanced_inf_index ON instanced_inf (env);
-'''
-
-CREATE_INSTANCED_INF_TABLE_JUNCTION = '''
-CREATE TABLE IF NOT EXISTS instanced_inf_junction (
-    env INTEGER,
-    component TEXT,
-    instanced_inf1 TEXT,
-    instanced_inf2 TEXT,
-    FOREIGN KEY(env) REFERENCES environment(env)
-);
-'''
-
-CREATE_INSTANCED_INF_TABLE_JUNCTION_INDEX = '''
-CREATE INDEX IF NOT EXISTS instanced_inf_junction_index ON instanced_inf_junction (env);
-'''
-
-CREATE_INSTANCED_INF_SOURCE_TABLE_JUNCTION = '''
-CREATE TABLE IF NOT EXISTS instanced_inf_source_junction (env, component, instanced_inf, source);
-'''
-
-CREATE_INSTANCED_INF_SOURCE_TABLE_JUNCTION_INDEX = '''
-CREATE INDEX IF NOT EXISTS instanced_inf_source_junction_index ON instanced_inf_source_junction (env);
-'''
-
-INSERT_INSTANCED_INF_ROW = '''
-INSERT INTO instanced_inf (env, path, class, name, arch, dsc, component)
-VALUES (?, ?, ?, ?, ?, ?, ?);
-'''
-
-INSERT_INF_TABLE_JUNCTION_ROW = '''
-INSERT INTO instanced_inf_junction (env, component, instanced_inf1, instanced_inf2)
-VALUES (?, ?, ?, ?);
-'''
-
-INSERT_INF_TABLE_SOURCE_JUNCTION_ROW = '''
-INSERT INTO instanced_inf_source_junction (env, component, instanced_inf, source)
-VALUES (?, ?, ?, ?);
-'''
 
 class InstancedInfTable(TableGenerator):
     """A Table Generator that parses a single DSC file and generates a table."""
@@ -83,15 +29,6 @@ class InstancedInfTable(TableGenerator):
     def __init__(self, *args: Any, **kwargs: Any) -> 'InstancedInfTable':
         """Initialize the query with the specific settings."""
         self._parsed_infs = {}
-
-    def create_tables(self, db_cursor: Cursor) -> None:
-        """Create the tables necessary for this parser."""
-        db_cursor.execute(CREATE_INSTANCED_INF_TABLE)
-        db_cursor.execute(CREATE_INSTANCED_INF_TABLE_INDEX)
-        db_cursor.execute(CREATE_INSTANCED_INF_TABLE_JUNCTION)
-        db_cursor.execute(CREATE_INSTANCED_INF_TABLE_JUNCTION_INDEX)
-        db_cursor.execute(CREATE_INSTANCED_INF_SOURCE_TABLE_JUNCTION)
-        db_cursor.execute(CREATE_INSTANCED_INF_SOURCE_TABLE_JUNCTION_INDEX)
 
     def inf(self, inf: str) -> InfP:
         """Returns a parsed INF object.
@@ -106,7 +43,7 @@ class InstancedInfTable(TableGenerator):
             self._parsed_infs[inf] = infp
         return infp
 
-    def parse(self, db_cursor: Cursor, pathobj: Edk2Path, env_id: str, env: dict) -> None:
+    def parse(self, session: Session, pathobj: Edk2Path, env_id: str, env: dict) -> None:
         """Parse the workspace and update the database."""
         self.pathobj = pathobj
         self.ws = Path(self.pathobj.WorkspacePath)
@@ -131,32 +68,80 @@ class InstancedInfTable(TableGenerator):
 
         # Parse and insert
         inf_entries = self._build_inf_table(dscp)
-        return self._insert_db_rows(db_cursor, env_id, inf_entries)
+        return self._insert_db_rows(session, env_id, inf_entries)
 
-    def _insert_db_rows(self, db_cursor: sqlite3.Cursor, env_id: str, inf_entries: list) -> int:
+    def _insert_db_rows(self, session: Session, env_id: str, inf_entries: list) -> int:
         """Inserts data into the database.
 
         Inserts all inf's into the instanced_inf table and links source files and used libraries via the junction
         table.
         """
         # Insert all instanced INF rows
-        rows = [
-            (env_id, e["PATH"], e.get("LIBRARY_CLASS"), e["NAME"], e["ARCH"], e["DSC"], e["COMPONENT"])
-            for e in inf_entries
-        ]
-        db_cursor.executemany(INSERT_INSTANCED_INF_ROW, rows)
-
-        # Link instanced INF sources
         rows = []
+        all_sources = {source.path: source for source in session.query(Source).all()}
+        all_packages = {package.name: package for package in session.query(Package).all()}
+        all_repos = {
+            (repo.name, repo.path): repo for repo in session.query(Repository).filter(Repository.path is not None).all()
+        }
+        local_repo = session.query(Repository).filter_by(path = None).first()
         for e in inf_entries:
-            rows += [(env_id, e["COMPONENT"], e["PATH"], source) for source in e["SOURCES_USED"]]
-        db_cursor.executemany(INSERT_INF_TABLE_SOURCE_JUNCTION_ROW, rows)
+            # Could parse a Windows INF file, which is not a EDKII INF file
+            # and won't have a guid. GUIDS are required for INFs so we can
+            # assume if it does not have a guid, its the wrong type of INF
+            if e["GUID"] == "":
+                continue
+            sources = []
+            for src in e["SOURCES_USED"]:
+                if src in all_sources:
+                    sources.append(all_sources[src])
+                else:
+                    sources.append(Source(path=src))
+                    all_sources[src] = sources[-1]
 
-        # Link instanced INF libraries
-        rows = []
-        for e in inf_entries:
-            rows += [(env_id, e["COMPONENT"], e["PATH"], library) for library in e["LIBRARIES_USED"]]
-        db_cursor.executemany(INSERT_INF_TABLE_JUNCTION_ROW, rows)
+            package = None if e["PACKAGE"] is None else all_packages.get(e["PACKAGE"])
+            if package is not None:
+                repo = package.repository
+            else:
+                def filter_search(repo: Repository) -> bool:
+                    """Return the Repository that contains the INF file."""
+                    if repo.path is None:
+                        return False
+                    return Path(self.pathobj.WorkspacePath, repo.path).as_posix() in Path(e["FULL_PATH"]).as_posix()
+                repo = next(
+                    filter(filter_search, all_repos.values()),
+                    local_repo # Default
+                )
+            iinf = InstancedInf(
+                env = env_id,
+                path = e["PATH"],
+                cls = e.get("LIBRARY_CLASS"),
+                name = e["NAME"],
+                arch = e["ARCH"],
+                dsc = e["DSC"],
+                component = e["COMPONENT"],
+                sources = sources,
+                package = package,
+                repository = repo,
+            )
+            session.add(iinf)
+            rows.append(iinf)
+        session.add_all(rows)
+        session.commit()
+
+        all_libraries = {
+            (
+                library.path,
+                library.arch,
+                library.cls,
+                library.component
+            ): library for library in session.query(InstancedInf).filter_by(env=env_id).all()
+        }
+        # Link all instanced INF rows to their used libraries
+        for row, inf in zip(rows, inf_entries):
+            libraries = [all_libraries.get((path, row.arch, lib, row.component)) for lib, path in inf["LIBRARIES_USED"]]
+            row.libraries.extend([lib for lib in libraries if lib is not None])
+
+        session.commit()
 
     def _build_inf_table(self, dscp: DscP) -> list:
         """Create the instanced inf entries, including components and libraries.
@@ -258,24 +243,24 @@ class InstancedInfTable(TableGenerator):
         full_inf = self.pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(inf)
         pkg = self.pathobj.GetContainingPackage(full_inf)
         for source in infp.get_sources([arch]):
-            source = (Path(inf).parent / source).resolve().as_posix()
-            if pkg is not None:
-                source_list.append(source[source.find(pkg):])
-            else:
-                source_list.append(source)
+            source = (Path(full_inf).parent / source).resolve()
+            source = Path(self.pathobj.GetEdk2RelativePathFromAbsolutePath(str(source))).as_posix()
+            source_list.append(source)
 
         # Return Paths as posix paths, which is Edk2 standard.
         to_return.append({
             "DSC": Path(self.dsc).name,
             "PATH": Path(inf).as_posix(),
+            "FULL_PATH": full_inf,
             "GUID": infp.Dict.get("FILE_GUID", ""),
             "NAME": infp.Dict["BASE_NAME"],
             "LIBRARY_CLASS": library_class,
             "COMPONENT": Path(component).as_posix(),
             "MODULE_TYPE": infp.Dict["MODULE_TYPE"],
             "ARCH": arch,
+            "PACKAGE": pkg,
             "SOURCES_USED": source_list,
-            "LIBRARIES_USED": list(library_instance_list),
+            "LIBRARIES_USED": list(zip(library_class_list, library_instance_list)),
             "PROTOCOLS_USED": [],  # TODO
             "GUIDS_USED": [],  # TODO
             "PPIS_USED": [],  # TODO

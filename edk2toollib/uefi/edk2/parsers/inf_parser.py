@@ -276,8 +276,9 @@ class InfParser(HashFileParser):
             if current_section == "Sources":
                 for arch in arch_list:
                     arch = 'common' if arch == '' else arch.lower()
+                    src = line.split()[0].strip().rstrip('|')
                     if arch in self.ScopedSourceDict:
-                        self.ScopedSourceDict[arch].append(line.split()[0].strip())
+                        self.ScopedSourceDict[arch].append(src)
                     else:
-                        self.ScopedSourceDict[arch] = [line.split()[0].strip()]
+                        self.ScopedSourceDict[arch] = [src]
         self.Parsed = True

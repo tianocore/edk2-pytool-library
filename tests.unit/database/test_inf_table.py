@@ -7,10 +7,12 @@
 ##
 # ruff: noqa: F811
 """Tests for build an inf file table."""
+
+import shutil
 from pathlib import Path
 
 from common import Tree, empty_tree, write_file  # noqa: F401
-from edk2toollib.database import Edk2DB
+from edk2toollib.database import Edk2DB, Inf
 from edk2toollib.database.tables import InfTable
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
@@ -55,16 +57,17 @@ def test_valid_inf(empty_tree: Tree):
 
     db.parse({})
 
-    rows = list(db.connection.cursor().execute("SELECT path, library_class FROM inf"))
-    assert len(rows) == 2
+    with db.session() as session:
+        rows = session.query(Inf).all()
+        assert len(rows) == 2
+        for row in rows:
+            assert row.path in [Path(lib1).as_posix(), Path(lib2).as_posix()]
+            assert row.library_class == "TestCls"
 
-    for path, library_class in rows:
-        assert path in [Path(lib1).as_posix(), Path(lib2).as_posix()]
-        assert library_class == "TestCls"
+        for inf in [Path(lib1).as_posix(), Path(lib2).as_posix()]:
+            row = session.query(Inf).filter(Inf.path == inf).first()
+            assert len(row.sources) == 3
 
-    for inf in [Path(lib1).as_posix(), Path(lib2).as_posix()]:
-        rows = db.connection.execute("SELECT * FROM junction WHERE key1 = ? AND table2 = 'source'", (inf,)).fetchall()
-        assert len(rows) == 3
 
 def test_source_path_with_dot_dot(empty_tree: Tree):
     """Tests that paths with .. are correctly resolved."""
@@ -84,7 +87,45 @@ def test_source_path_with_dot_dot(empty_tree: Tree):
     file2.touch()
 
     db.parse({})
+    with db.session() as session:
+        for row in session.query(Inf).all():
+            for source in row.sources:
+                assert empty_tree.ws / source.path in [file1, file2]
 
-    # Ensure we resolve file1 as ws / Test1.c and file2 as ws / library/ test2.c
-    for path, in db.connection.execute("SELECT key2 FROM junction").fetchall():
-        assert Path(empty_tree.ws, path) in [file1, file2]
+def test_pkg_not_pkg_path_relative(empty_tree: Tree):
+    """Tests when a package is not itself relative to a package path.
+
+    !!! example
+        pp = ["Common"]
+        pkg1 "Common/Package1"
+        pkg2 "Common/Packages/Package2"
+
+        assert pkg1.relative == "Package1"
+        assert pkg2.relative == "Packges/Package2"
+    """
+    empty_tree.create_library(
+        "TestLib", "TestCls",
+        sources = [
+            "Test2.c"
+        ]
+    )
+    file2 = empty_tree.library_folder / "Test2.c"
+    file2.touch()
+
+    ws = empty_tree.ws
+    common = ws / "Common"
+
+    shutil.copytree(ws, common)
+    shutil.rmtree(ws / "TestPkg")
+
+    edk2path = Edk2Path(str(ws), [])
+    db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
+    db.register(InfTable(n_jobs = 1))
+    db.parse({})
+
+    with db.session() as session:
+        inf = session.query(Inf).one()
+        assert len(inf.sources) == 1
+        assert inf.sources[0].path == Path("Common", "TestPkg", "Library", "Test2.c").as_posix()
+        assert inf.path == Path("Common", "TestPkg", "Library", "TestLib.inf").as_posix()
+
