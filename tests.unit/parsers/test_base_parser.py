@@ -7,11 +7,12 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
+import os
+import tempfile
 import unittest
+
 from edk2toollib.uefi.edk2.parsers.base_parser import BaseParser
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
-import tempfile
-import os
 
 
 class TestBaseParser(unittest.TestCase):
@@ -460,14 +461,14 @@ class TestBaseParserConditionals(unittest.TestCase):
         parser.ResetParserState()
 
     def test_emulator_conditional_parens_order(self):
-        ''' Makes sure the parenthesis affect the order of expressions '''
+        '''Makes sure the parenthesis affect the order of expressions.'''
         parser = BaseParser("")
         self.assertFalse(parser.EvaluateConditional('!if TRUE OR FALSE AND FALSE'))
         self.assertTrue(parser.EvaluateConditional('!if TRUE OR (FALSE AND FALSE)'))
         parser.ResetParserState()
 
     def test_emulator_conditional_not_or(self):
-        ''' Makes sure we can use the not with other operators '''
+        '''Makes sure we can use the not with other operators.'''
         parser = BaseParser("")
         self.assertTrue(parser.EvaluateConditional('!if FALSE NOT OR FALSE'))
         self.assertFalse(parser.EvaluateConditional('!if TRUE NOT OR FALSE'))
@@ -475,7 +476,7 @@ class TestBaseParserConditionals(unittest.TestCase):
         self.assertFalse(parser.EvaluateConditional('!if TRUE NOT OR TRUE'))
 
     def test_emulator_conditional_not_it_all(self):
-        ''' Makes sure the parenthesis affect the order of expressions '''
+        '''Makes sure the parenthesis affect the order of expressions.'''
         parser = BaseParser("")
         self.assertTrue(parser.EvaluateConditional('!if NOT FALSE OR FALSE'))
         self.assertFalse(parser.EvaluateConditional('!if NOT TRUE OR FALSE'))
@@ -640,7 +641,7 @@ class TestBaseParserPathAndFile(unittest.TestCase):
         # create target file
         os.makedirs(target_filedir)
         parser.WriteLinesToFile(target_filepath)
-        parser.TargetFilePath = target_filepath
+        parser.PushTargetFile(target_filepath, 0)
         # check if we can find the root
         root_found = parser.FindPath(root_file)
         self.assertEqual(root_found, root_filepath)

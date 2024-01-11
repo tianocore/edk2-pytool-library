@@ -7,9 +7,10 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-import unittest
-import tempfile
 import os
+import tempfile
+import unittest
+
 from edk2toollib.uefi.edk2.parsers.dsc_parser import DscParser
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
@@ -30,7 +31,7 @@ class TestDscParserIncludes(unittest.TestCase):
         f.close()
 
     def test_dsc_include_single_file(self):
-        ''' This tests whether includes work properly '''
+        '''This tests whether includes work properly.'''
         workspace = tempfile.mkdtemp()
 
         file1_name = "file1.dsc"
@@ -53,7 +54,7 @@ class TestDscParserIncludes(unittest.TestCase):
         self.assertEqual(len(parser.GetAllDscPaths()), 2)  # make sure we have two dsc paths
 
     def test_dsc_include_missing_file(self):
-        ''' This tests whether includes work properly '''
+        '''This tests whether includes work properly.'''
         workspace = tempfile.mkdtemp()
 
         file1_name = "file1.dsc"
@@ -69,7 +70,7 @@ class TestDscParserIncludes(unittest.TestCase):
             parser.ParseFile(file1_path)
 
     def test_dsc_include_missing_file_no_fail_mode(self):
-        ''' This tests whether includes work properly if no fail mode is on'''
+        '''This tests whether includes work properly if no fail mode is on.'''
         workspace = tempfile.mkdtemp()
 
         file1_name = "file1.dsc"
@@ -85,7 +86,7 @@ class TestDscParserIncludes(unittest.TestCase):
         parser.ParseFile(file1_path)
 
     def test_dsc_parse_file_on_package_path(self):
-        ''' This tests whether includes work properly if no fail mode is on'''
+        '''This tests whether includes work properly if no fail mode is on.'''
         workspace = tempfile.mkdtemp()
         working_dir_name = "working"
         working2_dir_name = "working2"
@@ -113,7 +114,7 @@ class TestDscParserIncludes(unittest.TestCase):
         self.assertEqual(parser.LocalVars["INCLUDED"], "TRUE")  # make sure we got the defines
 
     def test_dsc_include_relative_path(self):
-        ''' This tests whether includes work properly with a relative path'''
+        '''This tests whether includes work properly with a relative path.'''
         workspace = tempfile.mkdtemp()
         outside_folder = os.path.join(workspace, "outside")
         inside_folder = os.path.join(outside_folder, "inside")
@@ -154,3 +155,45 @@ class TestDscParserIncludes(unittest.TestCase):
             self.assertEqual(parser.LocalVars["INCLUDED"], "TRUE")  # make sure we got the defines
         finally:
             os.chdir(cwd)
+
+def test_dsc_include_relative_paths2(tmp_path):
+    """This tests whether includes work properly with a relative path, when includes are not nested.
+
+    Directory setup
+    src
+    └─ Platforms
+       └─ PlatformPkg
+          ├─ PlatformPkg.dsc
+          └─ includes
+             ├─ PCDs1.dsc.inc
+             └─ PCDs2.dsc.inc
+
+    Base DSC
+    [PcdsFixedAtBuild]
+    gPlatformPkgTokenSpaceGuid.PcdSomething
+    !include includes/PCDs1.dsc.inc
+    !include includes/PCDs2.dsc.inc
+    """
+    pp = tmp_path / "Platforms"
+    pkg_dir = pp / "PlatformPkg"
+    dsc = pkg_dir / "PlatformPkg.dsc"
+    inc_dir = pkg_dir / "includes"
+
+    # Create Platforms, Platforms/PlatformPkg, Platforms/PlatformPkg/includes
+    inc_dir.mkdir(parents=True)
+
+    with open(inc_dir / "PCDs1.dsc.inc", "w") as f:
+        f.write("gPlatformPkgTokenSpaceGuid.PcdSomething1\n")
+
+    with open(inc_dir / "PCDs2.dsc.inc", "w") as f:
+        f.write("gPlatformPkgTokenSpaceGuid.PcdSomething2\n")
+
+    with open(dsc, "w") as f:
+        f.write("[PcdsFixedAtBuild]\n")
+        f.write("gPlatformPkgTokenSpaceGuid.PcdSomething\n")
+        f.write("!include includes/PCDs1.dsc.inc\n")
+        f.write("!include includes/PCDs2.dsc.inc\n")
+
+    parser = DscParser()
+    parser.SetEdk2Path(Edk2Path(str(tmp_path), [str(pp)]))
+    parser.ParseFile(dsc)

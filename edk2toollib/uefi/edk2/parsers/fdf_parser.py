@@ -50,13 +50,16 @@ class FdfParser(HashFileParser):
         sline = self.StripComment(line)
 
         if (sline is None or len(sline) < 1):
+            self.DecrementLinesParsed()
             return self.GetNextLine()
 
         sline = self.ReplaceVariables(sline)
         if self.ProcessConditional(sline):
             # was a conditional so skip
+            self.DecrementLinesParsed()
             return self.GetNextLine()
         if not self.InActiveCode():
+            self.DecrementLinesParsed()
             return self.GetNextLine()
 
         self._BracketCount += sline.count("{")
@@ -67,9 +70,11 @@ class FdfParser(HashFileParser):
     def InsertLinesFromFile(self, file_path: str):
         """Adds additional lines to the Lines Attribute from the provided file."""
         with open(file_path, 'r') as lines_file:
-            self.Lines += reversed(lines_file.readlines())
+            lines = lines_file.readlines()
+            self.Lines += reversed(lines)
             # Back off the line count to ignore the include line itself.
             self.CurrentLine -= 1
+            self.PushTargetFile(file_path, len(lines))
 
     def ParseFile(self, filepath):
         """Parses the provided FDF file."""
@@ -79,12 +84,13 @@ class FdfParser(HashFileParser):
         else:
             fp = filepath
         self.Path = fp
-        self.TargetFilePath = os.path.abspath(fp)
+        fp = os.path.abspath(fp)
         self.CurrentLine = 0
         self._f = open(fp, "r")
         self.Lines = self._f.readlines()
         self.Lines.reverse()
         self._f.close()
+        self.PushTargetFile(fp, len(self.Lines))
         self._BracketCount = 0
         InDefinesSection = False
         InFdSection = False
@@ -221,4 +227,5 @@ class FdfParser(HashFileParser):
             elif sline.strip().lower().startswith('[rule.'):
                 InRuleSection = True
 
+            self.DecrementLinesParsed()
         self.Parsed = True

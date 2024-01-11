@@ -42,6 +42,8 @@ class BaseParser(object):
         self.PPs = []
         self._Edk2PathUtil = None
         self.TargetFilePath = None  # the abs path of the target file
+        self.FilePathStack = []  # a stack containing a list of size 2: [filepath, line_count]
+        self.ParsedFiles = set()
         self.CurrentLine = -1
         self._MacroNotDefinedValue = "0"  # value to used for undefined macro
 
@@ -133,6 +135,27 @@ class BaseParser(object):
         self.InputVars = inputdict
         return self
 
+    def PushTargetFile(self, abs_path, line_count):
+        """Adds a target file to the stack."""
+        self.FilePathStack.append([abs_path, line_count])
+        self.ParsedFiles.add(abs_path)
+
+    def DecrementLinesParsed(self) -> bool:
+        """Decrements line count for the current target file by one.
+
+        Returns:
+            (bool): True if there are still lines to parse, False otherwise.
+        """
+        if not self.FilePathStack:
+            return False
+        line_count = self.FilePathStack[-1][1]
+        if line_count - 1 > 0:
+            self.FilePathStack[-1][1] -= 1
+            return True
+
+        self.FilePathStack.pop()
+        return False
+
     def FindPath(self, *p):
         """Given a path, it will find it relative to the root, the current target file, or the packages path.
 
@@ -159,8 +182,8 @@ class BaseParser(object):
             return os.path.abspath(Path)
 
         # If that fails, check a path relative to the target file.
-        if self.TargetFilePath is not None:
-            Path = os.path.abspath(os.path.join(os.path.dirname(self.TargetFilePath), *p))
+        if self.FilePathStack:
+            Path = os.path.abspath(os.path.join(os.path.dirname(self.FilePathStack[-1][0]), *p))
             if os.path.exists(Path):
                 return os.path.abspath(Path)
 
@@ -789,6 +812,7 @@ class BaseParser(object):
         self.ConditionalStack = []
         self.CurrentSection = ''
         self.CurrentFullSection = ''
+        self.FilePathStack = []
         self.Parsed = False
 
 
