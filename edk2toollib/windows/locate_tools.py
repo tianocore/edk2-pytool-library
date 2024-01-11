@@ -129,7 +129,7 @@ def GetVsWherePath(fail_on_not_found: bool = True):
 
 
 def FindWithVsWhere(products: str = "*", vs_version: str = None):
-    """Finds a product with VS Where. Returns the first match.
+    """Finds a product with VS Where. Returns the newest match.
 
     Args:
         products (:obj:`str`, optional): product defined by vswhere tool
@@ -147,7 +147,7 @@ def FindWithVsWhere(products: str = "*", vs_version: str = None):
     return results[0] if results else None
 
 def FindAllWithVsWhere(products: str = "*", vs_version: str = None):
-    """Finds a product with VS Where. Returns all matches.
+    """Finds a product with VS Where. Returns all matches, sorted by newest version.
 
     Args:
         products (:obj:`str`, optional): product defined by vswhere tool
@@ -161,7 +161,7 @@ def FindAllWithVsWhere(products: str = "*", vs_version: str = None):
         (ValueError): Unsupported VS version
         (RuntimeError): Error when running vswhere
     """
-    cmd = "-nologo -all -property installationPath"
+    cmd = "-nologo -all -sort -property installationPath"
     vs_where_path = GetVsWherePath()  # Will raise the Environment Error if not on windows.
     if vs_where_path is None:
         raise EnvironmentError("Unable to locate the VsWhere Executable.")
