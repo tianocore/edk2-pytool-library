@@ -11,6 +11,7 @@ import struct
 import sys
 import xml.etree.ElementTree as ET
 from enum import IntEnum
+from typing import Optional
 
 IVRSParserVersion = '1.00'
 # spell-checker:ignore IVMD, IOMMUEFR
@@ -18,7 +19,7 @@ IVRSParserVersion = '1.00'
 
 class IVRS_TABLE(object):
     """Object representing a IVRS Table."""
-    def __init__(self, data=None):
+    def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE':
         """Inits an empty object."""
         self.acpi_header = None
         self.SubStructs = list()
@@ -27,7 +28,7 @@ class IVRS_TABLE(object):
         if data is not None:
             self.Decode(data)
 
-    def Decode(self, data):
+    def Decode(self, data: bytes) -> None:
         """Loads data into the object from the header_byte_array."""
         self.acpi_header = IVRS_TABLE.ACPI_TABLE_HEADER(data[:IVRS_TABLE.ACPI_TABLE_HEADER.struct_format_size])
 
@@ -70,7 +71,7 @@ class IVRS_TABLE(object):
             raise Exception("IVRS length does not add up. Parsed len: %d, reported len: %d" %
                             (t_length, self.acpi_header.Length))
 
-    def Encode(self):
+    def Encode(self) -> bytes:
         r"""Serializes the object.
 
         Returns:
@@ -86,7 +87,7 @@ class IVRS_TABLE(object):
             bytes_str += ivxd.Encode()
         return bytes_str
 
-    def ToXmlElementTree(self):
+    def ToXmlElementTree(self) -> ET.Element:
         """Transforms the object into an xml item and returns it."""
         root = ET.Element('IVRSTable')
         root.append(self.acpi_header.ToXmlElementTree())
@@ -95,7 +96,7 @@ class IVRS_TABLE(object):
 
         return root
 
-    def DumpInfo(self):
+    def DumpInfo(self) -> None:
         """Prints internal information to the console."""
         self.acpi_header.DumpInfo()
 
@@ -103,11 +104,11 @@ class IVRS_TABLE(object):
             sub.DumpInfo()
 
     @staticmethod
-    def validateChecksum8(data):
+    def validateChecksum8(data: bytes) -> bool:
         """Validate the Checksum."""
         return sum(data) & 0xFF
 
-    def updateACPISum(self):
+    def updateACPISum(self) -> None:
         """Update the ACPI Checksum."""
         temp_sum = 0
         # Clear the checksum before calculating sum
@@ -116,13 +117,13 @@ class IVRS_TABLE(object):
         temp_sum = sum(temp_str)
         self.acpi_header.Checksum = (0x100 - (temp_sum & 0xFF)) & 0xFF
 
-    def addIVHDEntry(self, ivhd):
+    def addIVHDEntry(self, ivhd: 'IVRS_TABLE.IVHD_STRUCT') -> None:
         """Append entry to the list, update length and checksum."""
         self.acpi_header.Length += len(ivhd.Encode())
         self.SubStructs.append(ivhd)
         self.updateACPISum()
 
-    def addIVMDEntry(self, ivmd):
+    def addIVMDEntry(self, ivmd: 'IVRS_TABLE.IVMD_STRUCT') -> None:
         """Append entry to the list, update length and checksum."""
         self.acpi_header.Length += len(ivmd.Encode())
         # IVMD has to follow the corresponding IVHD, thus the list records all entries to maintain order
@@ -130,7 +131,7 @@ class IVRS_TABLE(object):
         self.IVMD_list.append(ivmd)
         self.updateACPISum()
 
-    def IVRSBitEnabled(self):
+    def IVRSBitEnabled(self) -> bool:
         """Returns the IVRSBit Value."""
         return bool(self.acpi_header.IVRSBit)
 
@@ -139,7 +140,7 @@ class IVRS_TABLE(object):
         struct_format = '=4sIBB6s8sI4sIIQ'
         struct_format_size = struct.calcsize(struct_format)
 
-        def __init__(self, data=None):
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.ACPI_TABLE_HEADER':
             """Inits an empty object."""
             self.Signature = None
             self.Length = 0
@@ -158,7 +159,7 @@ class IVRS_TABLE(object):
             if data is not None:
                 self.Decode(data)
 
-        def Decode(self, header_byte_array):
+        def Decode(self, header_byte_array: bytes) -> None:
             """Loads data into the object from the header_byte_array."""
             (self.Signature,
              self.Length,
@@ -176,7 +177,7 @@ class IVRS_TABLE(object):
             if (self.IVinfo & 0x1E) == 0:
                 sys.exit(-1)
 
-        def Encode(self):
+        def Encode(self) -> bytes:
             r"""Serializes the object.
 
             Returns:
@@ -195,7 +196,7 @@ class IVRS_TABLE(object):
                                self.IVinfo,
                                self.Reserved)
 
-        def DumpInfo(self):
+        def DumpInfo(self) -> None:
             """Prints internal information to the console."""
             print('  ACPI Table Header')
             print('------------------------------------------------------------------')
@@ -210,7 +211,7 @@ class IVRS_TABLE(object):
             print('Creator Revision   : 0x{CreatorRevision:08X}'.format(CreatorRevision=self.CreatorRevision))
             print('IVinfo             : 0x{IVinfo:08X}'.format(IVinfo=self.IVinfo))
 
-        def ToXmlElementTree(self):
+        def ToXmlElementTree(self) -> ET.Element:
             """Transforms the object into an xml item and returns it."""
             xml_repr = ET.Element('AcpiTableHeader')
             xml_repr.set('Signature', '%s' % self.Signature)
@@ -230,7 +231,7 @@ class IVRS_TABLE(object):
         struct_format = '=B'
         struct_format_size = struct.calcsize(struct_format)
 
-        def __init__(self, header_byte_array):
+        def __init__(self, header_byte_array: bytes) -> 'IVRS_TABLE.REMAPPING_STRUCT_HEADER':
             """Inits an empty object."""
             (self.Type, ) = struct.unpack(IVRS_TABLE.REMAPPING_STRUCT_HEADER.struct_format,
                                           header_byte_array[:IVRS_TABLE.REMAPPING_STRUCT_HEADER.struct_format_size])
@@ -249,7 +250,7 @@ class IVRS_TABLE(object):
             TYPE_11H = 0x11
             TYPE_40H = 0x40
 
-        def __init__(self, data=None):
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE':
             """Inits an empty object."""
             self.Type = None
             self.Flags = None
@@ -268,7 +269,7 @@ class IVRS_TABLE(object):
             if data is not None:
                 self.Decode(data)
 
-        def Decode(self, header_byte_array):
+        def Decode(self, header_byte_array: bytes) -> None:
             """Loads data into the object from the header_byte_array."""
             (self.Type,
              self.Flags,
@@ -308,7 +309,7 @@ class IVRS_TABLE(object):
                 raise Exception("IVHD length does not add up. Parsed len: %d, reported len: %d" %
                                 (self.Length, t_Length))
 
-        def Encode(self):
+        def Encode(self) -> bytes:
             r"""Serializes the object.
 
             Returns:
@@ -334,12 +335,12 @@ class IVRS_TABLE(object):
 
             return byte_str
 
-        def addDTEEntry(self, dte):
+        def addDTEEntry(self, dte: 'IVRS_TABLE.DEVICE_TABLE_ENTRY') -> None:
             """Append raw data, update length. checksum will be left untouched."""
             self.Length += len(dte.Encode())
             self.DeviceTableEntries.append(dte)
 
-        def ToXmlElementTree(self):
+        def ToXmlElementTree(self) -> ET.Element:
             """Transforms the object into an xml item and returns it."""
             xml_repr = ET.Element('IVHD')
             xml_repr.set('Type', '0x%X' % self.Type)
@@ -362,7 +363,7 @@ class IVRS_TABLE(object):
 
             return xml_repr
 
-        def DumpInfo(self):
+        def DumpInfo(self) -> None:
             """Prints internal information to the console."""
             print("\t  IVHD")
             print("\t----------------------------------------------------------------")
@@ -391,7 +392,7 @@ class IVRS_TABLE(object):
             TYPE_21H = 0x21  # Specified peripheral
             TYPE_22H = 0x22  # Peripheral range
 
-        def __init__(self, data=None):
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.IVMD_STRUCT':
             """Inits an empty object."""
             self.Type = None
             self.Flags = None
@@ -405,7 +406,7 @@ class IVRS_TABLE(object):
             if data is not None:
                 self.Decode(data)
 
-        def Decode(self, header_byte_array):
+        def Decode(self, header_byte_array: bytes) -> None:
             """Loads data into the object from the header_byte_array."""
             (self.Type,
              self.Flags,
@@ -419,7 +420,7 @@ class IVRS_TABLE(object):
             if (self.Length != len(header_byte_array)):
                 raise Exception("Bad IVMD entry size %d, expecting %d" % (self.Length, len(header_byte_array)))
 
-        def Encode(self):
+        def Encode(self) -> bytes:
             r"""Serializes the object.
 
             Returns:
@@ -435,7 +436,7 @@ class IVRS_TABLE(object):
                                self.IVMDStartAddress,
                                self.IVMDMemoryBlockLength)
 
-        def ToXmlElementTree(self):
+        def ToXmlElementTree(self) -> ET.Element:
             """Transforms the object into an xml item and returns it."""
             xml_repr = ET.Element('IVMD')
 
@@ -453,7 +454,7 @@ class IVRS_TABLE(object):
 
             return xml_repr
 
-        def DumpInfo(self):
+        def DumpInfo(self) -> None:
             """Prints internal information to the console."""
             print("\t  IVMD")
             print("\t----------------------------------------------------------------")
@@ -491,7 +492,7 @@ class IVRS_TABLE(object):
             ACPI = 240
 
         @staticmethod
-        def Factory(data):
+        def Factory(data: bytes) -> Optional['IVRS_TABLE.DEVICE_TABLE_ENTRY_SPECIAL']:
             """Factory method to generate a specific table entry type."""
             if (data is None):
                 raise Exception("Invalid File stream")
@@ -524,7 +525,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_RESERVED(object):
         """Object representing a Device Table Entry RESERVED."""
-        def __init__(self, data=None):
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -534,7 +535,7 @@ class IVRS_TABLE(object):
             if data is not None:
                 self.Decode(data)
 
-        def Decode(self, header_byte_array):
+        def Decode(self, header_byte_array: bytes) -> None:
             """Loads data into the object from the header_byte_array."""
             (self.Type,
              self.DeviceID,
@@ -547,7 +548,7 @@ class IVRS_TABLE(object):
             self.TypeString = "Reserved"
             self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
 
-        def Encode(self):
+        def Encode(self) -> bytes:
             r"""Serializes the object.
 
             Returns:
@@ -558,7 +559,7 @@ class IVRS_TABLE(object):
                                self.DeviceID,
                                self.DTESetting)
 
-        def ToXmlElementTree(self):
+        def ToXmlElementTree(self) -> ET.Element:
             """Transforms the object into an xml item and returns it."""
             xml_item = ET.Element(self.TypeString.replace(" ", ""))
             xml_item.set('DeviceID', '0x%X' % (self.DeviceID))
@@ -566,7 +567,7 @@ class IVRS_TABLE(object):
             xml_item.set('Type', '0x%X' % self.Type)
             return xml_item
 
-        def DumpInfo(self):
+        def DumpInfo(self) -> None:
             """Prints internal information to the console."""
             print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
             print('\t\t--------------------------------------------------')
@@ -576,7 +577,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_ALL(object):
         """Object representing a Device Table Entry ALL."""
-        def __init__(self, data=None):
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_ALL':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -586,7 +587,7 @@ class IVRS_TABLE(object):
             if data is not None:
                 self.Decode(data)
 
-        def Decode(self, header_byte_array):
+        def Decode(self, header_byte_array: bytes) -> None:
             """Loads data into the object from the header_byte_array."""
             (self.Type,
              self.DeviceID,
@@ -600,7 +601,7 @@ class IVRS_TABLE(object):
             self.TypeString = "All"
             self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
 
-        def Encode(self):
+        def Encode(self) -> bytes:
             r"""Serializes the object.
 
             Returns:
@@ -611,7 +612,7 @@ class IVRS_TABLE(object):
                                self.DeviceID,
                                self.DTESetting)
 
-        def ToXmlElementTree(self):
+        def ToXmlElementTree(self) -> ET.Element:
             """Transforms the object into an xml item and returns it."""
             xml_item = ET.Element(self.TypeString.replace(" ", ""))
             xml_item.set('Type', '0x%X' % self.Type)
@@ -619,7 +620,7 @@ class IVRS_TABLE(object):
             xml_item.set('DTESetting', '0x%X' % (self.DTESetting))
             return xml_item
 
-        def DumpInfo(self):
+        def DumpInfo(self) -> None:
             """Prints internal information to the console."""
             print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
             print('\t\t--------------------------------------------------')
@@ -629,7 +630,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_SELECT(object):
         """Object representing a Device Table Entry SELECT."""
-        def __init__(self, data=None):
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_SELECT':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -639,7 +640,7 @@ class IVRS_TABLE(object):
             if data is not None:
                 self.Decode(data)
 
-        def Decode(self, header_byte_array):
+        def Decode(self, header_byte_array: bytes) -> None:
             """Loads data into the object from the header_byte_array."""
             (self.Type,
              self.DeviceID,
@@ -653,7 +654,7 @@ class IVRS_TABLE(object):
             self.TypeString = "Reserved"
             self.Length = IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
 
-        def Encode(self):
+        def Encode(self) -> bytes:
             r"""Serializes the object.
 
             Returns:
@@ -664,7 +665,7 @@ class IVRS_TABLE(object):
                                self.DeviceID,
                                self.DTESetting)
 
-        def ToXmlElementTree(self):
+        def ToXmlElementTree(self) -> ET.Element:
             """Transforms the object into an xml item and returns it."""
             xml_item = ET.Element(self.TypeString.replace(" ", ""))
             xml_item.set('Type', '0x%X' % self.Type)
@@ -672,7 +673,7 @@ class IVRS_TABLE(object):
             xml_item.set('DTESetting', '0x%X' % (self.DTESetting))
             return xml_item
 
-        def DumpInfo(self):
+        def DumpInfo(self) -> None:
             """Prints internal information to the console."""
             print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
             print('\t\t--------------------------------------------------')
@@ -682,7 +683,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_RANGE_START(object):
         """Object representing a Device Table Entry RANGE_START."""
-        def __init__(self, data=None):
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_RANGE_START':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -692,7 +693,7 @@ class IVRS_TABLE(object):
             if data is not None:
                 self.Decode(data)
 
-        def Decode(self, header_byte_array):
+        def Decode(self, header_byte_array: bytes) -> None:
             """Loads data into the object from the header_byte_array."""
             (self.Type,
              self.DeviceID,
@@ -714,7 +715,7 @@ class IVRS_TABLE(object):
                 sys.exit(-1)
             self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
 
-        def Encode(self):
+        def Encode(self) -> bytes:
             r"""Serializes the object.
 
             Returns:
@@ -730,7 +731,7 @@ class IVRS_TABLE(object):
                                     0)
             return byte_str
 
-        def ToXmlElementTree(self):
+        def ToXmlElementTree(self) -> ET.Element:
             """Transforms the object into an xml item and returns it."""
             xml_item = ET.Element(self.TypeString.replace(" ", ""))
             xml_item.set('Type', '0x%X' % self.Type)
@@ -739,7 +740,7 @@ class IVRS_TABLE(object):
             xml_item.set('DTESetting', '0x%X' % (self.DTESetting))
             return xml_item
 
-        def DumpInfo(self):
+        def DumpInfo(self) -> None:
             """Prints internal information to the console."""
             print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
             print('\t\t--------------------------------------------------')
@@ -750,7 +751,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_ALIAS_SELECT(object):
         """Object representing a Device Table Entry ALIAS_SELECT."""
-        def __init__(self, data=None):
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_ALIAS_SELECT':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -761,7 +762,7 @@ class IVRS_TABLE(object):
             if data is not None:
                 self.Decode(data)
 
-        def Decode(self, header_byte_array):
+        def Decode(self, header_byte_array: bytes) -> None:
             """Loads data into the object from the header_byte_array."""
             (self.Type,
              self.DeviceID,
@@ -780,7 +781,7 @@ class IVRS_TABLE(object):
                 struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                               header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
 
-        def Encode(self):
+        def Encode(self) -> bytes:
             r"""Serializes the object.
 
             Returns:
@@ -793,7 +794,7 @@ class IVRS_TABLE(object):
             byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 0, self.SourceDeviceID, 0)
             return byte_str
 
-        def ToXmlElementTree(self):
+        def ToXmlElementTree(self) -> ET.Element:
             """Transforms the object into an xml item and returns it."""
             xml_item = ET.Element(self.TypeString.replace(" ", ""))
             xml_item.set('Type', '0x%X' % self.Type)
@@ -802,7 +803,7 @@ class IVRS_TABLE(object):
             xml_item.set('SourceDeviceID', '0x%X' % (self.SourceDeviceID))
             return xml_item
 
-        def DumpInfo(self):
+        def DumpInfo(self) -> None:
             """Prints internal information to the console."""
             print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
             print('\t\t--------------------------------------------------')
@@ -813,7 +814,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_ALIAS_RANGE_START(object):
         """Object representing a Device Table Range Start."""
-        def __init__(self, data=None):
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_ALIAS_RANGE_START':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -825,7 +826,7 @@ class IVRS_TABLE(object):
             if data is not None:
                 self.Decode(data)
 
-        def Decode(self, header_byte_array):
+        def Decode(self, header_byte_array: bytes) -> None:
             """Loads data into the object from the header_byte_array."""
             (self.Type,
              self.DeviceID,
@@ -852,7 +853,7 @@ class IVRS_TABLE(object):
                 sys.exit(-1)
             self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
 
-        def Encode(self):
+        def Encode(self) -> bytes:
             r"""Serializes the object.
 
             Returns:
@@ -869,7 +870,7 @@ class IVRS_TABLE(object):
                                     0)
             return byte_str
 
-        def ToXmlElementTree(self):
+        def ToXmlElementTree(self) -> ET.Element:
             """Transforms the object into an xml item and returns it."""
             xml_item = ET.Element(self.TypeString.replace(" ", ""))
             xml_item.set('Type', '0x%X' % self.Type)
@@ -879,7 +880,7 @@ class IVRS_TABLE(object):
             xml_item.set('SourceDeviceID', '0x%X' % (self.SourceDeviceID))
             return xml_item
 
-        def DumpInfo(self):
+        def DumpInfo(self) -> None:
             """Prints internal information to the console."""
             print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
             print('\t\t--------------------------------------------------')
@@ -891,7 +892,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_EX_SELECT(object):
         """Object representing a Device Table Entry EX_SELECT."""
-        def __init__(self, data=None):
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_EX_SELECT':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -902,7 +903,7 @@ class IVRS_TABLE(object):
             if data is not None:
                 self.Decode(data)
 
-        def Decode(self, header_byte_array):
+        def Decode(self, header_byte_array: bytes) -> None:
             """Loads data into the object from the header_byte_array."""
             (self.Type,
              self.DeviceID,
@@ -920,7 +921,7 @@ class IVRS_TABLE(object):
             (self.ExtendedDTESetting,) = \
                 struct.unpack("=I", header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
 
-        def Encode(self):
+        def Encode(self) -> bytes:
             r"""Serializes the object.
 
             Returns:
@@ -934,7 +935,7 @@ class IVRS_TABLE(object):
             byte_str += struct.pack("=I", self.ExtendedDTESetting)
             return byte_str
 
-        def ToXmlElementTree(self):
+        def ToXmlElementTree(self) -> ET.Element:
             """Transforms the object into an xml item and returns it."""
             xml_item = ET.Element(self.TypeString.replace(" ", ""))
             xml_item.set('Type', '0x%X' % self.Type)
@@ -946,7 +947,7 @@ class IVRS_TABLE(object):
                 xml_item.set('ExtendedDTESetting', 'ATS allowed')
             return xml_item
 
-        def DumpInfo(self):
+        def DumpInfo(self) -> None:
             """Prints internal information to the console."""
             print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
             print('\t\t--------------------------------------------------')
@@ -961,7 +962,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_EX_RANGE_START(object):
         """Object representing a Device Table Entry EX_RANGE_START."""
-        def __init__(self, data=None):
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_EX_RANGE_START':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -971,7 +972,7 @@ class IVRS_TABLE(object):
             if data is not None:
                 self.Decode(data)
 
-        def Decode(self, header_byte_array):
+        def Decode(self, header_byte_array: bytes) -> None:
             """Loads data into the object from the header_byte_array."""
             (self.Type,
              self.DeviceID,
@@ -997,7 +998,7 @@ class IVRS_TABLE(object):
                 sys.exit(-1)
             self.Length += IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size
 
-        def Encode(self):
+        def Encode(self) -> bytes:
             r"""Serializes the object.
 
             Returns:
@@ -1012,7 +1013,7 @@ class IVRS_TABLE(object):
             byte_str += struct.pack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format, 4, self.EndDeviceID, 0)
             return byte_str
 
-        def ToXmlElementTree(self):
+        def ToXmlElementTree(self) -> ET.Element:
             """Transforms the object into an xml item and returns it."""
             xml_item = ET.Element(self.TypeString.replace(" ", ""))
             xml_item.set('Type', '0x%X' % self.Type)
@@ -1025,7 +1026,7 @@ class IVRS_TABLE(object):
                 xml_item.set('ExtendedDTESetting', 'ATS allowed')
             return xml_item
 
-        def DumpInfo(self):
+        def DumpInfo(self) -> None:
             """Prints internal information to the console."""
             print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
             print('\t\t--------------------------------------------------')
@@ -1041,7 +1042,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_SPECIAL(object):
         """Object representing a Device Table Entry Special."""
-        def __init__(self, data=None):
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_SPECIAL':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -1052,7 +1053,7 @@ class IVRS_TABLE(object):
             if data is not None:
                 self.Decode(data)
 
-        def Decode(self, header_byte_array):
+        def Decode(self, header_byte_array: bytes) -> None:
             """Loads data into the object from the header_byte_array."""
             (self.Type,
              self.DeviceID,
@@ -1071,7 +1072,7 @@ class IVRS_TABLE(object):
                 struct.unpack(IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format,
                               header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.struct_format_size:self.Length])
 
-        def Encode(self):
+        def Encode(self) -> bytes:
             r"""Serializes the object.
 
             Returns:
@@ -1088,7 +1089,7 @@ class IVRS_TABLE(object):
                                     self.Variety)
             return byte_str
 
-        def ToXmlElementTree(self):
+        def ToXmlElementTree(self) -> ET.Element:
             """Transforms the object into an xml item and returns it."""
             xml_item = ET.Element(self.TypeString.replace(" ", ""))
             xml_item.set('Type', '0x%X' % self.Type)
@@ -1105,7 +1106,7 @@ class IVRS_TABLE(object):
                 xml_item.set('Variety', 'Reserved %X' % (self.Variety))
             return xml_item
 
-        def DumpInfo(self):
+        def DumpInfo(self) -> None:
             """Prints internal information to the console."""
             print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
             print('\t\t--------------------------------------------------')
@@ -1125,7 +1126,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_ACPI(object):
         """Object representing a Device Table Entry ACPI."""
-        def __init__(self, data=None):
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_ACPI':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -1136,7 +1137,7 @@ class IVRS_TABLE(object):
             if data is not None:
                 self.Decode(data)
 
-        def Decode(self, header_byte_array):
+        def Decode(self, header_byte_array: bytes) -> None:
             """Loads data into the object from the header_byte_array."""
             (self.Type,
              self.DeviceID,
@@ -1163,7 +1164,7 @@ class IVRS_TABLE(object):
                     struct.unpack("=%ss" % self.UIDLength,
                                   header_byte_array[IVRS_TABLE.DEVICE_TABLE_ENTRY.dte_var_len:self.Length])
 
-        def Encode(self):
+        def Encode(self) -> bytes:
             r"""Serializes the object.
 
             Returns:
@@ -1185,7 +1186,7 @@ class IVRS_TABLE(object):
                 byte_str += struct.pack("=%ss" % self.UIDLength, self.UID)
             return byte_str
 
-        def ToXmlElementTree(self):
+        def ToXmlElementTree(self) -> ET.Element:
             """Transforms the object into an xml item and returns it."""
             xml_item = ET.Element(self.TypeString.replace(" ", ""))
             xml_item.set('Type', '0x%X' % self.Type)
@@ -1207,7 +1208,7 @@ class IVRS_TABLE(object):
                 sys.exit(-1)
             return xml_item
 
-        def DumpInfo(self):
+        def DumpInfo(self) -> None:
             """Prints internal information to the console."""
             print('\t\t  {TypeString:s}'.format(TypeString=self.TypeString))
             print('\t\t--------------------------------------------------')

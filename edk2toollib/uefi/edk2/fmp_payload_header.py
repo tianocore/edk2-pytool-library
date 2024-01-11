@@ -16,11 +16,11 @@ FmpDevicePkg.
 import struct
 
 
-def _SIGNATURE_32(A, B, C, D):
+def _SIGNATURE_32(A: str, B: str, C: str, D: str) -> bytes:
     return struct.unpack('=I', bytearray(A + B + C + D, 'ascii'))[0]
 
 
-def _SIGNATURE_32_TO_STRING(Signature):
+def _SIGNATURE_32_TO_STRING(Signature: int) -> bytes:
     return struct.pack("<I", Signature).decode()
 
 
@@ -41,7 +41,7 @@ class FmpPayloadHeaderClass (object):
 
     _FMP_PAYLOAD_HEADER_SIGNATURE = _SIGNATURE_32('M', 'S', 'S', '1')
 
-    def __init__(self):
+    def __init__(self) -> 'FmpPayloadHeaderClass':
         """Inits an empty object."""
         self.Signature = self._FMP_PAYLOAD_HEADER_SIGNATURE
         self.HeaderSize = self._StructSize
@@ -49,11 +49,11 @@ class FmpPayloadHeaderClass (object):
         self.LowestSupportedVersion = 0x00000000
         self.Payload = b''
 
-    def Encode(self):
+    def Encode(self) -> bytes:
         r"""Serializes the Header + payload.
 
         Returns:
-            (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
+            (bytes): string representing packed data as bytes (i.e. b'\x01\x00\x03')
         """
         FmpPayloadHeader = struct.pack(
             self._StructFormat,
@@ -64,7 +64,7 @@ class FmpPayloadHeaderClass (object):
         )
         return FmpPayloadHeader + self.Payload
 
-    def Decode(self, Buffer):
+    def Decode(self, Buffer: bytes) -> bytes:
         """Loads data into the Object by parsing a buffer.
 
         Args:
@@ -96,7 +96,7 @@ class FmpPayloadHeaderClass (object):
 
         return self.Payload
 
-    def DumpInfo(self):
+    def DumpInfo(self) -> None:
         """Prints payload header information."""
         print('FMP_PAYLOAD_HEADER.Signature              = {Signature:08X} ({SignatureString})'
               .format(Signature=self.Signature, SignatureString=_SIGNATURE_32_TO_STRING(self.Signature)))

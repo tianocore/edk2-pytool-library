@@ -7,6 +7,8 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """This module contains utility classes to help interpret definitions from the Tpm20.h header file."""
+from typing import Optional
+
 ##
 # INCLUDES CONTENTS FROM TianoCore Tpm20.h HEADER FILE!!
 #
@@ -241,7 +243,7 @@ class CommandCode(object):
     Allows alternativing between command codes and command strings.
     """
     @staticmethod
-    def get_code(cc_string):
+    def get_code(cc_string: str) -> Optional[int]:
         """Returns associated command code.
 
         Args:
@@ -361,7 +363,7 @@ class CommandCode(object):
         }.get(cc_string, None)
 
     @staticmethod
-    def get_string(cc_code):
+    def get_string(cc_code: int) -> Optional[str]:
         """Returns associated command string.
 
         Args:
@@ -487,11 +489,11 @@ class ResponseCode(object):
     Allows alternativing between response codes and response strings.
     """
     @staticmethod
-    def get_simple_string(rc_code):
+    def get_simple_string(rc_code: int) -> Optional[str]:
         """Returns associated response string.
 
         Args:
-            rc_code (int): response code
+            rc_code: response code
         Returns:
             (str): Associated response string
             (None): rc_code not found
@@ -534,7 +536,7 @@ class ResponseCode(object):
         }.get(rc_code, None)
 
     @staticmethod
-    def parse_code(rc_code):
+    def parse_code(rc_code: int) -> tuple:
         """Returns a Tuple representing the parsed response code."""
         generic_errors = {
             0x000: 'TPM_RC_INITIALIZE',

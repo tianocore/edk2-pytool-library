@@ -8,6 +8,7 @@
 """A module to run a table generator that creates or appends to a table with environment information."""
 import datetime
 import sqlite3
+from typing import Any
 
 import git
 
@@ -33,7 +34,7 @@ CREATE TABLE IF NOT EXISTS environment_values (
 
 class EnvironmentTable(TableGenerator):
     """A Workspace parser that records import environment information for a given parsing execution."""  # noqa: E501
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> 'EnvironmentTable':
         """Initialize the query with the specific settings."""
 
     def create_tables(self, db_cursor: sqlite3.Cursor) -> None:
@@ -41,7 +42,7 @@ class EnvironmentTable(TableGenerator):
         db_cursor.execute(CREATE_ENV_VALUES_TABLE_COMMAND)
         db_cursor.execute(CREATE_ENV_TABLE_COMMAND)
 
-    def parse(self, db_cursor: sqlite3.Cursor, pathobj: Edk2Path, id, env) -> None:
+    def parse(self, db_cursor: sqlite3.Cursor, pathobj: Edk2Path, id: str, env: dict) -> None:
         """Parses the environment and adds the data to the table."""
         dtime = datetime.datetime.now()
 

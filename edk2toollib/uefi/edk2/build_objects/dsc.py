@@ -8,19 +8,20 @@
 """Data model for the EDK II DSC."""
 # There will be some overlap between the objects for DSC files and FDF files
 import collections
+from typing import Any, Optional
 
 DEFAULT_SECTION_TYPE = "COMMON"
 
 
 class dsc_set(set):
     """a DSC set object."""
-    def __init__(self, allowed_classes=None):
+    def __init__(self, allowed_classes: list=None) -> 'dsc_set':
         """Initializes an empty set."""
         if allowed_classes is None:
             allowed_classes = []
         self._allowed_classes = set(allowed_classes)
 
-    def add(self, item):
+    def add(self, item: Any) -> None:  # noqa: ANN401
         """Adds the item to the set.
 
         Raises:
@@ -37,7 +38,11 @@ class dsc_set(set):
 class dsc_dict(collections.OrderedDict):
     """A dictionary that allows specific classes as headers and sections."""
 
-    def __init__(self, allowed_key_classes=None, allowed_value_classes=None):
+    def __init__(
+        self,
+        allowed_key_classes: Optional[str]=None,
+        allowed_value_classes: Optional[Any]=None # noqa: ANN401
+    ) -> 'dsc_dict':
         """Initializes a dsc_dict."""
         if allowed_key_classes is None:
             allowed_key_classes = []
@@ -46,7 +51,7 @@ class dsc_dict(collections.OrderedDict):
         self._allowed_key_classes = set(allowed_key_classes)
         self._allowed_value_classes = set(allowed_value_classes)
 
-    def __missing__(self, key):
+    def __missing__(self, key: int) -> str:
         """Describes how to handle a missing key.
 
         Makes a new dsc_set if allowed.
@@ -59,7 +64,7 @@ class dsc_dict(collections.OrderedDict):
             return self[key]
         raise KeyError(key)
 
-    def __setitem__(self, key, val):
+    def __setitem__(self, key: int, val: str) -> None:
         """Setting a key value pair in the Ordered Dictionary.
 
         Raises:
@@ -87,7 +92,7 @@ class dsc_dict(collections.OrderedDict):
 
 class dsc:
     """Class representing a DSC."""
-    def __init__(self, file_path=None):
+    def __init__(self, file_path: Optional[str]=None) -> 'dsc':
         """Inits dsc type."""
         # The EDK2 path to this particular DSC, if is is None it means it was created from a stream and has no file
         self.file_path = file_path
@@ -109,7 +114,7 @@ class dsc:
         # NEXTVER: should we populate the default information into the DSC object?
         # FOR EXAMPLE: default_stores and skus
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'dsc') -> bool:
         """Enables equality comparisons (a == b).
 
         Warning:
@@ -145,19 +150,19 @@ class dsc_section_type:
                         "DXE_SMM_DRIVER", "SMM_CORE", "UEFI_DRIVER",
                         "UEFI_APPLICATION", "USER_DEFINED"]
 
-    def __init__(self, arch="common", module_type="common"):
+    def __init__(self, arch: str="common", module_type: str="common") -> 'dsc_section_type':
         """Inits dsc section type."""
         self.arch = arch.upper().strip()
         self.module_type = module_type.upper().strip()
         if not dsc_section_type.IsValidModuleType(self.module_type):
             raise ValueError(f"{module_type} is not a proper module type for dsc section")
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Returns the hash of an object for hashtables."""
         arch = "*" if (self.arch == "COMMON" or self.arch == "DEFAULT") else self.arch
         return hash((arch, self.module_type))
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'dsc_section_type') -> bool:
         """Enables equality comparisons (a == b)."""
         if type(other) is not dsc_section_type:
             return False
@@ -165,13 +170,13 @@ class dsc_section_type:
         arch2 = "*" if (other.arch == "COMMON" or other.arch == "DEFAULT") else other.arch
         return self.module_type == other.module_type or arch == arch2
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A string representation of the object."""
         attributes = f".{self.arch}.{self.module_type}"
         return attributes
 
     @classmethod
-    def IsValidModuleType(cls, name):
+    def IsValidModuleType(cls: 'dsc_section_type', name: str) -> bool:
         """If the module type is valid or not."""
         return name in cls.dsc_module_types
 
@@ -192,7 +197,11 @@ class dsc_buildoption_section_type(dsc_section_type):
         BuildOptions
         ```
     """
-    def __init__(self, arch="common", codebase="common", module_type="common"):
+    def __init__(
+        self, arch: str="common",
+        codebase: str="common",
+        module_type: str="common"
+    ) -> 'dsc_buildoption_section_type':
         """Inits dsc build option section type."""
         super().__init__(arch, module_type)
         self.codebase = codebase.upper().strip()
@@ -200,22 +209,22 @@ class dsc_buildoption_section_type(dsc_section_type):
             raise ValueError(f"{codebase} is not a valid codebase type")
 
     @classmethod
-    def IsValidCodeBase(cls, codebase):
+    def IsValidCodeBase(cls: 'dsc_buildoption_section_type', codebase: str) -> bool:
         """Determines if codebase is valid.
 
         Args:
-            codebase (str): codebase
+            codebase: codebase
 
         Returns:
             (bool): True if COMMON, EDK, EDKII else false
         """
         return codebase in ["COMMON", "EDK", "EDKII"]
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Returns the hash of an object for hashtables."""
         return hash((super().__hash__(), self.codebase))
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'dsc_buildoption_section_type') -> bool:
         """Enables equality comparisons (a == b)."""
         if type(other) is not dsc_buildoption_section_type:
             return False
@@ -223,7 +232,7 @@ class dsc_buildoption_section_type(dsc_section_type):
             return False
         return other.module_type == self.module_type
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A string representation of the object."""
         return f"{self.arch}.{self.codebase}.{self.module_type}"
 
@@ -236,12 +245,18 @@ class dsc_pcd_section_type():
     """This class is uses to define the PCD section type inside a component.
 
     Attributes:
-        pcdtype (str): pcd type
-        arch (:obj:`str`, optional): defaults to common
-        sku (:obj:`str`, optional): defaults to DEFAULT
-        store (:obj:`bool`, optional): if none, we don't have anything done
+        pcdtype: pcd type
+        arch: defaults to common
+        sku: defaults to DEFAULT
+        store: if none, we don't have anything done
     """
-    def __init__(self, pcdtype, arch="common", sku="DEFAULT", store=None):
+    def __init__(
+        self,
+        pcdtype: str,
+        arch: str="common",
+        sku: str="DEFAULT",
+        store: Optional[str]=None
+    ) -> 'dsc_pcd_section_type':
         """Inits the dsc_pcd_section object."""
         # if store is none, then we don't have anything done
         self.arch = arch.upper().strip()
@@ -253,16 +268,16 @@ class dsc_pcd_section_type():
             raise ValueError(f"{pcdtype} does not allow for a store to be specified")
         self.sku = sku.upper()
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Returns the hash of an object for hashtables."""
         return hash((self.arch, self.pcd_type))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A string representation of the object."""
         store = "" if self.default_store is None else f".{self.default_store}"
         return f"Pcds{self.pcd_type}.{self.arch}.{self.sku}{store}"
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'dsc_pcd_section_type') -> bool:
         """Enables equality comparisons (a == b)."""
         if type(other) is not dsc_pcd_section_type:
             return False
@@ -272,19 +287,19 @@ class dsc_pcd_section_type():
 class dsc_pcd_component_type(dsc_pcd_section_type):
     """This class is uses to define the PCD type inside a component."""
 
-    def __init__(self, pcdtype):
+    def __init__(self, pcdtype: str) -> 'dsc_pcd_component_type':
         """Inits the dsc_pcd_component object."""
         super().__init__(pcdtype)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A string representation of the object."""
         return f"Pcds{self.pcd_type}"
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Returns the hash of an object for hashtables."""
         return hash(self.pcd_type)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'dsc_pcd_component_type') -> bool:
         """Enables equality comparisons (a == b)."""
         if type(other) is not dsc_pcd_component_type:
             return False
@@ -295,26 +310,32 @@ class sku_id:
     """Contains the data for a sku.
 
     Args:
-        id (int): sku id number
-        name (:obj:`str`, optional): name of the sku
-        parent (:obj:`str`, optional): parent
-        source_info (:obj:`str`, optional): source info
+        id: sku id number
+        name: name of the sku
+        parent: parent
+        source_info: source info
     """
 
-    def __init__(self, id=0, name="DEFAULT", parent="DEFAULT", source_info=None):
+    def __init__(
+        self,
+        id: int=0,
+        name: str="DEFAULT",
+        parent: str="DEFAULT",
+        source_info: Optional['source_info']=None
+    ) -> 'sku_id':
         """Inits the sku_id object."""
         self.id = id
         self.name = name
         self.parent = parent  # the default parent is default
         self.source_info = source_info
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'sku_id') -> bool:
         """Enables equality comparisons (a == b)."""
         if type(other) is not sku_id:
             return False
         return self.id == other.id or self.name == other.name
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Returns the hash of an object for hashtables."""
         # we return zero because we want all the skus to hash to the same bucket
         # this won't be performant for large numbers of skus, which hopefully won't happen
@@ -322,7 +343,7 @@ class sku_id:
         # since we want to make sure names and id's are unique
         return 0
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A string representation of the object."""
         return f"{self.id}|{self.name}|{self.parent}"
 
@@ -330,7 +351,7 @@ class sku_id:
 class component:
     """Contains the data for a component for the EDK build system to build."""
 
-    def __init__(self, inf, source_info=None):
+    def __init__(self, inf: str, source_info: Optional['source_info']=None) -> 'component':
         """Inits the component object."""
         self.library_classes = set()  # a list of libraries that this component uses
         self.pcds = {}  # a dictionary of PCD's that are keyed by dsc_pcd_component_type, they are sets
@@ -339,17 +360,17 @@ class component:
         self.inf = inf  # the EDK2 relative path to the source INF
         self.source_info = source_info
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'component') -> bool:
         """Enables equality comparisons (a == b)."""
         if (type(other) is not component):
             return False
         return self.inf == other.inf  # NEXTVER: should this be case insensitive?
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Returns the hash of an object for hashtables."""
         return hash(self.inf)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A string representation of the object."""
         source = str(self.source_info) if source_info is not None else ""
         return f"{self.inf} @ {source}"
@@ -359,13 +380,19 @@ class definition:
     """Contains the information on a definition.
 
     Args:
-        name (obj): definition name
-        value (obj): definition value
-        local (:obj:`bool`, optional): if the value is local or not
-        source_info (:obj:`bool`, optional): source info
+        name: definition name
+        value: definition value
+        local: if the value is local or not
+        source_info: source info
     """
 
-    def __init__(self, name, value, local=False, source_info=None):
+    def __init__(
+        self,
+        name: str,
+        value: str,
+        local: bool=False,
+        source_info: Optional['source_info']=None
+    ) -> 'definition':
         """Inits the definition object.
 
         NOTE: Local means DEFINE is in front and is localized to that particular section
@@ -375,7 +402,7 @@ class definition:
         self.local = local
         self.source_info = source_info
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A string representation of the object."""
         string = ""
         if self.local:
@@ -383,11 +410,11 @@ class definition:
         string += f"{self.name} = {self.value} @ {self.source_info}"
         return string
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Returns the hash of an object for hashtables."""
         return hash(self.name)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'definition') -> bool:
         """Enables equality comparisons (a == b)."""
         if (type(other) is not definition):
             return False
@@ -402,22 +429,22 @@ class library:
         source_info (:obj:`obj`, optional): source info
     """
 
-    def __init__(self, inf: str, source_info=None):
+    def __init__(self, inf: str, source_info: Optional['source_info']=None) -> 'library':
         """Inits the Library object."""
         self.inf = inf
         self.source_info = source_info
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'library') -> bool:
         """Enables equality comparisons (a == b)."""
         if type(other) is not library:
             return False
         return self.inf == other.inf
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Returns the hash of an object for hashtables."""
         return hash(self.inf)  # NEXTVER how to figure out if they hash to the same spot?
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A string representation of the object."""
         return f"{self.inf} @ {self.source_info}"
 
@@ -426,24 +453,24 @@ class library_class:
     """Contains the data for a specific EDK2 library class.
 
     Attributes:
-        libraryclass (str): the EDK2 library class
-        inf (str): the inf
-        source_info (:obj:`obj`, optional): source info
+        libraryclass: the EDK2 library class
+        inf): the inf
+        source_info: source info
     """
 
-    def __init__(self, libraryclass: str, inf: str, source_info=None):
+    def __init__(self, libraryclass: str, inf: str, source_info: Optional['source_info']=None) -> 'library_class':
         """Inits the Library class object.
 
         Args:
-            libraryclass (str): the EDK2 library class
-            inf (str): the inf
-            source_info (:obj:`obj`, optional): source info
+            libraryclass: the EDK2 library class
+            inf: the inf
+            source_info: source info
         """
         self.libraryclass = libraryclass
         self.inf = inf
         self.source_info = source_info
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'library_class') -> bool:
         """Enables equality comparisons (a == b)."""
         if (type(other) is not library_class):
             return False
@@ -452,7 +479,7 @@ class library_class:
             return self.inf == other.inf
         return self.libraryclass.lower() == other.libraryclass.lower()
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Returns the hash of an object for hashtables."""
         # if we're a null lib, we want the hash to be based on the inf path
         if (self.libraryclass.lower() == "null"):
@@ -460,7 +487,7 @@ class library_class:
         else:
             return hash(self.libraryclass)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A string representation of the object."""
         return f"{self.libraryclass}|{self.inf} @ {self.source_info}"
 
@@ -469,39 +496,39 @@ class pcd:
     """A PCD object.
 
     Attributes:
-        namespace (obj): namespace
-        name (obj): pcd name
-        value (obj): pcd value
-        source_info (:obj:`obj`, optional): source info
+        namespace: namespace
+        name: pcd name
+        value: pcd value
+        source_info: source info
 
     EXAMPLE: PcdTokenSpaceGuidCName.PcdCName|Value
     """
 
-    def __init__(self, namespace, name, value, source_info=None):
+    def __init__(self, namespace: str, name: str, value: str, source_info: Optional['source_info']=None) -> 'pcd':
         """Inits a PCD object.
 
         Args:
-            namespace (obj): namespace
-            name (obj): pcd name
-            value (obj): pcd value
-            source_info (:obj:`obj`, optional): source info
+            namespace: namespace
+            name: pcd name
+            value: pcd value
+            source_info: source info
         """
         self.namespace = namespace
         self.name = name
         self.value = value
         self.source_info = source_info
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'pcd') -> bool:
         """Enables equality comparisons (a == b)."""
         if not issubclass(other.__class__, pcd):
             return False
         return self.namespace == other.namespace and self.name == other.name
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Returns the hash of an object for hashtables."""
         return hash(f"{self.namespace}.{self.name}")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A string representation of the object."""
         return f"{self.namespace}.{self.name} = {self.value} @ {self.source_info}"
 
@@ -510,19 +537,27 @@ class pcd_typed(pcd):
     """A Typed PCD object.
 
     Attributes:
-        datum_type (obj): Data Type
-        max_size (obj): max size of the data type
+        datum_type: Data Type
+        max_size: max size of the data type
 
     EXAMPLE: PcdTokenSpaceGuidCName.PcdCName|Value[|DatumType[|MaximumDatumSize]]
     """
 
-    def __init__(self, namespace, name, value, datum_type, max_size=0, source_info=None):
+    def __init__(
+        self,
+        namespace: str,
+        name: str,
+        value: str,
+        datum_type: str,
+        max_size: int=0,
+        source_info: Optional['source_info']=None
+    ) -> 'pcd_typed':
         """Inits the Typed PCD Object."""
         super().__init__(namespace, name, value, source_info)
         self.datum_type = datum_type
         self.max_size = int(max_size)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A string representation of the object."""
         return f"{self.namespace}.{self.name} = {self.value} |{self.datum_type}|{self.max_size} @ {self.source_info}"
 
@@ -534,18 +569,27 @@ class pcd_variable(pcd):
     """A Variable PCD object.
 
     Attributes:
-        var_name (obj): VariableName
-        var_guid (obj): VariableGuid
-        var_offset (obj): VariableOffset
-        default (:obj:`obj`, optional): default value
-        attribute (:obj:`obj`, optional): Optional attributes
-        source_info (:obj:`obj`, optional): source info
+        var_name: VariableName
+        var_guid: VariableGuid
+        var_offset: VariableOffset
+        default: default value
+        attribute: Optional attributes
+        source_info: source info
 
     EXAMPLE: PcdTokenSpaceGuidCName.PcdCName|VariableName|VariableGuid|VariableOffset[|HiiDefaultValue[|HiiAttribute]]
     """
 
-    def __init__(self, namespace, name, var_name, var_guid, var_offset,
-                 default=None, attributes=None, source_info=None):
+    def __init__(
+        self,
+        namespace: str,
+        name: str,
+        var_name: str,
+        var_guid: str,
+        var_offset: str,
+        default: Optional[str]=None,
+        attributes: Optional[str]=None,
+        source_info: Optional['source_info']=None
+    ) -> 'pcd_variable':
         """Inits a pcd_variable object."""
         super().__init__(namespace, name, "", source_info)
         if attributes is None:
@@ -562,7 +606,7 @@ class pcd_variable(pcd):
             raise ValueError(f"Invalid PcdHiiAttribute values: {attributes}")
         self.attributes = attributes
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A string representation of the object."""
         pcd_data = f"{self.var_guid}|{self.var_offset}|{self.default}|{self.attributes}"
         return f"{self.namespace}.{self.name} = {self.var_name} |{pcd_data} @ {self.source_info}"
@@ -572,34 +616,44 @@ class build_option:
     """Build option object.
 
     Attributes:
-        tool_code (obj): One of the defined tool codes in the Conf/tools_def.txt file.
-        attribute (obj): for example flags, d_path, path
-        data (obj): the actual flags or path you want to set
-        target (obj): DEBUG, RELEASE, or other
-        tagname (obj): the tool chain tag
-        arch (obj): ARM, AARCH64, IA32, X64, etc
-        family (obj): Conf/tools_def.txt defines FAMILY as one of MSFT, INTEL or GCC.
-        replace (obj): whether or not this replaces the default from tools_def, if this is false, we append
-        source_info (obj): source_info object.
+        tool_code: One of the defined tool codes in the Conf/tools_def.txt file.
+        attribute: for example flags, d_path, path
+        data: the actual flags or path you want to set
+        target: DEBUG, RELEASE, or other
+        tagname: the tool chain tag
+        arch: ARM, AARCH64, IA32, X64, etc
+        family: Conf/tools_def.txt defines FAMILY as one of MSFT, INTEL or GCC.
+        replace: whether or not this replaces the default from tools_def, if this is false, we append
+        source_info: source_info object.
 
     NOTE: Contains the data for a build option
         EX: MSFT:*_*_*_CC_FLAGS = /D MDEPKG_NDEBUG
     """
     # {FAMILY}:{TARGET}_{TAGNAME}_{ARCH}_{TOOLCODE}_{ATTRIBUTE}
-    def __init__(self, tool_code, attribute, data, target="*", tagname="*",
-                 arch="*", family=None, replace=False, source_info=None):
+    def __init__(
+        self,
+        tool_code: str,
+        attribute: str,
+        data: str,
+        target: str="*",
+        tagname: str="*",
+        arch: str="*",
+        family: Optional[str]=None,
+        replace: bool=False,
+        source_info: 'source_info'=None
+    ) -> 'build_option':
         """Inits a build_option object.
 
         Args:
-            tool_code (obj): One of the defined tool codes in the Conf/tools_def.txt file.
-            attribute (obj): for example flags, d_path, path
-            data (obj): the actual flags or path you want to set
-            target (obj): DEBUG, RELEASE, or other
-            tagname (obj): the tool chain tag
-            arch (obj): ARM, AARCH64, IA32, X64, etc
-            family (obj): Conf/tools_def.txt defines FAMILY as one of MSFT, INTEL or GCC.
-            replace (obj): whether or not this replaces the default from tools_def, if this is false, we append
-            source_info (obj): source_info object.
+            tool_code: One of the defined tool codes in the Conf/tools_def.txt file.
+            attribute: for example flags, d_path, path
+            data: the actual flags or path you want to set
+            target: DEBUG, RELEASE, or other
+            tagname: the tool chain tag
+            arch: ARM, AARCH64, IA32, X64, etc
+            family: Conf/tools_def.txt defines FAMILY as one of MSFT, INTEL or GCC.
+            replace: whether or not this replaces the default from tools_def, if this is false, we append
+            source_info: source_info object.
 
         NOTE: attribute Attribute:
             The flags defined in this section are appended to flags defined in the tools_def.txt file
@@ -619,7 +673,7 @@ class build_option:
         self.data = data
         self.source_info = source_info
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'build_option') -> bool:
         """Enables equality comparisons (a == b)."""
         if (type(other) is not build_option):
             return False
@@ -637,11 +691,11 @@ class build_option:
             return False
         return True
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Returns the hash of an object for hashtables."""
         return hash(self.__repr__(False))
 
-    def __repr__(self, include_data=True):
+    def __repr__(self, include_data: bool=True) -> str:
         """A string representation of the object."""
         rep = "" if self.family is None else f"{self.family}:"
         rep += "_".join((self.target, self.tagname, self.arch, self.tool_code, self.attribute))
@@ -654,14 +708,14 @@ class default_store:
     """Object containing information on a default store.
 
     Attributes:
-        index (:obj:`int`, optional): index
-        value (:obj:`str`, optional): defaults to "Standard"
-        source_info (:obj:`str`, optional): defaults to None
+        index: index
+        value: defaults to "Standard"
+        source_info: defaults to None
     """
     ''' contains the information on a default store. '''
     ''' 0 | Standard        # UEFI Standard default '''
 
-    def __init__(self, index=0, value="Standard", source_info=None):
+    def __init__(self, index: int=0, value: str="Standard", source_info: Optional[str]=None) -> 'default_store':
         """Inits a default store object.
 
         NOTE: Local means DEFINE is in front and is localized to that particular section
@@ -670,15 +724,15 @@ class default_store:
         self.value = value
         self.source_info = source_info
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A string representation of the object."""
         return f"{self.index} | {self.value}"
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Returns the hash of an object for hashtables."""
         return hash(self.index)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'default_store') -> bool:
         """Enables equality comparisons (a == b)."""
         if (type(other) is not default_store):
             return False
@@ -692,12 +746,12 @@ class source_info:
         file (str): filename
         lineno (:obj:`int`, optional): line number
     """
-    def __init__(self, file: str, lineno: int = None):
+    def __init__(self, file: str, lineno: int = None) -> 'source_info':
         """Inits a source_info object."""
         self.file = file
         self.lineno = lineno
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns a string representation of object."""
         if self.lineno is None:
             return self.file

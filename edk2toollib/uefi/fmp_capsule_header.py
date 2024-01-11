@@ -10,6 +10,7 @@
 
 import struct
 import uuid
+from typing import IO
 
 from edk2toollib.uefi.fmp_auth_header import FmpAuthHeaderClass
 
@@ -51,7 +52,7 @@ class FmpCapsuleImageHeaderClass (object):
 
     EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER_INIT_VERSION = 0x00000002
 
-    def __init__(self):
+    def __init__(self) -> 'FmpCapsuleImageHeaderClass':
         """Inits an empty object."""
         self.Version = self.EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER_INIT_VERSION
         self.UpdateImageTypeId = uuid.UUID('00000000-0000-0000-0000-000000000000')
@@ -63,7 +64,7 @@ class FmpCapsuleImageHeaderClass (object):
         self.VendorCodeBytes = b''
         self.FmpAuthHeader = None
 
-    def Encode(self):
+    def Encode(self) -> bytes:
         r"""Serializes the object.
 
         Returns:
@@ -87,14 +88,14 @@ class FmpCapsuleImageHeaderClass (object):
         )
         return FmpCapsuleImageHeader + self.Payload + self.VendorCodeBytes
 
-    def Decode(self, Buffer):
+    def Decode(self, Buffer: IO) -> bytes:
         """Loads data into the object from a filestream.
 
         Args:
-            Buffer (obj): Buffer containing data
+            Buffer: Buffer containing data
 
         Returns:
-            (obj): remaining buffer
+            bytes: remaining buffer
 
         Raises:
             (ValueError): Invalid buffer length
@@ -128,7 +129,7 @@ class FmpCapsuleImageHeaderClass (object):
         self.VendorCodeBytes = Buffer[self._StructSize + UpdateImageSize:]
         return Buffer[self._StructSize:]
 
-    def DumpInfo(self):
+    def DumpInfo(self) -> None:
         """Prints object to Console."""
         print('EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER.Version                = {Version:08X}'
               .format(Version=self.Version))
@@ -180,7 +181,7 @@ class FmpCapsuleHeaderClass (object):
 
     EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER_INIT_VERSION = 0x00000001
 
-    def __init__(self):
+    def __init__(self) -> 'FmpCapsuleHeaderClass':
         """Inits an empty object."""
         self.Version = self.EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER_INIT_VERSION
         self.EmbeddedDriverCount = 0
@@ -188,25 +189,25 @@ class FmpCapsuleHeaderClass (object):
         self._EmbeddedDriverList = []
         self._FmpCapsuleImageHeaderList = []
 
-    def AddEmbeddedDriver(self, EmbeddedDriver):
+    def AddEmbeddedDriver(self, EmbeddedDriver: bytes) -> None:
         """Adds an embedded driver to the list."""
         self._EmbeddedDriverList.append(EmbeddedDriver)
         self.EmbeddedDriverCount += 1
 
-    def GetEmbeddedDriver(self, Index):
+    def GetEmbeddedDriver(self, Index: int) -> bytes:
         """Returns the embedded driver at the index."""
         return self._EmbeddedDriverList[Index]
 
-    def AddFmpCapsuleImageHeader(self, FmpCapsuleHeader):
+    def AddFmpCapsuleImageHeader(self, FmpCapsuleHeader: 'FmpCapsuleImageHeaderClass') -> None:
         """Adds an Fmp Capsule Image header to the list."""
         self._FmpCapsuleImageHeaderList.append(FmpCapsuleHeader)
         self.PayloadItemCount += 1
 
-    def GetFmpCapsuleImageHeader(self, Index):
+    def GetFmpCapsuleImageHeader(self, Index: int) -> 'FmpCapsuleImageHeaderClass':
         """Returns the Fmp Capsule Image header at the index."""
         return self._FmpCapsuleImageHeaderList[Index]
 
-    def Encode(self):
+    def Encode(self) -> bytes:
         r"""Serializes the object.
 
         Returns:
@@ -240,7 +241,7 @@ class FmpCapsuleHeaderClass (object):
 
         return FmpCapsuleHeader + FmpCapsuleData
 
-    def Decode(self, Buffer):
+    def Decode(self, Buffer: IO) -> bytes:
         """Loads data into the object from a Buffer.
 
         Args:
@@ -308,7 +309,7 @@ class FmpCapsuleHeaderClass (object):
 
         return Result
 
-    def DumpInfo(self):
+    def DumpInfo(self) -> None:
         """Prints the object to the console."""
         print('EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER.Version             = {Version:08X}'.format(Version=self.Version))
         print('EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER.EmbeddedDriverCount = {EmbeddedDriverCount:08X}'.format(

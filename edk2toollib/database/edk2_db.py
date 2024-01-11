@@ -10,7 +10,7 @@ import logging
 import sqlite3
 import time
 import uuid
-from typing import Any
+from typing import Any, Optional, Type
 
 from edk2toollib.database.tables import EnvironmentTable
 from edk2toollib.database.tables.base_table import TableGenerator
@@ -60,7 +60,7 @@ class Edk2DB:
 
             db.connection.execute("SELECT * FROM ?", table)
     """
-    def __init__(self, db_path: str, pathobj: Edk2Path = None, **kwargs: dict[str,Any]):
+    def __init__(self: 'Edk2DB', db_path: str, pathobj: Edk2Path = None, **kwargs: dict[str,Any]) -> 'Edk2DB':
         """Initializes the database.
 
         Args:
@@ -72,11 +72,15 @@ class Edk2DB:
         self.clear_parsers()
         self.connection = sqlite3.connect(db_path)
 
-    def __enter__(self):
+    def __enter__(self: 'Edk2DB') -> 'Edk2DB':
         """Enables the use of the `with` statement."""
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+        self, exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[Any]  # noqa: ANN401
+    ) -> None:
         """Enables the use of the `with` statement."""
         self.connection.commit()
         self.connection.close()

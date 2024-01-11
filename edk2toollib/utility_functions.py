@@ -22,6 +22,8 @@ import sys
 import threading
 import time
 from collections import namedtuple
+from io import BytesIO, StringIO
+from typing import Any, Callable, Optional
 from warnings import warn
 
 
@@ -85,7 +87,7 @@ def reader(filepath, outstream, stream, logging_level=logging.INFO, encodingErro
         f.close()
 
 
-def GetHostInfo():
+def GetHostInfo() -> namedtuple:
     """Returns a namedtuple containing information about host machine.
 
     Returns:
@@ -120,7 +122,7 @@ def GetHostInfo():
     return Host(os=os, arch=arch, bit=bit)
 
 
-def timing(f):
+def timing(f: Callable) -> Callable:
     """This is a mixing to do timing on a function.
 
     Example:
@@ -129,7 +131,7 @@ def timing(f):
             def function_i_want_to_time():
         ```
     """
-    def wrap(*args):
+    def wrap(*args: Any) -> int:  #
         time1 = time.time()
         ret = f(*args)
         time2 = time.time()
@@ -138,30 +140,40 @@ def timing(f):
     return wrap
 
 
-def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstream=None, environ=None,
-           logging_level=logging.INFO, raise_exception_on_nonzero=False, encodingErrors='strict',
-           close_fds=True):
+def RunCmd(
+    cmd: str,
+    parameters: str,
+    capture: bool=True,
+    workingdir: str=None,
+    outfile: Optional[str]=None,
+    outstream: Optional[str]=None,
+    environ: Optional[dict]=None,
+    logging_level: int=logging.INFO,
+    raise_exception_on_nonzero: bool=False,
+    encodingErrors: str='strict',
+    close_fds: bool=True
+) -> int:
     """Run a shell command and print the output to the log file.
 
     This is the public function that should be used to run commands from the shell in python environment
 
     Attributes:
-        cmd (str): command being run, either quoted or not quoted
-        parameters (str): parameters string taken as is
+        cmd: command being run, either quoted or not quoted
+        parameters: parameters string taken as is
         capture (obj): boolean to determine if caller wants the output captured
             in any format.
-        workingdir (str): path to set to the working directory before running
+        workingdir: path to set to the working directory before running
             the command.
-        outfile (obj): capture output to file of given path.
-        outstream (obj): capture output to a stream.
-        environ (obj): shell environment variables dictionary that replaces the
+        outfile: capture output to file of given path.
+        outstream: capture output to a stream.
+        environ: shell environment variables dictionary that replaces the
             one inherited from the current process.
-        logging_level (obj): log level to log output at.  Default is INFO
-        raise_exception_on_nonzero (bool): Setting to true causes exception to
+        logging_level: log level to log output at.  Default is INFO
+        raise_exception_on_nonzero: Setting to true causes exception to
             be raised if the cmd return code is not zero.
-        encodingErrors (str): may be given to set the desired error handling
+        encodingErrors: may be given to set the desired error handling
             for encoding errors decoding cmd output. Default is 'strict'.
-        close_fds (bool): If True, file descriptors are closed before the
+        close_fds: If True, file descriptors are closed before the
             command is run. Default is True.
 
     Returns:
@@ -203,20 +215,32 @@ def RunCmd(cmd, parameters, capture=True, workingdir=None, outfile=None, outstre
     return c.returncode
 
 
-def RunPythonScript(pythonfile, params, capture=True, workingdir=None, outfile=None, outstream=None,
-                    environ=None, logging_level=logging.INFO, raise_exception_on_nonzero=False):
+def RunPythonScript(
+    pythonfile: str,
+    params: str,
+    capture: bool=True,
+    workingdir: Optional[str]=None,
+    outfile: Optional[str]=None,
+    outstream: Optional[str]=None,
+    environ:Optional[dict]=None,
+    logging_level: int=logging.INFO,
+    raise_exception_on_nonzero: bool=False
+) -> int:
     """Run a python script and print the output to the log file.
 
     This is the public function that should be used to execute python scripts from the shell in python environment.
     The python script will be located using the path as if it was an executable.
 
-    Attributes:
-        cmd: cmd string to run including parameters
-        capture: boolean to determine if caller wants the output captured in any format.
+    Args:
+        pythonfile: python file to execute
+        params: parameters string taken as is
+        capture: if caller wants the output captured in any format.
         workingdir: path to set to the working directory before running the command.
         outfile: capture output to file of given path.
         outstream: capture output to a stream.
         environ: shell environment variables dictionary that replaces the one inherited from the current process.
+        logging_level: log level to log output at.  Default is INFO
+        raise_exception_on_nonzero: causes exception to be raised if the cmd return code is not zero.
 
     Returns:
         (int): returncode of called cmd
@@ -246,8 +270,15 @@ def RunPythonScript(pythonfile, params, capture=True, workingdir=None, outfile=N
                   raise_exception_on_nonzero=raise_exception_on_nonzero)
 
 
-def DetachedSignWithSignTool(SignToolPath, ToSignFilePath, SignatureOutputFile, PfxFilePath,
-                             PfxPass=None, Oid="1.2.840.113549.1.7.2", Eku=None):
+def DetachedSignWithSignTool(
+    SignToolPath: str,
+    ToSignFilePath: str,
+    SignatureOutputFile: str,
+    PfxFilePath: str,
+    PfxPass: Optional[str]=None,
+    Oid: str="1.2.840.113549.1.7.2",
+    Eku: Optional[str]=None
+) -> int:
     """Locally Sign input file using Windows SDK signtool.
 
     This will use a local Pfx file.
@@ -290,7 +321,12 @@ def DetachedSignWithSignTool(SignToolPath, ToSignFilePath, SignatureOutputFile, 
     return ret
 
 
-def CatalogSignWithSignTool(SignToolPath, ToSignFilePath, PfxFilePath, PfxPass=None):
+def CatalogSignWithSignTool(
+    SignToolPath: str,
+    ToSignFilePath: str,
+    PfxFilePath: str,
+    PfxPass: Optional[str]=None
+) -> int:
     """Locally sign input file using Windows SDK signtool.
 
     This will use a local Pfx file.
@@ -327,15 +363,15 @@ def CatalogSignWithSignTool(SignToolPath, ToSignFilePath, PfxFilePath, PfxPass=N
 # https://stackoverflow.com/questions/1714027/version-number-comparison
 # With Python 3.0 help from:
 # https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
-def version_compare(version1, version2):
+def version_compare(version1: str, version2: str) -> bool:
     """Compare two versions."""
-    def normalize(v):
+    def normalize(v: str) -> bool:
         return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split(".")]
     (a, b) = (normalize(version1), normalize(version2))
     return (a > b) - (a < b)
 
 
-def import_module_by_file_name(module_file_path):
+def import_module_by_file_name(module_file_path: str) -> Any:  # noqa: ANN401
     """Standard method of importing a Python file. Expecting absolute path."""
     module_name = os.path.basename(module_file_path)
     spec = importlib.util.spec_from_file_location(module_name, module_file_path)
@@ -349,7 +385,7 @@ def import_module_by_file_name(module_file_path):
     return ImportedModule
 
 
-def locate_class_in_module(Module, DesiredClass):
+def locate_class_in_module(Module: Any, DesiredClass: Any) -> Any:  # noqa: ANN401
     """Given a module and a class, this function will return the subclass of DesiredClass found in Module.
 
     It gives preference to classes that are defined in the module itself.
@@ -388,15 +424,15 @@ def RemoveTree(dir_path: str, ignore_errors: bool = False) -> None:
     On error try to change file attributes.  Also adds retry logic.
 
     Args:
-        dir_path (str): Path to directory to remove.
-        ignore_errors (bool): ignore errors during removal
+        dir_path: Path to directory to remove.
+        ignore_errors: ignore errors during removal
     """
     # Allows for finding paths over the 260 character limit, even if the registry key (LongPathsEnabled)
     # Is not enabled.
     if sys.platform.startswith('win'):
         dir_path = '\\\\?\\' + os.path.abspath(dir_path)
 
-    def _remove_readonly(func, path, _):
+    def _remove_readonly(func: Callable, path: str, _: any) -> None:
         """Private function to attempt to change permissions on file/folder being deleted."""
         os.chmod(path, stat.S_IWRITE)
         func(path)
@@ -412,7 +448,14 @@ def RemoveTree(dir_path: str, ignore_errors: bool = False) -> None:
         raise RuntimeError(f"Failed to remove {dir_path}")
 
 
-def PrintByteList(ByteList, IncludeAscii=True, IncludeOffset=True, IncludeHexSep=True, OffsetStart=0, **kwargs):
+def PrintByteList(
+    ByteList: bytearray,
+    IncludeAscii: bool=True,
+    IncludeOffset: bool=True,
+    IncludeHexSep: bool=True,
+    OffsetStart: int=0,
+    **kwargs: Any  #
+) -> None:
     """Print a byte array as hex and optionally output ascii as well as offset within the buffer."""
     outfs = kwargs.get("outfs", sys.stdout)
     kwargs["include_ascii"] = IncludeAscii
@@ -426,14 +469,14 @@ def PrintByteList(ByteList, IncludeAscii=True, IncludeOffset=True, IncludeHexSep
     hexdump(ByteList, offset_start=OffsetStart, outfs=outfs, **kwargs)
 
 
-def hexdump(byte_list, offset_start=0, outfs=sys.stdout, **kwargs) -> None:
+def hexdump(byte_list: bytearray, offset_start: int=0, outfs: BytesIO=sys.stdout, **kwargs: Any) -> None:  #
     """Print a byte array as hex and optionally output ascii as well as offset within the buffer.
 
     Args:
-        byte_list (bytearray): byte array to print
-        offset_start (int): offset to print to the side of the hexdump
-        outfs (io.BytesIO): output file stream to print to
-        kwargs (any): keyword arguments expanded below.
+        byte_list: byte array to print
+        offset_start: offset to print to the side of the hexdump
+        outfs: output file stream to print to
+        kwargs: keyword arguments expanded below.
 
     Keyword Arguments:
         include_ascii (bool): Option (Default: True) to include ascii
@@ -493,14 +536,14 @@ def hexdump(byte_list, offset_start=0, outfs=sys.stdout, **kwargs) -> None:
         outfs.write("\n")
 
 
-def export_c_type_array(buffer_fs, variable_name, out_fs, **kwargs) -> None:
+def export_c_type_array(buffer_fs: BytesIO, variable_name: str, out_fs: StringIO, **kwargs: Any) -> None:  #
     """Converts a given binary file to a UEFI typed C style array.
 
     Args:
-        buffer_fs (io.BytesIO): buffer file stream to turn into a C style array
-        variable_name (str): variable name to use for the C style array
-        out_fs (io.StringIO): output filestream to write to
-        kwargs (any): keyword arguments expanded below.
+        buffer_fs: buffer file stream to turn into a C style array
+        variable_name: variable name to use for the C style array
+        out_fs: output filestream to write to
+        kwargs: keyword arguments expanded below.
 
     Keyword Arguments:
         data_type (str): The datatype of the array (Default: UINT8)

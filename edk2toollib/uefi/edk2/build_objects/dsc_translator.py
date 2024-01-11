@@ -24,7 +24,7 @@ from edk2toollib.uefi.edk2.build_objects.dsc import (
 class DscTranslator():
     """A class used to translate DSCs."""
     @classmethod
-    def dsc_to_file(cls, dsc_obj, filepath):
+    def dsc_to_file(cls: 'DscTranslator', dsc_obj: dsc, filepath: str) -> None:
         """Transforms the DSC object to a file."""
         file_path = os.path.abspath(filepath)
         f = open(file_path, "w")
@@ -34,7 +34,7 @@ class DscTranslator():
         f.close()
 
     @classmethod
-    def _GetDscLinesFromDscObj(cls, obj, depth=0) -> list:
+    def _GetDscLinesFromDscObj(cls: 'DscTranslator', obj: dsc, depth: int=0) -> list:
         """Gets the DSC strings for an data model objects."""
         lines = []
         depth_pad = ''.ljust(depth)
@@ -118,7 +118,7 @@ class DscTranslator():
         return lines
 
     @classmethod
-    def _FormatComponent(cls, comp, depth=0):
+    def _FormatComponent(cls: 'DscTranslator', comp: dsc, depth: int=0) -> list[str]:
         has_subsection = len(comp.pcds) > 0 or len(comp.defines) > 0 or len(
             comp.build_options) > 0 or len(comp.library_classes) > 0
         depth_pad = ''.ljust(depth)

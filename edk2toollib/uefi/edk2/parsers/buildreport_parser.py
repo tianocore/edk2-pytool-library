@@ -9,6 +9,7 @@
 import logging
 import os
 from enum import Enum
+from typing import Optional
 
 import edk2toollib.uefi.edk2.path_utilities as pu
 
@@ -28,7 +29,7 @@ class ModuleSummary(object):
         PackagePathList (list): list of package paths
         FvName (str): Name of Fv
     """
-    def __init__(self, content, ws, packagepatahlist, pathconverter):
+    def __init__(self, content: str, ws: str, packagepatahlist: list, pathconverter: pu.Edk2Path) -> 'ModuleSummary':
         """Inits an empty Module Summary Object."""
         self._RawContent = content
         self.Guid = ""
@@ -43,7 +44,7 @@ class ModuleSummary(object):
         self.FvName = None
         self.pathConverter = pathconverter
 
-    def Parse(self):
+    def Parse(self) -> None:
         """Parses the Module summary object."""
         inPcdSection = False
         inLibSection = False
@@ -205,7 +206,7 @@ class BuildReport(object):
         MODULE = 'MODULE'
         UNKNOWN = 'UNKNOWN'
 
-    def __init__(self, filepath, ws, packagepathcsv, protectedWordsDict):
+    def __init__(self, filepath: str, ws: str, packagepathcsv: str, protectedWordsDict: dict) -> 'RegionTypes':
         """Inits an empty BuildReport object."""
         self.PlatformName = ""
         self.DscPath = ""
@@ -228,7 +229,7 @@ class BuildReport(object):
     # do region level parsing
     # to get the layout, lists, and dictionaries setup.
     #
-    def BasicParse(self):
+    def BasicParse(self) -> None:
         """Performs region level parsing.
 
         Gets the layout, lists, and dictionaries setup.
@@ -301,11 +302,11 @@ class BuildReport(object):
             if (r[0] == BuildReport.RegionTypes.FD):
                 self._ParseFdRegionForModules(self._ReportContents[r[1]:r[2]])
 
-    def FindComponentByInfPath(self, InfPath):
+    def FindComponentByInfPath(self, InfPath: str) -> Optional['ModuleSummary']:
         """Attempts to find the Component the Inf is apart of.
 
         Args:
-            InfPath (str): Inf Path
+            InfPath: Inf Path
 
         Returns:
             (ModuleSummary): Module if found
@@ -319,7 +320,7 @@ class BuildReport(object):
         logging.error("Failed to find Module by InfPath %s" % InfPath)
         return None
 
-    def _ParseFdRegionForModules(self, rawcontents):
+    def _ParseFdRegionForModules(self, rawcontents: str) -> None:
         FvName = None
         index = 0
         WorkspaceAndPPList = [self.Workspace]
@@ -360,7 +361,7 @@ class BuildReport(object):
     #
     # Get the start of region
     #
-    def _GetNextRegionStart(self, number):
+    def _GetNextRegionStart(self, number: int) -> Optional[int]:
         lineNumber = number
         while (lineNumber < len(self._ReportContents)):
             if self._ReportContents[lineNumber] == ">======================================================================================================================<":  # noqa: E501
@@ -373,7 +374,7 @@ class BuildReport(object):
     #
     # Get the end of region
     #
-    def _GetEndOfRegion(self, number):
+    def _GetEndOfRegion(self, number: int) -> Optional[int]:
         lineNumber = number
         while (lineNumber < len(self._ReportContents)):
             if self._ReportContents[lineNumber] == "<======================================================================================================================>":  # noqa: E501
@@ -384,7 +385,7 @@ class BuildReport(object):
         # didn't find new region
         return None
 
-    def _GetRegionType(self, lineNumber):
+    def _GetRegionType(self, lineNumber: int) -> 'BuildReport.RegionTypes':
         line = self._ReportContents[lineNumber].strip()
         if (line == "Firmware Device (FD)"):
             return BuildReport.RegionTypes.FD

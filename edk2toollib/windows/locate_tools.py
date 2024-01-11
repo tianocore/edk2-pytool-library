@@ -52,7 +52,7 @@ supported_vs_versions = {"vs2017": "15.0,16.0", "vs2019": "16.0,17.0", "vs2022":
 
 
 # Downloads VSWhere
-def _DownloadVsWhere(unpack_folder: os.PathLike = None):
+def _DownloadVsWhere(unpack_folder: os.PathLike = None) -> None:
     if unpack_folder is None:
         unpack_folder = os.path.dirname(__VsWherePath())
 
@@ -84,7 +84,7 @@ def _DownloadVsWhere(unpack_folder: os.PathLike = None):
         raise RuntimeError(f"VsWhere - sha256 does not match\n\tdownloaded:\t{temp_file_sha256}\n\t")
 
 
-def __VsWherePath():
+def __VsWherePath() -> str:
     file = "vswhere.exe"
     requirement = pkg_resources.Requirement.parse("edk2-pytool-library")
     file_path = os.path.join("edk2toollib", "bin", file)
@@ -92,7 +92,7 @@ def __VsWherePath():
     return vswhere_path
 
 
-def GetVsWherePath(fail_on_not_found: bool = True):
+def GetVsWherePath(fail_on_not_found: bool = True) -> Optional[str]:
     """Get the VsWhere tool path.
 
     Args:
@@ -129,7 +129,7 @@ def GetVsWherePath(fail_on_not_found: bool = True):
     return vswhere_path
 
 
-def FindWithVsWhere(products: str = "*", vs_version: str = None):
+def FindWithVsWhere(products: str = "*", vs_version: Optional[str] = None) -> Optional[str]:
     """Finds a product with VS Where. Returns the newest match.
 
     Args:
@@ -147,7 +147,7 @@ def FindWithVsWhere(products: str = "*", vs_version: str = None):
     results = FindAllWithVsWhere(products, vs_version)
     return results[0] if results else None
 
-def FindAllWithVsWhere(products: str = "*", vs_version: str = None) -> Optional[List[str]]:
+def FindAllWithVsWhere(products: str = "*", vs_version: Optional[str] = None) -> Optional[List[str]]:
     """Finds a product with VS Where. Returns all matches, sorted by newest version.
 
     Args:
@@ -187,7 +187,7 @@ def FindAllWithVsWhere(products: str = "*", vs_version: str = None) -> Optional[
     return None
 
 
-def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_version: str = None):
+def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_version: str = None) -> str:
     """Launch vcvarsall.bat and read the settings from its environment.
 
     This is a windows only function and Windows is case insensitive for the keys
@@ -283,7 +283,7 @@ def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_versi
     return result
 
 
-def _CompareWindowVersions(a, b):
+def _CompareWindowVersions(a: str, b: str) -> int:
     """Compares Windows versions.
 
     Returns:
@@ -311,7 +311,7 @@ def _CompareWindowVersions(a, b):
     return 0
 
 
-def _CheckArchOfMatch(match):
+def _CheckArchOfMatch(match: str) -> bool:
     """Returns if this binary matches our host.
 
     Returns:
@@ -355,7 +355,7 @@ def _CheckArchOfMatch(match):
 
 # does a glob in the folder that your sdk is
 # uses the environmental variable WindowsSdkDir and tries to use WindowsSDKVersion
-def FindToolInWinSdk(tool: str, product: str = None, arch: str = None):
+def FindToolInWinSdk(tool: str, product: str = None, arch: str = None) -> str:
     """Searches for a tool in the Windows SDK Directory.
 
     Args:

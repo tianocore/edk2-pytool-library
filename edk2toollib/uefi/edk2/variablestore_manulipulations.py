@@ -8,6 +8,7 @@
 """Contains classes and helper functions to modify variables in a UEFI ROM image."""
 import mmap
 import os
+from typing import Optional
 
 import edk2toollib.uefi.edk2.variable_format as VF
 import edk2toollib.uefi.pi_firmware_volume as PiFV
@@ -15,7 +16,7 @@ import edk2toollib.uefi.pi_firmware_volume as PiFV
 
 class VariableStore(object):
     """Class representing the variable store."""
-    def __init__(self, romfile, store_base=None, store_size=None):
+    def __init__(self, romfile: str, store_base: Optional[int]=None, store_size: Optional[int]=None) -> 'VariableStore':
         """Initialize the Variable store and read necessary files.
 
         Loads the data.
@@ -72,7 +73,7 @@ class VariableStore(object):
         # Finally, reset the file cursor to the beginning of the VarStore FV.
         self.rom_file.seek(self.store_base)
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Flushes and closes files."""
         if self.rom_file_map is not None:
             self.rom_file_map.flush()
@@ -81,7 +82,7 @@ class VariableStore(object):
         if self.rom_file is not None:
             self.rom_file.close()
 
-    def get_new_var_class(self):
+    def get_new_var_class(self) -> VF.VariableHeader | VF.AuthenticatedVariableHeader:
         """Var class builder method depending on var type."""
         if self.var_store_header.Type == 'Var':
             new_var = VF.VariableHeader()
@@ -90,11 +91,11 @@ class VariableStore(object):
 
         return new_var
 
-    def add_variable(self, new_var):
+    def add_variable(self, new_var: VF.VariableHeader | VF.AuthenticatedVariableHeader) -> None:
         """Add a variable to the variable list."""
         self.variables.append(new_var)
 
-    def flush_to_file(self):
+    def flush_to_file(self) -> None:
         """Flush the changes to file."""
         # First, we need to make sure that our variables will fit in the VarStore.
         var_size = sum([var.get_buffer_size() for var in self.variables])

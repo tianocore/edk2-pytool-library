@@ -11,6 +11,7 @@
 import struct
 import sys
 import uuid
+from typing import IO
 
 #
 # UEFI GUIDs
@@ -45,7 +46,7 @@ class EfiFirmwareVolumeHeader(object):
     } EFI_FIRMWARE_VOLUME_HEADER;
     ```
     """
-    def __init__(self):
+    def __init__(self) -> 'EfiFirmwareVolumeHeader':
         """Inits an empty object."""
         self.StructString = "=16s16sQ4sLHHHBBQQ"  # spell-checker: disable-line
         self.ZeroVector = None
@@ -60,7 +61,7 @@ class EfiFirmwareVolumeHeader(object):
         self.Blockmap0 = None
         self.Blockmap1 = None
 
-    def load_from_file(self, file):
+    def load_from_file(self, file: IO) -> 'EfiFirmwareVolumeHeader':
         """Loads data into the object from a filestream.
 
         Args:
@@ -95,7 +96,7 @@ class EfiFirmwareVolumeHeader(object):
 
         return self
 
-    def serialize(self):
+    def serialize(self) -> bytes:
         r"""Serializes the object.
 
         Returns:
@@ -119,17 +120,17 @@ class EfiFirmwareVolumeExtHeader(object):
     } EFI_FIRMWARE_VOLUME_EXT_HEADER;
     ```
     """
-    def __init__(self):
+    def __init__(self) -> 'EfiFirmwareVolumeExtHeader':
         """Inits an empty object."""
         self.StructString = "=16sL"
         self.FileSystemGuid = None
         self.ExtHeaderSize = None
 
-    def load_from_file(self, file):
+    def load_from_file(self, file: IO) -> 'EfiFirmwareVolumeExtHeader':
         """Loads data into the object from a filestream.
 
         Args:
-            file (obj): An open file that has been seeked to the correct location.
+            file: An open file that has been seeked to the correct location.
 
         Returns:
             (EfiFirmwareVolumeExtHeader): self

@@ -8,6 +8,7 @@
 """Code to support parsing EDK2 files."""
 import logging
 import os
+from typing import Optional, Union
 from warnings import warn
 
 from edk2toollib.uefi.edk2 import path_utilities
@@ -28,7 +29,7 @@ class BaseParser(object):
     """
     operators = ["OR", "AND", "IN", "==", "!=", ">", "<", "<=", ">="]
 
-    def __init__(self, log="BaseParser"):
+    def __init__(self, log: str="BaseParser") -> 'BaseParser':
         """Inits an empty Parser."""
         self.Logger = logging.getLogger(log)
         self.Lines = []
@@ -49,7 +50,7 @@ class BaseParser(object):
     # For include files set the base root path
     #
 
-    def SetEdk2Path(self, pathobj: path_utilities.Edk2Path):
+    def SetEdk2Path(self, pathobj: path_utilities.Edk2Path) -> 'BaseParser':
         """Sets the internal attribute Edk2PathUtil.
 
         !!! note
@@ -87,7 +88,7 @@ class BaseParser(object):
         self._Edk2PathUtil = pathobj
         return self
 
-    def SetBaseAbsPath(self, path):
+    def SetBaseAbsPath(self, path: str) -> 'BaseParser':
         """Sets the attribute RootPath.
 
         Args:
@@ -101,11 +102,11 @@ class BaseParser(object):
         self._ConfigEdk2PathUtil()
         return self
 
-    def _ConfigEdk2PathUtil(self):
+    def _ConfigEdk2PathUtil(self) -> None:
         """Creates the path utility object based on the root path and package paths."""
         self._Edk2PathUtil = path_utilities.Edk2Path(self.RootPath, self.PPs, error_on_invalid_pp=False)
 
-    def SetPackagePaths(self, pps=[]):
+    def SetPackagePaths(self, pps: Optional[list[str]]=None) -> 'BaseParser':
         """Sets the attribute PPs.
 
         Args:
@@ -117,11 +118,11 @@ class BaseParser(object):
             (BaseParser): self
         """
         warn("SetPackagePaths is deprecated.  Use SetEdk2Path instead", DeprecationWarning)
-        self.PPs = pps
+        self.PPs = pps or []
         self._ConfigEdk2PathUtil()
         return self
 
-    def SetInputVars(self, inputdict):
+    def SetInputVars(self, inputdict: dict) -> 'BaseParser':
         """Sets the attribute InputVars.
 
         Args:
@@ -133,7 +134,7 @@ class BaseParser(object):
         self.InputVars = inputdict
         return self
 
-    def FindPath(self, *p):
+    def FindPath(self, *p: str) -> str:
         """Given a path, it will find it relative to the root, the current target file, or the packages path.
 
         Args:
@@ -175,7 +176,7 @@ class BaseParser(object):
         self.Logger.error(f"Invalid file path: {p}")
         return None
 
-    def WriteLinesToFile(self, filepath):
+    def WriteLinesToFile(self, filepath: str) -> None:
         """Write all parsed lines to a file.
 
         Args:
@@ -187,13 +188,13 @@ class BaseParser(object):
             file_handle.write(line + "\n")
         file_handle.close()
 
-    def ComputeResult(self, value, cond, value2):
+    def ComputeResult(self, value: Union[str, int], cond: str, value2: Union[str, int]) -> bool:
         """Compute a logical comaprison.
 
         Args:
-          value (str, int): First value
-          cond (str): comparison to do
-          value2 (str, int): Second value
+          value: First value
+          cond: comparison to do
+          value2: Second value
 
         Returns:
             (bool): result of comparison
@@ -272,7 +273,7 @@ class BaseParser(object):
             self.Logger.error(f"{self.__class__}: Unknown conditional: {cond}")
             raise RuntimeError("Unknown conditional")
 
-    def ConvertToInt(self, value):
+    def ConvertToInt(self, value: Union[str, int]) -> int:
         """Converts a str or int to an int based on prefix.
 
         Args:
@@ -292,7 +293,7 @@ class BaseParser(object):
         else:
             return int(value, 10)
 
-    def PushConditional(self, v: bool, already_true: bool = False):
+    def PushConditional(self, v: bool, already_true: bool = False) -> None:
         """Push new value onto the conditional stack.
 
         Args:
@@ -307,7 +308,7 @@ class BaseParser(object):
         """
         self.ConditionalStack.append((v, already_true))
 
-    def PopConditional(self):
+    def PopConditional(self) -> bool:
         """Pops the current conditional and return the value.
 
         Additionally returns a value specifying if the if/elseif/else block has already
@@ -322,7 +323,7 @@ class BaseParser(object):
             self.Logger.critical("Tried to pop an empty conditional stack.  Line Number %d" % self.CurrentLine)
             return self.ConditionalStack.pop()  # this should cause a crash but will give trace.
 
-    def _FindReplacementForToken(self, token, replace_if_not_found=False):
+    def _FindReplacementForToken(self, token: str, replace_if_not_found: bool=False) -> str:
 
         v = self.LocalVars.get(token)
 
@@ -343,7 +344,7 @@ class BaseParser(object):
 
         return str(v)
 
-    def ReplaceVariables(self, line):
+    def ReplaceVariables(self, line: str) -> str:
         """Replaces a variable in a string.
 
         Args:
@@ -383,7 +384,7 @@ class BaseParser(object):
 
         return result
 
-    def ProcessConditional(self, text):
+    def ProcessConditional(self, text: str) -> bool:
         """Processes a conditional.
 
         Args:
@@ -455,7 +456,7 @@ class BaseParser(object):
 
         return False
 
-    def EvaluateConditional(self, text):
+    def EvaluateConditional(self, text: str) -> bool:
         """Uses a pushdown resolver."""
         text = str(text).strip()
         if text.lower().startswith("!if "):
@@ -526,7 +527,7 @@ class BaseParser(object):
         return bool(final)
 
     @classmethod
-    def _TokenizeConditional(cls, text):
+    def _TokenizeConditional(cls: 'BaseParser', text: str) -> str:
         """Takes in a string that has macros replaced."""
         # TOKENIZER
         # first we create tokens
@@ -606,7 +607,7 @@ class BaseParser(object):
         return collapsed_tokens
 
     @classmethod
-    def _ConvertTokensToPostFix(cls, tokens):
+    def _ConvertTokensToPostFix(cls: 'BaseParser', tokens: list[str]) -> list[str]:
         # convert infix into post fix
         stack = ["("]
         tokens.append(")")  # add an extra parathesis
@@ -652,7 +653,7 @@ class BaseParser(object):
         return expression
 
     @classmethod
-    def _IsOperator(cls, token):
+    def _IsOperator(cls: 'BaseParser', token: str) -> bool:
         if not isinstance(token, str):
             return False
         if token.startswith("!+"):
@@ -662,7 +663,7 @@ class BaseParser(object):
         return token in cls.operators
 
     @classmethod
-    def _GetOperatorPrecedence(cls, token):
+    def _GetOperatorPrecedence(cls: 'BaseParser', token: str) -> int:
         if not cls._IsOperator(token):
             return -1
         if token == "(" or token == ")":
@@ -673,7 +674,7 @@ class BaseParser(object):
             return 1
         return 0
 
-    def InActiveCode(self):
+    def InActiveCode(self) -> bool:
         """Determines what the state of the conditional you are currently in.
 
         Returns:
@@ -687,7 +688,7 @@ class BaseParser(object):
 
         return ret
 
-    def IsGuidString(self, line):
+    def IsGuidString(self, line: str) -> str:
         """Determines if a line is a guid string.
 
         Args:
@@ -703,7 +704,7 @@ class BaseParser(object):
             return True
         return False
 
-    def ParseGuid(self, line):
+    def ParseGuid(self, line: str) -> str:
         """Parse a guid into a different format.
 
         Args:
@@ -784,7 +785,7 @@ class BaseParser(object):
 
         return gu.upper()
 
-    def ResetParserState(self):
+    def ResetParserState(self) -> None:
         """Resets the state of the parser."""
         self.ConditionalStack = []
         self.CurrentSection = ''
@@ -795,11 +796,11 @@ class BaseParser(object):
 class HashFileParser(BaseParser):
     """Base class for Edk2 build files that use # for comments."""
 
-    def __init__(self, log):
+    def __init__(self, log: str) -> 'HashFileParser':
         """Inits an empty Parser for files that use # for comments.."""
         BaseParser.__init__(self, log)
 
-    def StripComment(self, line):
+    def StripComment(self, line: str) -> str:
         """Removes a comment from a line.
 
         Args:
@@ -832,7 +833,7 @@ class HashFileParser(BaseParser):
 
         return ''.join(result).rstrip()
 
-    def ParseNewSection(self, line):
+    def ParseNewSection(self, line: str) -> tuple[bool, str]:
         """Parses a new section line.
 
         Args:

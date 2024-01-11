@@ -27,7 +27,7 @@ SUPPORTED_ARCH = {'amd64': 'amd64',
 class InfHeader(object):
     """The INF header at the start of the INF file."""
     def __init__(self, Name: str, VersionStr: str, CreationDate: str, Arch: str, Provider: str, Manufacturer: str,
-                 InfStrings: 'InfStrings') -> None:
+                 InfStrings: 'InfStrings') -> 'InfHeader':
         """Instantiate an INF header object.
 
         Args:
@@ -47,12 +47,12 @@ class InfHeader(object):
         InfStrings.AddLocalizableString("MfgName", Manufacturer)
 
     @property
-    def Name(self):
+    def Name(self) -> str:
         """Returns the Name attribute."""
         return self._name
 
     @Name.setter
-    def Name(self, value):
+    def Name(self, value: str) -> None:
         """Validates a Name string before setting the attribute.
 
         Raises:
@@ -64,12 +64,12 @@ class InfHeader(object):
         self._name = value
 
     @property
-    def VersionStr(self):
+    def VersionStr(self) -> str:
         """Returns the VersionStr attribute."""
         return self._versionstr
 
     @VersionStr.setter
-    def VersionStr(self, value):
+    def VersionStr(self, value: str) -> None:
         """Validates the VersionStr before setting the attribute.
 
         Raises:
@@ -81,22 +81,22 @@ class InfHeader(object):
         self._versionstr = value
 
     @property
-    def Date(self):
+    def Date(self) -> str:
         """Returns the Date attribute, a datetime object."""
         return self._date
 
     @Date.setter
-    def Date(self, value):
+    def Date(self, value: str) -> None:
         """Sets the Date attribute as a datetime object, from a str."""
         self._date = datetime.strptime(value, "%m/%d/%Y").strftime("%m/%d/%Y")
 
     @property
-    def Arch(self):
+    def Arch(self) -> str:
         """Returns the Architecture."""
         return self._arch
 
     @Arch.setter
-    def Arch(self, value):
+    def Arch(self, value: str) -> str:
         """Validates the Architecture before setting the attribute."""
         key = value.lower()
         if (key not in SUPPORTED_ARCH.keys()):
@@ -131,7 +131,7 @@ class InfFirmware(object):
 
     def __init__(self, Tag: str, Description: str, EsrtGuid: str, VersionInt: str, FirmwareFile: str,
                  InfStrings: 'InfStrings', InfSourceFiles: 'InfSourceFiles', Rollback: Optional[bool] = False,
-                 IntegrityFile: Optional[str] = None) -> None:
+                 IntegrityFile: Optional[str] = None) -> 'InfFirmware':
         """Instantiate an INF firmware object.
 
         Args:
@@ -162,12 +162,12 @@ class InfFirmware(object):
         InfStrings.AddNonLocalizableString("REG_DWORD", "0x00010001")
 
     @property
-    def Tag(self):
+    def Tag(self) -> str:
         """Returns the Tag value."""
         return self._tag
 
     @Tag.setter
-    def Tag(self, value):
+    def Tag(self, value: str) -> None:
         """Verifies a valid tag before setting.
 
         Raises:
@@ -179,23 +179,23 @@ class InfFirmware(object):
         self._tag = value
 
     @property
-    def EsrtGuid(self):
+    def EsrtGuid(self) -> uuid.UUID:
         """Returns the EsrtGuid value."""
         return self._esrt_guid
 
     @EsrtGuid.setter
-    def EsrtGuid(self, value):
+    def EsrtGuid(self, value: uuid.UUID) -> None:
         """Transforms string into actual guid object before setting."""
         uuid.UUID(value)
         self._esrt_guid = value
 
     @property
-    def VersionInt(self):
+    def VersionInt(self) -> int:
         """Returns the VersionInt value."""
         return self._version_int
 
     @VersionInt.setter
-    def VersionInt(self, value):
+    def VersionInt(self, value: int) -> None:
         """Sets the VersionInt value from a string."""
         self._version_int = int(value, base=0)
 
@@ -249,7 +249,7 @@ class InfFirmware(object):
 
 class InfFirmwareSections(object):
     """A collection of firmware sections and associated common metadata."""
-    def __init__(self, Arch: str, InfStrings: 'InfStrings') -> None:
+    def __init__(self, Arch: str, InfStrings: 'InfStrings') -> 'InfFirmwareSections':
         """Instantiate an INF firmware sections object.
 
         Args:
@@ -261,12 +261,12 @@ class InfFirmwareSections(object):
         self.InfStrings = InfStrings
 
     @property
-    def Arch(self):
+    def Arch(self) -> str:
         """Returns the Architecture."""
         return self._arch
 
     @Arch.setter
-    def Arch(self, value):
+    def Arch(self, value: str) -> str:
         """Validates the Architecture before setting the attribute."""
         key = value.lower()
         if (key not in SUPPORTED_ARCH.keys()):
@@ -299,7 +299,7 @@ class InfFirmwareSections(object):
 
 class InfSourceFiles(object):
     """The collection of source files that are referenced by other sections of the INF."""
-    def __init__(self, DiskName: str, InfStrings: 'InfStrings') -> None:
+    def __init__(self, DiskName: str, InfStrings: 'InfStrings') -> 'InfSourceFiles':
         """Instantiate an INF source files object.
 
         Args:
@@ -346,7 +346,7 @@ class InfStrings(object):
 
     strings can be localizable or non-localizable
     """
-    def __init__(self) -> None:
+    def __init__(self) -> 'InfStrings':
         """Instantiate an INF strings object."""
         self.LocalizableStrings = {}
         self.NonLocalizableStrings = {}
@@ -408,7 +408,7 @@ class InfStrings(object):
 class InfFile(object):
     """An object representing an INF file."""
     def __init__(self, Name: str, VersionStr: str, CreationDate: str, Provider: str, ManufacturerName: str,
-                 Arch: Optional[str] = 'amd64', DiskName: Optional[str] = "Firmware Update") -> None:
+                 Arch: Optional[str] = 'amd64', DiskName: Optional[str] = "Firmware Update") -> 'InfFile':
         """Instantiate an INF file object.
 
         This object represents the entire INF file.

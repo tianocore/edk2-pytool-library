@@ -12,11 +12,11 @@ import struct
 
 class Tpm2StreamElement(object):
     """Tpm2 Stream Element."""
-    def __init__(self):
+    def __init__(self) -> 'Tpm2StreamElement':
         """Init an empty Tpm2StreamElement."""
         self.pack_string = ""
 
-    def get_size(self):
+    def get_size(self) -> int:
         """The size of this structure when marshalled."""
         return struct.calcsize(self.pack_string)
 
@@ -25,15 +25,15 @@ class Tpm2StreamPrimitive(Tpm2StreamElement):
     """Tpm2 Stream Primitive.
 
     Attributes:
-        size (int): size of the primitive. 1, 2, 4, or 8 bytes
-        value (): Value of primitive
+        size: size of the primitive. 1, 2, 4, or 8 bytes
+        value: Value of primitive
     """
-    def __init__(self, size, value):
+    def __init__(self, size: int, value: str) -> 'Tpm2StreamPrimitive':
         """Init a primitive value.
 
         Args:
-            size (int): 1, 2, 4, or 8 bytes
-            value (): Value to stream.
+            size: 1, 2, 4, or 8 bytes
+            value: Value to stream.
         """
         super(Tpm2StreamPrimitive, self).__init__()
 
@@ -48,7 +48,7 @@ class Tpm2StreamPrimitive(Tpm2StreamElement):
         }[size]
         self.value = value
 
-    def marshal(self):
+    def marshal(self) -> bytes:
         r"""Serializes the Tpm2 primitive.
 
         Returns:
@@ -61,11 +61,11 @@ class TPM2_COMMAND_HEADER(Tpm2StreamElement):
     """Tpm2 Command header.
 
     Attributes:
-        tag (): tag
-        code (): code
-        size(): size
+        tag: The Tag
+        code: The Code
+        size: The size of the code
     """
-    def __init__(self, tag, size, code):
+    def __init__(self, tag: str, size: str, code: str) -> 'TPM2_COMMAND_HEADER':
         """Init a Tpm2 command."""
         super(TPM2_COMMAND_HEADER, self).__init__()
         self.tag = tag
@@ -73,11 +73,11 @@ class TPM2_COMMAND_HEADER(Tpm2StreamElement):
         self.size = size
         self.pack_string = ">HLL"
 
-    def update_size(self, size):
+    def update_size(self, size: int) -> None:
         """Update size of the whole command."""
         self.size = size
 
-    def marshal(self):
+    def marshal(self) -> str:
         r"""Serializes the Tpm2 command header.
 
         Returns:
@@ -88,20 +88,20 @@ class TPM2_COMMAND_HEADER(Tpm2StreamElement):
 
 class TPM2B(Tpm2StreamElement):
     """Tpm2 B."""
-    def __init__(self, data):
+    def __init__(self, data: str) -> 'TPM2B':
         """Inits the object."""
         super(TPM2B, self).__init__()
         self.data = data
         self.size = len(data)
         self.pack_string = ">H%ds" % self.size
 
-    def update_data(self, data):
+    def update_data(self, data: str) -> None:
         """Updates the data attribute."""
         self.data = data
         self.size = len(data)
         self.pack_string = ">H%ds" % self.size
 
-    def marshal(self):
+    def marshal(self) -> str:
         r"""Serializes the Tpm2B object.
 
         Returns:
@@ -112,7 +112,7 @@ class TPM2B(Tpm2StreamElement):
 
 class Tpm2CommandStream(object):
     """Tpm2 Command Stream."""
-    def __init__(self, tag, size, code):
+    def __init__(self, tag: str, size: int, code: str) -> 'Tpm2CommandStream':
         """Inits a Tpm2 Command stream object."""
         super(Tpm2CommandStream, self).__init__()
         self.header = TPM2_COMMAND_HEADER(tag, size, code)
@@ -120,17 +120,17 @@ class Tpm2CommandStream(object):
         self.header.update_size(self.stream_size)
         self.stream_elements = []
 
-    def get_size(self):
+    def get_size(self) -> int:
         """Returns the stream size."""
         return self.stream_size
 
-    def add_element(self, element):
+    def add_element(self, element: 'Tpm2StreamElement') -> None:
         """Adds an element to the stream list."""
         self.stream_elements.append(element)
         self.stream_size += element.get_size()
         self.header.update_size(self.stream_size)
 
-    def get_stream(self):
+    def get_stream(self) -> str:
         r"""Serializes the Header + elements.
 
         Returns:

@@ -19,7 +19,7 @@ import sys
 import uuid
 from abc import ABC, abstractmethod
 from operator import attrgetter
-from typing import BinaryIO, List
+from typing import IO, Any, BinaryIO, List, Optional, Tuple, Union
 from warnings import warn
 
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
@@ -44,7 +44,7 @@ Sha256Oid = [0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01]
 class CommonUefiStructure(ABC):
     """This structure contains the methods common across all UEFI Structures."""
 
-    def __init__(self):
+    def __init__(self) -> 'CommonUefiStructure':
         """Inits the object."""
 
     @abstractmethod
@@ -73,7 +73,7 @@ class CommonUefiStructure(ABC):
         """
 
     @abstractmethod
-    def print(self, outfs=sys.stdout) -> None:
+    def print(self, outfs: IO=sys.stdout) -> None:
         """Prints the object to the console."""
 
 
@@ -84,18 +84,18 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
 
     def __init__(self,
                  decodefs: BinaryIO = None,
-                 decodesize=0,
+                 decodesize: int=0,
                  createfs: BinaryIO = None,
                  cert: bytes = None,
-                 sigowner: uuid.UUID = None):
+                 sigowner: uuid.UUID = None) -> 'EfiSignatureDataEfiCertX509':
         """Inits the object.
 
         Args:
-            decodefs (BinaryIO): a filestream object of binary content that is the structure encoded
-            decodesize (int):number of bytes to decode as the EFI_SIGNATURE_DATA object (guid + x509 data)
-            createfs (BinaryIO): a filestream object that is the DER encoded x509 cert
-            cert (bytes): the x509 certificate to initialize this object
-            sigowner (uuid.UUID): the uuid object of the signature owner guid
+            decodefs: a filestream object of binary content that is the structure encoded
+            decodesize:number of bytes to decode as the EFI_SIGNATURE_DATA object (guid + x509 data)
+            createfs: a filestream object that is the DER encoded x509 cert
+            cert: the x509 certificate to initialize this object
+            sigowner: the uuid object of the signature owner guid
 
         Raises:
             (ValueError): Invalid FileStream size
@@ -147,16 +147,16 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
         warn("SignatureData is deprecated. Use signature_data instead.", DeprecationWarning, 2)
         self.signature_data = value
 
-    def __lt__(self, other):
+    def __lt__(self, other: 'EfiSignatureDataEfiCertX509') -> bool:
         """Less-than comparison for sorting. Looks at signature_data only, not signature_owner."""
         return self.signature_data < other.signature_data
 
-    def PopulateFromFileStream(self, fs: BinaryIO, decodesize):
+    def PopulateFromFileStream(self, fs: BinaryIO, decodesize: int) -> None:
         """Decodes an object from a filestream.
 
         Args:
-            fs (BinaryIO): filestream
-            decodesize (int): amount to decode.
+            fs: filestream
+            decodesize: amount to decode.
 
         Raises:
             (ValueError): Invalid filestream
@@ -165,12 +165,12 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
         warn("PopulateFromFileStream() is deprecated. Use decode() instead.", DeprecationWarning, 2)
         self.decode(fs, decodesize=decodesize)
 
-    def decode(self, fs: BinaryIO, decodesize):
+    def decode(self, fs: BinaryIO, decodesize: int) -> None:
         """Decodes an object from a filestream.
 
         Args:
-            fs (BinaryIO): filestream
-            decodesize (int): amount to decode.
+            fs: filestream
+            decodesize: amount to decode.
 
         Raises:
             (ValueError): Invalid filestream
@@ -201,12 +201,12 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
             EfiSignatureDataEfiCertX509.STATIC_STRUCT_SIZE
         self.signature_data = fs.read(self.signature_data_size)
 
-    def Print(self, compact: bool = False, outfs=sys.stdout):
+    def Print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
         """Prints to the console."""
         warn("Print() is deprecated. Use print() instead.", DeprecationWarning, 2)
         self.print(compact=compact, outfs=outfs)
 
-    def print(self, compact: bool = False, outfs=sys.stdout):
+    def print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
         """Prints to the console."""
         if not compact:
             outfs.write("EfiSignatureData - EfiSignatureDataEfiCertX509\n")
@@ -232,11 +232,11 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
             outfs.write(s)
             outfs.write("\n")
 
-    def Write(self, fs):
+    def Write(self, fs: BinaryIO) -> None:
         """Write the object to the filestream.
 
         Args:
-            fs (BinaryIO): filestream
+            fs: filestream
 
         Raises:
             (ValueError): Invalid filestream
@@ -245,11 +245,11 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
         warn("Write() is deprecated. Use write() instead.", DeprecationWarning, 2)
         self.write(fs)
 
-    def write(self, fs):
+    def write(self, fs: BinaryIO) -> None:
         """Write the object to the filestream.
 
         Args:
-            fs (BinaryIO): filestream
+            fs: filestream
 
         Raises:
             (ValueError): Invalid filestream
@@ -271,12 +271,12 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
         """Return bytes array produced by Write()."""
         return self.signature_owner.bytes_le + self.signature_data
 
-    def GetTotalSize(self):
+    def GetTotalSize(self) -> int:
         """Returns the total size of the object."""
         warn("GetTotalSize() is deprecated. Use get_total_size() instead.", DeprecationWarning, 2)
         return self.get_total_size()
 
-    def get_total_size(self):
+    def get_total_size(self) -> int:
         """Returns the total size of the object."""
         return EfiSignatureDataEfiCertX509.STATIC_STRUCT_SIZE + self.signature_data_size
 
@@ -290,7 +290,7 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
                  decodefs: BinaryIO = None,
                  createfs: BinaryIO = None,
                  digest: bytes = None,
-                 sigowner: uuid = None):
+                 sigowner: uuid = None) -> 'EfiSignatureDataEfiCertSha256':
         """Inits the object.
 
         Args:
@@ -343,12 +343,12 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
         warn("SignatureData is deprecated. Use signature_data instead.", DeprecationWarning, 2)
         self.signature_data = value
 
-    def decode(self, fs, decodesize: int = -1):
+    def decode(self, fs: BinaryIO, decodesize: int = -1) -> None:
         """Decodes an object from a filestream.
 
         Args:
-            fs (BinaryIO): filestream
-            decodesize (int): size of the object to decode (UNUSED)
+            fs: filestream
+            decodesize: size of the object to decode (UNUSED)
 
         Raises:
             (Exception): Invalid filestream
@@ -369,7 +369,7 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
 
         self.signature_data = fs.read(hashlib.sha256().digest_size)
 
-    def PopulateFromFileStream(self, fs):
+    def PopulateFromFileStream(self, fs: BinaryIO) -> None:
         """Loads an object from a filestream.
 
         Args:
@@ -381,7 +381,7 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
         warn("PopulateFromFileStream() is deprecated. Use decode() instead.", DeprecationWarning, 2)
         self.decode(fs)
 
-    def print(self, compact: bool = False, outfs=sys.stdout):
+    def print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
         """Prints to the console."""
         if not compact:
             outfs.write("EfiSignatureData - EfiSignatureDataEfiCertSha256\n")
@@ -406,16 +406,16 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
             outfs.write(s)
             outfs.write("\n")
 
-    def Print(self, compact: bool = False, outfs=sys.stdout):
+    def Print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
         """Prints to the console."""
         warn("Print() is deprecated. Use print() instead.", DeprecationWarning, 2)
         self.print(compact, outfs)
 
-    def write(self, fs):
+    def write(self, fs: BinaryIO) -> None:
         """Write the object to the filestream.
 
         Args:
-            fs (BinaryIO): filestream
+            fs: filestream
 
         Raises:
             (Exception): Invalid filestream
@@ -429,11 +429,11 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
         fs.write(self.signature_owner.bytes_le)
         fs.write(self.signature_data)
 
-    def Write(self, fs):
+    def Write(self, fs: BinaryIO) -> None:
         """Write the object to the filestream.
 
         Args:
-            fs (BinaryIO): filestream
+            fs: filestream
 
         Raises:
             (Exception): Invalid filestream
@@ -453,11 +453,11 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
         warn("GetBytes() is deprecated. Use encode() instead.", DeprecationWarning, 2)
         return self.encode()
 
-    def get_total_size(self):
+    def get_total_size(self) -> int:
         """Returns the total size of the object."""
         return EfiSignatureDataEfiCertSha256.STATIC_STRUCT_SIZE
 
-    def GetTotalSize(self):
+    def GetTotalSize(self) -> int:
         """Returns the total size of the object."""
         warn("GetTotalSize() is deprecated. Use get_total_size() instead.", DeprecationWarning, 2)
         return self.get_total_size()
@@ -486,15 +486,19 @@ class EfiSignatureDataFactory(object):
     # EFI_CERT_TYPE_PKCS7_GUID = uuid.UUID("0x4aafd29d, 0x68df, 0x49ee, 0x8a, 0xa9, 0x34, 0x7d, 0x37, 0x56, 0x65, 0xa7")
 
     @staticmethod
-    def factory(fs: BinaryIO, type, size):
+    def factory(
+        fs: BinaryIO,
+        type: uuid.UUID,
+        size: int
+    )-> Union[EfiSignatureDataEfiCertSha256, EfiSignatureDataEfiCertX509]:
         """This method is a factory for creating the correct Efi Signature Data object from the filestream.
 
         Uses a Filestream of an existing auth payload.
 
         Args:
-            fs (BinaryIO): filestream to read
-            type (uuid.UUID): Guid of the type
-            size (int): decodesize for x509, struct size for Sha256
+            fs: filestream to read
+            type: Guid of the type
+            size: decodesize for x509, struct size for Sha256
         """
         if (fs is None):
             raise Exception("Invalid File stream")
@@ -512,39 +516,51 @@ class EfiSignatureDataFactory(object):
             raise Exception("Not Supported")
 
     @staticmethod
-    def Factory(fs: BinaryIO, type, size):
+    def Factory(
+        fs: BinaryIO,
+        type: uuid.UUID,
+        size: int
+    ) -> Union[EfiSignatureDataEfiCertSha256, EfiSignatureDataEfiCertX509]:
         """This method is a factory for creating the correct Efi Signature Data object from the filestream.
 
         Uses a Filestream of an existing auth payload.
 
         Args:
-            fs (BinaryIO): filestream to read
-            type (uuid.UUID): Guid of the type
-            size (int): decodesize for x509, struct size for Sha256
+            fs: filestream to read
+            type: Guid of the type
+            size: decodesize for x509, struct size for Sha256
         """
         warn("Factory() is deprecated, use factory() instead", DeprecationWarning)
         return EfiSignatureDataFactory.factory(fs, type, size)
 
     @staticmethod
-    def Create(type, ContentFileStream, sigowner):
+    def Create(
+        type: uuid.UUID,
+        ContentFileStream: BinaryIO,
+        sigowner: uuid.UUID
+    ) -> Union[EfiSignatureDataEfiCertSha256, EfiSignatureDataEfiCertX509]:
         """Create a new EFI Sginature Data Object.
 
         Args:
-            type (uuid.UUID): Guid of the type
-            ContentFileStream (BinaryIO): filestream to read
-            sigowner (uuid.UUID): the uuid object of the signature owner guid
+            type: Guid of the type
+            ContentFileStream: filestream to read
+            sigowner: the uuid object of the signature owner guid
         """
         warn("Create() is deprecated, use create() instead", DeprecationWarning, 2)
         return EfiSignatureDataFactory.create(type, ContentFileStream, sigowner)
 
     @staticmethod
-    def create(type, ContentFileStream, sigowner):
+    def create(
+        type: uuid.UUID,
+        ContentFileStream: BinaryIO,
+        sigowner: uuid.UUID
+    ) -> Union[EfiSignatureDataEfiCertSha256, EfiSignatureDataEfiCertX509]:
         """Create a new EFI Sginature Data Object.
 
         Args:
-            type (uuid.UUID): Guid of the type
-            ContentFileStream (BinaryIO): filestream to read
-            sigowner (uuid.UUID): the uuid object of the signature owner guid
+            type: Guid of the type
+            ContentFileStream: filestream to read
+            sigowner: the uuid object of the signature owner guid
         """
         if (ContentFileStream is None):
             raise Exception("Invalid Content File Stream")
@@ -561,7 +577,7 @@ class EfiSignatureList(CommonUefiStructure):
     """An object representing a EFI_SIGNATURE_LIST."""
     STATIC_STRUCT_SIZE = 16 + 4 + 4 + 4
 
-    def __init__(self, filestream: BinaryIO = None, typeguid: uuid.UUID = None):
+    def __init__(self, filestream: BinaryIO = None, typeguid: uuid.UUID = None) -> 'EfiSignatureList':
         """Inits the object.
 
         Args:
@@ -603,7 +619,7 @@ class EfiSignatureList(CommonUefiStructure):
         warn("SignatureData_List is deprecated. Use signature_data_list instead.", DeprecationWarning, 2)
         self.signature_data_list = value
 
-    def decode(self, fs: BinaryIO):
+    def decode(self, fs: BinaryIO) -> None:
         """Decodes a filestream and generates the structure.
 
         Args:
@@ -664,7 +680,7 @@ class EfiSignatureList(CommonUefiStructure):
                 fs, self.signature_type, self.signature_size)
             self.signature_data_list.append(a)
 
-    def PopulateFromFileStream(self, fs: BinaryIO):
+    def PopulateFromFileStream(self, fs: BinaryIO) -> None:
         """Decodes a filestream and generates the structure.
 
         Args:
@@ -679,12 +695,12 @@ class EfiSignatureList(CommonUefiStructure):
         warn("PopulateFromFileStream() is deprecated, use decode() instead.", DeprecationWarning, 2)
         self.decode(fs)
 
-    def Print(self, compact: bool = False, outfs=sys.stdout):
+    def Print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
         """Prints to the console."""
         warn("Print() is deprecated, use print() instead().", DeprecationWarning, 2)
         self.print(compact=compact, outfs=outfs)
 
-    def print(self, compact: bool = False, outfs=sys.stdout):
+    def print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
         """Prints to the console."""
         if not compact:
             outfs.write("EfiSignatureList\n")
@@ -713,7 +729,7 @@ class EfiSignatureList(CommonUefiStructure):
             for a in self.signature_data_list:
                 a.print(compact=compact, outfs=outfs)
 
-    def Write(self, fs):
+    def Write(self, fs: BinaryIO) -> None:
         """Serializes the object and writes it to a filestream.
 
         Raises:
@@ -723,7 +739,7 @@ class EfiSignatureList(CommonUefiStructure):
         warn("Write() is deprecated, use write() instead", DeprecationWarning, 2)
         self.write(fs)
 
-    def write(self, fs):
+    def write(self, fs: BinaryIO) -> None:
         """Serializes the object and writes it to a filestream.
 
         Raises:
@@ -757,7 +773,7 @@ class EfiSignatureList(CommonUefiStructure):
             self.write(fs)
             return fs.getvalue()
 
-    def AddSignatureHeader(self, SigHeader, SigSize=0):
+    def AddSignatureHeader(self, SigHeader: bytes, SigSize: int=0) -> None:
         """Adds the Signature Header.
 
         Raises:
@@ -784,7 +800,10 @@ class EfiSignatureList(CommonUefiStructure):
             self.signature_size = SigHeader.GetSizeOfSignatureDataEntry()
             self.signature_list_size += self.signature_header_size
 
-    def AddSignatureData(self, SigDataObject):
+    def AddSignatureData(
+        self,
+        SigDataObject: Tuple['EfiSignatureDataEfiCertX509', 'EfiSignatureDataEfiCertSha256']
+    ) -> None:
         """Adds the Signature Data.
 
         Raises:
@@ -803,7 +822,7 @@ class EfiSignatureList(CommonUefiStructure):
         self.signature_data_list.append(SigDataObject)
         self.signature_list_size += self.signature_size
 
-    def MergeSignatureList(self, esl):
+    def MergeSignatureList(self, esl: 'EfiSignatureList') -> None:
         """Add the EfiSignatureData entries within the supplied EfiSignatureList to the current object.
 
         No sorting or deduplication is performed, the EfiSignatureData elements are simply appended
@@ -837,7 +856,7 @@ class EfiSignatureList(CommonUefiStructure):
         self.signature_list_size += esl.signature_list_size - \
             EfiSignatureList.STATIC_STRUCT_SIZE
 
-    def SortBySignatureDataValue(self, deduplicate: bool = True):
+    def SortBySignatureDataValue(self, deduplicate: bool = True) -> 'EfiSignatureList':
         """Sort self's signature_data_list by signature_data values (ignores SigOwner) & optionally deduplicate.
 
         When deduplicate is true, remove duplicate signature_data values from self and return them in an
@@ -889,7 +908,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
     Useful for parsing and building the contents of the Secure Boot variables
     """
 
-    def __init__(self, filestream: BinaryIO = None, EslList: List[EfiSignatureList] = None):
+    def __init__(self, filestream: BinaryIO = None, EslList: List[EfiSignatureList] = None) -> 'EfiSignatureDatabase':
         """Inits an Efi Signature Database object.
 
         Args:
@@ -902,7 +921,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
         else:
             self.EslList = [] if EslList is None else EslList
 
-    def decode(self, fs: BinaryIO, decodesize: int = -1):
+    def decode(self, fs: BinaryIO, decodesize: int = -1) -> None:
         """Decodes a filestream and generates the structure.
 
         Args:
@@ -924,7 +943,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
             Esl = EfiSignatureList(fs)
             self.EslList.append(Esl)
 
-    def PopulateFromFileStream(self, fs: BinaryIO):
+    def PopulateFromFileStream(self, fs: BinaryIO) -> None:
         """Decodes a filestream and generates the structure.
 
         Args:
@@ -936,17 +955,17 @@ class EfiSignatureDatabase(CommonUefiStructure):
         """
         return self.decode(fs)
 
-    def print(self, compact: bool = False, outfs=sys.stdout):
+    def print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
         """Prints to the console."""
         for Esl in self.EslList:
             Esl.print(compact=compact, outfs=outfs)
 
-    def Print(self, compact: bool = False, outfs=sys.stdout):
+    def Print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
         """Prints to the console."""
         warn("Print() is deprecated, use print() instead.", DeprecationWarning, 2)
         self.print(compact=compact, outfs=outfs)
 
-    def Write(self, fs):
+    def Write(self, fs: BinaryIO) -> None:
         """Serializes the object and writes it to a filestream.
 
         Raises:
@@ -955,7 +974,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
         warn("Write() is deprecated, use write() instead.", DeprecationWarning, 2)
         self.write(fs)
 
-    def write(self, fs):
+    def write(self, fs: BinaryIO) -> None:
         """Serializes the object and writes it to a filestream.
 
         Raises:
@@ -977,7 +996,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
             self.write(fs)
             return fs.getvalue()
 
-    def get_canonical_and_dupes(self):
+    def get_canonical_and_dupes(self) -> tuple['EfiSignatureDatabase', 'EfiSignatureDatabase']:
         """Compute and return a tuple containing both a canonicalized database & a database of duplicates.
 
         Returns:
@@ -1037,7 +1056,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
 
         return (canonicalDb, duplicatesDb)
 
-    def GetCanonicalAndDupes(self):
+    def GetCanonicalAndDupes(self) -> tuple['EfiSignatureDatabase', 'EfiSignatureDatabase']:
         """Compute and return a tuple containing both a canonicalized database & a database of duplicates.
 
         Returns:
@@ -1053,22 +1072,22 @@ class EfiSignatureDatabase(CommonUefiStructure):
         warn("GetCanonicalAndDupes() is deprecated. Use get_canonical_and_dupes() instead.", DeprecationWarning, 2)
         return self.get_canonical_and_dupes()
 
-    def get_canonical(self):
+    def get_canonical(self) -> 'EfiSignatureDatabase':
         """Return a canonicalized EfiSignatureDatabase, see GetCanonicalAndDupes() for more details."""
         canonical, _ = self.get_canonical_and_dupes()
         return canonical
 
-    def GetCanonical(self):
+    def GetCanonical(self) -> 'EfiSignatureDatabase':
         """Return a canonicalized EfiSignatureDatabase, see GetCanonicalAndDupes() for more details."""
         warn("GetCanonical() is deprecated. Use get_canonical() instead.", DeprecationWarning, 2)
         return self.get_canonical()
 
-    def get_duplicates(self):
+    def get_duplicates(self) -> 'EfiSignatureDatabase':
         """Return an EfiSignatureDatabase of duplicates, see GetCanonicalAndDupes() for more details."""
         _, dupes = self.get_canonical_and_dupes()
         return dupes
 
-    def GetDuplicates(self):
+    def GetDuplicates(self) -> 'EfiSignatureDatabase':
         """Return an EfiSignatureDatabase of duplicates, see GetCanonicalAndDupes() for more details."""
         warn("GetDuplicates() is deprecated. Use get_duplicates() instead.", DeprecationWarning, 2)
         return self.get_duplicates()
@@ -1079,19 +1098,19 @@ class EfiTime(CommonUefiStructure):
     _StructFormat = '<H6BLh2B'
     _StructSize = struct.calcsize(_StructFormat)
 
-    def __init__(self, time=datetime.datetime.now(), decodefs=None):
+    def __init__(self, time: datetime.datetime=datetime.datetime.now(), decodefs: BinaryIO=None) -> 'EfiTime':
         """Inits an EFI_TIME object.
 
         Args:
-            time (:obj:`datetime`, optional): Inits object with specified date (if decodefs not set)
-            decodefs (:obj:`BinaryIO`, optional): Inits the object with this stream
+            time: Inits object with specified date (if decodefs not set)
+            decodefs: Inits the object with this stream
         """
         if decodefs is None:
             self.time = time
         else:
             self.decode(decodefs)
 
-    def decode(self, fs):
+    def decode(self, fs: BinaryIO) -> datetime.datetime:
         """Decodes a filestream and generates the structure.
 
         Args:
@@ -1133,7 +1152,7 @@ class EfiTime(CommonUefiStructure):
 
         return self.time
 
-    def PopulateFromFileStream(self, fs):
+    def PopulateFromFileStream(self, fs: BinaryIO) -> datetime.datetime:
         """Decodes a filestream and generates the structure.
 
         Args:
@@ -1146,22 +1165,22 @@ class EfiTime(CommonUefiStructure):
         warn("PopulateFromFileStream() is deprecated, use decode() instead", DeprecationWarning, 2)
         return self.decode(fs)
 
-    def Print(self, outfs=sys.stdout):
+    def Print(self, outfs: IO=sys.stdout) -> None:
         """Prints to the console."""
         warn("Print() is deprecated, use print() instead", DeprecationWarning, 2)
         return self.print(outfs)
 
-    def print(self, outfs=sys.stdout):
+    def print(self, outfs: IO=sys.stdout) -> None:
         """Prints to the console."""
         outfs.write("\nEfiTime: %s\n" % datetime.datetime.strftime(
             self.time, "%A, %B %d, %Y %I:%M%p"))
 
-    def Encode(self):
+    def Encode(self) -> bytes:
         """Return's time as a packed EfiTime Structure."""
         warn("Encode() is deprecated use encode() instead", DeprecationWarning, 2)
         return self.encode()
 
-    def encode(self):
+    def encode(self) -> bytes:
         """Get's time as packed EfiTime structure."""
         return struct.pack(
             EfiTime._StructFormat,
@@ -1178,7 +1197,7 @@ class EfiTime(CommonUefiStructure):
             0   # Pad2
         )
 
-    def write(self, fs):
+    def write(self, fs: IO) -> None:
         """Serializes the object and writes it to a filestream.
 
         Raises:
@@ -1189,7 +1208,7 @@ class EfiTime(CommonUefiStructure):
 
         fs.write(self.encode())
 
-    def Write(self, fs):
+    def Write(self, fs: IO) -> None:
         """Serializes the object and writes it to a filestream.
 
         Raises:
@@ -1198,7 +1217,7 @@ class EfiTime(CommonUefiStructure):
         warn("Write is deprecated(), use write() instead", DeprecationWarning, 2)
         self.write(fs)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation of EFI_TIME."""
         return datetime.datetime.strftime(self.time, "%A, %B %d, %Y %I:%M%p")
 
@@ -1206,12 +1225,16 @@ class EfiTime(CommonUefiStructure):
 class EfiVariableAuthentication2(CommonUefiStructure):
     """An object representing a EFI_VARIABLE_AUTHENTICATION_2."""
 
-    def __init__(self, time=datetime.datetime.now(), decodefs=None):
+    def __init__(
+        self,
+        time: datetime.datetime=datetime.datetime.now(),
+        decodefs: BinaryIO=None
+    ) -> 'EfiVariableAuthentication2':
         """Inits an EFI_VARIABLE_AUTHENTICATION_2 object.
 
         Args:
-            time (:obj:`datetime`, optional): Inits object with specified date (if decodefs not set)
-            decodefs (:obj:`BinaryIO`, optional): Inits the object with this stream
+            time: Inits object with specified date (if decodefs not set)
+            decodefs: Inits the object with this stream
         """
         if decodefs:
             self.decode(decodefs)
@@ -1225,10 +1248,11 @@ class EfiVariableAuthentication2(CommonUefiStructure):
         # Most variables do not have a sig list
         self.sig_list_payload = None
 
-    def encode(self):
+    def encode(self) -> bytes:
         """Encodes a new variable into a binary representation.
 
-        :return: buffer - binary representation of the variable
+        Returns:
+            (bytes): binary representation of the variable
         """
         buffer = self.time.encode() + self.auth_info.encode()
 
@@ -1237,13 +1261,14 @@ class EfiVariableAuthentication2(CommonUefiStructure):
 
         return buffer
 
-    def Encode(self, outfs=None):
+    def Encode(self, outfs: BinaryIO=None) -> bytes:
         """Encodes a new variable into a binary representation.
 
         Args:
-            outfs (BinaryIO): [default: None] write's to a file stream if provided
+            outfs: [default: None] write's to a file stream if provided
 
-        :return: buffer - binary representation of the variable
+        Returns:
+            (bytes): binary representation of the variable
         """
         warn("Encode() is deprecated, use encode() instead", DeprecationWarning, 2)
 
@@ -1253,11 +1278,11 @@ class EfiVariableAuthentication2(CommonUefiStructure):
 
         return buffer
 
-    def decode(self, fs):
+    def decode(self, fs: BinaryIO) -> None:
         """Decodes a filestream and generates the structure.
 
         Args:
-            fs (BinaryIO): filestream to load from
+            fs: filestream to load from
 
         Raises:
             (Exception): Invalid filestream
@@ -1271,11 +1296,11 @@ class EfiVariableAuthentication2(CommonUefiStructure):
 
         self.set_payload(fs)
 
-    def PopulateFromFileStream(self, fs):
+    def PopulateFromFileStream(self, fs: BinaryIO) -> None:
         """Decodes a filestream and generates the structure.
 
         Args:
-            fs (BinaryIO): filestream to load from
+            fs: filestream to load from
 
         Raises:
             (ValueError): Invalid filestream
@@ -1283,7 +1308,7 @@ class EfiVariableAuthentication2(CommonUefiStructure):
         warn("PopulateFromFileStream() is deprecated, use decode() instead.", DeprecationWarning, 2)
         self.decode(fs)
 
-    def print(self, outfs=sys.stdout):
+    def print(self, outfs: IO=sys.stdout) -> None:
         """Prints to the console."""
         outfs.write("EfiVariableAuthentication2\n")
         self.time.print(outfs)
@@ -1300,16 +1325,16 @@ class EfiVariableAuthentication2(CommonUefiStructure):
                 raise Exception("Invalid Payload Data Size vs Length of data")
             hexdump(sdl, outfs=outfs)
 
-    def Print(self, outfs=sys.stdout):
+    def Print(self, outfs: IO=sys.stdout) -> None:
         """Prints to the console."""
         warn("Print() is deprecated, use print() instead.", DeprecationWarning, 2)
         self.print(outfs=outfs)
 
-    def write(self, fs) -> None:
+    def write(self, fs: BinaryIO) -> None:
         """Serializes the object and writes it to a filestream.
 
         Args:
-            fs (BinaryIO): filestream to write to
+            fs: filestream to write to
 
         Raises:
             (ValueError): Invalid filestream
@@ -1322,22 +1347,22 @@ class EfiVariableAuthentication2(CommonUefiStructure):
         if self.payload is not None:
             fs.write(self.payload)
 
-    def Write(self, fs) -> None:
+    def Write(self, fs: BinaryIO) -> None:
         """Serializes the object and writes it to a filestream.
 
         Args:
-            fs (BinaryIO): filestream to write to
+            fs: filestream to write to
 
         Raises:
             (ValueError): Invalid filestream
         """
         return self.write(fs)
 
-    def SetPayload(self, fs) -> None:
+    def SetPayload(self, fs: BinaryIO) -> None:
         """Decodes a filestream and generates the payload.
 
         Args:
-            fs (BinaryIO): filestream to load from
+            fs: filestream to load from
 
         Raises:
             (ValueError): Invalid filestream
@@ -1345,11 +1370,11 @@ class EfiVariableAuthentication2(CommonUefiStructure):
         warn("SetPayload() is deprecated, use set_payload() instead.", DeprecationWarning, 2)
         self.set_payload(fs)
 
-    def set_payload(self, fs) -> None:
+    def set_payload(self, fs: BinaryIO) -> None:
         """Decodes a filestream and generates the payload.
 
         Args:
-            fs (BinaryIO): filestream to load from
+            fs: filestream to load from
 
         Raises:
             (ValueError): Invalid filestream
@@ -1384,7 +1409,14 @@ class EfiVariableAuthentication2(CommonUefiStructure):
 class EfiVariableAuthentication2Builder(object):
     """Builds EfiVariableAuthentication2 variables."""
 
-    def __init__(self, name, guid, attributes, payload=None, efi_time=datetime.datetime.now()):
+    def __init__(
+        self,
+        name: str,
+        guid: str,
+        attributes: Union[int, str],
+        payload: Optional[Union[io.BytesIO, bytes]]=None,
+        efi_time: datetime.datetime=datetime.datetime.now()
+    ) -> 'EfiVariableAuthentication2Builder':
         """Builds a EfiVariableAuthentication2 structure.
 
         Args:
@@ -1431,11 +1463,11 @@ class EfiVariableAuthentication2Builder(object):
         """Returns the Signature of the digest (PKCS#7 ContentInfo or SignedData structure)."""
         return self.signature
 
-    def update_payload(self, payload) -> None:
+    def update_payload(self, payload: Union[io.BytesIO, bytes]) -> None:
         """Updates the authenticated variables payload and ultimately the digest.
 
         Args:
-            payload (io.ByteIO | bytes): byte array or byte file stream of variable data
+            payload: byte array or byte file stream of variable data
 
         Returns:
             None
@@ -1459,8 +1491,12 @@ class EfiVariableAuthentication2Builder(object):
 
         self.authenticated_variable.set_payload(payload)
 
-    def sign(self, signing_certificate: Certificate, signing_private_key: RSAPrivateKey,
-             additional_certificates: List = [], **kwargs) -> None:
+    def sign(
+        self, signing_certificate: Certificate,
+        signing_private_key: RSAPrivateKey,
+        additional_certificates: List = [],
+        **kwargs: Any
+    ) -> None:
         """Signs an authenticated variable.
 
         Args:
@@ -1502,7 +1538,7 @@ class EfiVariableAuthentication2Builder(object):
             # Add the certificate for verification
             self.signature_builder = self.signature_builder.add_certificate(cert.certificate)
 
-    def finalize(self, omit_content_info=True) -> EfiVariableAuthentication2:
+    def finalize(self, omit_content_info: bool=True) -> EfiVariableAuthentication2:
         """Finalizes the signature and returns a EfiVariableAuthentication2.
 
         Args:
@@ -1546,7 +1582,12 @@ class EfiVariableAuthentication2Builder(object):
 
 class EFiVariableAuthentication2(EfiVariableAuthentication2):
     """An object representing a EFI_VARIABLE_AUTHENTICATION_2. DEPRECATED."""
-    def __init__(self, time=datetime.datetime.now(), decodefs=None):
+    def __init__(
+        self,
+        time: datetime.datetime=datetime.datetime.now(),
+        decodefs:
+        BinaryIO=None
+    ) -> 'EFiVariableAuthentication2':
         """DEPRECATED. Use EfiVariableAuthentication2() instead. Initializes a EFiVariableAuthentication2."""
         warn("EFiVariableAuthentication2() is deprecated, use EfiVariableAuthentication2() instead.", DeprecationWarning, 2)  # noqa: E501
         super().__init__(time, decodefs=decodefs)

@@ -9,6 +9,7 @@
 """Module for working with UEFI Authenticated Variable Atrributes."""
 
 import struct
+from typing import IO, Union
 
 EFI_VARIABLE_NON_VOLATILE = 0x00000001
 EFI_VARIABLE_BOOTSERVICE_ACCESS = 0x00000002
@@ -47,7 +48,7 @@ class EfiVariableAttributes(object):
     }
     INVERSE_STRING_MAP = {v: k for k, v in STRING_MAP.items()}
 
-    def __init__(self, attributes=0x0000_0000, decodefs=None) -> None:
+    def __init__(self, attributes: Union[int, str]=0x0000_0000, decodefs: IO=None) -> 'EfiVariableAttributes':
         """Creates a EfiVariableAttributes object.
 
         Args:
@@ -62,11 +63,11 @@ class EfiVariableAttributes(object):
         else:
             self.update(attributes)
 
-    def update(self, attributes: 0x0000_00000) -> None:
+    def update(self, attributes: Union[int, str] = 0x0000_00000) -> None:
         """Updates instance to provided attributes.
 
         Args:
-            attributes (int | str): attributes to parse
+            attributes: attributes to parse
 
         Returns:
             None
@@ -83,11 +84,11 @@ class EfiVariableAttributes(object):
                 f"Invalid type: {type(attributes)}")
 
     @staticmethod
-    def parse_attributes_str(attributes_str) -> int:
+    def parse_attributes_str(attributes_str: str) -> int:
         """Converts attributes string into integer representation.
 
         Args:
-            attributes_str (str): string containing attributes that have been comma delimated.
+            attributes_str: string containing attributes that have been comma delimated.
 
         Examples:
             ```python
@@ -130,7 +131,7 @@ class EfiVariableAttributes(object):
 
         return attributes
 
-    def decode(self, fs) -> int:
+    def decode(self, fs: IO) -> int:
         """Reads in attributes from a file stream.
 
         This updates the attributes value of the object
@@ -154,7 +155,7 @@ class EfiVariableAttributes(object):
 
         return attributes
 
-    def encode(self) -> bytes:
+    def encode(self,) -> bytes:
         """Returns the attributes as a packed structure.
 
         !!! Examples
@@ -171,7 +172,7 @@ class EfiVariableAttributes(object):
         """
         return struct.pack(EfiVariableAttributes._struct_format, self.attributes)
 
-    def get_short_string(self) -> str:
+    def get_short_string(self,) -> str:
         """Short form string representation of the attributes.
 
         !!! Examples
@@ -190,7 +191,7 @@ class EfiVariableAttributes(object):
                 result.append(EfiVariableAttributes.SHORT_STRING_MAP[key])
         return ",".join(result)
 
-    def __str__(self) -> str:
+    def __str__(self,) -> str:
         """String representation of the attributes.
 
         Returns:
@@ -202,6 +203,6 @@ class EfiVariableAttributes(object):
                 result.append(EfiVariableAttributes.STRING_MAP[key])
         return ",".join(result)
 
-    def __int__(self):
+    def __int__(self,) -> int:
         """Returns attributes as an int."""
         return self.attributes

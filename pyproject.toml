@@ -70,12 +70,17 @@ select = [
     "F", # PyFlakes
     "D", # pydocstyle
     "I", # isort
-    "PIE", # flake8 - PIE
+    "PIE", # flake8 - PIEpip
+    "ANN", 
 ]
 line-length = 120
+ignore = ["ANN101"]
 
 [tool.ruff.pydocstyle]
 convention = "google"
+
+[tool.ruff.flake8-annotations]
+allow-star-arg-any = true
 
 [tool.pytest.ini_options]
 testpaths = [

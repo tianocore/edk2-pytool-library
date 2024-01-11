@@ -8,7 +8,7 @@ import re
 import sys
 from os.path import abspath, dirname
 from pathlib import Path
-from typing import Union
+from typing import Callable, Optional, Union
 
 """Original file is from
 https://github.com/mherrmann/gitignore_parser/blob/master/gitignore_parser.py
@@ -41,7 +41,7 @@ SOFTWARE.
 """
 
 
-def handle_negation(file_path, rules):
+def handle_negation(file_path: str, rules: list) -> bool:
     """Allows `matched` value override if negation is true.
 
     Otherwise `matched` cannot be overwritten with an exception.
@@ -53,7 +53,7 @@ def handle_negation(file_path, rules):
     return False
 
 
-def parse_gitignore_file(full_path, base_dir=None):
+def parse_gitignore_file(full_path: str, base_dir: Optional[str]=None) -> Callable:
     """Parse a gitignore file."""
     if base_dir is None:
         base_dir = dirname(full_path)
@@ -62,7 +62,7 @@ def parse_gitignore_file(full_path, base_dir=None):
     return parse_gitignore_lines(lines, full_path, base_dir)
 
 
-def parse_gitignore_lines(lines: list, full_path: str, base_dir: str):
+def parse_gitignore_lines(lines: list, full_path: str, base_dir: str) -> Callable:
     """Parse a list of lines matching gitignore syntax."""
     counter = 0
     rules = []
@@ -81,7 +81,7 @@ def parse_gitignore_lines(lines: list, full_path: str, base_dir: str):
         return lambda file_path: handle_negation(file_path, rules)
 
 
-def rule_from_pattern(pattern, base_path=None, source=None):
+def rule_from_pattern(pattern: str, base_path: Optional[str]=None, source: Optional[str]=None) ->'IgnoreRule':
     """Generates an IgnoreRule object from a pattern.
 
     Take a .gitignore match pattern, such as "*.py[cod]" or "**/*.bak",
@@ -167,15 +167,15 @@ IGNORE_RULE_FIELDS = [
 
 class IgnoreRule(collections.namedtuple('IgnoreRule_', IGNORE_RULE_FIELDS)):
     """Class representing a single rule parsed from a .ignore file."""
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation (user friendly) of the rule."""
         return self.pattern
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """String representation (developer friendly) of the rule."""
         return ''.join(['IgnoreRule(\'', self.pattern, '\')'])
 
-    def match(self, abs_path):
+    def match(self, abs_path: str) -> bool:
         """Returns True or False if the path matches the rule."""
         matched = False
         if self.base_path:
@@ -201,8 +201,8 @@ class IgnoreRule(collections.namedtuple('IgnoreRule_', IGNORE_RULE_FIELDS)):
 # Frustratingly, python's fnmatch doesn't provide the FNM_PATHNAME
 # option that .gitignore's behavior depends on.
 def fnmatch_pathname_to_regex(
-    pattern, directory_only: bool, negation: bool, anchored: bool = False
-):
+    pattern: str, directory_only: bool, negation: bool, anchored: bool = False
+) -> str:
     """Implements fnmatch style-behavior, as though with FNM_PATHNAME flagged.
 
     WARNING: the path seperator will not match shell-style '*' and '.' wildcards.

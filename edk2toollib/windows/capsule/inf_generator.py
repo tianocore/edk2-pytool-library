@@ -15,11 +15,12 @@ import logging
 import os
 import re
 import uuid
+from typing import Optional
 
 
 class InfSection(object):
     """Object representing an INF Section."""
-    def __init__(self, name) -> None:
+    def __init__(self, name: str) -> 'InfSection':
         """Inits the object."""
         self.Name = name
         self.Items = []
@@ -103,7 +104,16 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
                       'aarch64': 'ARM64'
                       }
 
-    def __init__(self, name_string, provider, esrt_guid, arch, description_string, version_string, version_hex):
+    def __init__(
+        self,
+        name_string: str,
+        provider: str,
+        esrt_guid: str,
+        arch: str,
+        description_string: str,
+        version_string: str,
+        version_hex: str
+    ) -> None:
         """Inits the object with data necessary to generate an INF file.
 
         Args:
@@ -127,12 +137,12 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         self._integrityfile = None
 
     @property
-    def Name(self):
+    def Name(self) -> str:
         """Getter for the Name Attribute."""
         return self._name
 
     @Name.setter
-    def Name(self, value):
+    def Name(self, value: str) -> None:
         """Setter for the Name Attribute.
 
         Raises:
@@ -145,17 +155,17 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         self._name = value
 
     @property
-    def Provider(self):
+    def Provider(self) -> str:
         """Getter for the Provider Attribute."""
         return self._provider
 
     @Provider.setter
-    def Provider(self, value):
+    def Provider(self, value: str) -> None:
         """Setter for the Provider Attribute."""
         self._provider = value
 
     @property
-    def Manufacturer(self):
+    def Manufacturer(self) -> str:
         """Getter for the Manufacturer Attribute.
 
         NOTE: Returns Provider attribute if Manufacturer attribute is not set.
@@ -166,27 +176,27 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         return self._manufacturer
 
     @Manufacturer.setter
-    def Manufacturer(self, value):
+    def Manufacturer(self, value: str) -> None:
         """Setter for the Manufacturer Attribute."""
         self._manufacturer = value
 
     @property
-    def Description(self):
+    def Description(self) -> str:
         """Getter for the Description Attribute."""
         return self._description
 
     @Description.setter
-    def Description(self, value):
+    def Description(self, value: str) -> None:
         """Setter for the Description Attribute."""
         self._description = value
 
     @property
-    def EsrtGuid(self):
+    def EsrtGuid(self) -> str:
         """Getter for the EsrtGuid Attribute."""
         return self._esrt_guid
 
     @EsrtGuid.setter
-    def EsrtGuid(self, value):
+    def EsrtGuid(self, value: str) -> None:
         """Setter for the EsrtGuid Attribute.
 
         Raises:
@@ -197,12 +207,12 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         self._esrt_guid = value
 
     @property
-    def VersionString(self):
+    def VersionString(self) -> str:
         """Getter for VersionString attribute."""
         return self._versionstring
 
     @VersionString.setter
-    def VersionString(self, value):
+    def VersionString(self, value: str) -> None:
         """Setter for the VersionString attribute.
 
         Raises:
@@ -215,12 +225,12 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         self._versionstring = value
 
     @property
-    def VersionHex(self):
+    def VersionHex(self) -> str:
         """Getter for the VersionHex attribute."""
         return "0x%X" % self._versionhex
 
     @VersionHex.setter
-    def VersionHex(self, value):
+    def VersionHex(self, value: int) -> None:
         """Setter for the VersionHex attribute.
 
         Raises:
@@ -233,12 +243,12 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         self._versionhex = a
 
     @property
-    def Arch(self):
+    def Arch(self) -> str:
         """Getter for the Arch property."""
         return self._arch
 
     @Arch.setter
-    def Arch(self, value):
+    def Arch(self, value: str) -> None:
         """Setter for the Arch Attribute.
 
         Raises:
@@ -251,7 +261,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         self._arch = InfGenerator.SUPPORTED_ARCH[key]
 
     @property
-    def Date(self):
+    def Date(self) -> str:
         """Getter for the date attribute.
 
         Formats to a m/d/y str before returning
@@ -259,7 +269,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         return self._date.strftime("%m/%d/%Y")
 
     @Date.setter
-    def Date(self, value):
+    def Date(self, value: datetime.date) -> None:
         """Setter for the Date attribute.
 
         Raises:
@@ -270,7 +280,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         self._date = value
 
     @property
-    def IntegrityFilename(self):
+    def IntegrityFilename(self) -> Optional[str]:
         """Getter for the Integrity File Name.
 
         Transforms value into string.
@@ -278,15 +288,15 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         return str(self._integrityfile) if self._integrityfile is not None else ""
 
     @IntegrityFilename.setter
-    def IntegrityFilename(self, value):
+    def IntegrityFilename(self, value: str) -> None:
         """Setter for the IntegrityFile name."""
         self._integrityfile = value
 
-    def MakeInf(self, OutputInfFilePath, FirmwareBinFileName, Rollback=False):
+    def MakeInf(self, OutputInfFilePath: os.PathLike, FirmwareBinFileName: str, Rollback: bool=False) -> int:
         """Generates the INF with provided information.
 
         Args:
-            OutputInfFilePath (PathLike): Path to existing file
+            OutputInfFilePath (os.PathLike): Path to existing file
             FirmwareBinFileName (str): File Name
             Rollback (:obj:`bool`, optional): Generate with Rollback template
         """

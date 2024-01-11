@@ -9,6 +9,7 @@
 """Module containing helper classes and functions to work with Variable Policy structures and substructures."""
 import struct
 import uuid
+from typing import IO
 
 from edk2toollib.uefi.uefi_multi_phase import EfiVariableAttributes
 
@@ -26,17 +27,17 @@ class VariableLockOnVarStatePolicy(object):
     _HdrStructFormat = "<16sBB"
     _HdrStructSize = struct.calcsize(_HdrStructFormat)
 
-    def __init__(self):
+    def __init__(self) -> 'VariableLockOnVarStatePolicy':
         """Initializes the Variable Lock On Var State Policy."""
         self.Namespace = uuid.UUID(bytes=b'\x00' * 16)
         self.Value = 0
         self.Name = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation of the object."""
         return "VARIABLE_LOCK_ON_VAR_STATE_POLICY(%s, %d, %s)" % (self.Namespace, self.Value, self.Name)
 
-    def decode(self, buffer):
+    def decode(self, buffer: IO) -> bytes:
         """Load this object from a bytes buffer.
 
         Returns:
@@ -107,7 +108,7 @@ class VariablePolicyEntry(object):
         TYPE_LOCK_ON_VAR_STATE: "ON_VAR_STATE",
     }
 
-    def __init__(self):
+    def __init__(self) -> 'VariablePolicyEntry':
         """Initializes the Variable Policy Entry."""
         self.Version = VariablePolicyEntry.ENTRY_REVISION
         self.Size = VariablePolicyEntry._HdrStructSize
@@ -121,7 +122,7 @@ class VariablePolicyEntry(object):
         self.LockPolicy = None
         self.Name = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation of the object."""
         result = "VARIABLE_POLICY_ENTRY(%s, %s)\n" % (self.Namespace, self.Name)
 
@@ -138,12 +139,12 @@ class VariablePolicyEntry(object):
         return result
 
     @staticmethod
-    def csv_header():
+    def csv_header() -> list:
         """Returns a list containing the names of the ordered columns that are produced by csv_row()."""
         return ['Namespace', 'Name', 'LockPolicyType', 'VarStateNamespace', 'VarStateName',
                 'VarStateValue', 'MinSize', 'MaxSize', 'AttributesMustHave', 'AttributesCantHave']
 
-    def csv_row(self, guid_xref: dict = None):
+    def csv_row(self, guid_xref: dict = None) -> list:
         """Returns a list containing the elements of this structure.
 
         (in the same order as the csv_header) ready to be written to a csv file
@@ -172,11 +173,11 @@ class VariablePolicyEntry(object):
 
         return result
 
-    def decode(self, buffer):
+    def decode(self, buffer: IO) -> bytes:
         """Load this object from a bytes buffer.
 
         Returns:
-            (obj): Any remaining buffer
+            (bytes): Any remaining buffer
         """
         (self.Version, self.Size, self.OffsetToName, _namespace,
             self.MinSize, self.MaxSize, self.AttributesMustHave,

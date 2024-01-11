@@ -25,7 +25,7 @@ class FdfParser(HashFileParser):
 
     Note: Dict Key Value pairs come from lines that contain a single =.
     """
-    def __init__(self):
+    def __init__(self) -> 'HashFileParser':
         """Inits an empty FDF parser."""
         HashFileParser.__init__(self, 'ModuleFdfParser')
         self.Lines = []
@@ -36,7 +36,7 @@ class FdfParser(HashFileParser):
         self.CurrentSection = []
         self.Path = ""
 
-    def GetNextLine(self):
+    def GetNextLine(self) -> str:
         """Returns the next line to parse.
 
         Performs manipulation on the line like replacing variables,
@@ -64,14 +64,14 @@ class FdfParser(HashFileParser):
 
         return sline
 
-    def InsertLinesFromFile(self, file_path: str):
+    def InsertLinesFromFile(self, file_path: str) -> None:
         """Adds additional lines to the Lines Attribute from the provided file."""
         with open(file_path, 'r') as lines_file:
             self.Lines += reversed(lines_file.readlines())
             # Back off the line count to ignore the include line itself.
             self.CurrentLine -= 1
 
-    def ParseFile(self, filepath):
+    def ParseFile(self, filepath: str) -> None:
         """Parses the provided FDF file."""
         self.Logger.debug("Parsing file: %s" % filepath)
         if (not os.path.isabs(filepath)):
