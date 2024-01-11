@@ -152,7 +152,7 @@ def FindAllWithVsWhere(products: str = "*", vs_version: str = None) -> Optional[
 
     Args:
         products (:obj:`str`, optional): product defined by vswhere tool
-        vs_version (:obj:`str, optional): helper to find version of supported VS version (example vs2019)
+        vs_version (:obj:`str`, optional): helper to find version of supported VS version (example vs2019)
 
     Returns:
         (list[str]): VsWhere products
