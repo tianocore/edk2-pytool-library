@@ -11,6 +11,7 @@ import logging
 import re
 import sqlite3
 from pathlib import Path
+from typing import Any
 
 from edk2toollib.database.tables.base_table import TableGenerator
 from edk2toollib.uefi.edk2.parsers.fdf_parser import FdfParser as FdfP
@@ -40,7 +41,7 @@ class InstancedFvTable(TableGenerator):
 
     RULEOVERRIDE = re.compile(r'RuleOverride\s*=.+\s+(.+\.inf)', re.IGNORECASE)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> 'InstancedFvTable':
         """Initialize the query with the specific settings."""
 
 
@@ -48,7 +49,7 @@ class InstancedFvTable(TableGenerator):
         """Create the tables necessary for this parser."""
         db_cursor.execute(CREATE_INSTANCED_FV_TABLE)
 
-    def parse(self, db_cursor: sqlite3.Cursor, pathobj: Edk2Path, env_id, env) -> None:
+    def parse(self, db_cursor: sqlite3.Cursor, pathobj: Edk2Path, env_id: str, env: dict) -> None:
         """Parse the workspace and update the database."""
         self.pathobj = pathobj
         self.ws = Path(self.pathobj.WorkspacePath)

@@ -11,6 +11,7 @@ import re
 import time
 from pathlib import Path
 from sqlite3 import Cursor
+from typing import Any
 
 from joblib import Parallel, delayed
 
@@ -38,7 +39,7 @@ VALUES (?, ?, ?, ?, ?, ?)
 
 class SourceTable(TableGenerator):
     """A Table Generator that parses all c and h files in the workspace."""
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> 'SourceTable':
         """Initializes the Source Table Parser.
 
         Args:
@@ -71,7 +72,7 @@ class SourceTable(TableGenerator):
 
         db_cursor.executemany(INSERT_SOURCE_ROW, src_entries)
 
-    def _parse_file(self, ws, filename: Path) -> dict:
+    def _parse_file(self, _ws: str, filename: Path) -> dict:
         """Parse a C file and return the results."""
         license = ""
         with open(filename, 'r', encoding='cp850') as f:

@@ -6,6 +6,7 @@
 ##
 """An interface for a parser that generates a sqlite3 table maintained by Edk2DB."""
 import sqlite3
+from typing import Any
 
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
@@ -19,7 +20,7 @@ class TableGenerator:
     the parser has finished executing and has returned. Review sqlite3 documentation for more information on
     how to interact with the database.
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> 'TableGenerator':
         """Initialize the query with the specific settings."""
 
     def create_tables(self, db_cursor: sqlite3.Cursor) -> None:

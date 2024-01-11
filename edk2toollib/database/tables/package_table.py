@@ -8,6 +8,7 @@
 """A module to generate a table containing information about a package."""
 from pathlib import Path
 from sqlite3 import Cursor
+from typing import Any
 
 import git
 
@@ -27,7 +28,7 @@ VALUES (?, ?)
 """
 class PackageTable(TableGenerator):
     """A Table Generator that associates packages with their repositories."""
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> 'PackageTable':
         """Initializes the Repository Table Parser.
 
         Args:

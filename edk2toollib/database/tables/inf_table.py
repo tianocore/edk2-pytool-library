@@ -11,6 +11,7 @@ import logging
 import time
 from pathlib import Path
 from sqlite3 import Cursor
+from typing import Any
 
 from joblib import Parallel, delayed
 
@@ -41,7 +42,7 @@ VALUES (?, ?, ?, ?, ?)
 class InfTable(TableGenerator):
     """A Table Generator that parses all INF files in the workspace and generates a table."""
     # TODO: Add phase, protocol, guid, ppi, pcd tables and associations once necessary
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> 'InfTable':
         """Initializes the INF Table Parser.
 
         Args:
@@ -83,7 +84,7 @@ class InfTable(TableGenerator):
                 row = (env_id, "inf", inf["PATH"], "source", source)
                 db_cursor.execute(INSERT_JUNCTION_ROW, row)
 
-    def _parse_file(self, filename, pathobj) -> dict:
+    def _parse_file(self, filename: str, pathobj: Edk2Path) -> dict:
         inf_parser = InfP().SetEdk2Path(pathobj)
         inf_parser.ParseFile(filename)
 

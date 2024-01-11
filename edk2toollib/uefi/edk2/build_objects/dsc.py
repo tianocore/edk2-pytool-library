@@ -38,7 +38,7 @@ class dsc_set(set):
 class dsc_dict(collections.OrderedDict):
     """A dictionary that allows specific classes as headers and sections."""
 
-    def __init__(self, allowed_key_classes: Optional[str]=None, allowed_value_classes: Optional[Any]=None) -> None:
+    def __init__(self, allowed_key_classes: Optional[str]=None, allowed_value_classes: Optional[Any]=None) -> None: # noqa: ANN401
         """Initializes a dsc_dict."""
         if allowed_key_classes is None:
             allowed_key_classes = []

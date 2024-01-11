@@ -133,12 +133,12 @@ class Edk2Path(object):
                         )
 
     @property
-    def WorkspacePath(self):
+    def WorkspacePath(self: 'Edk2Path') -> str:
         """Workspace Path as a string."""
         return str(self._workspace_path)
 
     @property
-    def PackagePathList(self):
+    def PackagePathList(self: 'Edk2Path') -> list[str]:
         """List of package paths as strings."""
         return [str(p) for p in self._package_path_list]
 

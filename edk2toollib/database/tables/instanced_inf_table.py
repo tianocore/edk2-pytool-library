@@ -9,8 +9,10 @@
 """A module to run the InstancedInf table generator against a dsc, adding instanced inf information to the database."""
 import logging
 import re
+import sqlite3
 from pathlib import Path
 from sqlite3 import Cursor
+from typing import Any
 
 from edk2toollib.database.tables.base_table import TableGenerator
 from edk2toollib.uefi.edk2.parsers.dsc_parser import DscParser as DscP
@@ -78,7 +80,7 @@ class InstancedInfTable(TableGenerator):
     SECTION_REGEX = re.compile(r"\[(.*)\]")
     OVERRIDE_REGEX = re.compile(r"\<(.*)\>")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> 'InstancedInfTable':
         """Initialize the query with the specific settings."""
         self._parsed_infs = {}
 
@@ -131,7 +133,7 @@ class InstancedInfTable(TableGenerator):
         inf_entries = self._build_inf_table(dscp)
         return self._insert_db_rows(db_cursor, env_id, inf_entries)
 
-    def _insert_db_rows(self, db_cursor, env_id, inf_entries) -> int:
+    def _insert_db_rows(self, db_cursor: sqlite3.Cursor, env_id: str, inf_entries: list) -> int:
         """Inserts data into the database.
 
         Inserts all inf's into the instanced_inf table and links source files and used libraries via the junction
@@ -156,7 +158,7 @@ class InstancedInfTable(TableGenerator):
             rows += [(env_id, e["COMPONENT"], e["PATH"], library) for library in e["LIBRARIES_USED"]]
         db_cursor.executemany(INSERT_INF_TABLE_JUNCTION_ROW, rows)
 
-    def _build_inf_table(self, dscp: DscP):
+    def _build_inf_table(self, dscp: DscP) -> list:
         """Create the instanced inf entries, including components and libraries.
 
         Multiple entries of the same library will exist if multiple components use it.
@@ -199,7 +201,7 @@ class InstancedInfTable(TableGenerator):
         override_dict: dict,
         scope: str,
         visited: list[str]
-    ):
+    ) -> str:
         """Recurses down all libraries starting from a single INF.
 
         Will immediately return if the INF has already been visited.
@@ -246,7 +248,7 @@ class InstancedInfTable(TableGenerator):
                             instance, cls, component, library_dict, override_dict, scope, visited
                         )
         # Transform path to edk2 relative form (POSIX)
-        def to_posix(path):
+        def to_posix(path: str) -> str:
             if path is None:
                 return None
             return Path(path).as_posix()
@@ -281,7 +283,13 @@ class InstancedInfTable(TableGenerator):
         })
         return to_return
 
-    def _lib_to_instance(self, library_class_name, scope, library_dict, override_dict):
+    def _lib_to_instance(
+        self,
+        library_class_name: str,
+        scope: str,
+        library_dict: dict,
+        override_dict: dict
+    ) -> str:
         """Converts a library name to the actual instance of the library.
 
         This conversion is based off the library section definitions in the DSC.
