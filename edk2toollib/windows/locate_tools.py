@@ -26,6 +26,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
+from typing import List, Optional
 
 import pkg_resources
 
@@ -133,7 +134,7 @@ def FindWithVsWhere(products: str = "*", vs_version: str = None):
 
     Args:
         products (:obj:`str`, optional): product defined by vswhere tool
-        vs_version (:obj:`str, optional): helper to find version of supported VS version (example vs2019)
+        vs_version (:obj:`str`, optional): helper to find version of supported VS version (example vs2019)
 
     Returns:
         (str): VsWhere products
@@ -146,7 +147,7 @@ def FindWithVsWhere(products: str = "*", vs_version: str = None):
     results = FindAllWithVsWhere(products, vs_version)
     return results[0] if results else None
 
-def FindAllWithVsWhere(products: str = "*", vs_version: str = None):
+def FindAllWithVsWhere(products: str = "*", vs_version: str = None) -> Optional[List[str]]:
     """Finds a product with VS Where. Returns all matches, sorted by newest version.
 
     Args:
