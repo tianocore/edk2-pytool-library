@@ -60,7 +60,6 @@ class Edk2DB:
             db.connection.execute("SELECT * FROM ?", table)
         ```
     """
-
     def __init__(self: 'Edk2DB', db_path: str, pathobj: Edk2Path = None, **kwargs: dict[str,Any]) -> 'Edk2DB':
         """Initializes the database.
 
