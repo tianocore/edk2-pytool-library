@@ -4,7 +4,19 @@ copyright: Copyright (c) Microsoft.  All rights reserved
 site_description: edk2toollib package documentation
 
 theme:
-  name: readthedocs
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.indexes
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
 
 docs_dir: docs/user
 
@@ -41,7 +53,7 @@ markdown_extensions:
   - pymdownx.critic
   - pymdownx.details
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
   - pymdownx.inlinehilite
   - pymdownx.magiclink
@@ -64,12 +76,6 @@ watch:
   - 'edk2toollib/'
 
 nav:
-  - Our Philosophy: index.md
-  - Advanced Features:
-    - Edk2 Database: features/edk2_db.md
-    - ANSI Logging: features/logging.ansi_handler.md
-    - Get Host Info: features/utility_functions.GetHostInfo.md
-    - Windows Firmware Policy: features/windows_firmware_policy.md
-    - Build Objects: features/build_objects.md
-  - API Reference:
-    - ... | flat | api/**/*.md
+  - Home: index.md
+  - ... | features/**/*.md
+  - ... | api/**/*.md

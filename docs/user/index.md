@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+  - toc
+---
 # Our Philosophy
 
 Edk2 Pytool Library (edk2toollib) is a Tianocore maintained project consisting

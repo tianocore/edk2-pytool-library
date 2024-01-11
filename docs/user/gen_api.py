@@ -6,12 +6,14 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Python script used to automatically generate API Reference documentation.
+
 Used in conjunction with mkdocs to generate static markdown files for each
 file inside the edk2toollib package for ReadTheDocs hosting.
 """
-import mkdocs_gen_files
 import glob
 import os
+
+import mkdocs_gen_files
 
 
 def main():
@@ -51,6 +53,9 @@ def main():
         # Point the "Edit on Github" button in the docs to point at the source code
         edit_path = os.path.join('..', 'edk2toollib', edit_path)
         mkdocs_gen_files.set_edit_path(filename, edit_path)
+
+    with mkdocs_gen_files.open("api/.pages", "w") as f:
+        print("title: API Reference", file=f)
 
 
 main()
