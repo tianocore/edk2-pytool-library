@@ -97,7 +97,7 @@ class Rule(object):
         OffsetToSubKeyName: int = 0,
         OffsetToValueName: int = 0,
         OffsetToValue: int = 0
-) -> None:
+) -> 'Rule':
         """Inits the Rule Object.
 
         Args:
@@ -242,7 +242,7 @@ class PolicyValueType():
                            POLICY_VALUE_TYPE_QWORD,
                            POLICY_VALUE_TYPE_STRING}
 
-    def __init__(self, Type: int) -> None:
+    def __init__(self, Type: int) -> 'PolicyValueType':
         """Inits the PolicyValueType.
 
         Args:
@@ -326,7 +326,7 @@ class PolicyString():
     StringLengthFormat = '<H'
     StringLengthSize = struct.calcsize(StringLengthFormat)
 
-    def __init__(self, String: str = None) -> None:
+    def __init__(self, String: str = None) -> 'PolicyString':
         """Inits PolicyStructure.
 
         Args:
@@ -407,7 +407,7 @@ class PolicyValue():
         valueType (PolicyValueType): Policy Value Type
         value (struct): Policy String, dword, qword
     """
-    def __init__(self, valueType: PolicyValueType, value: str) -> None:
+    def __init__(self, valueType: PolicyValueType, value: str) -> 'PolicyValue':
         """Inits a Policy Value.
 
         Args:
@@ -526,7 +526,7 @@ class Reserved2(object):
     StructFormat = '<III'
     StructSize = struct.calcsize(StructFormat)
 
-    def __init__(self, fs: BinaryIO = None, vtOffset: int = 0) -> None:
+    def __init__(self, fs: BinaryIO = None, vtOffset: int = 0) -> 'Reserved2':
         """Initializes the Reserved2 structure.
 
         Args:
@@ -635,7 +635,7 @@ class FirmwarePolicy(object):
         FW_POLICY_VALUE_STATE_TBD: "To Be Defined Placeholder"
     }
 
-    def __init__(self, fs: BinaryIO = None) -> None:
+    def __init__(self, fs: BinaryIO = None) -> 'FirmwarePolicy':
         """Initializes a Firmware Policy object.
 
         Args:

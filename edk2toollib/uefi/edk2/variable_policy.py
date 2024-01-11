@@ -27,7 +27,7 @@ class VariableLockOnVarStatePolicy(object):
     _HdrStructFormat = "<16sBB"
     _HdrStructSize = struct.calcsize(_HdrStructFormat)
 
-    def __init__(self) -> None:
+    def __init__(self) -> 'VariableLockOnVarStatePolicy':
         """Initializes the Variable Lock On Var State Policy."""
         self.Namespace = uuid.UUID(bytes=b'\x00' * 16)
         self.Value = 0
@@ -108,7 +108,7 @@ class VariablePolicyEntry(object):
         TYPE_LOCK_ON_VAR_STATE: "ON_VAR_STATE",
     }
 
-    def __init__(self) -> None:
+    def __init__(self) -> 'VariablePolicyEntry':
         """Initializes the Variable Policy Entry."""
         self.Version = VariablePolicyEntry.ENTRY_REVISION
         self.Size = VariablePolicyEntry._HdrStructSize

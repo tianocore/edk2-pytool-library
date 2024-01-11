@@ -38,7 +38,7 @@ class CatGenerator(object):
                     'serverrs4': 'ServerRS4'
                     }
 
-    def __init__(self, arch: str, os: str) -> None:
+    def __init__(self, arch: str, os: str) -> 'CatGenerator':
         """Inits a Cat Generator.
 
         Args:

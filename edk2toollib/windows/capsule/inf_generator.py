@@ -20,7 +20,7 @@ from typing import Optional
 
 class InfSection(object):
     """Object representing an INF Section."""
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str) -> 'InfSection':
         """Inits the object."""
         self.Name = name
         self.Items = []

@@ -41,7 +41,7 @@ class InfParser(HashFileParser):
     SECTION_LIBRARY = re.compile(r'libraryclasses(?:\.([^,.\]]+))?[,.\]]', re.IGNORECASE)
     SECTION_SOURCE = re.compile(r'sources(?:\.([^,.\]]+))?[,.\]]', re.IGNORECASE)
 
-    def __init__(self) -> None:
+    def __init__(self) -> 'InfParser':
         """Inits an empty parser."""
         HashFileParser.__init__(self, 'ModuleInfParser')
         self.Lines = []

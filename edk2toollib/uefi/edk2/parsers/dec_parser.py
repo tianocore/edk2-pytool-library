@@ -16,7 +16,7 @@ from edk2toollib.uefi.edk2.parsers.guid_parser import GuidParser
 
 class LibraryClassDeclarationEntry():
     """Object representing a Library Class Declaration Entry."""
-    def __init__(self, packagename: str, rawtext: str = None) -> None:
+    def __init__(self, packagename: str, rawtext: str = None) -> 'LibraryClassDeclarationEntry':
         """Init a library Class Declaration Entry."""
         self.path = ""
         self.name = ""
@@ -52,7 +52,7 @@ class GuidedDeclarationEntry():
     PPI = 2
     GUID = 3
 
-    def __init__(self, packagename: str, rawtext: str = None) -> None:
+    def __init__(self, packagename: str, rawtext: str = None) -> 'GuidedDeclarationEntry':
         """Init a protocol/Ppi/or Guid declaration entry."""
         self.name = ""
         self.guidstring = ""
@@ -77,7 +77,7 @@ class GuidedDeclarationEntry():
 
 class ProtocolDeclarationEntry(GuidedDeclarationEntry):
     """Object representing a Protocol Declaration Entry."""
-    def __init__(self, packagename: str, rawtext: str = None) -> None:
+    def __init__(self, packagename: str, rawtext: str = None) -> 'ProtocolDeclarationEntry':
         """Init a protocol declaration entry."""
         super().__init__(packagename, rawtext)
         self.type = GuidedDeclarationEntry.PROTOCOL
@@ -85,7 +85,7 @@ class ProtocolDeclarationEntry(GuidedDeclarationEntry):
 
 class PpiDeclarationEntry(GuidedDeclarationEntry):
     """Object representing a Ppi Declaration Entry."""
-    def __init__(self, packagename: str, rawtext: str = None) -> None:
+    def __init__(self, packagename: str, rawtext: str = None) -> 'GuidedDeclarationEntry':
         """Init a Ppi declaration entry."""
         super().__init__(packagename, rawtext)
         self.type = GuidedDeclarationEntry.PPI
@@ -93,7 +93,7 @@ class PpiDeclarationEntry(GuidedDeclarationEntry):
 
 class GuidDeclarationEntry(GuidedDeclarationEntry):
     """Object representing a Guid Declaration Entry."""
-    def __init__(self, packagename: str, rawtext: str = None) -> None:
+    def __init__(self, packagename: str, rawtext: str = None) -> 'GuidDeclarationEntry':
         """Init a Ppi declaration entry."""
         super().__init__(packagename, rawtext)
         self.type = GuidedDeclarationEntry.GUID
@@ -110,7 +110,7 @@ class PcdDeclarationEntry():
         id (str): id
         package_name: package name
     """
-    def __init__(self, packagename: str, rawtext: str = None) -> None:
+    def __init__(self, packagename: str, rawtext: str = None) -> 'PcdDeclarationEntry':
         """Creates a PCD Declaration Entry for one PCD."""
         self.token_space_name = ""
         self.name = ""
@@ -166,7 +166,7 @@ class DecParser(HashFileParser):
         Path (str): path to the DEC file
     """
 
-    def __init__(self) -> None:
+    def __init__(self) -> 'DecParser':
         """Init an empty Dec Parser."""
         HashFileParser.__init__(self, 'DecParser')
         self.Lines = []

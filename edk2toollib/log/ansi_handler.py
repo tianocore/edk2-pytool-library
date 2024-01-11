@@ -196,7 +196,7 @@ class ColoredFormatter(logging.Formatter):
         "SECTION": AnsiColor.CYAN
     }
 
-    def __init__(self, msg: str="", use_azure: bool=False) -> None:
+    def __init__(self, msg: str="", use_azure: bool=False) -> 'ColoredFormatter':
         """Inits the formatter."""
         logging.Formatter.__init__(self, msg)
         self.use_azure = use_azure
@@ -242,7 +242,9 @@ class ColoredStreamHandler(logging.StreamHandler):
     # Control Sequence Introducer
     ANSI_CSI_RE = re.compile('\001?\033\\[((?:\\d|;)*)([a-zA-Z])\002?')
 
-    def __init__(self, stream: Optional[IO]=None, strip: Optional[str]=None, convert: Optional[str]=None) -> None:
+    def __init__(
+        self, stream: Optional[IO]=None, strip: Optional[str]=None, convert: Optional[str]=None
+    ) -> 'ColoredStreamHandler':
         """Inits a Colored Stream Handler."""
         logging.StreamHandler.__init__(self, stream)
         self.on_windows = GetHostInfo().os == "Windows"

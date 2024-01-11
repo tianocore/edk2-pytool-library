@@ -45,7 +45,7 @@ class VariableStoreHeader(object):
         UINT32  Reserved1;
     } VARIABLE_STORE_HEADER;
     """
-    def __init__(self) -> None:
+    def __init__(self) -> 'VariableStoreHeader':
         """Init the empty structure."""
         self.StructString = "=16sLBBHL"  # spell-checker: disable-line
         self.StructSize = struct.calcsize(self.StructString)
@@ -110,7 +110,7 @@ class VariableHeader(object):
         EFI_GUID    VendorGuid;
     } VARIABLE_HEADER;
     """
-    def __init__(self) -> None:
+    def __init__(self) -> 'VariableHeader':
         """Init the structure."""
         self.StructString = "=HBBLLL16s"  # spell-checker: disable-line
         self.StructSize = struct.calcsize(self.StructString)
@@ -260,7 +260,7 @@ class AuthenticatedVariableHeader(VariableHeader):
         EFI_GUID    VendorGuid;
     } AUTHENTICATED_VARIABLE_HEADER;
     """
-    def __init__(self) -> None:
+    def __init__(self) -> 'AuthenticatedVariableHeader':
         """Initializes the struct."""
         super(AuthenticatedVariableHeader, self).__init__()
         self.StructString = "=HBBLQ16sLLL16s"  # spell-checker: disable-line

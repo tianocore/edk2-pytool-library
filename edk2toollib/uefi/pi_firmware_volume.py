@@ -46,7 +46,7 @@ class EfiFirmwareVolumeHeader(object):
     } EFI_FIRMWARE_VOLUME_HEADER;
     ```
     """
-    def __init__(self) -> None:
+    def __init__(self) -> 'EfiFirmwareVolumeHeader':
         """Inits an empty object."""
         self.StructString = "=16s16sQ4sLHHHBBQQ"  # spell-checker: disable-line
         self.ZeroVector = None
@@ -120,7 +120,7 @@ class EfiFirmwareVolumeExtHeader(object):
     } EFI_FIRMWARE_VOLUME_EXT_HEADER;
     ```
     """
-    def __init__(self) -> None:
+    def __init__(self) -> 'EfiFirmwareVolumeExtHeader':
         """Inits an empty object."""
         self.StructString = "=16sL"
         self.FileSystemGuid = None

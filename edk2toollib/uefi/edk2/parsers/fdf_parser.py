@@ -25,7 +25,7 @@ class FdfParser(HashFileParser):
 
     Note: Dict Key Value pairs come from lines that contain a single =.
     """
-    def __init__(self) -> None:
+    def __init__(self) -> 'HashFileParser':
         """Inits an empty FDF parser."""
         HashFileParser.__init__(self, 'ModuleFdfParser')
         self.Lines = []

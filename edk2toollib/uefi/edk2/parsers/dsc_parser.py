@@ -40,7 +40,7 @@ class DscParser(HashFileParser):
     SECTION_REGEX = re.compile(r"\[(.*)\]")
     OVERRIDE_REGEX = re.compile(r"\<(.*)\>")
 
-    def __init__(self) -> None:
+    def __init__(self) -> 'HashFileParser':
         """Init an empty Parser."""
         super(DscParser, self).__init__('DscParser')
         self.SixMods = []

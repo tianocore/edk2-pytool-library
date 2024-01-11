@@ -11,7 +11,7 @@ import logging
 
 class FileHandler(logging.FileHandler):
     """Object for handling basic logging output to files."""
-    def __init__(self, filename: str, mode: str='w+') -> None:
+    def __init__(self, filename: str, mode: str='w+') -> 'FileHandler':
         """Init a file handler for the specified file."""
         logging.FileHandler.__init__(self, filename, mode=mode)
 

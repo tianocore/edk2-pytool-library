@@ -29,7 +29,7 @@ class ModuleSummary(object):
         PackagePathList (list): list of package paths
         FvName (str): Name of Fv
     """
-    def __init__(self, content: str, ws: str, packagepatahlist: list, pathconverter: pu.Edk2Path) -> None:
+    def __init__(self, content: str, ws: str, packagepatahlist: list, pathconverter: pu.Edk2Path) -> 'ModuleSummary':
         """Inits an empty Module Summary Object."""
         self._RawContent = content
         self.Guid = ""
@@ -206,7 +206,7 @@ class BuildReport(object):
         MODULE = 'MODULE'
         UNKNOWN = 'UNKNOWN'
 
-    def __init__(self, filepath: str, ws: str, packagepathcsv: str, protectedWordsDict: dict) -> None:
+    def __init__(self, filepath: str, ws: str, packagepathcsv: str, protectedWordsDict: dict) -> 'RegionTypes':
         """Inits an empty BuildReport object."""
         self.PlatformName = ""
         self.DscPath = ""

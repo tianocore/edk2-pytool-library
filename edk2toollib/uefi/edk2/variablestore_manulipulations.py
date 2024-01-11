@@ -16,7 +16,7 @@ import edk2toollib.uefi.pi_firmware_volume as PiFV
 
 class VariableStore(object):
     """Class representing the variable store."""
-    def __init__(self, romfile: str, store_base: Optional[int]=None, store_size: Optional[int]=None) -> None:
+    def __init__(self, romfile: str, store_base: Optional[int]=None, store_size: Optional[int]=None) -> 'VariableStore':
         """Initialize the Variable store and read necessary files.
 
         Loads the data.

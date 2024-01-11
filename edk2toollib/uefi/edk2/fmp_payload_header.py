@@ -41,7 +41,7 @@ class FmpPayloadHeaderClass (object):
 
     _FMP_PAYLOAD_HEADER_SIGNATURE = _SIGNATURE_32('M', 'S', 'S', '1')
 
-    def __init__(self) -> None:
+    def __init__(self) -> 'FmpPayloadHeaderClass':
         """Inits an empty object."""
         self.Signature = self._FMP_PAYLOAD_HEADER_SIGNATURE
         self.HeaderSize = self._StructSize

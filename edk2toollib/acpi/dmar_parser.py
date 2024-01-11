@@ -27,7 +27,7 @@ class DMARTable(object):
     ANDDHeaderLength = 8
     DeviceScopeHeaderLength = 6
 
-    def __init__(self, data: bytes) -> None:
+    def __init__(self, data: bytes) -> 'DMARTable':
         """Inits the object."""
         self.dmar_table = self.AcpiTableHeader(data)
         self.data = data[DMARTable.DMARHeaderLength:]
@@ -109,7 +109,7 @@ class DMARTable(object):
         STRUCT_FORMAT = '=4sIBB6s8sI4sIBB'
         size = struct.calcsize(STRUCT_FORMAT)
 
-        def __init__(self, header_byte_array: bytes) -> None:
+        def __init__(self, header_byte_array: bytes) -> 'DMARTable.AcpiTableHeader':
             """Inits the object."""
             (self.Signature,
              self.Length,
@@ -166,7 +166,7 @@ class DMARTable(object):
         """Generic remapping struct header."""
         STRUCT_FORMAT = '=HH'
 
-        def __init__(self, header_byte_array: bytes) -> None:
+        def __init__(self, header_byte_array: bytes) -> 'DMARTable.RemappingStructHeader':
             """Inits the object."""
             (self.Type,
              self.Length) = struct.unpack_from(DMARTable.RemappingStructHeader.STRUCT_FORMAT, header_byte_array)
@@ -183,7 +183,7 @@ class DMARTable(object):
         """Object representing the DRHD struct."""
         STRUCT_FORMAT = '=HHBBHQ'  # spell-checker: disable-line
 
-        def __init__(self, header_byte_array: bytes, length: int) -> None:
+        def __init__(self, header_byte_array: bytes, length: int) -> 'DMARTable.DRHDStruct':
             """Inits the object."""
             (self.Type,
              self.Length,
@@ -244,7 +244,7 @@ class DMARTable(object):
         """Object representing the RMRR struct."""
         STRUCT_FORMAT = '=HHHHQQ'  # spell-checker: disable-line
 
-        def __init__(self, header_byte_array: bytes, length: int) -> None:
+        def __init__(self, header_byte_array: bytes, length: int) -> 'DMARTable.RMRRStruct':
             """Inits the object."""
             (self.Type,
              self.Length,
@@ -316,7 +316,7 @@ class DMARTable(object):
         """Object representing the ANDD struct."""
         STRUCT_FORMAT = '=HHBBH'  # spell-checker: disable-line
 
-        def __init__(self, header_byte_array: bytes, length: int) -> None:
+        def __init__(self, header_byte_array: bytes, length: int) -> 'DMARTable.ATSRStruct':
             """Inits the object."""
             (self.Type,
              self.Length,
@@ -374,7 +374,7 @@ class DMARTable(object):
         """Object representing the RHSA struct."""
         STRUCT_FORMAT = '=HHIQI'  # spell-checker: disable-line
 
-        def __init__(self, header_byte_array: bytes, length: int) -> None:
+        def __init__(self, header_byte_array: bytes, length: int) -> 'DMARTable.RHSAStruct':
             """Inits the object."""
             (self.Type,
              self.Length,
@@ -408,7 +408,7 @@ class DMARTable(object):
         """Object representing the ANDD struct."""
         header_format = '=HH'
 
-        def __init__(self, header_byte_array: bytes, length: int) -> None:
+        def __init__(self, header_byte_array: bytes, length: int) -> 'DMARTable.ANDDStruct':
             """Inits the object."""
             self.STRUCT_FORMAT = '=B'
             (self.Type,
@@ -452,7 +452,7 @@ class DMARTable(object):
         """Object representing a Device Scope."""
         STRUCT_FORMAT = '=BBHBB'  # spell-checker: disable-line
 
-        def __init__(self, header_byte_array: bytes) -> None:
+        def __init__(self, header_byte_array: bytes) -> 'DMARTable.DeviceScopeStruct':
             """Inits a DeviceScopeStruct."""
             (self.Type,
              self.Length,

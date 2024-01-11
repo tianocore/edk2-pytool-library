@@ -52,7 +52,7 @@ class FmpCapsuleImageHeaderClass (object):
 
     EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER_INIT_VERSION = 0x00000002
 
-    def __init__(self) -> None:
+    def __init__(self) -> 'FmpCapsuleImageHeaderClass':
         """Inits an empty object."""
         self.Version = self.EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER_INIT_VERSION
         self.UpdateImageTypeId = uuid.UUID('00000000-0000-0000-0000-000000000000')
@@ -181,7 +181,7 @@ class FmpCapsuleHeaderClass (object):
 
     EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER_INIT_VERSION = 0x00000001
 
-    def __init__(self) -> None:
+    def __init__(self) -> 'FmpCapsuleHeaderClass':
         """Inits an empty object."""
         self.Version = self.EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER_INIT_VERSION
         self.EmbeddedDriverCount = 0

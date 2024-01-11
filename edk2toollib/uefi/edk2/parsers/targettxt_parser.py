@@ -20,7 +20,7 @@ class TargetTxtParser(HashFileParser):
         Dict (dict): Key / Value pair of all lines that contain a `=` in them (key=value)
         Path (str): path to Target.txt file
     """
-    def __init__(self) -> None:
+    def __init__(self) -> 'TargetTxtParser':
         """Inits an empty parser."""
         HashFileParser.__init__(self, 'TargetTxtParser')
         self.Lines = []

@@ -30,7 +30,7 @@ import edk2toollib.tpm.tpm2_defs as t2d
 
 class PolicyHasher(object):
     """An object used to hash TPM 2.0 policies with a specified hash."""
-    def __init__(self, hash_type: str) -> None:
+    def __init__(self, hash_type: str) -> 'PolicyHasher':
         """Init the hasher with the specified hash.
 
         Args:
@@ -78,7 +78,7 @@ class PolicyCalculator(object): # noqa
 
 class PolicyTreeOr(object):
     """Object representing an OR junction in a policy tree."""
-    def __init__(self, components: Union['PolicyTreeAnd', 'PolicyTreeOr', 'PolicyTreeSolo']) -> None:
+    def __init__(self, components: Union['PolicyTreeAnd', 'PolicyTreeOr', 'PolicyTreeSolo']) -> 'PolicyTreeOr':
         """Inits the policy tree junction with a list of connected components.
 
         Args:
@@ -127,7 +127,7 @@ class PolicyTreeOr(object):
 
 class PolicyTreeAnd(object):
     """Object representing an AND junction in a policy tree."""
-    def __init__(self, components: list[Union['PolicyTreeAnd', 'PolicyTreeOr', 'PolicyTreeSolo']]) -> None:
+    def __init__(self, components: list[Union['PolicyTreeAnd', 'PolicyTreeOr', 'PolicyTreeSolo']]) -> 'PolicyTreeAnd':
         """Inits the policy tree junction with a list of connected components."""
         # ANDs must only be composed of primitives. For simplicity, I guess.
         # Honestly, this has spiralled out of control, but something is better than nothing.
@@ -157,7 +157,7 @@ class PolicyTreeAnd(object):
 class PolicyTreeSolo(object):
     """This object should only be used to put a single policy claim under an OR."""
 
-    def __init__(self, policy_obj: Union['PolicyTreeAnd', 'PolicyTreeOr', 'PolicyTreeSolo']) -> None:
+    def __init__(self, policy_obj: Union['PolicyTreeAnd', 'PolicyTreeOr', 'PolicyTreeSolo']) -> 'PolicyTreeSolo':
         """Inits the policy tree junction."""
         if not hasattr(policy_obj, 'get_buffer_for_digest'):
             raise ValueError("Supplied policy object is missing required functionality!")
@@ -193,7 +193,7 @@ class PolicyTreeSolo(object):
 
 class PolicyLocality(object):
     """Policy Primitive to describe a single assertion to create complex assertions."""
-    def __init__(self, localities: list[int]) -> None:
+    def __init__(self, localities: list[int]) -> 'PolicyLocality':
         """Init with the requested localities."""
         # Update the bitfield with the requested localities.
         if localities is not None:
@@ -245,7 +245,7 @@ class PolicyLocality(object):
 
 class PolicyCommandCode(object):
     """Policy Primitive to describe a Command code."""
-    def __init__(self, command_code_string: Optional[str]=None) -> None:
+    def __init__(self, command_code_string: Optional[str]=None) -> 'PolicyCommandCode':
         """Init with the requested command code string."""
         # Check to make sure that a command_code can be found.
         str_command_code_string = str(command_code_string)

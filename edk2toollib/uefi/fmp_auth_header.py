@@ -38,7 +38,7 @@ class FmpAuthHeaderClass (object):
     _MonotonicCountFormat = '<Q'
     _MonotonicCountSize = struct.calcsize(_MonotonicCountFormat)
 
-    def __init__(self) -> None:
+    def __init__(self) -> 'FmpAuthHeaderClass':
         """Inits an empty object."""
         self.MonotonicCount = 0
         self.AuthInfo = WinCertUefiGuid()

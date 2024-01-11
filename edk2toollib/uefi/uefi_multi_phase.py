@@ -48,7 +48,7 @@ class EfiVariableAttributes(object):
     }
     INVERSE_STRING_MAP = {v: k for k, v in STRING_MAP.items()}
 
-    def __init__(self, attributes: Union[int, str]=0x0000_0000, decodefs: IO=None) -> None:
+    def __init__(self, attributes: Union[int, str]=0x0000_0000, decodefs: IO=None) -> 'EfiVariableAttributes':
         """Creates a EfiVariableAttributes object.
 
         Args:

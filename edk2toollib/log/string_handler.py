@@ -15,7 +15,7 @@ class StringStreamHandler(logging.StreamHandler):
     """Class for logging via StringIO."""
     terminator = '\n'
 
-    def __init__(self) -> None:
+    def __init__(self) -> 'StringStreamHandler':
         """Init a StringStreamHandler."""
         logging.Handler.__init__(self)
         self.stream = io.StringIO()

@@ -24,7 +24,7 @@ class GuidListEntry():
         guid (str): registry format guid in string format
         filepath (str): absolute path to file where this guid was found
     """
-    def __init__(self, name: str, guid: str, filepath: str) -> None:
+    def __init__(self, name: str, guid: str, filepath: str) -> 'GuidListEntry':
         """Create GuidListEntry for later review and compare.
 
         Args:

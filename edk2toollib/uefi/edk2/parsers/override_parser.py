@@ -22,7 +22,7 @@ class OpParseError(Exception):
     PE_HASH = 'HASH'
     PE_DATE = 'DATE'
 
-    def __init__(self, my_type: str) -> None:
+    def __init__(self, my_type: str) -> 'OpParseError':
         """Verifies type is a valid OpParseError type."""
         if my_type not in (OpParseError.PE_VER, OpParseError.PE_PATH,
                            OpParseError.PE_HASH, OpParseError.PE_DATE):
@@ -54,7 +54,7 @@ class OverrideParser(object):
           parsers. The pros and cons of this should also be weighed during
           any parser refactor.
     """
-    def __init__(self, file_path: Optional[str]=None, inf_contents: Optional[str]=None) -> None:
+    def __init__(self, file_path: Optional[str]=None, inf_contents: Optional[str]=None) -> 'OverrideParser':
         """Inits and parses either a file or already parsed contents.
 
         Args:

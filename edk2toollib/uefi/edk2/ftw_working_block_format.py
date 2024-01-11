@@ -33,7 +33,7 @@ class EfiFtwWorkingBlockHeader(object):
         UINT64    WriteQueueSize;
     } EFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER;
     """
-    def __init__(self) -> None:
+    def __init__(self) -> 'EfiFtwWorkingBlockHeader':
         """Initializes an empty object."""
         self.StructString = "=16sLBBBBQ"  # spell-checker: disable-line
         self.Signature = None
@@ -104,7 +104,7 @@ class EfiFtwWriteHeader(object):
         UINT64    PrivateDataSize;
     } EFI_FAULT_TOLERANT_WRITE_HEADER;
     """
-    def __init__(self) -> None:
+    def __init__(self) -> 'EfiFtwWriteHeader':
         """Initializes an empty object."""
         self.StructString = "=BBBB16sLQQ"
         self.StatusBits = None
@@ -165,7 +165,7 @@ class EfiFtwWriteRecord(object):
         INT64   RelativeOffset;
     } EFI_FAULT_TOLERANT_WRITE_RECORD;
     """
-    def __init__(self) -> None:
+    def __init__(self) -> 'EfiFtwWriteRecord':
         """Initializes an empty object."""
         self.StructString = "=BBBBLQQQQ"  # spell-checker: disable-line
         self.StatusBits = None

@@ -19,7 +19,7 @@ IVRSParserVersion = '1.00'
 
 class IVRS_TABLE(object):
     """Object representing a IVRS Table."""
-    def __init__(self, data: Optional[bytes]=None) -> None:
+    def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE':
         """Inits an empty object."""
         self.acpi_header = None
         self.SubStructs = list()
@@ -140,7 +140,7 @@ class IVRS_TABLE(object):
         struct_format = '=4sIBB6s8sI4sIIQ'
         struct_format_size = struct.calcsize(struct_format)
 
-        def __init__(self, data: Optional[bytes]=None) -> None:
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.ACPI_TABLE_HEADER':
             """Inits an empty object."""
             self.Signature = None
             self.Length = 0
@@ -231,7 +231,7 @@ class IVRS_TABLE(object):
         struct_format = '=B'
         struct_format_size = struct.calcsize(struct_format)
 
-        def __init__(self, header_byte_array: bytes) -> None:
+        def __init__(self, header_byte_array: bytes) -> 'IVRS_TABLE.REMAPPING_STRUCT_HEADER':
             """Inits an empty object."""
             (self.Type, ) = struct.unpack(IVRS_TABLE.REMAPPING_STRUCT_HEADER.struct_format,
                                           header_byte_array[:IVRS_TABLE.REMAPPING_STRUCT_HEADER.struct_format_size])
@@ -250,7 +250,7 @@ class IVRS_TABLE(object):
             TYPE_11H = 0x11
             TYPE_40H = 0x40
 
-        def __init__(self, data: Optional[bytes]=None) -> None:
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.IVHD_STRUCT.IVHD_TYPE':
             """Inits an empty object."""
             self.Type = None
             self.Flags = None
@@ -392,7 +392,7 @@ class IVRS_TABLE(object):
             TYPE_21H = 0x21  # Specified peripheral
             TYPE_22H = 0x22  # Peripheral range
 
-        def __init__(self, data: Optional[bytes]=None) -> None:
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.IVMD_STRUCT':
             """Inits an empty object."""
             self.Type = None
             self.Flags = None
@@ -525,7 +525,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_RESERVED(object):
         """Object representing a Device Table Entry RESERVED."""
-        def __init__(self, data: Optional[bytes]=None) -> None:
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -577,7 +577,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_ALL(object):
         """Object representing a Device Table Entry ALL."""
-        def __init__(self, data: Optional[bytes]=None) -> None:
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_ALL':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -630,7 +630,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_SELECT(object):
         """Object representing a Device Table Entry SELECT."""
-        def __init__(self, data: Optional[bytes]=None) -> None:
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_SELECT':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -683,7 +683,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_RANGE_START(object):
         """Object representing a Device Table Entry RANGE_START."""
-        def __init__(self, data: Optional[bytes]=None) -> None:
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_RANGE_START':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -751,7 +751,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_ALIAS_SELECT(object):
         """Object representing a Device Table Entry ALIAS_SELECT."""
-        def __init__(self, data: Optional[bytes]=None) -> None:
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_ALIAS_SELECT':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -814,7 +814,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_ALIAS_RANGE_START(object):
         """Object representing a Device Table Range Start."""
-        def __init__(self, data: Optional[bytes]=None) -> None:
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_ALIAS_RANGE_START':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -892,7 +892,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_EX_SELECT(object):
         """Object representing a Device Table Entry EX_SELECT."""
-        def __init__(self, data: Optional[bytes]=None) -> None:
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_EX_SELECT':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -962,7 +962,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_EX_RANGE_START(object):
         """Object representing a Device Table Entry EX_RANGE_START."""
-        def __init__(self, data: Optional[bytes]=None) -> None:
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_EX_RANGE_START':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -1042,7 +1042,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_SPECIAL(object):
         """Object representing a Device Table Entry Special."""
-        def __init__(self, data: Optional[bytes]=None) -> None:
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_SPECIAL':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0
@@ -1126,7 +1126,7 @@ class IVRS_TABLE(object):
 
     class DEVICE_TABLE_ENTRY_ACPI(object):
         """Object representing a Device Table Entry ACPI."""
-        def __init__(self, data: Optional[bytes]=None) -> None:
+        def __init__(self, data: Optional[bytes]=None) -> 'IVRS_TABLE.DEVICE_TABLE_ENTRY_ACPI':
             """Inits an empty object."""
             self.Type = 0
             self.DeviceID = 0

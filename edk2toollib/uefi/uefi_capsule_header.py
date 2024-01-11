@@ -51,7 +51,7 @@ class UefiCapsuleHeaderClass (object):
     _CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE = 0x00020000
     _CAPSULE_FLAGS_INITIATE_RESET = 0x00040000
 
-    def __init__(self) -> None:
+    def __init__(self) -> 'UefiCapsuleHeaderClass':
         """Inits an empty object."""
         self.CapsuleGuid = self.EFI_FIRMWARE_MANAGEMENT_CAPSULE_ID_GUID
         self.HeaderSize = self._StructSize

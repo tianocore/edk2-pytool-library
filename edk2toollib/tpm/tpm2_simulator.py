@@ -42,7 +42,7 @@ PLAT_COMMANDS = {
 
 class TpmSimulator(object):
     """An object for interacting with the Tpm Simulator."""
-    def __init__(self, host: str='localhost', port: int=2321) -> None:
+    def __init__(self, host: str='localhost', port: int=2321) -> 'TpmSimulator':
         """Initialize the simulator on the requested host (ip) and port."""
         super(TpmSimulator, self).__init__()
 

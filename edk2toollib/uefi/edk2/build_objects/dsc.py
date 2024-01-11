@@ -15,7 +15,7 @@ DEFAULT_SECTION_TYPE = "COMMON"
 
 class dsc_set(set):
     """a DSC set object."""
-    def __init__(self, allowed_classes: list=None) -> None:
+    def __init__(self, allowed_classes: list=None) -> 'dsc_set':
         """Initializes an empty set."""
         if allowed_classes is None:
             allowed_classes = []
@@ -38,7 +38,11 @@ class dsc_set(set):
 class dsc_dict(collections.OrderedDict):
     """A dictionary that allows specific classes as headers and sections."""
 
-    def __init__(self, allowed_key_classes: Optional[str]=None, allowed_value_classes: Optional[Any]=None) -> None: # noqa: ANN401
+    def __init__(
+        self,
+        allowed_key_classes: Optional[str]=None,
+        allowed_value_classes: Optional[Any]=None # noqa: ANN401
+    ) -> 'dsc_dict':
         """Initializes a dsc_dict."""
         if allowed_key_classes is None:
             allowed_key_classes = []
@@ -88,7 +92,7 @@ class dsc_dict(collections.OrderedDict):
 
 class dsc:
     """Class representing a DSC."""
-    def __init__(self, file_path: Optional[str]=None) -> None:
+    def __init__(self, file_path: Optional[str]=None) -> 'dsc':
         """Inits dsc type."""
         # The EDK2 path to this particular DSC, if is is None it means it was created from a stream and has no file
         self.file_path = file_path
@@ -146,7 +150,7 @@ class dsc_section_type:
                         "DXE_SMM_DRIVER", "SMM_CORE", "UEFI_DRIVER",
                         "UEFI_APPLICATION", "USER_DEFINED"]
 
-    def __init__(self, arch: str="common", module_type: str="common") -> None:
+    def __init__(self, arch: str="common", module_type: str="common") -> 'dsc_section_type':
         """Inits dsc section type."""
         self.arch = arch.upper().strip()
         self.module_type = module_type.upper().strip()
@@ -193,7 +197,11 @@ class dsc_buildoption_section_type(dsc_section_type):
         BuildOptions
         ```
     """
-    def __init__(self, arch: str="common", codebase: str="common", module_type: str="common") -> None:
+    def __init__(
+        self, arch: str="common",
+        codebase: str="common",
+        module_type: str="common"
+    ) -> 'dsc_buildoption_section_type':
         """Inits dsc build option section type."""
         super().__init__(arch, module_type)
         self.codebase = codebase.upper().strip()
@@ -242,7 +250,13 @@ class dsc_pcd_section_type():
         sku: defaults to DEFAULT
         store: if none, we don't have anything done
     """
-    def __init__(self, pcdtype: str, arch: str="common", sku: str="DEFAULT", store: Optional[str]=None) -> None:
+    def __init__(
+        self,
+        pcdtype: str,
+        arch: str="common",
+        sku: str="DEFAULT",
+        store: Optional[str]=None
+    ) -> 'dsc_pcd_section_type':
         """Inits the dsc_pcd_section object."""
         # if store is none, then we don't have anything done
         self.arch = arch.upper().strip()
@@ -273,7 +287,7 @@ class dsc_pcd_section_type():
 class dsc_pcd_component_type(dsc_pcd_section_type):
     """This class is uses to define the PCD type inside a component."""
 
-    def __init__(self, pcdtype: str) -> None:
+    def __init__(self, pcdtype: str) -> 'dsc_pcd_component_type':
         """Inits the dsc_pcd_component object."""
         super().__init__(pcdtype)
 
@@ -308,7 +322,7 @@ class sku_id:
         name: str="DEFAULT",
         parent: str="DEFAULT",
         source_info: Optional['source_info']=None
-    ) -> None:
+    ) -> 'sku_id':
         """Inits the sku_id object."""
         self.id = id
         self.name = name
@@ -337,7 +351,7 @@ class sku_id:
 class component:
     """Contains the data for a component for the EDK build system to build."""
 
-    def __init__(self, inf: str, source_info: Optional['source_info']=None) -> None:
+    def __init__(self, inf: str, source_info: Optional['source_info']=None) -> 'component':
         """Inits the component object."""
         self.library_classes = set()  # a list of libraries that this component uses
         self.pcds = {}  # a dictionary of PCD's that are keyed by dsc_pcd_component_type, they are sets
@@ -372,7 +386,13 @@ class definition:
         source_info: source info
     """
 
-    def __init__(self, name: str, value: str, local: bool=False, source_info: Optional['source_info']=None) -> None:
+    def __init__(
+        self,
+        name: str,
+        value: str,
+        local: bool=False,
+        source_info: Optional['source_info']=None
+    ) -> 'definition':
         """Inits the definition object.
 
         NOTE: Local means DEFINE is in front and is localized to that particular section
@@ -409,7 +429,7 @@ class library:
         source_info (:obj:`obj`, optional): source info
     """
 
-    def __init__(self, inf: str, source_info: Optional['source_info']=None) -> None:
+    def __init__(self, inf: str, source_info: Optional['source_info']=None) -> 'library':
         """Inits the Library object."""
         self.inf = inf
         self.source_info = source_info
@@ -438,7 +458,7 @@ class library_class:
         source_info: source info
     """
 
-    def __init__(self, libraryclass: str, inf: str, source_info: Optional['source_info']=None) -> None:
+    def __init__(self, libraryclass: str, inf: str, source_info: Optional['source_info']=None) -> 'library_class':
         """Inits the Library class object.
 
         Args:
@@ -484,7 +504,7 @@ class pcd:
     EXAMPLE: PcdTokenSpaceGuidCName.PcdCName|Value
     """
 
-    def __init__(self, namespace: str, name: str, value: str, source_info: Optional['source_info']=None) -> None:
+    def __init__(self, namespace: str, name: str, value: str, source_info: Optional['source_info']=None) -> 'pcd':
         """Inits a PCD object.
 
         Args:
@@ -531,7 +551,7 @@ class pcd_typed(pcd):
         datum_type: str,
         max_size: int=0,
         source_info: Optional['source_info']=None
-    ) -> None:
+    ) -> 'pcd_typed':
         """Inits the Typed PCD Object."""
         super().__init__(namespace, name, value, source_info)
         self.datum_type = datum_type
@@ -569,7 +589,7 @@ class pcd_variable(pcd):
         default: Optional[str]=None,
         attributes: Optional[str]=None,
         source_info: Optional['source_info']=None
-    ) -> None:
+    ) -> 'pcd_variable':
         """Inits a pcd_variable object."""
         super().__init__(namespace, name, "", source_info)
         if attributes is None:
@@ -621,7 +641,7 @@ class build_option:
         family: Optional[str]=None,
         replace: bool=False,
         source_info: 'source_info'=None
-    ) -> None:
+    ) -> 'build_option':
         """Inits a build_option object.
 
         Args:
@@ -695,7 +715,7 @@ class default_store:
     ''' contains the information on a default store. '''
     ''' 0 | Standard        # UEFI Standard default '''
 
-    def __init__(self, index: int=0, value: str="Standard", source_info: Optional[str]=None) -> None:
+    def __init__(self, index: int=0, value: str="Standard", source_info: Optional[str]=None) -> 'default_store':
         """Inits a default store object.
 
         NOTE: Local means DEFINE is in front and is localized to that particular section
@@ -726,7 +746,7 @@ class source_info:
         file (str): filename
         lineno (:obj:`int`, optional): line number
     """
-    def __init__(self, file: str, lineno: int = None) -> None:
+    def __init__(self, file: str, lineno: int = None) -> 'source_info':
         """Inits a source_info object."""
         self.file = file
         self.lineno = lineno

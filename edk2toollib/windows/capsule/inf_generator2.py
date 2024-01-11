@@ -27,7 +27,7 @@ SUPPORTED_ARCH = {'amd64': 'amd64',
 class InfHeader(object):
     """The INF header at the start of the INF file."""
     def __init__(self, Name: str, VersionStr: str, CreationDate: str, Arch: str, Provider: str, Manufacturer: str,
-                 InfStrings: 'InfStrings') -> None:
+                 InfStrings: 'InfStrings') -> 'InfHeader':
         """Instantiate an INF header object.
 
         Args:
@@ -131,7 +131,7 @@ class InfFirmware(object):
 
     def __init__(self, Tag: str, Description: str, EsrtGuid: str, VersionInt: str, FirmwareFile: str,
                  InfStrings: 'InfStrings', InfSourceFiles: 'InfSourceFiles', Rollback: Optional[bool] = False,
-                 IntegrityFile: Optional[str] = None) -> None:
+                 IntegrityFile: Optional[str] = None) -> 'InfFirmware':
         """Instantiate an INF firmware object.
 
         Args:
@@ -249,7 +249,7 @@ class InfFirmware(object):
 
 class InfFirmwareSections(object):
     """A collection of firmware sections and associated common metadata."""
-    def __init__(self, Arch: str, InfStrings: 'InfStrings') -> None:
+    def __init__(self, Arch: str, InfStrings: 'InfStrings') -> 'InfFirmwareSections':
         """Instantiate an INF firmware sections object.
 
         Args:
@@ -299,7 +299,7 @@ class InfFirmwareSections(object):
 
 class InfSourceFiles(object):
     """The collection of source files that are referenced by other sections of the INF."""
-    def __init__(self, DiskName: str, InfStrings: 'InfStrings') -> None:
+    def __init__(self, DiskName: str, InfStrings: 'InfStrings') -> 'InfSourceFiles':
         """Instantiate an INF source files object.
 
         Args:
@@ -346,7 +346,7 @@ class InfStrings(object):
 
     strings can be localizable or non-localizable
     """
-    def __init__(self) -> None:
+    def __init__(self) -> 'InfStrings':
         """Instantiate an INF strings object."""
         self.LocalizableStrings = {}
         self.NonLocalizableStrings = {}
@@ -408,7 +408,7 @@ class InfStrings(object):
 class InfFile(object):
     """An object representing an INF file."""
     def __init__(self, Name: str, VersionStr: str, CreationDate: str, Provider: str, ManufacturerName: str,
-                 Arch: Optional[str] = 'amd64', DiskName: Optional[str] = "Firmware Update") -> None:
+                 Arch: Optional[str] = 'amd64', DiskName: Optional[str] = "Firmware Update") -> 'InfFile':
         """Instantiate an INF file object.
 
         This object represents the entire INF file.

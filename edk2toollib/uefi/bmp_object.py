@@ -30,7 +30,7 @@ class BmpColorMap(object):
     """
     STATIC_SIZE = 4
 
-    def __init__(self, filestream: Optional[IO]=None) -> None:
+    def __init__(self, filestream: Optional[IO]=None) -> 'BmpColorMap':
         """Inits an empty object or loads from an fs."""
         if filestream is None:
             self.Blue = 0
@@ -111,7 +111,7 @@ class BmpObject(object):
     STATIC_FILE_HEADER_SIZE = 14
     STATIC_IMAGE_HEADER_SIZE = 40
 
-    def __init__(self, filestream: Optional[IO]=None) -> None:
+    def __init__(self, filestream: Optional[IO]=None) -> 'BmpObject':
         """Inits an empty object or loads from filestream."""
         self.logger = logging.getLogger(__name__)
         if filestream is None:

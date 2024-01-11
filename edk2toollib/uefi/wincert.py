@@ -58,7 +58,7 @@ class WinCertPkcs1(object):
     STATIC_STRUCT_SIZE = (4 + 2 + 2 + 16)
     EFI_HASH_SHA256 = uuid.UUID("{51AA59DE-FDF2-4EA3-BC63-875FB7842EE9}")  # EFI_HASH_SHA256 guid defined by UEFI spec
 
-    def __init__(self, filestream: Optional[BytesIO]=None) -> None:
+    def __init__(self, filestream: Optional[BytesIO]=None) -> 'WinCertPkcs1':
         """Inits the object."""
         if filestream is None:
             self.Hdr_dwLength = WinCertPkcs1.STATIC_STRUCT_SIZE
@@ -264,7 +264,7 @@ class WinCertUefiGuid(object):
     STATIC_STRUCT_SIZE = _StructSize
     PKCS7Guid = _EFI_CERT_TYPE_PKCS7_GUID
 
-    def __init__(self, in_data: Optional[BytesIO]=None) -> None:
+    def __init__(self, in_data: Optional[BytesIO]=None) -> 'WinCertUefiGuid':
         """Inits the object."""
         self.Hdr_dwLength = self._StructSize
         self.Hdr_wRevision = WinCert.REVISION

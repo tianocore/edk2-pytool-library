@@ -37,7 +37,7 @@ class Edk2Path(object):
     """
 
     def __init__(self, ws: os.PathLike, package_path_list: Iterable[os.PathLike],
-                 error_on_invalid_pp: bool = True) -> None:
+                 error_on_invalid_pp: bool = True) -> 'Edk2Path':
         """Constructor.
 
         Args:

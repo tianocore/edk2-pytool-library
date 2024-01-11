@@ -44,7 +44,7 @@ Sha256Oid = [0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01]
 class CommonUefiStructure(ABC):
     """This structure contains the methods common across all UEFI Structures."""
 
-    def __init__(self) -> None:
+    def __init__(self) -> 'CommonUefiStructure':
         """Inits the object."""
 
     @abstractmethod
@@ -87,7 +87,7 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
                  decodesize: int=0,
                  createfs: BinaryIO = None,
                  cert: bytes = None,
-                 sigowner: uuid.UUID = None) -> None:
+                 sigowner: uuid.UUID = None) -> 'EfiSignatureDataEfiCertX509':
         """Inits the object.
 
         Args:
@@ -290,7 +290,7 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
                  decodefs: BinaryIO = None,
                  createfs: BinaryIO = None,
                  digest: bytes = None,
-                 sigowner: uuid = None) -> None:
+                 sigowner: uuid = None) -> 'EfiSignatureDataEfiCertSha256':
         """Inits the object.
 
         Args:
@@ -577,7 +577,7 @@ class EfiSignatureList(CommonUefiStructure):
     """An object representing a EFI_SIGNATURE_LIST."""
     STATIC_STRUCT_SIZE = 16 + 4 + 4 + 4
 
-    def __init__(self, filestream: BinaryIO = None, typeguid: uuid.UUID = None) -> None:
+    def __init__(self, filestream: BinaryIO = None, typeguid: uuid.UUID = None) -> 'EfiSignatureList':
         """Inits the object.
 
         Args:
@@ -908,7 +908,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
     Useful for parsing and building the contents of the Secure Boot variables
     """
 
-    def __init__(self, filestream: BinaryIO = None, EslList: List[EfiSignatureList] = None) -> None:
+    def __init__(self, filestream: BinaryIO = None, EslList: List[EfiSignatureList] = None) -> 'EfiSignatureDatabase':
         """Inits an Efi Signature Database object.
 
         Args:
@@ -1098,7 +1098,7 @@ class EfiTime(CommonUefiStructure):
     _StructFormat = '<H6BLh2B'
     _StructSize = struct.calcsize(_StructFormat)
 
-    def __init__(self, time: datetime.datetime=datetime.datetime.now(), decodefs: BinaryIO=None) -> None:
+    def __init__(self, time: datetime.datetime=datetime.datetime.now(), decodefs: BinaryIO=None) -> 'EfiTime':
         """Inits an EFI_TIME object.
 
         Args:
@@ -1225,7 +1225,11 @@ class EfiTime(CommonUefiStructure):
 class EfiVariableAuthentication2(CommonUefiStructure):
     """An object representing a EFI_VARIABLE_AUTHENTICATION_2."""
 
-    def __init__(self, time: datetime.datetime=datetime.datetime.now(), decodefs: BinaryIO=None) -> None:
+    def __init__(
+        self,
+        time: datetime.datetime=datetime.datetime.now(),
+        decodefs: BinaryIO=None
+    ) -> 'EfiVariableAuthentication2':
         """Inits an EFI_VARIABLE_AUTHENTICATION_2 object.
 
         Args:
@@ -1412,7 +1416,7 @@ class EfiVariableAuthentication2Builder(object):
         attributes: Union[int, str],
         payload: Optional[Union[io.BytesIO, bytes]]=None,
         efi_time: datetime.datetime=datetime.datetime.now()
-    ) -> None:
+    ) -> 'EfiVariableAuthentication2Builder':
         """Builds a EfiVariableAuthentication2 structure.
 
         Args:
@@ -1578,7 +1582,12 @@ class EfiVariableAuthentication2Builder(object):
 
 class EFiVariableAuthentication2(EfiVariableAuthentication2):
     """An object representing a EFI_VARIABLE_AUTHENTICATION_2. DEPRECATED."""
-    def __init__(self, time: datetime.datetime=datetime.datetime.now(), decodefs: BinaryIO=None) -> None:
+    def __init__(
+        self,
+        time: datetime.datetime=datetime.datetime.now(),
+        decodefs:
+        BinaryIO=None
+    ) -> 'EFiVariableAuthentication2':
         """DEPRECATED. Use EfiVariableAuthentication2() instead. Initializes a EFiVariableAuthentication2."""
         warn("EFiVariableAuthentication2() is deprecated, use EfiVariableAuthentication2() instead.", DeprecationWarning, 2)  # noqa: E501
         super().__init__(time, decodefs=decodefs)

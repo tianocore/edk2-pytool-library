@@ -21,7 +21,7 @@ from xml.sax.saxutils import escape
 
 class JunitReportError(object):
     """Object representing a Test Error."""
-    def __init__(self, type: str, msg: str) -> None:
+    def __init__(self, type: str, msg: str) -> 'JunitReportError':
         """Init the type of error."""
         self.Message = escape(msg.strip(), {'"': "&quot;"})
         self.Type = escape(type.strip(), {'"': "&quot;"})
@@ -29,7 +29,7 @@ class JunitReportError(object):
 
 class JunitReportFailure(object):
     """Object representing a Test Failure."""
-    def __init__(self, type: str, msg: str) -> None:
+    def __init__(self, type: str, msg: str) -> 'JunitReportFailure':
         """Init the type of Failure."""
         self.Message = escape(msg.strip(), {'"': "&quot;"})
         self.Type = escape(type.strip(), {'"': "&quot;"})
@@ -43,7 +43,7 @@ class JunitReportTestCase(object):
     ERROR = 4
     SUCCESS = 5
 
-    def __init__(self, Name: str, ClassName: str) -> None:
+    def __init__(self, Name: str, ClassName: str) -> 'JunitReportTestCase':
         """Init a Test case with it's name and class name."""
         self.Name = escape(Name.strip(), {'"': "&quot;"})
         self.ClassName = escape(ClassName.strip(), {'"': "&quot;"})
@@ -121,7 +121,7 @@ class JunitReportTestSuite(object):
 
     Create new suites by using the JunitTestReport Object
     """
-    def __init__(self, Name: str, Package: str, Id: id) -> None:
+    def __init__(self, Name: str, Package: str, Id: id) -> 'JunitReportTestSuite':
         """Initialize a new test suite."""
         self.Name = escape(Name.strip(), {'"': "&quot;"})
         self.Package = escape(Package.strip(), {'"': "&quot;"})
@@ -169,7 +169,7 @@ class JunitTestReport(object):
 
     Top level object test reporting.
     """
-    def __init__(self) -> None:
+    def __init__(self) -> 'JunitTestReport':
         """Init an empty test report."""
         self.TestSuites = []
 

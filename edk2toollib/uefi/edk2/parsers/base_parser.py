@@ -29,7 +29,7 @@ class BaseParser(object):
     """
     operators = ["OR", "AND", "IN", "==", "!=", ">", "<", "<=", ">="]
 
-    def __init__(self, log: str="BaseParser") -> None:
+    def __init__(self, log: str="BaseParser") -> 'BaseParser':
         """Inits an empty Parser."""
         self.Logger = logging.getLogger(log)
         self.Lines = []
@@ -796,7 +796,7 @@ class BaseParser(object):
 class HashFileParser(BaseParser):
     """Base class for Edk2 build files that use # for comments."""
 
-    def __init__(self, log: str) -> None:
+    def __init__(self, log: str) -> 'HashFileParser':
         """Inits an empty Parser for files that use # for comments.."""
         BaseParser.__init__(self, log)
 

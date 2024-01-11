@@ -28,7 +28,7 @@ class EfiFirmwareFileSystemHeader(object):
     } EFI_FFS_FILE_HEADER;
     ```
     """
-    def __init__(self) -> None:
+    def __init__(self) -> 'EfiFirmwareFileSystemHeader':
         """Inits an empty object."""
         self.StructString = "=16sHBBBBBB"  # spell-checker: disable-line
         self.FileSystemGuid = None
