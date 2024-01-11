@@ -25,6 +25,8 @@ import logging
 import os
 import re
 import subprocess
+from pathlib import Path
+from typing import List, Optional
 
 import pkg_resources
 
@@ -128,11 +130,11 @@ def GetVsWherePath(fail_on_not_found: bool = True):
 
 
 def FindWithVsWhere(products: str = "*", vs_version: str = None):
-    """Finds a product with VS Where.
+    """Finds a product with VS Where. Returns the newest match.
 
     Args:
         products (:obj:`str`, optional): product defined by vswhere tool
-        vs_version (:obj:`str, optional): helper to find version of supported VS version (example vs2019)
+        vs_version (:obj:`str`, optional): helper to find version of supported VS version (example vs2019)
 
     Returns:
         (str): VsWhere products
@@ -142,7 +144,25 @@ def FindWithVsWhere(products: str = "*", vs_version: str = None):
         (ValueError): Unsupported VS version
         (RuntimeError): Error when running vswhere
     """
-    cmd = "-latest -nologo -all -property installationPath"
+    results = FindAllWithVsWhere(products, vs_version)
+    return results[0] if results else None
+
+def FindAllWithVsWhere(products: str = "*", vs_version: str = None) -> Optional[List[str]]:
+    """Finds a product with VS Where. Returns all matches, sorted by newest version.
+
+    Args:
+        products (:obj:`str`, optional): product defined by vswhere tool
+        vs_version (:obj:`str`, optional): helper to find version of supported VS version (example vs2019)
+
+    Returns:
+        (list[str]): VsWhere products
+        (None): If no products returned
+    Raises:
+        (EnvironmentError): Not on a windows system or cannot locate the VsWhere
+        (ValueError): Unsupported VS version
+        (RuntimeError): Error when running vswhere
+    """
+    cmd = "-nologo -all -sort -property installationPath"
     vs_where_path = GetVsWherePath()  # Will raise the Environment Error if not on windows.
     if vs_where_path is None:
         raise EnvironmentError("Unable to locate the VsWhere Executable.")
@@ -163,7 +183,7 @@ def FindWithVsWhere(products: str = "*", vs_version: str = None):
     p1 = a.getvalue().strip()
     a.close()
     if (len(p1.strip()) > 0):
-        return p1
+        return [line.strip() for line in p1.splitlines()]
     return None
 
 
@@ -191,11 +211,11 @@ def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_versi
 
     # Handle failing to get the vs_path from FindWithVsWhere
     try:
-        vs_path = FindWithVsWhere(product, vs_version)
+        vs_path_list = FindAllWithVsWhere(product, vs_version)
     except (EnvironmentError, ValueError, RuntimeError) as e:
         logging.error(str(e))
         raise
-    if vs_path is None:
+    if vs_path_list is None:
         err_msg = "VS path not found."
         if vs_version is not None:
             err_msg += f" Might need to verify {vs_version} install exists."
@@ -210,7 +230,21 @@ def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_versi
             f"[{interesting}]. This could result in missing keys."
         logging.warning(w)
 
-    vcvarsall_path = os.path.join(vs_path, "VC", "Auxiliary", "Build", "vcvarsall.bat")
+    # Attempt to find vcvarsall.bat from any of the found VS installations
+    vcvarsall_path = next(
+        (
+            Path(vs_path, "VC", "Auxiliary", "Build", "vcvarsall.bat")
+            for vs_path in vs_path_list
+            if Path(vs_path, "VC", "Auxiliary", "Build", "vcvarsall.bat").exists()
+        ),
+        None,
+    )
+
+    if vcvarsall_path is None:
+        e = f"Could not locate VC/Auxiliary/Build/vcvarsall.bat in [{vs_path_list}]"
+        logging.error(e)
+        raise ValueError(e)
+
     logging.debug("Calling '%s %s'", vcvarsall_path, arch)
     popen = subprocess.Popen('"%s" %s & set' % (vcvarsall_path, arch), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
