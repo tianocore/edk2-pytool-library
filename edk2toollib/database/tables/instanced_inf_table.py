@@ -111,20 +111,20 @@ class InstancedInfTable(TableGenerator):
                     filter(filter_search, all_repos.values()),
                     local_repo # Default
                 )
-            iinf = InstancedInf(
-                env = env_id,
-                path = e["PATH"],
-                cls = e.get("LIBRARY_CLASS"),
-                name = e["NAME"],
-                arch = e["ARCH"],
-                dsc = e["DSC"],
-                component = e["COMPONENT"],
-                sources = sources,
-                package = package,
-                repository = repo,
+            rows.append(
+                InstancedInf(
+                    env = env_id,
+                    path = e["PATH"],
+                    cls = e.get("LIBRARY_CLASS"),
+                    name = e["NAME"],
+                    arch = e["ARCH"],
+                    dsc = e["DSC"],
+                    component = e["COMPONENT"],
+                    sources = sources,
+                    package = package,
+                    repository = repo,
+                )
             )
-            session.add(iinf)
-            rows.append(iinf)
         session.add_all(rows)
         session.commit()
 
