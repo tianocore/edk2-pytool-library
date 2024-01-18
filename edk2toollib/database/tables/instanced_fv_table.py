@@ -72,7 +72,7 @@ class InstancedFvTable(TableGenerator):
             filtered = []
             for inf in inf_list:
                 if inf not in all_components:
-                    logging.error(f'INF [{inf}] not found in database.')
+                    logging.warning(f'INF [{inf}] not found in database.')
                 else:
                     filtered.append(inf)
 
@@ -80,7 +80,6 @@ class InstancedFvTable(TableGenerator):
                 env = env_id,
                 name = fv,
                 fdf = self.fdf,
-                # infs = [all_components.get(inf) for inf in inf_list]
                 infs = [all_components.get(inf) for inf in filtered]
             )
             session.add(fv)
