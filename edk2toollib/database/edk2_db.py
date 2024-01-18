@@ -122,7 +122,7 @@ class TableGenerator:
     the parser has finished executing and has returned. Review sqlite3 documentation for more information on
     how to interact with the database.
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> 'TableGenerator':
         """Initialize the query with the specific settings."""
 
     def parse(self, session: Session, pathobj: Edk2Path, id: str, env: dict) -> None:

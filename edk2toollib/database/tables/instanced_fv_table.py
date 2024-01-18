@@ -30,7 +30,7 @@ class InstancedFvTable(TableGenerator):
     def __init__(self, *args: Any, **kwargs: Any) -> 'InstancedFvTable':
         """Initialize the query with the specific settings."""
 
-    def parse(self, session: Session, pathobj: Edk2Path, env_id, env) -> None:
+    def parse(self, session: Session, pathobj: Edk2Path, env_id: str, env: dict) -> None:
         """Parse the workspace and update the database."""
         self.pathobj = pathobj
         self.ws = Path(self.pathobj.WorkspacePath)
