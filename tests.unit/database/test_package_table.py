@@ -42,7 +42,7 @@ def test_basic_parse(tmp_path):
             ("SetupDataPkg", "Features/CONFIG"): False,
         }
         for package in packages:
-            to_pass[(package.name, package.repository)] = True
+            to_pass[(package.name, package.repository.name)] = True
 
         # Assert that all expected items in to_pass were found and set to True
         assert all(to_pass.values())
