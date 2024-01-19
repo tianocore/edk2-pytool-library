@@ -377,3 +377,36 @@ def test_closest_packagepath(empty_tree: Tree):
         rows = session.query(InstancedInf).all()
         for row in rows:
             assert row.path.startswith(("Library", "Drivers"))
+
+def test_dsc_with_component_section_moduletype_definition(empty_tree: Tree, caplog):
+    """Component sections with a moduletype definition is not necessary and should be ignored.
+
+    Per the DSC specification, this is not supported, but the DSC parser just ignores it.
+    [Components.IA32.DXE_DRIVER] -> [Components.IA32]
+    This is because the Component INF describes it's own module type.
+    """
+    edk2path = Edk2Path(str(empty_tree.ws), [])
+    db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
+    db.register(InstancedInfTable())
+
+    lib1 = empty_tree.create_library("TestLib", "TestCls")
+    comp1 = empty_tree.create_component("TestDriver", "PEIM", libraryclasses=["TestCls"])
+
+    dsc = empty_tree.create_dsc(
+        libraryclasses = [
+            f'TestCls| {Path(lib1).as_posix()}',
+        ],
+        components = [],
+        components_ia32_PEIM = [
+            Path(comp1).as_posix(),
+        ],
+    )
+
+    env = {
+        "ACTIVE_PLATFORM": dsc,
+        "TARGET_ARCH": "IA32",
+        "TARGET": "DEBUG",
+    }
+
+    # Should not error
+    db.parse(env)

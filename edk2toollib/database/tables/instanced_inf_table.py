@@ -151,8 +151,14 @@ class InstancedInfTable(TableGenerator):
         """
         inf_entries = []
         for (inf, scope, overrides) in dscp.Components:
+            # components section scope should only contain the arch.
+            # module_type is only needed for libraryclasses section.
+            if "." in scope:
+                logging.debug(f"Section Header unnecessarily contains MODULE_TYPE: [Components.{scope.upper()}]")
+                scope = scope.split(".")[0]
+
             # Ignore components built with an architecture that is not in TARGET_ARCH
-            arch = scope.split(".")[0].upper()
+            arch = scope.upper()
             if arch not in self.arch:
                 continue
 
