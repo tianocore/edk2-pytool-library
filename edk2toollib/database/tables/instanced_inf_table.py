@@ -154,7 +154,7 @@ class InstancedInfTable(TableGenerator):
             # components section scope should only contain the arch.
             # module_type is only needed for libraryclasses section.
             if "." in scope:
-                logging.debug(f"Section Header unnecessarily contains MODULE_TYPE: [Components.{scope.upper()}]")
+                logging.debug(f"DSC section header unnecessarily contains MODULE_TYPE: [Components.{scope.upper()}]")
                 scope = scope.split(".")[0]
 
             # Ignore components built with an architecture that is not in TARGET_ARCH
