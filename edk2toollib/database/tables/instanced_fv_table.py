@@ -9,47 +9,28 @@
 """A module to generate a table containing fv information."""
 import logging
 import re
-import sqlite3
 from pathlib import Path
 from typing import Any
 
-from edk2toollib.database.tables.base_table import TableGenerator
+from edk2toollib.database import Fv, InstancedInf, Session
+from edk2toollib.database.tables import TableGenerator
 from edk2toollib.uefi.edk2.parsers.fdf_parser import FdfParser as FdfP
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
-CREATE_INSTANCED_FV_TABLE = """
-CREATE TABLE IF NOT EXISTS instanced_fv (
-    env INTEGER,
-    fv_name TEXT,
-    fdf TEXT,
-    path TEXT
-)
-"""
-
-INSERT_INSTANCED_FV_ROW = """
-INSERT INTO instanced_fv (env, fv_name, fdf, path)
-VALUES (?, ?, ?, ?)
-"""
-
-INSERT_JUNCTION_ROW = '''
-INSERT INTO junction (env, table1, key1, table2, key2)
-VALUES (?, ?, ?, ?, ?)
-'''
 
 class InstancedFvTable(TableGenerator):
-    """A Table Generator that parses a single FDF file and generates a table containing FV information."""  # noqa: E501
+    """A Table Generator that parses a single FDF file and generates a table containing FV information.
 
-    RULEOVERRIDE = re.compile(r'RuleOverride\s*=.+\s+(.+\.inf)', re.IGNORECASE)
+    !!! warning
+        This table generator relies on the instanced_inf_table generator to be run first.
+    """  # noqa: E501
+
+    INFOPTS = re.compile(r'(RuleOverride|file_guid|version|ui|use)\s*=.+\s+(.+\.inf)', re.IGNORECASE)
 
     def __init__(self, *args: Any, **kwargs: Any) -> 'InstancedFvTable':
         """Initialize the query with the specific settings."""
 
-
-    def create_tables(self, db_cursor: sqlite3.Cursor) -> None:
-        """Create the tables necessary for this parser."""
-        db_cursor.execute(CREATE_INSTANCED_FV_TABLE)
-
-    def parse(self, db_cursor: sqlite3.Cursor, pathobj: Edk2Path, env_id: str, env: dict) -> None:
+    def parse(self, session: Session, pathobj: Edk2Path, env_id: str, env: dict) -> None:
         """Parse the workspace and update the database."""
         self.pathobj = pathobj
         self.ws = Path(self.pathobj.WorkspacePath)
@@ -69,12 +50,14 @@ class InstancedFvTable(TableGenerator):
         fdfp.SetInputVars(self.env)
         fdfp.ParseFile(self.fdf)
 
+        all_components = {inf.path: inf for inf in session.query(InstancedInf).filter_by(env=env_id, cls=None).all()}
         for fv in fdfp.FVs:
 
-            inf_list = []  # Some INF's start with RuleOverride. We only need the INF
+            inf_list = []  # Some INF's have extra options. We only need the INF
             for inf in fdfp.FVs[fv]["Infs"]:
-                if inf.lower().startswith("ruleoverride"):
-                    inf = InstancedFvTable.RULEOVERRIDE.findall(inf)[0]
+                options = InstancedFvTable.INFOPTS.findall(inf)
+                if len(options) > 0:
+                    inf = options[0][1]
 
                 # Convert to absolute, and back to relative to ensure we get the closest pp relative path
                 # i.e. if we have two package paths: ("MyPP", and "MyPP/Subfolder"), in the FDF, devs
@@ -86,9 +69,18 @@ class InstancedFvTable(TableGenerator):
                 inf = self.pathobj.GetEdk2RelativePathFromAbsolutePath(inf)
                 inf_list.append(Path(inf).as_posix())
 
-            row = (self.env_id, fv, Path(self.fdf).name, self.fdf)
-            db_cursor.execute(INSERT_INSTANCED_FV_ROW, row)
-
+            filtered = []
             for inf in inf_list:
-                row = (self.env_id, "instanced_fv", fv, "inf", inf)
-                db_cursor.execute(INSERT_JUNCTION_ROW, row)
+                if inf not in all_components:
+                    logging.warning(f'INF [{inf}] not found in database.')
+                else:
+                    filtered.append(inf)
+
+            fv = Fv(
+                env = env_id,
+                name = fv,
+                fdf = self.fdf,
+                infs = [all_components.get(inf) for inf in filtered]
+            )
+            session.add(fv)
+            session.commit()

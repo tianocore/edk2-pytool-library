@@ -6,8 +6,8 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Tests for building a source file table."""
-from common import write_file
-from edk2toollib.database.edk2_db import Edk2DB
+from common import write_file  # noqa: I001
+from edk2toollib.database import Source, Edk2DB
 from edk2toollib.database.tables import SourceTable
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
@@ -40,11 +40,11 @@ def test_source_with_license(tmp_path):
       write_file(tmp_path / file, SOURCE_LICENSE)
 
     db.parse({})
-
-    rows = list(db.connection.cursor().execute("SELECT license FROM source"))
-    assert len(rows) == 4
-    for license, in rows:
-       assert license == "BSD-2-Clause-Patent"
+    with db.session() as session:
+      rows = session.query(Source).all()
+      assert len(rows) == 4
+      for entry in rows:
+        assert entry.license == "BSD-2-Clause-Patent"
 
 
 def test_source_without_license(tmp_path):
@@ -59,10 +59,11 @@ def test_source_without_license(tmp_path):
 
     db.parse({})
 
-    rows = list(db.connection.cursor().execute("SELECT license FROM source"))
-    assert len(rows) == 2
-    for license, in rows:
-        assert license == "Unknown"
+    with db.session() as session:
+      rows = session.query(Source).all()
+      assert len(rows) == 2
+      for entry in rows:
+        assert entry.license == "Unknown"
 
 def test_invalid_filetype(tmp_path):
     """Tests that a source file that is not of the valid type is skipped."""
@@ -73,5 +74,6 @@ def test_invalid_filetype(tmp_path):
     # Ensure we don't catch a file that isnt a c / h file.
     write_file(tmp_path / "file1.py", SOURCE_LICENSE)
     db.parse({})
-    rows = list(db.connection.cursor().execute("SELECT license FROM source"))
-    assert len(rows) == 0
+    with db.session() as session:
+      rows = session.query(Source).all()
+      assert len(rows) == 0

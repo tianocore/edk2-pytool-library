@@ -81,7 +81,7 @@ def create_dsc_file(file_path, **kwargs):
     # Make default values.
     defines = {"SUPPORTED_ARCHITECTURES": "IA32|X64|AARCH64"}
     libs = ["TestLib|TestPkg/Library/TestLibNull.inf"]
-    comps = ["TestPkg/Drivers/TestDriver.inf"]
+    comps = ["TestPkg/Driver/TestDriver.inf"]
 
     # Override default values if they exist
     k = {

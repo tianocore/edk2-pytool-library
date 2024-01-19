@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 from common import Tree, empty_tree  # noqa: F401
-from edk2toollib.database import Edk2DB
+from edk2toollib.database import Edk2DB, InstancedInf, Source
 from edk2toollib.database.tables import InstancedInfTable
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
@@ -46,9 +46,10 @@ def test_valid_dsc(empty_tree: Tree):
     }
     db.parse(env)
 
-    rows = db.connection.cursor().execute("SELECT * FROM instanced_inf").fetchall()
-    assert len(rows) == 1
-    assert rows[0][3] == Path(comp1).stem
+    with db.session() as session:
+        rows = session.query(InstancedInf).all()
+        assert len(rows) == 1
+        assert rows[0].component == Path(comp1).as_posix()
 
 def test_no_active_platform(empty_tree: Tree, caplog):
     """Tests that the dsc table returns immediately when no ACTIVE_PLATFORM is defined."""
@@ -97,7 +98,9 @@ def test_dsc_with_conditional(empty_tree: Tree):
     }
     db.parse(env)
 
-    assert db.connection.cursor().execute("SELECT * FROM instanced_inf").fetchall() == []
+    with db.session() as session:
+        rows = session.query(InstancedInf).all()
+        assert len(rows) == 0
 
 def test_library_override(empty_tree: Tree):
     """Tests that overrides and null library overrides can be parsed as expected."""
@@ -135,11 +138,11 @@ def test_library_override(empty_tree: Tree):
         "TARGET": "DEBUG",
     }
     db.parse(env)
-    db.connection.execute("SELECT * FROM junction").fetchall()
-    library_list = db.connection.cursor().execute(f"SELECT instanced_inf2 FROM instanced_inf_junction WHERE instanced_inf1 = '{Path(comp1).as_posix()}'").fetchall()
-
-    for path, in library_list:
-        assert path in [Path(lib2).as_posix(), Path(lib3).as_posix()]
+    with db.session() as session:
+        for entry in session.query(InstancedInf).filter_by(path = Path(comp1).as_posix()).all():
+            assert len(entry.libraries) == 2
+            for library in entry.libraries:
+                assert library.name in ["TestLib2", "TestLib3"]
 
 def test_scoped_libraries1(empty_tree: Tree):
     """Ensure that the correct libraries in regards to scoping.
@@ -177,15 +180,17 @@ def test_scoped_libraries1(empty_tree: Tree):
     }
     db.parse(env)
 
-    for arch in ["IA32", "X64"]:
-        for component, in db.connection.execute("SELECT path FROM instanced_inf WHERE component = path and arch is ?;", (arch,)):
-            component_lib = db.connection.execute(GET_USED_LIBRARIES_QUERY, (component, arch)).fetchone()[0]
-            assert Path(component).name.replace("Driver", "Lib") == Path(component_lib).name
+    with db.session() as session:
+        for component in session.query(InstancedInf).filter_by(cls = None).all():
+            assert len(component.libraries) == 1
+            component_path = Path(component.path)
+            library_path = Path(component.libraries[0].path)
+            assert library_path.name == component_path.name.replace("Driver", "Lib")
 
-    results = db.connection.execute('SELECT source FROM instanced_inf_source_junction').fetchall()
-    assert len(results) == 3
-    for source, in results:
-        assert Path(source).name in ["File1.c", "File2.c", "File3.c"]
+        source_list = session.query(Source).all()
+        assert len(source_list) == 3
+        for source in source_list:
+            assert Path(source.path).name in ["File1.c", "File2.c", "File3.c"]
 
 def test_scoped_libraries2(empty_tree: Tree):
     """Ensure that the correct libraries in regards to scoping.
@@ -219,10 +224,12 @@ def test_scoped_libraries2(empty_tree: Tree):
     }
     db.parse(env)
 
-    for arch in ["IA32", "X64"]:
-        for component, in db.connection.execute("SELECT path FROM instanced_inf WHERE component = path and arch is ?;", (arch,)):
-            component_lib = db.connection.execute(GET_USED_LIBRARIES_QUERY, (component, arch)).fetchone()[0]
-            assert Path(component).name.replace("Driver", "Lib") == Path(component_lib).name
+    with db.session() as session:
+        for component in session.query(InstancedInf).filter_by(cls = None).all():
+            assert len(component.libraries) == 1
+            component_path = Path(component.path)
+            library_path = Path(component.libraries[0].path)
+            assert library_path.name == component_path.name.replace("Driver", "Lib")
 
 def test_missing_library(empty_tree: Tree):
     """Test when a library is missing."""
@@ -244,13 +251,16 @@ def test_missing_library(empty_tree: Tree):
         "TARGET": "DEBUG",
     }
     db.parse(env)
-    key2 = db.connection.execute("SELECT instanced_inf2 FROM instanced_inf_junction").fetchone()[0]
-    assert key2 is None  # This library class does not have an instance available, so key2 should be None
+    with db.session() as session:
+        component = session.query(InstancedInf).filter_by(cls=None).one()
+        assert len(component.libraries) == 0
+    # key2 = db.connection.execute("SELECT instanced_inf2 FROM instanced_inf_junction").fetchone()[0]
+    # assert key2 is None  # This library class does not have an instance available, so key2 should be None
 
 def test_multiple_library_class(empty_tree: Tree):
     """Test that a library INF that has multiple library class definitions is handled correctly."""
     edk2path = Edk2Path(str(empty_tree.ws), [])
-    db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
+    db = Edk2DB(":memory:", pathobj=edk2path)
     db.register(InstancedInfTable())
 
     lib1 = empty_tree.create_library("TestLib", "TestCls", default = {
@@ -279,19 +289,20 @@ def test_multiple_library_class(empty_tree: Tree):
 
     db.parse(env)
 
-    results = db.connection.execute("SELECT component, instanced_inf1, instanced_inf2 FROM instanced_inf_junction").fetchall()
+    with db.session() as session:
+        infs = session.query(InstancedInf).filter_by(cls = None ).all()
+        assert len(infs) == 2
 
-    # Verify that TestDriver1 uses TestLib acting as TestCls1
-    assert results[0] == (Path(comp1).as_posix(), Path(comp1).as_posix(), Path(lib1).as_posix()) # idx 2 is TestDriver1, idx1 is TestLib1 acting as TestCsl1
-    assert ("TestLib", "TestCls1") == db.connection.execute(
-        "SELECT name, class FROM instanced_inf where path = ? AND component = ?",
-        (Path(lib1).as_posix(), Path(comp1).as_posix())).fetchone()
+        assert infs[0].path == Path(comp1).as_posix() # If this fails, The order of returned objects may have changed
+        assert len(infs[0].libraries) == 1
+        assert infs[0].libraries[0].path == Path(lib1).as_posix()
+        assert infs[0].libraries[0].cls == "TestCls1"
 
-    # Verify that TestDriver2 uses TestLib acting as TestCls2
-    assert results[1] == (Path(comp2).as_posix(), Path(comp2).as_posix(), Path(lib1).as_posix())  # idx 4 is TestDriver2, idx 3 is TestLib1 acting as TestCls2
-    assert ("TestLib", "TestCls2") == db.connection.execute(
-        "SELECT name, class FROM instanced_inf where path = ? AND component = ?",
-        (Path(lib1).as_posix(), Path(comp2).as_posix())).fetchone()
+        assert infs[1].path == Path(comp2).as_posix() # If this fails, The order of returned objects may have changed
+        assert len(infs[1].libraries) == 1
+        assert infs[1].libraries[0].path == Path(lib1).as_posix()
+        assert infs[1].libraries[0].cls == "TestCls2"
+
 
 def test_absolute_paths_in_dsc(empty_tree: Tree):
     edk2path = Edk2Path(str(empty_tree.ws), [])
@@ -318,9 +329,11 @@ def test_absolute_paths_in_dsc(empty_tree: Tree):
 
     db.parse(env)
 
-    results = db.connection.execute("SELECT path FROM instanced_inf").fetchall()
-    assert results[0] == (Path(lib1).as_posix(),)
-    assert results[1] == (Path(comp1).as_posix(),)
+    with db.session() as session:
+        rows = session.query(InstancedInf).all()
+        assert len(rows) == 2
+        assert rows[0].path == Path(lib1).as_posix()
+        assert rows[1].path == Path(comp1).as_posix()
 
 def test_closest_packagepath(empty_tree: Tree):
     common_folder = empty_tree.ws / "Common"
@@ -360,8 +373,40 @@ def test_closest_packagepath(empty_tree: Tree):
 
     db.parse(env)
 
-    rows = db.connection.execute("SELECT path FROM instanced_inf").fetchall()
+    with db.session() as session:
+        rows = session.query(InstancedInf).all()
+        for row in rows:
+            assert row.path.startswith(("Library", "Drivers"))
 
-    # Ensure that we convert the path to be relative to the clostest package path.
-    for row in rows:
-        assert row[0].startswith("Library") or row[0].startswith("Drivers")
+def test_dsc_with_component_section_moduletype_definition(empty_tree: Tree, caplog):
+    """Component sections with a moduletype definition is not necessary and should be ignored.
+
+    Per the DSC specification, this is not supported, but the DSC parser just ignores it.
+    [Components.IA32.DXE_DRIVER] -> [Components.IA32]
+    This is because the Component INF describes it's own module type.
+    """
+    edk2path = Edk2Path(str(empty_tree.ws), [])
+    db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
+    db.register(InstancedInfTable())
+
+    lib1 = empty_tree.create_library("TestLib", "TestCls")
+    comp1 = empty_tree.create_component("TestDriver", "PEIM", libraryclasses=["TestCls"])
+
+    dsc = empty_tree.create_dsc(
+        libraryclasses = [
+            f'TestCls| {Path(lib1).as_posix()}',
+        ],
+        components = [],
+        components_ia32_PEIM = [
+            Path(comp1).as_posix(),
+        ],
+    )
+
+    env = {
+        "ACTIVE_PLATFORM": dsc,
+        "TARGET_ARCH": "IA32",
+        "TARGET": "DEBUG",
+    }
+
+    # Should not error
+    db.parse(env)

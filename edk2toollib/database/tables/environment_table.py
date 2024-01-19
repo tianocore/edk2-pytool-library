@@ -7,42 +7,21 @@
 ##
 """A module to run a table generator that creates or appends to a table with environment information."""
 import datetime
-import sqlite3
 from typing import Any
 
 import git
 
-from edk2toollib.database.tables.base_table import TableGenerator
+from edk2toollib.database import Environment, Session, Value
+from edk2toollib.database.tables import TableGenerator
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
-CREATE_ENV_TABLE_COMMAND = '''
-CREATE TABLE IF NOT EXISTS environment (
-    id TEXT PRIMARY KEY,
-    date TEXT,
-    version TEXT
-);
-'''
-
-CREATE_ENV_VALUES_TABLE_COMMAND = '''
-CREATE TABLE IF NOT EXISTS environment_values (
-    id TEXT,
-    key TEXT,
-    value TEXT,
-    FOREIGN KEY (id) REFERENCES environment(id)
-);
-'''
 
 class EnvironmentTable(TableGenerator):
     """A Workspace parser that records import environment information for a given parsing execution."""  # noqa: E501
     def __init__(self, *args: Any, **kwargs: Any) -> 'EnvironmentTable':
         """Initialize the query with the specific settings."""
 
-    def create_tables(self, db_cursor: sqlite3.Cursor) -> None:
-        """Create the tables necessary for this parser."""
-        db_cursor.execute(CREATE_ENV_VALUES_TABLE_COMMAND)
-        db_cursor.execute(CREATE_ENV_TABLE_COMMAND)
-
-    def parse(self, db_cursor: sqlite3.Cursor, pathobj: Edk2Path, id: str, env: dict) -> None:
+    def parse(self, session: Session, pathobj: Edk2Path, id: str, env: dict) -> None:
         """Parses the environment and adds the data to the table."""
         dtime = datetime.datetime.now()
 
@@ -51,10 +30,9 @@ class EnvironmentTable(TableGenerator):
         except git.InvalidGitRepositoryError:
             version = "UNKNOWN"
 
-        # Insert into environment table
-        entry = (id,str(dtime),version,)
-        db_cursor.execute("INSERT INTO environment (id, date, version) VALUES (?, ?, ?)", entry)
+        entry = Environment(
+            id=id,
+            date=dtime,
+            version=version,values = [Value(env_id = env, key=key, value=value) for key, value in env.items()])
 
-        # Insert into environment_values table
-        data = [(id, key, value) for key, value in env.items()]
-        db_cursor.executemany("INSERT INTO environment_values VALUES (?, ?, ?)", data)
+        session.add(entry)

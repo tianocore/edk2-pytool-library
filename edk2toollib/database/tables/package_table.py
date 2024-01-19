@@ -7,25 +7,16 @@
 ##
 """A module to generate a table containing information about a package."""
 from pathlib import Path
-from sqlite3 import Cursor
 from typing import Any
 
 import git
 
-from edk2toollib.database.tables.base_table import TableGenerator
+from edk2toollib.database import Package, Repository, Session
+from edk2toollib.database.tables import TableGenerator
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
-CREATE_PACKAGE_TABLE = """
-CREATE TABLE IF NOT EXISTS package (
-    name TEXT PRIMARY KEY,
-    repository TEXT
-)
-"""
-
-INSERT_PACKAGE_ROW = """
-INSERT OR REPLACE INTO package (name, repository)
-VALUES (?, ?)
-"""
+GIT_EXTENSION = ".git"
+DEC_EXTENSION = "*.dec"
 class PackageTable(TableGenerator):
     """A Table Generator that associates packages with their repositories."""
     def __init__(self, *args: Any, **kwargs: Any) -> 'PackageTable':
@@ -37,28 +28,46 @@ class PackageTable(TableGenerator):
 
         """
 
-    def create_tables(self, db_cursor: Cursor) -> None:
-        """Create the table necessary for this parser."""
-        db_cursor.execute(CREATE_PACKAGE_TABLE)
+    def get_repo_name(repo: git.Repo) -> str:
+        """Get the name of the repository."""
+        if "origin" in repo.remotes:
+            return repo.remotes.origin.url.split("/")[-1].split(GIT_EXTENSION)[0].upper()
+        elif len(repo.remotes) > 0:
+            return repo.remotes[0].url.split("/")[-1].split(GIT_EXTENSION)[0].upper()
+        return "BASE"
 
-    def parse(self, db_cursor: Cursor, pathobj: Edk2Path, id: str, env: dict) -> None:
+    def parse(self, session: Session, pathobj: Edk2Path, id: str, env: dict) -> None:
         """Glob for packages and insert them into the table."""
         try:
             repo = git.Repo(pathobj.WorkspacePath)
         except git.InvalidGitRepositoryError:
             return
 
-        for file in Path(pathobj.WorkspacePath).rglob("*.dec"):
-            pkg = pathobj.GetContainingPackage(str(file))
-            containing_repo = "BASE"
-            if "origin" in repo.remotes:
-                containing_repo = repo.remotes.origin.url.split("/")[-1].split(".git")[0].upper()
-            elif len(repo.remotes) > 0:
-                containing_repo = repo.remotes[0].url.split("/")[-1].split(".git")[0].upper()
-            if repo:
-                for submodule in repo.submodules:
-                    if submodule.abspath in str(file):
-                        containing_repo = submodule.name
-                        break
-            row = (pkg, containing_repo)
-            db_cursor.execute(INSERT_PACKAGE_ROW, row)
+        all_packages = {(pkg.name, pkg.path): pkg for pkg in session.query(Package).all()}
+        all_repos = {(repo.name, repo.path): repo for repo in session.query(Repository).all()}
+
+        packages_to_add = []
+        for file in Path(pathobj.WorkspacePath).rglob(DEC_EXTENSION):
+            pkg_name = file.parent.name
+            containing_repo = PackageTable.get_repo_name(repo)
+            repo_path = None
+
+            for submodule in repo.submodules:
+                if submodule.abspath in str(file):
+                    containing_repo = submodule.name
+                    repo_path = submodule.path
+                    break
+
+            repository = all_repos.setdefault(
+                (containing_repo, repo_path),
+                Repository(name=containing_repo, path=repo_path)
+            )
+
+            pkg_path = file.parent.relative_to(pathobj.WorkspacePath).as_posix()
+            if (pkg_name, pkg_path) not in all_packages:
+                package = all_packages.setdefault(
+                    (pkg_name, pkg_path),
+                    Package(name=pkg_name, path=pkg_path, repository=repository)
+                )
+                packages_to_add.append(package)
+        session.add_all(packages_to_add)

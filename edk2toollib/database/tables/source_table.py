@@ -10,31 +10,15 @@ import logging
 import re
 import time
 from pathlib import Path
-from sqlite3 import Cursor
 from typing import Any
 
 from joblib import Parallel, delayed
 
-from edk2toollib.database.tables.base_table import TableGenerator
+from edk2toollib.database import Session, Source
+from edk2toollib.database.tables import TableGenerator
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
-SOURCE_FILES = ["*.c", "*.h", "*.cpp", "*.asm", "*.s", "*.nasm", "*.masm", "*.rs"]
-
-CREATE_SOURCE_TABLE = '''
-CREATE TABLE IF NOT EXISTS source (
-    path TEXT UNIQUE,
-    license TEXT,
-    total_lines INTEGER,
-    code_lines INTEGER,
-    comment_lines INTEGER,
-    blank_lines INTEGER
-)
-'''
-
-INSERT_SOURCE_ROW = '''
-INSERT OR REPLACE INTO source (path, license, total_lines, code_lines, comment_lines, blank_lines)
-VALUES (?, ?, ?, ?, ?, ?)
-'''
+SOURCE_EXT_LIST = ["*.c", "*.h", "*.cpp", "*.asm", "*.s", "*.nasm", "*.masm", "*.rs"]
 
 
 class SourceTable(TableGenerator):
@@ -48,43 +32,53 @@ class SourceTable(TableGenerator):
 
         Keyword Arguments:
             n_jobs (int): Number of files to run in parallel
+            source_extensions (list[str]): List of file extensions to parse
         """
         self.n_jobs = kwargs.get("n_jobs", -1)
+        self.source_extensions = kwargs.get("source_extensions", SOURCE_EXT_LIST)
 
-    def create_tables(self, db_cursor: Cursor) -> None:
-        """Create the tables necessary for this parser."""
-        db_cursor.execute(CREATE_SOURCE_TABLE)
-
-    def parse(self, db_cursor: Cursor, pathobj: Edk2Path, id: str, env: dict) -> None:
+    def parse(self, session: Session, pathobj: Edk2Path, id: str, env: dict) -> None:
         """Parse the workspace and update the database."""
         ws = Path(pathobj.WorkspacePath)
         self.pathobj = pathobj
 
         start = time.time()
         files = []
-        for src in SOURCE_FILES:
+        for src in self.source_extensions:
             files.extend(list(ws.rglob(src)))
         files = [file for file in files if not file.is_relative_to(ws / "Build")]
-        src_entries = Parallel(n_jobs=self.n_jobs)(delayed(self._parse_file)(ws, filename) for filename in files)
+        src_entries = Parallel(n_jobs=self.n_jobs)(delayed(self._parse_file)(filename) for filename in files)
+
+        existing_source = {source.path: source for source in session.query(Source).all()}
+        to_add = []
+        for source in src_entries:
+            if source.path not in existing_source:
+                existing_source[source.path] = source
+                to_add.append(source)
+
+        session.add_all(to_add)
+        session.commit()
+
         logging.debug(
             f"{self.__class__.__name__}: Parsed {len(src_entries)} files; "
             f"took {round(time.time() - start, 2)} seconds.")
 
-        db_cursor.executemany(INSERT_SOURCE_ROW, src_entries)
-
-    def _parse_file(self, _ws: str, filename: Path) -> dict:
+    def _parse_file(self, filename: Path) -> dict:
         """Parse a C file and return the results."""
         license = ""
         with open(filename, 'r', encoding='cp850') as f:
-            for line in f.readlines():
+            lines = f.readlines()
+            for line in lines:
                 match = re.search(r"SPDX-License-Identifier:\s*(.*)$", line)  # TODO: This is not a standard format.
                 if match:
                     license = match.group(1)
-        return (
-            self.pathobj.GetEdk2RelativePathFromAbsolutePath(filename.as_posix()),  # path
-            license or "Unknown",  # license
-            0,  # total_lines
-            0,  # code_lines
-            0,  # comment_lines
-            0,  # blank_lines
+
+        path = self.pathobj.GetEdk2RelativePathFromAbsolutePath(filename.as_posix())
+        return Source(
+            path=path,
+            license=license or 'Unknown',
+            total_lines=len(lines),
+            code_lines=0,
+            comment_lines=0,
+            blank_lines=0,
         )

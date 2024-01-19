@@ -11,7 +11,7 @@ import sys
 
 import git
 import pytest
-from edk2toollib.database import Edk2DB
+from edk2toollib.database import Edk2DB, Package
 from edk2toollib.database.tables import PackageTable
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
@@ -32,16 +32,17 @@ def test_basic_parse(tmp_path):
     db.register(PackageTable())
     db.parse({})
 
-    results = db.connection.cursor().execute("SELECT * FROM package").fetchall()
+    with db.session() as session:
+        packages = session.query(Package).all()
 
-    to_pass = {
-        ("QemuPkg", "MU_TIANO_PLATFORMS"): False,
-        ("QemuSbsaPkg", "MU_TIANO_PLATFORMS"): False,
-        ("QemuQ35Pkg", "MU_TIANO_PLATFORMS"): False,
-        ("SetupDataPkg", "Features/CONFIG"): False,
-    }
-    for result in results:
-        to_pass[result] = True
+        to_pass = {
+            ("QemuPkg", "MU_TIANO_PLATFORMS"): False,
+            ("QemuSbsaPkg", "MU_TIANO_PLATFORMS"): False,
+            ("QemuQ35Pkg", "MU_TIANO_PLATFORMS"): False,
+            ("SetupDataPkg", "Features/CONFIG"): False,
+        }
+        for package in packages:
+            to_pass[(package.name, package.repository.name)] = True
 
-    # Assert that all expected items in to_pass were found and set to True
-    assert all(to_pass.values())
+        # Assert that all expected items in to_pass were found and set to True
+        assert all(to_pass.values())

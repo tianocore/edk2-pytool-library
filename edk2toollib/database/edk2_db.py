@@ -7,29 +7,22 @@
 ##
 """A class for interacting with a database implemented using json."""
 import logging
-import sqlite3
 import time
 import uuid
-from typing import Any, Optional, Type
+from contextlib import contextmanager
+from typing import Any
 
-from edk2toollib.database.tables import EnvironmentTable
-from edk2toollib.database.tables.base_table import TableGenerator
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, Session
+
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
-CREATE_JUNCTION_TABLE = """
-CREATE TABLE IF NOT EXISTS junction (
-    env TEXT,
-    table1 TEXT,
-    key1 TEXT,
-    table2 TEXT,
-    key2 TEXT
-)
-"""
 
-CREATE_JUNCTION_INDEX = """
-CREATE INDEX IF NOT EXISTS junction_idx
-ON junction (env);
-"""
+class Base(DeclarativeBase):
+    """The base class for creating database table models.
+
+    This class should be the subclass for any table model that will be used with Edk2DB.
+    """
 
 class Edk2DB:
     """A SQLite3 database manager for a EDKII workspace.
@@ -60,6 +53,7 @@ class Edk2DB:
             db.connection.execute("SELECT * FROM ?", table)
         ```
     """
+    Base = Base
     def __init__(self: 'Edk2DB', db_path: str, pathobj: Edk2Path = None, **kwargs: dict[str,Any]) -> 'Edk2DB':
         """Initializes the database.
 
@@ -70,20 +64,24 @@ class Edk2DB:
         """
         self.pathobj = pathobj
         self.clear_parsers()
-        self.connection = sqlite3.connect(db_path)
+        self.engine = create_engine(f"sqlite:///{db_path}", **kwargs)
+        self.Base.metadata.create_all(self.engine)
 
-    def __enter__(self: 'Edk2DB') -> 'Edk2DB':
-        """Enables the use of the `with` statement."""
-        return self
+    @contextmanager
+    def session(self) -> Session:
+        """Provides a context manager for a session with the database.
 
-    def __exit__(
-        self, exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[Any]  # noqa: ANN401
-    ) -> None:
-        """Enables the use of the `with` statement."""
-        self.connection.commit()
-        self.connection.close()
+        Handles commiting changes and rolling back if an exception is raised.
+        """
+        session = Session(self.engine)
+        try:
+            yield session
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
 
     def register(self, *parsers: 'TableGenerator') -> None:
         """Registers a one or more table generators.
@@ -96,7 +94,7 @@ class Edk2DB:
 
     def clear_parsers(self) -> None:
         """Empties the list of registered table generators."""
-        self._parsers = [EnvironmentTable()]
+        self._parsers = []
 
     def parse(self, env: dict) -> None:
         """Runs all registered table parsers against the database.
@@ -105,18 +103,28 @@ class Edk2DB:
             To enable queries to differentiate between two parses, an environment table is always created if it does
             not exist, and a row is added for each call of this command.
         """
-        self.connection.execute(CREATE_JUNCTION_TABLE)
-        self.connection.execute(CREATE_JUNCTION_INDEX)
         id = str(uuid.uuid4().hex)
-
-        # Create all tables
-        for table in self._parsers:
-            table.create_tables(self.connection.cursor())
 
         # Fill all tables
         for table in self._parsers:
             logging.debug(f"[{table.__class__.__name__}] starting...")
             t = time.time()
-            table.parse(self.connection.cursor(), self.pathobj, id, env)
-            self.connection.commit()
+            with self.session() as session:
+                table.parse(session, self.pathobj, id, env)
             logging.debug(f"Finished in {round(time.time() - t, 2)}")
+
+class TableGenerator:
+    """An interface for a parser that generates a sqlite3 table maintained by Edk2DB.
+
+    Allows you to parse a workspace, file, etc, and load the contents into the database as rows in a table.
+
+    Edk2Db provides a connection to a sqlite3 database and will commit any changes made during `parse` once
+    the parser has finished executing and has returned. Review sqlite3 documentation for more information on
+    how to interact with the database.
+    """
+    def __init__(self, *args: Any, **kwargs: Any) -> 'TableGenerator':
+        """Initialize the query with the specific settings."""
+
+    def parse(self, session: Session, pathobj: Edk2Path, id: str, env: dict) -> None:
+        """Execute the parser and update the database."""
+        raise NotImplementedError
