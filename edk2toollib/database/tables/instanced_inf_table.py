@@ -230,8 +230,6 @@ class InstancedInfTable(TableGenerator):
                 library_class_list.append("NULL")
 
             for null_lib in self._get_null_lib_instances(scope, library_dict):
-                if null_lib == inf:
-                    continue
                 library_instance_list.append(null_lib)
                 library_class_list.append("NULL")
 
