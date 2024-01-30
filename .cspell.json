@@ -79,6 +79,7 @@
         "pcdtype",
         "prebuild",
         "pyasn",
+        "pygount",
         "pypath",
         "pytest",
         "PYTHONPATH",
