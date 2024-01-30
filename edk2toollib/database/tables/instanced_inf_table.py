@@ -228,7 +228,9 @@ class InstancedInfTable(TableGenerator):
             library_instance_list.append(null_lib)
             library_class_list.append("NULL")
 
-        for null_lib in self._get_null_lib_instances(inf, scope, library_dict):
+        for null_lib in self._get_null_lib_instances(scope, library_dict):
+            if null_lib == inf:
+                continue
             library_instance_list.append(null_lib)
             library_class_list.append("NULL")
 
@@ -362,14 +364,12 @@ class InstancedInfTable(TableGenerator):
 
     def _get_null_lib_instances(
         self,
-        inf: str,
         scope: str,
         library_dict: dict,
     ) -> list:
         """Returns all null libraries for a given scope.
 
         Args:
-            inf (str): The INF file to ignore null libraries for.
             scope (str): The scope to search for null libraries.
             library_dict (dict): The dictionary of libraries to search through.
 
@@ -390,8 +390,5 @@ class InstancedInfTable(TableGenerator):
 
         lookup = 'common.null'
         null_libs.extend(library_dict.get(lookup, []))
-
-        if inf in null_libs:
-            null_libs.remove(inf)
 
         return null_libs
