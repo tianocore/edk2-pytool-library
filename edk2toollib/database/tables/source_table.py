@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from joblib import Parallel, delayed
+from pygount import SourceAnalysis
 
 from edk2toollib.database import Session, Source
 from edk2toollib.database.tables import TableGenerator
@@ -31,9 +32,11 @@ class SourceTable(TableGenerator):
             kwargs (any): keyword arguments described below
 
         Keyword Arguments:
+            source_stats (bool): Whether to parse source statistics
             n_jobs (int): Number of files to run in parallel
             source_extensions (list[str]): List of file extensions to parse
         """
+        self.source_stats = kwargs.get("source_stats", False)
         self.n_jobs = kwargs.get("n_jobs", -1)
         self.source_extensions = kwargs.get("source_extensions", SOURCE_EXT_LIST)
 
@@ -55,6 +58,11 @@ class SourceTable(TableGenerator):
             if source.path not in existing_source:
                 existing_source[source.path] = source
                 to_add.append(source)
+            else:
+                to_add.append(existing_source[source.path])
+                to_add[-1].code_lines = source.code_lines
+                to_add[-1].comment_lines = source.comment_lines
+                to_add[-1].blank_lines = source.blank_lines
 
         session.add_all(to_add)
         session.commit()
@@ -73,12 +81,22 @@ class SourceTable(TableGenerator):
                 if match:
                     license = match.group(1)
 
+        total_lines = len(lines)
+        code_lines = total_lines
+        comment_lines = 0
+        blank_lines = 0
+        if self.source_stats:
+            code = SourceAnalysis.from_file(filename, "_", fallback_encoding="utf-8")
+            code_lines = code.code_count
+            comment_lines = code.documentation_count
+            blank_lines = code.empty_count
+
         path = self.pathobj.GetEdk2RelativePathFromAbsolutePath(filename.as_posix())
         return Source(
             path=path,
             license=license or 'Unknown',
-            total_lines=len(lines),
-            code_lines=0,
-            comment_lines=0,
-            blank_lines=0,
+            total_lines=total_lines,
+            code_lines=code_lines,
+            comment_lines=comment_lines,
+            blank_lines=blank_lines,
         )
