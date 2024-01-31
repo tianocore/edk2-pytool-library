@@ -28,6 +28,13 @@ SOURCE_NO_LICENSE = r"""
 *//
 """
 
+SOURCE_WITH_CODE = r"""
+  x = 5
+  y = 6
+  z = x + y
+  print(z)
+"""
+
 
 def test_source_with_license(tmp_path):
     """Tests that a source with a license is detected and the license is set."""
@@ -77,3 +84,18 @@ def test_invalid_filetype(tmp_path):
     with db.session() as session:
       rows = session.query(Source).all()
       assert len(rows) == 0
+
+def test_source_with_code(tmp_path):
+    """Tests that a source with code is detected."""
+    edk2path = Edk2Path(str(tmp_path), [])
+    db = Edk2DB(tmp_path / "db.db", pathobj=edk2path)
+    db.register(SourceTable(n_jobs = 1, source_stats=True, source_extensions=["*.py"]))
+
+    # Verify we detect c and h files
+    write_file(tmp_path / "file.py", SOURCE_WITH_CODE)
+
+    db.parse({})
+
+    with db.session() as session:
+      file = session.query(Source).one()
+      assert file.code_lines == 4
