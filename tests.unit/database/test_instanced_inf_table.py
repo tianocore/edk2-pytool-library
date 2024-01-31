@@ -410,3 +410,61 @@ def test_dsc_with_component_section_moduletype_definition(empty_tree: Tree, capl
 
     # Should not error
     db.parse(env)
+
+def test_dsc_with_null_lib_in_libraryclasses_section(empty_tree: Tree):
+    edk2path = Edk2Path(str(empty_tree.ws), [])
+    db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
+    db.register(InstancedInfTable())
+
+    lib1 = empty_tree.create_library("TestLib", "TestCls")
+    nulllib1 = empty_tree.create_library("NullLib1", "NULL")
+    nulllib2 = empty_tree.create_library("NullLib2", "NULL")
+    nulllib3 = empty_tree.create_library("NullLib3", "NULL")
+
+    comp1 = empty_tree.create_component("TestDriver", "PEIM", libraryclasses=["TestCls"])
+
+    dsc = empty_tree.create_dsc(
+        libraryclasses = [
+            f'TestCls| {Path(lib1).as_posix()}',
+            f'NULL| {Path(nulllib1).as_posix()}',
+        ],
+        libraryclasses_x64 = [
+            f'NULL| {Path(nulllib2).as_posix()}',
+        ],
+        libraryclasses_x64_DXE_DRIVER = [
+            f'NULL| {Path(nulllib3).as_posix()}',
+        ],
+        components = [],
+        components_ia32_PEIM = [
+            Path(comp1).as_posix(),
+        ],
+        components_x64 = [
+            Path(comp1).as_posix(),
+        ]
+    )
+
+    env = {
+        "ACTIVE_PLATFORM": dsc,
+        "TARGET_ARCH": "IA32",
+        "TARGET": "DEBUG",
+    }
+
+    db.parse(env)
+
+    with db.session() as session:
+        component = session.query(InstancedInf).filter_by(cls = None).one()
+        assert len(component.libraries) == 2
+
+    db = Edk2DB(":memory:", pathobj=edk2path)
+    db.register(InstancedInfTable())
+    env = {
+        "ACTIVE_PLATFORM": dsc,
+        "TARGET_ARCH": "X64",
+        "TARGET": "DEBUG",
+    }
+
+    db.parse(env)
+
+    with db.session() as session:
+        component = session.query(InstancedInf).filter_by(cls = None).one()
+        assert len(component.libraries) == 3

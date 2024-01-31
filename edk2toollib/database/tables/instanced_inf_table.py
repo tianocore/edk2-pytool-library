@@ -222,11 +222,16 @@ class InstancedInfTable(TableGenerator):
             library_class_list.append(lib)
 
         #
-        # 2. Append all NULL library instances
+        # 2. Append all NULL library instances if parsing the component.
         #
-        for null_lib in override_dict["NULL"]:
-            library_instance_list.append(null_lib)
-            library_class_list.append("NULL")
+        if inf == component:
+            for null_lib in override_dict["NULL"]:
+                library_instance_list.append(null_lib)
+                library_class_list.append("NULL")
+
+            for null_lib in self._get_null_lib_instances(scope, library_dict):
+                library_instance_list.append(null_lib)
+                library_class_list.append("NULL")
 
         #
         # 3. Recursively parse used libraries
@@ -355,3 +360,34 @@ class InstancedInfTable(TableGenerator):
                 library_instance = self.pathobj.GetEdk2RelativePathFromAbsolutePath(library_instance)
                 return library_instance
         return None
+
+    def _get_null_lib_instances(
+        self,
+        scope: str,
+        library_dict: dict,
+    ) -> list:
+        """Returns all null libraries for a given scope.
+
+        Args:
+            scope (str): The scope to search for null libraries.
+            library_dict (dict): The dictionary of libraries to search through.
+
+        Returns:
+            list: A list of null libraries for the given scope.
+        """
+        arch, module = tuple(scope.split("."))
+        null_libs = []
+
+        lookup = f'{arch}.{module}.null'
+        null_libs.extend(library_dict.get(lookup, []))
+
+        lookup = f'common.{module}.null'
+        null_libs.extend(library_dict.get(lookup, []))
+
+        lookup = f'{arch}.null'
+        null_libs.extend(library_dict.get(lookup, []))
+
+        lookup = 'common.null'
+        null_libs.extend(library_dict.get(lookup, []))
+
+        return null_libs
