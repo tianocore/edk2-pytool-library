@@ -99,3 +99,26 @@ def test_source_with_code(tmp_path):
     with db.session() as session:
       file = session.query(Source).one()
       assert file.code_lines == 4
+
+def test_source_with_code_is_updated(tmp_path):
+    """Tests that a source with code is updated When parsed again with different source_stats setting."""
+    edk2path = Edk2Path(str(tmp_path), [])
+    db = Edk2DB(tmp_path / "db.db", pathobj=edk2path)
+    db.register(SourceTable(n_jobs = 1, source_stats=False, source_extensions=["*.py"]))
+
+    # Verify we detect c and h files
+    write_file(tmp_path / "file.py", SOURCE_WITH_CODE)
+
+    db.parse({})
+
+    with db.session() as session:
+      file = session.query(Source).one()
+      assert file.code_lines == file.total_lines == 5 # When not parsing source_stats, code lines is equal to total lines
+
+    db.clear_parsers()
+    db.register(SourceTable(n_jobs = 1, source_stats=True, source_extensions=["*.py"]))
+
+    db.parse({})
+    with db.session() as session:
+      file = session.query(Source).one()
+      assert file.code_lines == 4
