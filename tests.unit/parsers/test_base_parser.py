@@ -534,7 +534,7 @@ class TestBaseParserConditionals(unittest.TestCase):
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional('!endif'))
 
-        self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET)!=4'))
+        self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET)!=3'))
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional('!endif'))
 
