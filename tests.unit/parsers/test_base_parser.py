@@ -512,7 +512,7 @@ class TestBaseParserConditionals(unittest.TestCase):
 
     def test_conditional_without_spaces(self):
         parser = BaseParser("")
-        parser.LocalVars = {"MAX_SOCKET": '4', 'TARGET': 'DEBUG'}
+        parser.LocalVars = {"MAX_SOCKET": '4'}
 
         self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET)<=4'))
         self.assertTrue(parser.InActiveCode())
@@ -531,6 +531,10 @@ class TestBaseParserConditionals(unittest.TestCase):
         self.assertTrue(parser.ProcessConditional('!endif'))
 
         self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET)==4'))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional('!endif'))
+
+        self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET)!=4'))
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional('!endif'))
 
