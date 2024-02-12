@@ -534,6 +534,8 @@ class BaseParser(object):
         TEXT_MODE = 0
         QUOTE_MODE = 1
         MACRO_MODE = 2
+        CONDITION_MODE = 3
+        CONDITION_CHARACTERS = ["=", ">", "<", "!"]
         token = ""
         mode = 0
         tokens = []
@@ -563,6 +565,25 @@ class BaseParser(object):
                     tokens.append(token)
                     token = ""
                     mode = TEXT_MODE
+            elif mode == CONDITION_MODE and character == "(":
+                mode = TEXT_MODE
+                if len(token) > 0:
+                    tokens.append(token)
+                    token = ""
+                tokens.append(character)
+            elif character in CONDITION_CHARACTERS and mode == CONDITION_MODE:
+                token += character
+            elif character not in CONDITION_CHARACTERS and mode == CONDITION_MODE:
+                if len(token) > 0:
+                    tokens.append(token)
+                token = character if character != " " else ''
+                mode = TEXT_MODE
+            elif character in CONDITION_CHARACTERS and mode == TEXT_MODE:
+                if len(token) > 0:
+                    tokens.append(token)
+                    token = ''
+                token = character
+                mode = CONDITION_MODE
             else:
                 token += character
         # make sure to add in the last token just in case
