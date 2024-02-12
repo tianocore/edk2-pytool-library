@@ -37,7 +37,7 @@ issues = "https://github.com/tianocore/edk2-pytool-library/issues/"
 
 [project.optional-dependencies]
 dev = [
-    "ruff == 0.2.0",
+    "ruff == 0.2.1",
     "pytest == 8.0.0",
     "coverage == 7.4.1",
     "pre-commit == 3.6.0",
