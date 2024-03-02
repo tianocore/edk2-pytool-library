@@ -313,6 +313,8 @@ class BuildReport(object):
             (None): If not found
         """
         for (k, v) in self.Modules.items():
+            if os.path.isabs(v.InfPath):
+                v.InfPath = self.PathConverter.GetEdk2RelativePathFromAbsolutePath(v.InfPath)
             if (v.InfPath.lower() == InfPath.lower()):
                 logging.debug("Found Module by InfPath: %s" % InfPath)
                 return v
