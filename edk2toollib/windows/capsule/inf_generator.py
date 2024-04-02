@@ -17,6 +17,7 @@ import re
 import uuid
 from typing import Optional
 
+OS_BUILD_VERSION_DIRID13_SUPPORT = '10.0...17134'
 
 class InfSection(object):
     """Object representing an INF Section."""
@@ -52,9 +53,9 @@ PnpLockdown=1
 CatalogFile={Name}.cat
 
 [Manufacturer]
-%MfgName% = Firmware,NT{Arch}.10.0...16299
+%MfgName% = Firmware,NT{Arch}.{OsBuildVersion}
 
-[Firmware.NT{Arch}.10.0...16299]
+[Firmware.NT{Arch}.{OsBuildVersion}]
 %FirmwareDesc% = Firmware_Install,UEFI\RES_{{{EsrtGuid}}}
 
 [Firmware_Install.NT]
@@ -331,6 +332,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
             EsrtGuid=self.EsrtGuid,
             Provider=self.Provider,
             MfgName=self.Manufacturer,
+            OsBuildVersion=OS_BUILD_VERSION_DIRID13_SUPPORT,
             Description=self.Description,
             Rollback=RollbackString,
             FirmwareCopyFilesSection=copy_files,

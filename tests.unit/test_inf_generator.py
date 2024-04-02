@@ -11,7 +11,7 @@ import os
 import tempfile
 import unittest
 
-from edk2toollib.windows.capsule.inf_generator import InfGenerator, InfSection
+from edk2toollib.windows.capsule.inf_generator import InfGenerator, InfSection, OS_BUILD_VERSION_DIRID13_SUPPORT
 
 
 def _get_test_file():
@@ -137,7 +137,7 @@ class InfGeneratorTest(unittest.TestCase):
 
 # NOTE: Below are the expected contents of a a valid INF file.
 #       Some fields will need to be generated (like the date).
-TEST_FILE_CONTENTS = ''';
+TEST_FILE_CONTENTS = f''';
 ; TestName.inf
 ; 1.2.3.4
 ; Copyright (C) 2019 Microsoft Corporation.  All Rights Reserved.
@@ -145,17 +145,17 @@ TEST_FILE_CONTENTS = ''';
 [Version]
 Signature="$WINDOWS NT$"
 Class=Firmware
-ClassGuid={f2e7dd72-6468-4e36-b6f1-6488f42c1b52}
+ClassGuid={{f2e7dd72-6468-4e36-b6f1-6488f42c1b52}}
 Provider=%Provider%
 DriverVer=<DATESUB>,1.2.3.4
 PnpLockdown=1
 CatalogFile=TestName.cat
 
 [Manufacturer]
-%MfgName% = Firmware,NTamd64.10.0...16299
+%MfgName% = Firmware,NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}
 
-[Firmware.NTamd64.10.0...16299]
-%FirmwareDesc% = Firmware_Install,UEFI\\RES_{3cad7a0c-d35b-4b75-96b1-03a9fb07b7fc}
+[Firmware.NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}]
+%FirmwareDesc% = Firmware_Install,UEFI\\RES_{{3cad7a0c-d35b-4b75-96b1-03a9fb07b7fc}}
 
 [Firmware_Install.NT]
 CopyFiles = Firmware_CopyFiles
@@ -170,7 +170,7 @@ AddService=,2
 AddReg = Firmware_AddReg
 
 [Firmware_AddReg]
-HKR,,FirmwareId,,{3cad7a0c-d35b-4b75-96b1-03a9fb07b7fc}
+HKR,,FirmwareId,,{{3cad7a0c-d35b-4b75-96b1-03a9fb07b7fc}}
 HKR,,FirmwareVersion,%REG_DWORD%,0x1020304
 HKR,,FirmwareFilename,,%13%\\TestFirmwareRom.bin
 
