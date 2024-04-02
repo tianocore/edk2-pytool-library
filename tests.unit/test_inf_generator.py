@@ -152,9 +152,9 @@ PnpLockdown=1
 CatalogFile=TestName.cat
 
 [Manufacturer]
-%MfgName% = Firmware,NTamd64.10.0...16299
+%MfgName% = Firmware,NTamd64.10.0...17134
 
-[Firmware.NTamd64.10.0...16299]
+[Firmware.NTamd64.10.0...17134]
 %FirmwareDesc% = Firmware_Install,UEFI\\RES_{3cad7a0c-d35b-4b75-96b1-03a9fb07b7fc}
 
 [Firmware_Install.NT]

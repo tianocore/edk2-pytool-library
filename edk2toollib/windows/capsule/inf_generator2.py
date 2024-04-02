@@ -121,7 +121,7 @@ class InfHeader(object):
             CatalogFile={self.Name}.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NT{self.Arch}.10.0...16299
+            %MfgName% = Firmware,NT{self.Arch}.10.0...17134
 
             """)
 
@@ -288,7 +288,7 @@ class InfFirmwareSections(object):
 
         This includes any InfFirmware objects in it.
         """
-        firmwareStr = f"[Firmware.NT{self.Arch}.10.0...16299]\n"
+        firmwareStr = f"[Firmware.NT{self.Arch}.10.0...17134]\n"
         for InfFirmware in self.Sections.values():
             firmwareStr += f"%{InfFirmware.Tag}Desc% = {InfFirmware.Tag}_Install,UEFI\\RES_{{{InfFirmware.EsrtGuid}}}\n"
         firmwareStr += "\n"

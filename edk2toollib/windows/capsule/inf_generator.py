@@ -52,9 +52,9 @@ PnpLockdown=1
 CatalogFile={Name}.cat
 
 [Manufacturer]
-%MfgName% = Firmware,NT{Arch}.10.0...16299
+%MfgName% = Firmware,NT{Arch}.10.0...17134
 
-[Firmware.NT{Arch}.10.0...16299]
+[Firmware.NT{Arch}.10.0...17134]
 %FirmwareDesc% = Firmware_Install,UEFI\RES_{{{EsrtGuid}}}
 
 [Firmware_Install.NT]
