@@ -16,15 +16,15 @@ from edk2toollib.windows.capsule.inf_generator2 import (
     InfHeader,
     InfSourceFiles,
     InfStrings,
+    OS_BUILD_VERSION_DIRID13_SUPPORT
 )
-
 
 class InfHeaderTest(unittest.TestCase):
     def test_header(self):
         Strings = InfStrings()
         Header = InfHeader("InfTest", "1.0.0.1", "01/01/2021", "amd64", "testprovider", "testmfr", Strings)
 
-        ExpectedStr = textwrap.dedent("""\
+        ExpectedStr = textwrap.dedent(f"""\
             ;
             ; InfTest
             ; 1.0.0.1
@@ -33,14 +33,14 @@ class InfHeaderTest(unittest.TestCase):
             [Version]
             Signature="$WINDOWS NT$"
             Class=Firmware
-            ClassGuid={f2e7dd72-6468-4e36-b6f1-6488f42c1b52}
+            ClassGuid={{f2e7dd72-6468-4e36-b6f1-6488f42c1b52}}
             Provider=%Provider%
             DriverVer=01/01/2021,1.0.0.1
             PnpLockdown=1
             CatalogFile=InfTest.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64.10.0...17134
+            %MfgName% = Firmware,NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}
 
             """)
         self.assertEqual(ExpectedStr, str(Header))
@@ -273,9 +273,9 @@ class InfFirmwareSectionsTest(unittest.TestCase):
         Sections = InfFirmwareSections('amd64', Strings)
         Sections.AddSection(Firmware)
 
-        ExpectedStr = textwrap.dedent("""\
-            [Firmware.NTamd64.10.0...17134]
-            %tagDesc% = tag_Install,UEFI\\RES_{34e094e9-4079-44cd-9450-3f2cb7824c97}
+        ExpectedStr = textwrap.dedent(f"""\
+            [Firmware.NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}]
+            %tagDesc% = tag_Install,UEFI\\RES_{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
 
             [tag_Install.NT]
             CopyFiles = tag_CopyFiles
@@ -290,7 +290,7 @@ class InfFirmwareSectionsTest(unittest.TestCase):
             AddReg = tag_AddReg
 
             [tag_AddReg]
-            HKR,,FirmwareId,,{34e094e9-4079-44cd-9450-3f2cb7824c97}
+            HKR,,FirmwareId,,{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000001
             HKR,,FirmwareFilename,,%13%\\test.bin
 
@@ -331,10 +331,10 @@ class InfFirmwareSectionsTest(unittest.TestCase):
         Sections.AddSection(Firmware1)
         Sections.AddSection(Firmware2)
 
-        ExpectedStr = textwrap.dedent("""\
-            [Firmware.NTamd64.10.0...17134]
-            %tag1Desc% = tag1_Install,UEFI\\RES_{34e094e9-4079-44cd-9450-3f2cb7824c97}
-            %tag2Desc% = tag2_Install,UEFI\\RES_{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
+        ExpectedStr = textwrap.dedent(f"""\
+            [Firmware.NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}]
+            %tag1Desc% = tag1_Install,UEFI\\RES_{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
+            %tag2Desc% = tag2_Install,UEFI\\RES_{{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}}
 
             [tag1_Install.NT]
             CopyFiles = tag1_CopyFiles
@@ -349,7 +349,7 @@ class InfFirmwareSectionsTest(unittest.TestCase):
             AddReg = tag1_AddReg
 
             [tag1_AddReg]
-            HKR,,FirmwareId,,{34e094e9-4079-44cd-9450-3f2cb7824c97}
+            HKR,,FirmwareId,,{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000001
             HKR,,FirmwareFilename,,%13%\\test1.bin
 
@@ -366,7 +366,7 @@ class InfFirmwareSectionsTest(unittest.TestCase):
             AddReg = tag2_AddReg
 
             [tag2_AddReg]
-            HKR,,FirmwareId,,{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
+            HKR,,FirmwareId,,{{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000002
             HKR,,FirmwareFilename,,%13%\\test2.bin
 
@@ -490,7 +490,7 @@ class InfFileTest(unittest.TestCase):
             "0x01000002",
             "test2.bin")
 
-        ExpectedStr = textwrap.dedent("""\
+        ExpectedStr = textwrap.dedent(f"""\
             ;
             ; CapsuleName
             ; 1.0.0.1
@@ -499,18 +499,18 @@ class InfFileTest(unittest.TestCase):
             [Version]
             Signature="$WINDOWS NT$"
             Class=Firmware
-            ClassGuid={f2e7dd72-6468-4e36-b6f1-6488f42c1b52}
+            ClassGuid={{f2e7dd72-6468-4e36-b6f1-6488f42c1b52}}
             Provider=%Provider%
             DriverVer=01/01/2021,1.0.0.1
             PnpLockdown=1
             CatalogFile=CapsuleName.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64.10.0...17134
+            %MfgName% = Firmware,NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}
 
-            [Firmware.NTamd64.10.0...17134]
-            %tag1Desc% = tag1_Install,UEFI\\RES_{34e094e9-4079-44cd-9450-3f2cb7824c97}
-            %tag2Desc% = tag2_Install,UEFI\\RES_{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
+            [Firmware.NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}]
+            %tag1Desc% = tag1_Install,UEFI\\RES_{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
+            %tag2Desc% = tag2_Install,UEFI\\RES_{{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}}
 
             [tag1_Install.NT]
             CopyFiles = tag1_CopyFiles
@@ -525,7 +525,7 @@ class InfFileTest(unittest.TestCase):
             AddReg = tag1_AddReg
 
             [tag1_AddReg]
-            HKR,,FirmwareId,,{34e094e9-4079-44cd-9450-3f2cb7824c97}
+            HKR,,FirmwareId,,{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000001
             HKR,,FirmwareFilename,,%13%\\test1.bin
 
@@ -542,7 +542,7 @@ class InfFileTest(unittest.TestCase):
             AddReg = tag2_AddReg
 
             [tag2_AddReg]
-            HKR,,FirmwareId,,{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
+            HKR,,FirmwareId,,{{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000002
             HKR,,FirmwareFilename,,%13%\\test2.bin
 
@@ -590,7 +590,7 @@ class InfFileTest(unittest.TestCase):
             "test2.bin",
             Rollback=True)
 
-        ExpectedStr = textwrap.dedent("""\
+        ExpectedStr = textwrap.dedent(f"""\
             ;
             ; CapsuleName
             ; 1.0.0.1
@@ -599,25 +599,25 @@ class InfFileTest(unittest.TestCase):
             [Version]
             Signature="$WINDOWS NT$"
             Class=Firmware
-            ClassGuid={f2e7dd72-6468-4e36-b6f1-6488f42c1b52}
+            ClassGuid={{f2e7dd72-6468-4e36-b6f1-6488f42c1b52}}
             Provider=%Provider%
             DriverVer=01/01/2021,1.0.0.1
             PnpLockdown=1
             CatalogFile=CapsuleName.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64.10.0...17134
+            %MfgName% = Firmware,NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}
 
-            [Firmware.NTamd64.10.0...17134]
-            %tag1Desc% = tag1_Install,UEFI\\RES_{34e094e9-4079-44cd-9450-3f2cb7824c97}
-            %tag2Desc% = tag2_Install,UEFI\\RES_{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
+            [Firmware.NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}]
+            %tag1Desc% = tag1_Install,UEFI\\RES_{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
+            %tag2Desc% = tag2_Install,UEFI\\RES_{{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}}
 
             [tag1_Install.NT]
             CopyFiles = tag1_CopyFiles
             AddReg = tag1_DowngradePolicy_AddReg
 
             [tag1_DowngradePolicy_AddReg]
-            HKLM,SYSTEM\\CurrentControlSet\\Control\\FirmwareResources\\{34e094e9-4079-44cd-9450-3f2cb7824c97},Policy,%REG_DWORD%,1
+            HKLM,SYSTEM\\CurrentControlSet\\Control\\FirmwareResources\\{{34e094e9-4079-44cd-9450-3f2cb7824c97}},Policy,%REG_DWORD%,1
 
             [tag1_CopyFiles]
             test1.bin
@@ -629,7 +629,7 @@ class InfFileTest(unittest.TestCase):
             AddReg = tag1_AddReg
 
             [tag1_AddReg]
-            HKR,,FirmwareId,,{34e094e9-4079-44cd-9450-3f2cb7824c97}
+            HKR,,FirmwareId,,{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000001
             HKR,,FirmwareFilename,,%13%\\test1.bin
 
@@ -638,7 +638,7 @@ class InfFileTest(unittest.TestCase):
             AddReg = tag2_DowngradePolicy_AddReg
 
             [tag2_DowngradePolicy_AddReg]
-            HKLM,SYSTEM\\CurrentControlSet\\Control\\FirmwareResources\\{bec9124f-9934-4ec0-a6ed-b8bc1c91d276},Policy,%REG_DWORD%,1
+            HKLM,SYSTEM\\CurrentControlSet\\Control\\FirmwareResources\\{{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}},Policy,%REG_DWORD%,1
 
             [tag2_CopyFiles]
             test2.bin
@@ -650,7 +650,7 @@ class InfFileTest(unittest.TestCase):
             AddReg = tag2_AddReg
 
             [tag2_AddReg]
-            HKR,,FirmwareId,,{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
+            HKR,,FirmwareId,,{{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000002
             HKR,,FirmwareFilename,,%13%\\test2.bin
 
@@ -700,7 +700,7 @@ class InfFileTest(unittest.TestCase):
             Rollback=True,
             IntegrityFile="integrity2.bin")
 
-        ExpectedStr = textwrap.dedent("""\
+        ExpectedStr = textwrap.dedent(f"""\
             ;
             ; CapsuleName
             ; 1.0.0.1
@@ -709,25 +709,25 @@ class InfFileTest(unittest.TestCase):
             [Version]
             Signature="$WINDOWS NT$"
             Class=Firmware
-            ClassGuid={f2e7dd72-6468-4e36-b6f1-6488f42c1b52}
+            ClassGuid={{f2e7dd72-6468-4e36-b6f1-6488f42c1b52}}
             Provider=%Provider%
             DriverVer=01/01/2021,1.0.0.1
             PnpLockdown=1
             CatalogFile=CapsuleName.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64.10.0...17134
+            %MfgName% = Firmware,NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}
 
-            [Firmware.NTamd64.10.0...17134]
-            %tag1Desc% = tag1_Install,UEFI\\RES_{34e094e9-4079-44cd-9450-3f2cb7824c97}
-            %tag2Desc% = tag2_Install,UEFI\\RES_{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
+            [Firmware.NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}]
+            %tag1Desc% = tag1_Install,UEFI\\RES_{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
+            %tag2Desc% = tag2_Install,UEFI\\RES_{{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}}
 
             [tag1_Install.NT]
             CopyFiles = tag1_CopyFiles
             AddReg = tag1_DowngradePolicy_AddReg
 
             [tag1_DowngradePolicy_AddReg]
-            HKLM,SYSTEM\\CurrentControlSet\\Control\\FirmwareResources\\{34e094e9-4079-44cd-9450-3f2cb7824c97},Policy,%REG_DWORD%,1
+            HKLM,SYSTEM\\CurrentControlSet\\Control\\FirmwareResources\\{{34e094e9-4079-44cd-9450-3f2cb7824c97}},Policy,%REG_DWORD%,1
 
             [tag1_CopyFiles]
             test1.bin
@@ -740,7 +740,7 @@ class InfFileTest(unittest.TestCase):
             AddReg = tag1_AddReg
 
             [tag1_AddReg]
-            HKR,,FirmwareId,,{34e094e9-4079-44cd-9450-3f2cb7824c97}
+            HKR,,FirmwareId,,{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000001
             HKR,,FirmwareFilename,,%13%\\test1.bin
             HKR,,FirmwareIntegrityFilename,,%13%\\integrity1.bin
@@ -750,7 +750,7 @@ class InfFileTest(unittest.TestCase):
             AddReg = tag2_DowngradePolicy_AddReg
 
             [tag2_DowngradePolicy_AddReg]
-            HKLM,SYSTEM\\CurrentControlSet\\Control\\FirmwareResources\\{bec9124f-9934-4ec0-a6ed-b8bc1c91d276},Policy,%REG_DWORD%,1
+            HKLM,SYSTEM\\CurrentControlSet\\Control\\FirmwareResources\\{{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}},Policy,%REG_DWORD%,1
 
             [tag2_CopyFiles]
             test2.bin
@@ -763,7 +763,7 @@ class InfFileTest(unittest.TestCase):
             AddReg = tag2_AddReg
 
             [tag2_AddReg]
-            HKR,,FirmwareId,,{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}
+            HKR,,FirmwareId,,{{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}}
             HKR,,FirmwareVersion,%REG_DWORD%,0x1000002
             HKR,,FirmwareFilename,,%13%\\test2.bin
             HKR,,FirmwareIntegrityFilename,,%13%\\integrity2.bin
