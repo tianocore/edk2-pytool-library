@@ -908,18 +908,30 @@ class EfiSignatureDatabase(CommonUefiStructure):
     Useful for parsing and building the contents of the Secure Boot variables
     """
 
-    def __init__(self, filestream: BinaryIO = None, EslList: List[EfiSignatureList] = None) -> 'EfiSignatureDatabase':
+    def __init__(self, filestream: BinaryIO = None, esl_list: List[EfiSignatureList] = None) -> 'EfiSignatureDatabase':
         """Inits an Efi Signature Database object.
 
         Args:
             filestream (:obj:`BinaryIO`, optional): Inits the object with this stream
-            EslList (:obj:`list[EfiSignatureList]`, optional): Inits the object with this list
+            esl_list (:obj:`list[EfiSignatureList]`, optional): Inits the object with this list
         """
         if filestream:
-            self.EslList = []
+            self.esl_list = []
             self.PopulateFromFileStream(filestream)
         else:
-            self.EslList = [] if EslList is None else EslList
+            self.esl_list = [] if esl_list is None else esl_list
+
+    @property
+    def EslList(self) -> List[EfiSignatureList]:
+        """Returns the EFI Signature List."""
+        warn("EslList is deprecated. Use esl_list instead.", DeprecationWarning, 2)
+        return self.esl_list
+
+    @EslList.setter
+    def EslList(self, value: List[EfiSignatureList]) -> None:
+        """Sets the EFI Signature List."""
+        warn("EslList is deprecated. Use esl_list instead.", DeprecationWarning, 2)
+        self.esl_list = value
 
     def decode(self, fs: BinaryIO, decodesize: int = -1) -> None:
         """Decodes a filestream and generates the structure.
@@ -934,14 +946,14 @@ class EfiSignatureDatabase(CommonUefiStructure):
         """
         if (fs is None):
             raise Exception("Invalid File Stream")
-        self.EslList = []
+        self.esl_list = []
         begin = fs.tell()
         fs.seek(0, io.SEEK_END)
         end = fs.tell()  # end is offset after last byte
         fs.seek(begin)
         while (fs.tell() != end):
             Esl = EfiSignatureList(fs)
-            self.EslList.append(Esl)
+            self.esl_list.append(Esl)
 
     def PopulateFromFileStream(self, fs: BinaryIO) -> None:
         """Decodes a filestream and generates the structure.
@@ -957,7 +969,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
 
     def print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
         """Prints to the console."""
-        for Esl in self.EslList:
+        for Esl in self.esl_list:
             Esl.print(compact=compact, outfs=outfs)
 
     def Print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
@@ -982,7 +994,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
         """
         if (fs is None):
             raise Exception("Invalid File Output Stream")
-        for Esl in self.EslList:
+        for Esl in self.esl_list:
             Esl.write(fs)
 
     def GetBytes(self) -> bytes:
@@ -1014,7 +1026,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
         sha256esl = None
         x509eslList = None
 
-        for Esl in self.EslList:
+        for Esl in self.esl_list:
             if (Esl.signature_data_list is None):  # discard empty EfiSignatureLists
                 continue
             if (Esl.signature_type == EfiSignatureDataFactory.EFI_CERT_SHA256_GUID):
@@ -1041,18 +1053,18 @@ class EfiSignatureDatabase(CommonUefiStructure):
 
         if (sha256esl is not None):
             dupes = sha256esl.SortBySignatureDataValue(deduplicate=True)
-            canonicalDb.EslList.append(sha256esl)
-            duplicatesDb.EslList.append(dupes)
+            canonicalDb.esl_list.append(sha256esl)
+            duplicatesDb.esl_list.append(dupes)
 
         if (x509eslList is not None):
             x509eslList.sort(key=attrgetter('signature_data_list'))
             for esl in x509eslList:
-                if not canonicalDb.EslList:
-                    canonicalDb.EslList.append(esl)
-                elif esl == canonicalDb.EslList[-1]:
-                    duplicatesDb.EslList.append(esl)
+                if not canonicalDb.esl_list:
+                    canonicalDb.esl_list.append(esl)
+                elif esl == canonicalDb.esl_list[-1]:
+                    duplicatesDb.esl_list.append(esl)
                 else:
-                    canonicalDb.EslList.append(esl)
+                    canonicalDb.esl_list.append(esl)
 
         return (canonicalDb, duplicatesDb)
 
@@ -1396,7 +1408,7 @@ class EfiVariableAuthentication2(CommonUefiStructure):
         # Variables with the GUID EFI_IMAGE_SECURITY_DATABASE_GUID are formatted
         # as EFI_SIGNATURE_LIST
         try:
-            self.sig_list_payload = EfiSignatureList(fs)
+            self.sig_list_payload = EfiSignatureDatabase(fs)
         except Exception:
             # Do nothing - we attempted to parse it as a sig list and it failed
             logging.debug("SigList Payload not detected.")
