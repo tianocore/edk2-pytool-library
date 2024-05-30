@@ -21,14 +21,13 @@
 NOTE: Has the capability to download VSwhere.
 """
 import glob
+import importlib.resources as resources
 import logging
 import os
 import re
 import subprocess
 from pathlib import Path
 from typing import List, Optional
-
-import pkg_resources
 
 from edk2toollib.utility_functions import GetHostInfo, RunCmd
 
@@ -86,10 +85,7 @@ def _DownloadVsWhere(unpack_folder: os.PathLike = None) -> None:
 
 def __VsWherePath() -> str:
     file = "vswhere.exe"
-    requirement = pkg_resources.Requirement.parse("edk2-pytool-library")
-    file_path = os.path.join("edk2toollib", "bin", file)
-    vswhere_path = pkg_resources.resource_filename(requirement, file_path)
-    return vswhere_path
+    return str(resources.files("edk2toollib") / "bin" / file)
 
 
 def GetVsWherePath(fail_on_not_found: bool = True) -> Optional[str]:
