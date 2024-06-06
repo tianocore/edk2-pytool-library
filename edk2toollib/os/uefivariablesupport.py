@@ -106,13 +106,13 @@ class UefiVariable(object):
                 ]
             except Exception:
                 logging.warn(
-                    "G[S]etFirmwareEnvironmentVariableW function doesn't seem to exist"
+                    "Collecting windll Variable functions encountered an error."
                 )
         else:
             pass
 
     def GetUefiVar(self, name: str, guid: str) -> tuple[int, str]:
-        """_Retrieve Uefi Variable from the system.
+        """Get a Uefi Variable from the system.
 
         Args:
             name (str): String corresponding to the Unicode Name of the variable.
@@ -165,13 +165,13 @@ class UefiVariable(object):
 
         Returns:
             tuple[int, bytes]:
-            Integer is return status, 0 for error, non-zero for success.
-            Bytes are the packed structure for each variable.
-                struct _VARIABLE_NAME {
-                    ULONG NextEntryOffset;
-                    GUID VendorGuid;
-                    WCHAR Name[ANYSIZE_ARRAY];
-                }
+                Integer is return status, 0 for error, non-zero for success.
+                Bytes are the packed structure for each variable.
+                    struct _VARIABLE_NAME {
+                        ULONG NextEntryOffset;
+                        GUID VendorGuid;
+                        WCHAR Name[ANYSIZE_ARRAY];
+                    }
         """
         status = 0
         if os.name == 'nt':
@@ -254,13 +254,13 @@ class UefiVariable(object):
             return (status, efi_var_names)
 
     def SetUefiVar(self, name: str, guid: str, var: str = None, attrs: int = None) -> int:
-        """_Set a Uefi Variable into the system.
+        """Set a Uefi Variable into the system.
 
         Args:
             name (str): Unicode name of variable to set
             guid (str): Guid to use when setting the variable
-            var (bytes, optional): Bytes to set to the variable. Defaults to None.
-            attrs (_type_, optional): Attributes to use when setting the variable. Defaults to None.
+            var (Optional[bytes]): Bytes to set to the variable. Defaults to None.
+            attrs (Optional[int]): Attributes to use when setting the variable. Defaults to None.
 
         Returns:
             int: 0 for a failure, non-zero for success
