@@ -107,6 +107,11 @@
         "urlunsplit",
         "vcvarsall",
         "vsvars",
-        "vswhere"
+        "vswhere",
+        "uefivariablesupport",
+        "ntdll",
+        "NTSTATUS",
+        "efivarfs",
+        "chattr"
     ]
 }
