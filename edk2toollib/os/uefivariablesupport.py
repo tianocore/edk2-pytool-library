@@ -122,6 +122,7 @@ class UefiVariable(object):
             Tuple: (error code, string of variable data)
         """
         err = 0
+        length = 0
 
         # Remove null termination on the name, if it exists.
         name = name.rstrip('\x00')
@@ -158,6 +159,7 @@ class UefiVariable(object):
             efi_var = create_string_buffer(EFI_VAR_MAX_BUFFER_SIZE)
             with open(path, 'rb') as fd:
                 efi_var = fd.read()
+                length = len(efi_var)
 
             return (err, efi_var[:length])
 
