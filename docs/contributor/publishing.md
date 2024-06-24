@@ -19,6 +19,11 @@ Versioning follows: aa.bb.cc and is based on tags in git
 
 ## Github Publishing Process
 
+Note: If this release contains a breaking change, you may need to navigate to
+the [Milestones](https://github.com/tianocore/edk2-pytool-library/milestones)
+page and "edit" the milestone version to roll it to the next minor / major
+patch. If it was already done, then you don't need to do it again.
+
 1. Navigate to the [Releases](https://github.com/tianocore/edk2-pytool-library/releases)
  section on the main page of edk2-pytool-library
 2. Click `Draft a new release` at the top right of the page
@@ -32,6 +37,15 @@ Versioning follows: aa.bb.cc and is based on tags in git
 7. Copy the integration steps from the pull request into the
    `## Integration Steps` section
 8. Click `Publish release`
+
+These are the steps you need to do once a release is complete, to setup
+contributing to the next tag.
+
+1. Navigate to the [Milestones](https://github.com/tianocore/edk2-pytool-library/milestones)
+   section on the Pull requests page
+2. Click `New Milestone` and create a new tag that should be the last release
+   with the patch version + 1.
+3. Click `Create milestone`
 
 NOTE: Feel free to add additional sections to the release notes as necessary.
 The release is not immediate. A pipeline will be queued that will perform final
