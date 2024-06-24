@@ -32,11 +32,11 @@ patch. If it was already done, then you don't need to do it again.
 5. Add a new section `## Dependency Updates`
 6. If the major / minor is rolled in this release, add a `## Integration Steps`
    section
-6. Move all dependabot contributions to the `## Dependency Updates` section
-7. Leave all "true" contributions in the `## What's Changed` section
-7. Copy the integration steps from the pull request into the
+7. Move all dependabot contributions to the `## Dependency Updates` section
+8. Leave all "true" contributions in the `## What's Changed` section
+9. Copy the integration steps from the pull request into the
    `## Integration Steps` section
-8. Click `Publish release`
+10. Click `Publish release`
 
 These are the steps you need to do once a release is complete, to setup
 contributing to the next tag.
@@ -50,7 +50,6 @@ contributing to the next tag.
 NOTE: Feel free to add additional sections to the release notes as necessary.
 The release is not immediate. A pipeline will be queued that will perform final
 CI checks and then release to pypi. You can monitor this pipeline [HERE](https://dev.azure.com/tianocore/edk2-pytools-library/_build?definitionId=3)
-
 
 ## Manual Publishing Process
 
