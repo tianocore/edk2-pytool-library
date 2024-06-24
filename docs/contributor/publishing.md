@@ -44,8 +44,9 @@ contributing to the next tag.
 1. Navigate to the [Milestones](https://github.com/tianocore/edk2-pytool-library/milestones)
    section on the Pull requests page
 2. Click `New Milestone` and create a new tag that should be the last release
-   with the patch version + 1.
+   with the patch version + 1
 3. Click `Create milestone`
+4. Close the old milestone for the latest release tag
 
 NOTE: Feel free to add additional sections to the release notes as necessary.
 The release is not immediate. A pipeline will be queued that will perform final
