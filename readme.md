@@ -145,10 +145,12 @@ mkdocs serve
 
 ### Contributors
 
-Contributor documentation is located at ```docs/contributor/``` and contains instructions for:
+Contributor documentation is located at [docs/contributor/](https://github.com/tianocore/edk2-pytool-library/tree/master/docs/contributor)
+ and contains instructions for:
 
 * Setting up a development and testing environment
 * How edk2pytools is versioned and published
+* How to publish a release
 * Contributing to the edk2-pytool-extensions repository
 
 [codecov]: https://codecov.io/gh/tianocore/edk2-pytool-library/branch/master/graph/badge.svg
