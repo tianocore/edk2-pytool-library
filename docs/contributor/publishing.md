@@ -17,7 +17,28 @@ Versioning follows: aa.bb.cc and is based on tags in git
 * cc == Patch version.  Bug fix or small optional feature.  Backward
   compatibility maintained.
 
-## Publishing Process
+## Github Publishing Process
+
+1. Navigate to the [Releases](https://github.com/tianocore/edk2-pytool-library/releases)
+ section on the main page of edk2-pytool-library
+2. Select `Draft a new release` at the top right of the page
+3. Click `Choose a tag` and create the new release version (`v0.21.8`, `v0.22.0`, etc.)
+4. Click `Generate release notes`
+5. Add a new section `## Dependency Updates`
+6. If the major / minor is rolled in this release, add a `## Integration Steps`
+   section
+6. Move all dependabot contributions to the `## Dependency Updates` section
+7. Leave all "true" contributions in the `## What's Changed` section
+7. Copy the integration steps from the pull request into the
+   `## Integration Steps` section
+8. Click `Publish release`
+
+NOTE: Feel free to add additional sections to the release notes as necessary.
+The release is not immediate. A pipeline will be queued that will perform final
+CI checks and then release to pypi. You can monitor this pipeline [HERE](https://dev.azure.com/tianocore/edk2-pytools-library/_build?definitionId=3)
+
+
+## Manual Publishing Process
 
 NOTE: These directions assume you have already configured your workspace for
 developing.  If not please first do that.  Directions on the
