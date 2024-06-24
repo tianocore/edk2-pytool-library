@@ -21,7 +21,7 @@ Versioning follows: aa.bb.cc and is based on tags in git
 
 1. Navigate to the [Releases](https://github.com/tianocore/edk2-pytool-library/releases)
  section on the main page of edk2-pytool-library
-2. Select `Draft a new release` at the top right of the page
+2. Click `Draft a new release` at the top right of the page
 3. Click `Choose a tag` and create the new release version (`v0.21.8`, `v0.22.0`, etc.)
 4. Click `Generate release notes`
 5. Add a new section `## Dependency Updates`
