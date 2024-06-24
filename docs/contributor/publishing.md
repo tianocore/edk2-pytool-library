@@ -22,7 +22,7 @@ Versioning follows: aa.bb.cc and is based on tags in git
 Note: If this release contains a breaking change, you may need to navigate to
 the [Milestones](https://github.com/tianocore/edk2-pytool-library/milestones)
 page and "edit" the milestone version to roll it to the next minor / major
-patch. If it was already done, then you don't need to do it again.
+version. If it was already done, then you don't need to do it again.
 
 1. Navigate to the [Releases](https://github.com/tianocore/edk2-pytool-library/releases)
  section on the main page of edk2-pytool-library
