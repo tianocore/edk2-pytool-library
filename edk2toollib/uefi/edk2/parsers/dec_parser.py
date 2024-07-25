@@ -127,7 +127,7 @@ class PcdDeclarationEntry():
         self.token_space_name = sp[0].strip()
 
         # Regular expression pattern to match the symbol '|' that is not inside quotes
-        pattern = r'\|(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)'
+        pattern = r'\|(?=(?:(?:[^\'"]*(?:\'[^\']*\'|"[^"]*"))*[^\'"]*)$)'
         op = re.split(pattern, sp[2])
 
         # if it's 2 long, we need to check that it's a structured PCD
