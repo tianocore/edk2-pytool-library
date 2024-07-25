@@ -128,7 +128,7 @@ class TestPcdDeclarationEntry(unittest.TestCase):
         self.assertEqual(a.id, "0x00010001")
 
     def test_string_containing_single_quote(self):
-        SAMPLE_DATA_DECL = """gTestTokenSpaceGuid.PcdSingleQuote|"eng'fraengfra"|VOID*|0x00010001"""
+        SAMPLE_DATA_DECL = """gTestTokenSpaceGuid.PcdTestString|"eng'fraengfra"|VOID*|0x00010001"""
         a = PcdDeclarationEntry("testpkg", SAMPLE_DATA_DECL)
         self.assertEqual(a.token_space_name, "gTestTokenSpaceGuid")
         self.assertEqual(a.name, "PcdTestString")
