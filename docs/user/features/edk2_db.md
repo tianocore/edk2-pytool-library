@@ -84,7 +84,7 @@ db.parse(env)
 
 ## Table Generators
 
-Table generators are just that, classes that subclass the [TableGenerator](/api/database/edk2_db/#edk2toollib.database.edk2_db.TableGenerator)
+Table generators are just that, classes that subclass the [TableGenerator](/api/database/edk2_db.md#edk2toollib.database.edk2_db.TableGenerator)
 , parse some type of information (typically the workspace) and insert the data into one of the tables managed by Edk2DB.
 Multiple table generators are provided by edk2toollib, and can be seen at [edk2toollib.database.tables](https://github.com/tianocore/edk2-pytool-library/tree/master/edk2toollib/database/tables).
 Edk2DB can use any class that implements the `TableGenerator` interface.
