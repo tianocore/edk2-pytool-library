@@ -41,7 +41,7 @@ dev = [
     "ruff == 0.5.6",
     "pytest == 8.3.1",
     "coverage == 7.6.0",
-    "pre-commit == 3.7.1",
+    "pre-commit == 3.8.0",
 ]
 publish = [
     "setuptools == 71.1.0",
