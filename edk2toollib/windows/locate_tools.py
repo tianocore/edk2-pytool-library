@@ -39,9 +39,9 @@ import urllib.error
 import urllib.request
 
 # Update this when you want a new version of VsWhere
-__VERSION = "2.8.4"
+__VERSION = "3.1.7"
 __URL = "https://github.com/microsoft/vswhere/releases/download/{}/vswhere.exe".format(__VERSION)
-__SHA256 = "e50a14767c27477f634a4c19709d35c27a72f541fb2ba5c3a446c80998a86419"
+__SHA256 = "c54f3b7c9164ea9a0db8641e81ecdda80c2664ef5a47c4191406f848cc07c662"
 
 #
 # Supported Versions that can be queried with vswhere
