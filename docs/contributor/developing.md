@@ -90,21 +90,16 @@ as described above.
               open the Python file and use `Alt+Shift+F` to auto format. See the [Ruff VSCode extension](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
               for more information.
 
-2. Run a Basic Python docstring Check (using pydocstring) and resolve any issues
+      * Note: `ruff` is a wrapper around tools likke `pydocstyle`. See [`pyproject.toml`](../../pyproject.toml) for
+        more details.
 
-    * Run pydocstyle
-
-      ``` cmd
-      pydocstyle edk2toollib
-      ```
-
-3. Run the `BasicDevTests.py` script to check file encoding, file naming, etc
+2. Run the `BasicDevTests.py` script to check file encoding, file naming, etc
 
     ```cmd
     BasicDevTests.py
     ```
 
-4. Run Coverage with pytest test execution
+3. Run Coverage with pytest test execution
 
     ``` cmd
     coverage run -m pytest
@@ -115,19 +110,19 @@ as described above.
 
     Coverage is uploaded to `codecov.io`.
 
-5. Generate and review the html report
+4. Generate and review the html report
 
     ```cmd
     coverage html
     ```
 
-6. Run the spell checker
+5. Run the spell checker
 
     ```cmd
     cspell -c .cspell.json "**/*.py" "**/*.md"
     ```
 
-7. Run the markdown linter
+6. Run the markdown linter
 
     ```cmd
     markdownlint "**/*.md"
