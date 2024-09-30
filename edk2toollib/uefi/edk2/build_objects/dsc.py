@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Data model for the EDK II DSC."""
+
 # There will be some overlap between the objects for DSC files and FDF files
 import collections
 from typing import Any, Optional
@@ -15,7 +16,8 @@ DEFAULT_SECTION_TYPE = "COMMON"
 
 class dsc_set(set):
     """a DSC set object."""
-    def __init__(self, allowed_classes: list=None) -> 'dsc_set':
+
+    def __init__(self, allowed_classes: list = None) -> "dsc_set":
         """Initializes an empty set."""
         if allowed_classes is None:
             allowed_classes = []
@@ -40,9 +42,9 @@ class dsc_dict(collections.OrderedDict):
 
     def __init__(
         self,
-        allowed_key_classes: Optional[str]=None,
-        allowed_value_classes: Optional[Any]=None # noqa: ANN401
-    ) -> 'dsc_dict':
+        allowed_key_classes: Optional[str] = None,
+        allowed_value_classes: Optional[Any] = None,  # noqa: ANN401
+    ) -> "dsc_dict":
         """Initializes a dsc_dict."""
         if allowed_key_classes is None:
             allowed_key_classes = []
@@ -81,7 +83,8 @@ class dsc_dict(collections.OrderedDict):
             if isinstance(val, dsc_set):
                 if val._allowed_classes != self._allowed_value_classes:
                     raise ValueError(
-                        f"Cannot add set:{val._allowed_classes} to restricted dict: {self._allowed_value_classes}")
+                        f"Cannot add set:{val._allowed_classes} to restricted dict: {self._allowed_value_classes}"
+                    )
             elif type(val) not in self._allowed_value_classes:
                 raise ValueError(f"Cannot add {type(val)} to restricted dict: {self._allowed_value_classes}")
         if key in self:
@@ -92,29 +95,54 @@ class dsc_dict(collections.OrderedDict):
 
 class dsc:
     """Class representing a DSC."""
-    def __init__(self, file_path: Optional[str]=None) -> 'dsc':
+
+    def __init__(self, file_path: Optional[str] = None) -> "dsc":
         """Inits dsc type."""
         # The EDK2 path to this particular DSC, if is is None it means it was created from a stream and has no file
         self.file_path = file_path
         # parameters added for clarity
         self.skus = dsc_set(allowed_classes=[definition, sku_id])  # this is a set of SKUs
-        self.components = dsc_dict(allowed_key_classes=[dsc_section_type, ],
-                                   allowed_value_classes=[component, definition])
-        self.libraries = dsc_dict(allowed_key_classes=[dsc_section_type, ],
-                                  allowed_value_classes=[library, definition])
-        self.library_classes = dsc_dict(allowed_key_classes=[dsc_section_type, ],
-                                        allowed_value_classes=[library_class, definition])
-        self.build_options = dsc_dict(allowed_key_classes=[dsc_buildoption_section_type, ],
-                                      allowed_value_classes=[build_option, definition])
-        self.pcds = dsc_dict(allowed_key_classes=[dsc_pcd_section_type, ],
-                             allowed_value_classes=[pcd, pcd_typed, pcd_variable])
-        self.defines = dsc_set(allowed_classes=[definition, ])
+        self.components = dsc_dict(
+            allowed_key_classes=[
+                dsc_section_type,
+            ],
+            allowed_value_classes=[component, definition],
+        )
+        self.libraries = dsc_dict(
+            allowed_key_classes=[
+                dsc_section_type,
+            ],
+            allowed_value_classes=[library, definition],
+        )
+        self.library_classes = dsc_dict(
+            allowed_key_classes=[
+                dsc_section_type,
+            ],
+            allowed_value_classes=[library_class, definition],
+        )
+        self.build_options = dsc_dict(
+            allowed_key_classes=[
+                dsc_buildoption_section_type,
+            ],
+            allowed_value_classes=[build_option, definition],
+        )
+        self.pcds = dsc_dict(
+            allowed_key_classes=[
+                dsc_pcd_section_type,
+            ],
+            allowed_value_classes=[pcd, pcd_typed, pcd_variable],
+        )
+        self.defines = dsc_set(
+            allowed_classes=[
+                definition,
+            ]
+        )
         self.default_stores = dsc_set(allowed_classes=[definition, default_store])
 
         # NEXTVER: should we populate the default information into the DSC object?
         # FOR EXAMPLE: default_stores and skus
 
-    def __eq__(self, other: 'dsc') -> bool:
+    def __eq__(self, other: "dsc") -> bool:
         """Enables equality comparisons (a == b).
 
         Warning:
@@ -145,12 +173,25 @@ class dsc_section_type:
         arch (str): architecture
         module_type (str): module type
     """
-    dsc_module_types = ["COMMON", "BASE", "SEC", "PEI_CORE", "PEIM", "DXE_CORE",
-                        "DXE_DRIVER", "DXE_RUNTIME_DRIVER", "DXE_SAL_DRIVER",
-                        "DXE_SMM_DRIVER", "SMM_CORE", "UEFI_DRIVER",
-                        "UEFI_APPLICATION", "USER_DEFINED"]
 
-    def __init__(self, arch: str="common", module_type: str="common") -> 'dsc_section_type':
+    dsc_module_types = [
+        "COMMON",
+        "BASE",
+        "SEC",
+        "PEI_CORE",
+        "PEIM",
+        "DXE_CORE",
+        "DXE_DRIVER",
+        "DXE_RUNTIME_DRIVER",
+        "DXE_SAL_DRIVER",
+        "DXE_SMM_DRIVER",
+        "SMM_CORE",
+        "UEFI_DRIVER",
+        "UEFI_APPLICATION",
+        "USER_DEFINED",
+    ]
+
+    def __init__(self, arch: str = "common", module_type: str = "common") -> "dsc_section_type":
         """Inits dsc section type."""
         self.arch = arch.upper().strip()
         self.module_type = module_type.upper().strip()
@@ -162,7 +203,7 @@ class dsc_section_type:
         arch = "*" if (self.arch == "COMMON" or self.arch == "DEFAULT") else self.arch
         return hash((arch, self.module_type))
 
-    def __eq__(self, other: 'dsc_section_type') -> bool:
+    def __eq__(self, other: "dsc_section_type") -> bool:
         """Enables equality comparisons (a == b)."""
         if type(other) is not dsc_section_type:
             return False
@@ -176,7 +217,7 @@ class dsc_section_type:
         return attributes
 
     @classmethod
-    def IsValidModuleType(cls: 'dsc_section_type', name: str) -> bool:
+    def IsValidModuleType(cls: "dsc_section_type", name: str) -> bool:
         """If the module type is valid or not."""
         return name in cls.dsc_module_types
 
@@ -197,11 +238,10 @@ class dsc_buildoption_section_type(dsc_section_type):
         BuildOptions
         ```
     """
+
     def __init__(
-        self, arch: str="common",
-        codebase: str="common",
-        module_type: str="common"
-    ) -> 'dsc_buildoption_section_type':
+        self, arch: str = "common", codebase: str = "common", module_type: str = "common"
+    ) -> "dsc_buildoption_section_type":
         """Inits dsc build option section type."""
         super().__init__(arch, module_type)
         self.codebase = codebase.upper().strip()
@@ -209,7 +249,7 @@ class dsc_buildoption_section_type(dsc_section_type):
             raise ValueError(f"{codebase} is not a valid codebase type")
 
     @classmethod
-    def IsValidCodeBase(cls: 'dsc_buildoption_section_type', codebase: str) -> bool:
+    def IsValidCodeBase(cls: "dsc_buildoption_section_type", codebase: str) -> bool:
         """Determines if codebase is valid.
 
         Args:
@@ -224,7 +264,7 @@ class dsc_buildoption_section_type(dsc_section_type):
         """Returns the hash of an object for hashtables."""
         return hash((super().__hash__(), self.codebase))
 
-    def __eq__(self, other: 'dsc_buildoption_section_type') -> bool:
+    def __eq__(self, other: "dsc_buildoption_section_type") -> bool:
         """Enables equality comparisons (a == b)."""
         if type(other) is not dsc_buildoption_section_type:
             return False
@@ -237,11 +277,21 @@ class dsc_buildoption_section_type(dsc_section_type):
         return f"{self.arch}.{self.codebase}.{self.module_type}"
 
 
-dsc_pcd_types = ["FEATUREFLAG", "PATCHABLEINMODULE", "FIXEDATBUILD", "DYNAMIC", "DYNAMICEX",
-                 "DYNAMICDEFAULT", "DYNAMICHII", "DYNAMICVPD", "DYNAMICEXHII", "DYNAMICEXVPD"]
+dsc_pcd_types = [
+    "FEATUREFLAG",
+    "PATCHABLEINMODULE",
+    "FIXEDATBUILD",
+    "DYNAMIC",
+    "DYNAMICEX",
+    "DYNAMICDEFAULT",
+    "DYNAMICHII",
+    "DYNAMICVPD",
+    "DYNAMICEXHII",
+    "DYNAMICEXVPD",
+]
 
 
-class dsc_pcd_section_type():
+class dsc_pcd_section_type:
     """This class is uses to define the PCD section type inside a component.
 
     Attributes:
@@ -250,13 +300,10 @@ class dsc_pcd_section_type():
         sku: defaults to DEFAULT
         store: if none, we don't have anything done
     """
+
     def __init__(
-        self,
-        pcdtype: str,
-        arch: str="common",
-        sku: str="DEFAULT",
-        store: Optional[str]=None
-    ) -> 'dsc_pcd_section_type':
+        self, pcdtype: str, arch: str = "common", sku: str = "DEFAULT", store: Optional[str] = None
+    ) -> "dsc_pcd_section_type":
         """Inits the dsc_pcd_section object."""
         # if store is none, then we don't have anything done
         self.arch = arch.upper().strip()
@@ -277,7 +324,7 @@ class dsc_pcd_section_type():
         store = "" if self.default_store is None else f".{self.default_store}"
         return f"Pcds{self.pcd_type}.{self.arch}.{self.sku}{store}"
 
-    def __eq__(self, other: 'dsc_pcd_section_type') -> bool:
+    def __eq__(self, other: "dsc_pcd_section_type") -> bool:
         """Enables equality comparisons (a == b)."""
         if type(other) is not dsc_pcd_section_type:
             return False
@@ -287,7 +334,7 @@ class dsc_pcd_section_type():
 class dsc_pcd_component_type(dsc_pcd_section_type):
     """This class is uses to define the PCD type inside a component."""
 
-    def __init__(self, pcdtype: str) -> 'dsc_pcd_component_type':
+    def __init__(self, pcdtype: str) -> "dsc_pcd_component_type":
         """Inits the dsc_pcd_component object."""
         super().__init__(pcdtype)
 
@@ -299,7 +346,7 @@ class dsc_pcd_component_type(dsc_pcd_section_type):
         """Returns the hash of an object for hashtables."""
         return hash(self.pcd_type)
 
-    def __eq__(self, other: 'dsc_pcd_component_type') -> bool:
+    def __eq__(self, other: "dsc_pcd_component_type") -> bool:
         """Enables equality comparisons (a == b)."""
         if type(other) is not dsc_pcd_component_type:
             return False
@@ -317,19 +364,15 @@ class sku_id:
     """
 
     def __init__(
-        self,
-        id: int=0,
-        name: str="DEFAULT",
-        parent: str="DEFAULT",
-        source_info: Optional['source_info']=None
-    ) -> 'sku_id':
+        self, id: int = 0, name: str = "DEFAULT", parent: str = "DEFAULT", source_info: Optional["source_info"] = None
+    ) -> "sku_id":
         """Inits the sku_id object."""
         self.id = id
         self.name = name
         self.parent = parent  # the default parent is default
         self.source_info = source_info
 
-    def __eq__(self, other: 'sku_id') -> bool:
+    def __eq__(self, other: "sku_id") -> bool:
         """Enables equality comparisons (a == b)."""
         if type(other) is not sku_id:
             return False
@@ -351,7 +394,7 @@ class sku_id:
 class component:
     """Contains the data for a component for the EDK build system to build."""
 
-    def __init__(self, inf: str, source_info: Optional['source_info']=None) -> 'component':
+    def __init__(self, inf: str, source_info: Optional["source_info"] = None) -> "component":
         """Inits the component object."""
         self.library_classes = set()  # a list of libraries that this component uses
         self.pcds = {}  # a dictionary of PCD's that are keyed by dsc_pcd_component_type, they are sets
@@ -360,9 +403,9 @@ class component:
         self.inf = inf  # the EDK2 relative path to the source INF
         self.source_info = source_info
 
-    def __eq__(self, other: 'component') -> bool:
+    def __eq__(self, other: "component") -> bool:
         """Enables equality comparisons (a == b)."""
-        if (type(other) is not component):
+        if type(other) is not component:
             return False
         return self.inf == other.inf  # NEXTVER: should this be case insensitive?
 
@@ -387,12 +430,8 @@ class definition:
     """
 
     def __init__(
-        self,
-        name: str,
-        value: str,
-        local: bool=False,
-        source_info: Optional['source_info']=None
-    ) -> 'definition':
+        self, name: str, value: str, local: bool = False, source_info: Optional["source_info"] = None
+    ) -> "definition":
         """Inits the definition object.
 
         NOTE: Local means DEFINE is in front and is localized to that particular section
@@ -414,9 +453,9 @@ class definition:
         """Returns the hash of an object for hashtables."""
         return hash(self.name)
 
-    def __eq__(self, other: 'definition') -> bool:
+    def __eq__(self, other: "definition") -> bool:
         """Enables equality comparisons (a == b)."""
-        if (type(other) is not definition):
+        if type(other) is not definition:
             return False
         return other.name == self.name
 
@@ -429,12 +468,12 @@ class library:
         source_info (:obj:`obj`, optional): source info
     """
 
-    def __init__(self, inf: str, source_info: Optional['source_info']=None) -> 'library':
+    def __init__(self, inf: str, source_info: Optional["source_info"] = None) -> "library":
         """Inits the Library object."""
         self.inf = inf
         self.source_info = source_info
 
-    def __eq__(self, other: 'library') -> bool:
+    def __eq__(self, other: "library") -> bool:
         """Enables equality comparisons (a == b)."""
         if type(other) is not library:
             return False
@@ -458,7 +497,7 @@ class library_class:
         source_info: source info
     """
 
-    def __init__(self, libraryclass: str, inf: str, source_info: Optional['source_info']=None) -> 'library_class':
+    def __init__(self, libraryclass: str, inf: str, source_info: Optional["source_info"] = None) -> "library_class":
         """Inits the Library class object.
 
         Args:
@@ -470,9 +509,9 @@ class library_class:
         self.inf = inf
         self.source_info = source_info
 
-    def __eq__(self, other: 'library_class') -> bool:
+    def __eq__(self, other: "library_class") -> bool:
         """Enables equality comparisons (a == b)."""
-        if (type(other) is not library_class):
+        if type(other) is not library_class:
             return False
         # if they're both null
         if self.libraryclass.lower() == "null" and other.libraryclass.lower() == "null":
@@ -482,7 +521,7 @@ class library_class:
     def __hash__(self) -> int:
         """Returns the hash of an object for hashtables."""
         # if we're a null lib, we want the hash to be based on the inf path
-        if (self.libraryclass.lower() == "null"):
+        if self.libraryclass.lower() == "null":
             return hash(self.inf)
         else:
             return hash(self.libraryclass)
@@ -504,7 +543,7 @@ class pcd:
     EXAMPLE: PcdTokenSpaceGuidCName.PcdCName|Value
     """
 
-    def __init__(self, namespace: str, name: str, value: str, source_info: Optional['source_info']=None) -> 'pcd':
+    def __init__(self, namespace: str, name: str, value: str, source_info: Optional["source_info"] = None) -> "pcd":
         """Inits a PCD object.
 
         Args:
@@ -518,7 +557,7 @@ class pcd:
         self.value = value
         self.source_info = source_info
 
-    def __eq__(self, other: 'pcd') -> bool:
+    def __eq__(self, other: "pcd") -> bool:
         """Enables equality comparisons (a == b)."""
         if not issubclass(other.__class__, pcd):
             return False
@@ -549,9 +588,9 @@ class pcd_typed(pcd):
         name: str,
         value: str,
         datum_type: str,
-        max_size: int=0,
-        source_info: Optional['source_info']=None
-    ) -> 'pcd_typed':
+        max_size: int = 0,
+        source_info: Optional["source_info"] = None,
+    ) -> "pcd_typed":
         """Inits the Typed PCD Object."""
         super().__init__(namespace, name, value, source_info)
         self.datum_type = datum_type
@@ -586,10 +625,10 @@ class pcd_variable(pcd):
         var_name: str,
         var_guid: str,
         var_offset: str,
-        default: Optional[str]=None,
-        attributes: Optional[str]=None,
-        source_info: Optional['source_info']=None
-    ) -> 'pcd_variable':
+        default: Optional[str] = None,
+        attributes: Optional[str] = None,
+        source_info: Optional["source_info"] = None,
+    ) -> "pcd_variable":
         """Inits a pcd_variable object."""
         super().__init__(namespace, name, "", source_info)
         if attributes is None:
@@ -629,19 +668,20 @@ class build_option:
     NOTE: Contains the data for a build option
         EX: MSFT:*_*_*_CC_FLAGS = /D MDEPKG_NDEBUG
     """
+
     # {FAMILY}:{TARGET}_{TAGNAME}_{ARCH}_{TOOLCODE}_{ATTRIBUTE}
     def __init__(
         self,
         tool_code: str,
         attribute: str,
         data: str,
-        target: str="*",
-        tagname: str="*",
-        arch: str="*",
-        family: Optional[str]=None,
-        replace: bool=False,
-        source_info: 'source_info'=None
-    ) -> 'build_option':
+        target: str = "*",
+        tagname: str = "*",
+        arch: str = "*",
+        family: Optional[str] = None,
+        replace: bool = False,
+        source_info: "source_info" = None,
+    ) -> "build_option":
         """Inits a build_option object.
 
         Args:
@@ -673,9 +713,9 @@ class build_option:
         self.data = data
         self.source_info = source_info
 
-    def __eq__(self, other: 'build_option') -> bool:
+    def __eq__(self, other: "build_option") -> bool:
         """Enables equality comparisons (a == b)."""
-        if (type(other) is not build_option):
+        if type(other) is not build_option:
             return False
         if self.family != other.family:
             return False
@@ -695,7 +735,7 @@ class build_option:
         """Returns the hash of an object for hashtables."""
         return hash(self.__repr__(False))
 
-    def __repr__(self, include_data: bool=True) -> str:
+    def __repr__(self, include_data: bool = True) -> str:
         """A string representation of the object."""
         rep = "" if self.family is None else f"{self.family}:"
         rep += "_".join((self.target, self.tagname, self.arch, self.tool_code, self.attribute))
@@ -712,10 +752,11 @@ class default_store:
         value: defaults to "Standard"
         source_info: defaults to None
     """
-    ''' contains the information on a default store. '''
-    ''' 0 | Standard        # UEFI Standard default '''
 
-    def __init__(self, index: int=0, value: str="Standard", source_info: Optional[str]=None) -> 'default_store':
+    """ contains the information on a default store. """
+    """ 0 | Standard        # UEFI Standard default """
+
+    def __init__(self, index: int = 0, value: str = "Standard", source_info: Optional[str] = None) -> "default_store":
         """Inits a default store object.
 
         NOTE: Local means DEFINE is in front and is localized to that particular section
@@ -732,9 +773,9 @@ class default_store:
         """Returns the hash of an object for hashtables."""
         return hash(self.index)
 
-    def __eq__(self, other: 'default_store') -> bool:
+    def __eq__(self, other: "default_store") -> bool:
         """Enables equality comparisons (a == b)."""
-        if (type(other) is not default_store):
+        if type(other) is not default_store:
             return False
         return other.index == self.index
 
@@ -746,7 +787,8 @@ class source_info:
         file (str): filename
         lineno (:obj:`int`, optional): line number
     """
-    def __init__(self, file: str, lineno: int = None) -> 'source_info':
+
+    def __init__(self, file: str, lineno: int = None) -> "source_info":
         """Inits a source_info object."""
         self.file = file
         self.lineno = lineno

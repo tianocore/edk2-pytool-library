@@ -12,16 +12,55 @@ class UefiStatusCode(object):
     """Object representing a UEFI Status Code from Appendix D of the UEFI spec."""
 
     # high bit set
-    ErrorCodeStrings = ["NOT VALID", "Load Error", "Invalid Parameter", "Unsupported", "Bad BufferSize",
-                        "Buffer Too Small", "Not Ready", "Device Error", "Write Protected", "Out of Resources",
-                        "Volume Corrupt", "Volume Full", "No Media", "Media Changed", "Not Found", "Access Denied",
-                        "No Response", "No Mapping", "Time Out", "Not Started", "Already Started", "Aborted",
-                        "ICMP Error", "TFTP Error", "Protocol Error", "Incompatible Error", "Security Violation",
-                        "CRC Error", "End of Media", "Reserved(29)", "Reserved(30)", "End of File",
-                        "Invalid Language", "Compromised Data", "IP Address Conflict", "HTTP Error"]
+    ErrorCodeStrings = [
+        "NOT VALID",
+        "Load Error",
+        "Invalid Parameter",
+        "Unsupported",
+        "Bad BufferSize",
+        "Buffer Too Small",
+        "Not Ready",
+        "Device Error",
+        "Write Protected",
+        "Out of Resources",
+        "Volume Corrupt",
+        "Volume Full",
+        "No Media",
+        "Media Changed",
+        "Not Found",
+        "Access Denied",
+        "No Response",
+        "No Mapping",
+        "Time Out",
+        "Not Started",
+        "Already Started",
+        "Aborted",
+        "ICMP Error",
+        "TFTP Error",
+        "Protocol Error",
+        "Incompatible Error",
+        "Security Violation",
+        "CRC Error",
+        "End of Media",
+        "Reserved(29)",
+        "Reserved(30)",
+        "End of File",
+        "Invalid Language",
+        "Compromised Data",
+        "IP Address Conflict",
+        "HTTP Error",
+    ]
 
-    NonErrorCodeStrings = ["Success", "Unknown Glyph", "Delete Failure", "Write Failure", "Buffer Too Small",
-                           "Stale Data", "File System", "Reset Required"]
+    NonErrorCodeStrings = [
+        "Success",
+        "Unknown Glyph",
+        "Delete Failure",
+        "Write Failure",
+        "Buffer Too Small",
+        "Stale Data",
+        "File System",
+        "Reset Required",
+    ]
 
     def Convert32BitToString(self, value: int) -> str:
         """Convert 32 bit int to a friendly UEFI status code string value."""
@@ -32,7 +71,7 @@ class UefiStatusCode(object):
             StatusStrings = UefiStatusCode.ErrorCodeStrings
             value = value & 0x7FFFFFFF  # mask off upper bit
 
-        if (value >= len(StatusStrings)):
+        if value >= len(StatusStrings):
             return "Undefined StatusCode"
 
         return StatusStrings[value]
@@ -46,7 +85,7 @@ class UefiStatusCode(object):
             StatusStrings = UefiStatusCode.ErrorCodeStrings
             value = value & 0x7FFFFFFFFFFFFFFF  # mask off upper bit
 
-        if (value >= len(StatusStrings)):
+        if value >= len(StatusStrings):
             return "Undefined StatusCode"
 
         return StatusStrings[value]

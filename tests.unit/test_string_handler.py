@@ -13,7 +13,6 @@ from edk2toollib.log.string_handler import StringStreamHandler
 
 
 class TestStringStreamHandler(unittest.TestCase):
-
     def test_init(self):
         handler = StringStreamHandler()
         self.assertNotEqual(handler, None)

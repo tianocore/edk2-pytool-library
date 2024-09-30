@@ -10,6 +10,7 @@
 
 Will call into win32 commands as needed when needed
 """
+
 import logging
 import re
 from typing import IO, Callable, Optional
@@ -20,6 +21,7 @@ try:
     # try to import windows types from winDLL
     import ctypes
     from ctypes import LibraryLoader
+
     windll = LibraryLoader(ctypes.WinDLL)
     from ctypes import wintypes
 except (AttributeError, ImportError):
@@ -42,6 +44,7 @@ else:
     # inspired by https://github.com/tartley/colorama/
     class CONSOLE_SCREEN_BUFFER_INFO(Structure):
         """Object representing a console screen buffer."""
+
         COORD = wintypes._COORD
         """struct in wincon.h."""
         _fields_ = [
@@ -54,17 +57,23 @@ else:
 
         def __str__(self) -> str:
             """String representation of the console screen buffer."""
-            return '(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)' % (
-                self.dwSize.Y, self.dwSize.X,
-                self.dwCursorPosition.Y, self.dwCursorPosition.X,
+            return "(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)" % (
+                self.dwSize.Y,
+                self.dwSize.X,
+                self.dwCursorPosition.Y,
+                self.dwCursorPosition.X,
                 self.wAttributes,
-                self.srWindow.Top, self.srWindow.Left,
-                self.srWindow.Bottom, self.srWindow.Right,
-                self.dwMaximumWindowSize.Y, self.dwMaximumWindowSize.X
+                self.srWindow.Top,
+                self.srWindow.Left,
+                self.srWindow.Bottom,
+                self.srWindow.Right,
+                self.dwMaximumWindowSize.Y,
+                self.dwMaximumWindowSize.X,
             )
 
     class Win32Console(object):
         """A simple wrapper around the few methods calls to windows."""
+
         _GetConsoleScreenBufferInfo = windll.kernel32.GetConsoleScreenBufferInfo
         _SetConsoleTextAttribute = windll.kernel32.SetConsoleTextAttribute
         _SetConsoleTextAttribute.argtypes = [
@@ -85,24 +94,26 @@ else:
         @staticmethod
         def _winapi_test(handle: Callable) -> bool:
             csbi = CONSOLE_SCREEN_BUFFER_INFO()
-            success = Win32Console._GetConsoleScreenBufferInfo(
-                handle, byref(csbi))
+            success = Win32Console._GetConsoleScreenBufferInfo(handle, byref(csbi))
             return bool(success)
 
         @staticmethod
         def winapi_test() -> Callable:
             """Returns the winapi_test."""
-            return any(Win32Console._winapi_test(h) for h in
-                       (Win32Console._GetStdHandle(Win32Console.STDOUT),
-                        Win32Console._GetStdHandle(Win32Console.STDERR)))
+            return any(
+                Win32Console._winapi_test(h)
+                for h in (
+                    Win32Console._GetStdHandle(Win32Console.STDOUT),
+                    Win32Console._GetStdHandle(Win32Console.STDERR),
+                )
+            )
 
         @staticmethod
-        def GetConsoleScreenBufferInfo(stream_id: int=STDOUT) -> CONSOLE_SCREEN_BUFFER_INFO:
+        def GetConsoleScreenBufferInfo(stream_id: int = STDOUT) -> CONSOLE_SCREEN_BUFFER_INFO:
             """Returns the console screen buffer info object."""
             handle = Win32Console._GetStdHandle(stream_id)
             csbi = CONSOLE_SCREEN_BUFFER_INFO()
-            Win32Console._GetConsoleScreenBufferInfo(
-                handle, byref(csbi))
+            Win32Console._GetConsoleScreenBufferInfo(handle, byref(csbi))
             return csbi
 
         @staticmethod
@@ -115,6 +126,7 @@ else:
 # from wincon.h
 class WinColor(object):
     """Enum representing Windows Console colors."""
+
     BLACK = 0
     BLUE = 1
     GREEN = 2
@@ -130,6 +142,7 @@ class WinColor(object):
 
 class AnsiColor(object):
     """Defines the different codes for the ansi colors."""
+
     BLACK = 30
     RED = 31
     GREEN = 32
@@ -167,7 +180,7 @@ class AnsiColor(object):
     BG_LIGHTWHITE_EX = 107
 
     @classmethod
-    def __contains__(self: 'AnsiColor', item: str) -> bool:
+    def __contains__(self: "AnsiColor", item: str) -> bool:
         """Verifies we contain the color."""
         if isinstance(item, str) and hasattr(self, item):
             return True
@@ -180,23 +193,21 @@ class AnsiColor(object):
 
 class ColoredFormatter(logging.Formatter):
     """The formatter that outputs ANSI codes as needed."""
-    AZURE_COLORS = {
-        'CRITICAL': "section",
-        'ERROR': "error"
-    }
+
+    AZURE_COLORS = {"CRITICAL": "section", "ERROR": "error"}
 
     COLORS = {
-        'WARNING': AnsiColor.YELLOW,
-        'INFO': AnsiColor.CYAN,
-        'DEBUG': AnsiColor.BLUE,
-        'CRITICAL': AnsiColor.LIGHTWHITE_EX,
-        'ERROR': AnsiColor.RED,
+        "WARNING": AnsiColor.YELLOW,
+        "INFO": AnsiColor.CYAN,
+        "DEBUG": AnsiColor.BLUE,
+        "CRITICAL": AnsiColor.LIGHTWHITE_EX,
+        "ERROR": AnsiColor.RED,
         "STATUS": AnsiColor.GREEN,
         "PROGRESS": AnsiColor.GREEN,
-        "SECTION": AnsiColor.CYAN
+        "SECTION": AnsiColor.CYAN,
     }
 
-    def __init__(self, msg: str="", use_azure: bool=False) -> 'ColoredFormatter':
+    def __init__(self, msg: str = "", use_azure: bool = False) -> "ColoredFormatter":
         """Inits the formatter."""
         logging.Formatter.__init__(self, msg)
         self.use_azure = use_azure
@@ -217,8 +228,7 @@ class ColoredFormatter(logging.Formatter):
             record.levelname = levelname_color
 
         if self.use_azure and levelname in ColoredFormatter.AZURE_COLORS:
-            levelname_color = "##[" + \
-                ColoredFormatter.AZURE_COLORS[levelname] + "]"
+            levelname_color = "##[" + ColoredFormatter.AZURE_COLORS[levelname] + "]"
             record.levelname = levelname_color
 
         result = logging.Formatter.format(self, record)
@@ -228,23 +238,24 @@ class ColoredFormatter(logging.Formatter):
         return result
 
 
-def get_ansi_string(color: AnsiColor=AnsiColor.RESET) -> str:
+def get_ansi_string(color: AnsiColor = AnsiColor.RESET) -> str:
     """Returns the string formatted ANSI command for the specific color."""
-    CSI = '\033['
+    CSI = "\033["
     colors = AnsiColor()
     if color not in colors:
         color = AnsiColor.RESET
-    return CSI + str(color) + 'm'
+    return CSI + str(color) + "m"
 
 
 class ColoredStreamHandler(logging.StreamHandler):
     """Class for logging in Color.."""
+
     # Control Sequence Introducer
-    ANSI_CSI_RE = re.compile('\001?\033\\[((?:\\d|;)*)([a-zA-Z])\002?')
+    ANSI_CSI_RE = re.compile("\001?\033\\[((?:\\d|;)*)([a-zA-Z])\002?")
 
     def __init__(
-        self, stream: Optional[IO]=None, strip: Optional[str]=None, convert: Optional[str]=None
-    ) -> 'ColoredStreamHandler':
+        self, stream: Optional[IO] = None, strip: Optional[str] = None, convert: Optional[str] = None
+    ) -> "ColoredStreamHandler":
         """Inits a Colored Stream Handler."""
         logging.StreamHandler.__init__(self, stream)
         self.on_windows = GetHostInfo().os == "Windows"
@@ -252,17 +263,16 @@ class ColoredStreamHandler(logging.StreamHandler):
         # we may be using a terminal that doesn't support the WinAPI
         # (e.g. Cygwin Terminal). In this case it's up to the terminal
         # to support the ANSI codes.
-        self.conversion_supported = (self.on_windows and Win32Console.winapi_test())
+        self.conversion_supported = self.on_windows and Win32Console.winapi_test()
         self.strip = False
         # should we strip ANSI sequences from our output?
         if strip is None:
-            strip = self.conversion_supported or (
-                not self.stream.closed and not self.stream.isatty())
+            strip = self.conversion_supported or (not self.stream.closed and not self.stream.isatty())
         self.strip = strip
 
         # should we should convert ANSI sequences into win32 calls?
         if convert is None:
-            convert = (self.conversion_supported and not self.stream.closed and self.stream.isatty())
+            convert = self.conversion_supported and not self.stream.closed and self.stream.isatty()
         self.convert = convert
         self.win32_calls = None
 
@@ -272,8 +282,7 @@ class ColoredStreamHandler(logging.StreamHandler):
         if self.on_windows:
             self.win32_calls = self.get_win32_calls()
             self._light = 0
-            self._default = Win32Console.GetConsoleScreenBufferInfo(
-                Win32Console.STDOUT).wAttributes
+            self._default = Win32Console.GetConsoleScreenBufferInfo(Win32Console.STDOUT).wAttributes
             self.set_attrs(self._default)
             self._default_fore = self._fore
             self._default_back = self._back
@@ -337,7 +346,7 @@ class ColoredStreamHandler(logging.StreamHandler):
             }
         return dict()
 
-    def set_foreground(self, fore: Optional[int]=None, light: bool=False, on_stderr: bool=False) -> None:
+    def set_foreground(self, fore: Optional[int] = None, light: bool = False, on_stderr: bool = False) -> None:
         """Does the win32 call to set the foreground."""
         if fore is None:
             fore = self._default_fore
@@ -349,7 +358,7 @@ class ColoredStreamHandler(logging.StreamHandler):
             self._light &= ~WinColor.BRIGHT
         self.set_console(on_stderr=on_stderr)
 
-    def set_background(self, back: Optional[int]=None, light: bool=False, on_stderr: bool=False) -> None:
+    def set_background(self, back: Optional[int] = None, light: bool = False, on_stderr: bool = False) -> None:
         """Does the win32 call to see the background."""
         if back is None:
             back = self._default_back
@@ -361,7 +370,7 @@ class ColoredStreamHandler(logging.StreamHandler):
             self._light &= ~WinColor.BRIGHT_BACKGROUND
         self.set_console(on_stderr=on_stderr)
 
-    def set_console(self, attrs: Optional[int]=None, on_stderr: bool=False) -> None:
+    def set_console(self, attrs: Optional[int] = None, on_stderr: bool = False) -> None:
         """Does the win32 call to set the console text attribute."""
         if attrs is None:
             attrs = self.get_attrs()
@@ -392,14 +401,14 @@ class ColoredStreamHandler(logging.StreamHandler):
         cursor = 0
         for match in self.ANSI_CSI_RE.finditer(text):
             start, end = match.span()
-            if (cursor < start):
+            if cursor < start:
                 self.write_plain_text(text, cursor, start)
             self.convert_ansi(*match.groups())
             cursor = end
 
         self.write_plain_text(text, cursor, len(text))
 
-    def write_plain_text(self, text: str, start: Optional[int]=None, end: Optional[int]=None) -> None:
+    def write_plain_text(self, text: str, start: Optional[int] = None, end: Optional[int] = None) -> None:
         """Writes plain text to our stream."""
         if start is None:
             self.stream.write(text)
@@ -415,7 +424,7 @@ class ColoredStreamHandler(logging.StreamHandler):
 
     def extract_params(self, command: str, paramstring: str) -> tuple:
         """Extracts the parameters in the ANSI command."""
-        params = tuple(int(p) for p in paramstring.split(';') if len(p) != 0)
+        params = tuple(int(p) for p in paramstring.split(";") if len(p) != 0)
         if len(params) == 0:
             params = (0,)
 
@@ -423,7 +432,7 @@ class ColoredStreamHandler(logging.StreamHandler):
 
     def call_win32(self, command: str, params: list) -> None:
         """Calls the win32 apis set_foreground and set_background."""
-        if command == 'm':
+        if command == "m":
             for param in params:
                 if param in self.win32_calls:
                     func_args = self.win32_calls[param]

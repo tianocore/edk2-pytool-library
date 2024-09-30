@@ -20,7 +20,7 @@ def _get_test_file():
 
 class InfSectionTest(unittest.TestCase):
     def test_empty(self):
-        section = InfSection('TestSection')
+        section = InfSection("TestSection")
         self.assertEqual(str(section), "[TestSection]")
 
     def test_single(self):
@@ -39,8 +39,15 @@ class InfGeneratorTest(unittest.TestCase):
     VALID_GUID_STRING = "3cad7a0c-d35b-4b75-96b1-03a9fb07b7fc"
 
     def test_valid(self):
-        o = InfGenerator("test_name", "provider", InfGeneratorTest.VALID_GUID_STRING, "x64",
-                         "description", "aa.bb.cc.dd", "0xaabbccdd")
+        o = InfGenerator(
+            "test_name",
+            "provider",
+            InfGeneratorTest.VALID_GUID_STRING,
+            "x64",
+            "description",
+            "aa.bb.cc.dd",
+            "0xaabbccdd",
+        )
         self.assertIsInstance(o, InfGenerator)
         self.assertEqual(o.Name, "test_name")
         self.assertEqual(o.Provider, "provider")
@@ -64,8 +71,15 @@ class InfGeneratorTest(unittest.TestCase):
     def test_file(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             inffile_path = os.path.join(tmpdir, "InfFile.inf")
-            infgen = InfGenerator('TestName', 'TestProvider', InfGeneratorTest.VALID_GUID_STRING,
-                                  "x64", "Test Description", "1.2.3.4", "0x01020304")
+            infgen = InfGenerator(
+                "TestName",
+                "TestProvider",
+                InfGeneratorTest.VALID_GUID_STRING,
+                "x64",
+                "Test Description",
+                "1.2.3.4",
+                "0x01020304",
+            )
             infgen.MakeInf(inffile_path, "TestFirmwareRom.bin", False)
 
             with open(inffile_path, "r") as inffile:
@@ -78,8 +92,15 @@ class InfGeneratorTest(unittest.TestCase):
     def test_integrity_file_entry(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             inffile_path = os.path.join(tmpdir, "InfFile.inf")
-            infgen = InfGenerator('TestName', 'TestProvider', InfGeneratorTest.VALID_GUID_STRING,
-                                  "x64", "Test Description", "1.2.3.4", "0x01020304")
+            infgen = InfGenerator(
+                "TestName",
+                "TestProvider",
+                InfGeneratorTest.VALID_GUID_STRING,
+                "x64",
+                "Test Description",
+                "1.2.3.4",
+                "0x01020304",
+            )
             infgen.MakeInf(inffile_path, "TestFirmwareRom.bin", False)
             with open(inffile_path, "r") as inffile:
                 file_contents = inffile.read()
@@ -94,40 +115,75 @@ class InfGeneratorTest(unittest.TestCase):
                 self.assertIn("FirmwareIntegrityFilename", file_contents)
 
     def test_invalid_name_symbol(self):
-
-        InvalidChars = ['~', '`', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', ' ', '{', '[', '}', ']', '+', '=']
+        InvalidChars = ["~", "`", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", " ", "{", "[", "}", "]", "+", "="]
         for a in InvalidChars:
             with self.subTest(name="test{}name".format(a)):
                 name = "test{}name".format(a)
                 with self.assertRaises(ValueError):
-                    InfGenerator(name, "provider", InfGeneratorTest.VALID_GUID_STRING, "x64",
-                                 "description", "aa.bb", "0xaabbccdd")
+                    InfGenerator(
+                        name,
+                        "provider",
+                        InfGeneratorTest.VALID_GUID_STRING,
+                        "x64",
+                        "description",
+                        "aa.bb",
+                        "0xaabbccdd",
+                    )
 
     def test_version_string_format(self):
         with self.subTest(version_string="zero ."):
             with self.assertRaises(ValueError):
-                InfGenerator("test_name", "provider", InfGeneratorTest.VALID_GUID_STRING, "x64",
-                             "description", "1234", "0x100000000")
+                InfGenerator(
+                    "test_name",
+                    "provider",
+                    InfGeneratorTest.VALID_GUID_STRING,
+                    "x64",
+                    "description",
+                    "1234",
+                    "0x100000000",
+                )
 
         with self.subTest(version_string="> 3 ."):
             with self.assertRaises(ValueError):
-                InfGenerator("test_name", "provider", InfGeneratorTest.VALID_GUID_STRING, "x64",
-                             "description", "1.2.3.4.5", "0x100000000")
+                InfGenerator(
+                    "test_name",
+                    "provider",
+                    InfGeneratorTest.VALID_GUID_STRING,
+                    "x64",
+                    "description",
+                    "1.2.3.4.5",
+                    "0x100000000",
+                )
 
     def test_version_hex_too_big(self):
         with self.subTest("hex string too big"):
             with self.assertRaises(ValueError):
-                InfGenerator("test_name", "provider", InfGeneratorTest.VALID_GUID_STRING, "x64",
-                             "description", "aa.bb", "0x100000000")
+                InfGenerator(
+                    "test_name",
+                    "provider",
+                    InfGeneratorTest.VALID_GUID_STRING,
+                    "x64",
+                    "description",
+                    "aa.bb",
+                    "0x100000000",
+                )
 
         with self.subTest("decimal too big"):
             with self.assertRaises(ValueError):
-                InfGenerator("test_name", "provider", InfGeneratorTest.VALID_GUID_STRING, "x64",
-                             "description", "aa.bb", "4294967296")
+                InfGenerator(
+                    "test_name",
+                    "provider",
+                    InfGeneratorTest.VALID_GUID_STRING,
+                    "x64",
+                    "description",
+                    "aa.bb",
+                    "4294967296",
+                )
 
     def test_version_hex_can_support_decimal(self):
-        o = InfGenerator("test_name", "provider", InfGeneratorTest.VALID_GUID_STRING, "x64",
-                         "description", "aa.bb.cc.dd", "12356")
+        o = InfGenerator(
+            "test_name", "provider", InfGeneratorTest.VALID_GUID_STRING, "x64", "description", "aa.bb.cc.dd", "12356"
+        )
         self.assertEqual(int(o.VersionHex, 0), 12356)
 
     def test_invalid_guid_format(self):
@@ -137,7 +193,7 @@ class InfGeneratorTest(unittest.TestCase):
 
 # NOTE: Below are the expected contents of a a valid INF file.
 #       Some fields will need to be generated (like the date).
-TEST_FILE_CONTENTS = f''';
+TEST_FILE_CONTENTS = f""";
 ; TestName.inf
 ; 1.2.3.4
 ; Copyright (C) 2019 Microsoft Corporation.  All Rights Reserved.
@@ -193,4 +249,4 @@ DiskName     = "Firmware Update"
 ; non-localizable
 DIRID_WINDOWS = 10
 REG_DWORD     = 0x00010001
-'''
+"""

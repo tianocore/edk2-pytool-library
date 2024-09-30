@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """This module contains utility classes to help interpret definitions from the Tpm20.h header file."""
+
 from typing import Optional
 
 ##
@@ -184,7 +185,7 @@ TPM_CC_LAST = 0x0000018E
 TPM_ST_Size = 2
 TPM_ST_Pack = "H"
 TPM_ST_RSP_COMMAND = 0x00C4
-TPM_ST_NULL = 0X8000
+TPM_ST_NULL = 0x8000
 TPM_ST_NO_SESSIONS = 0x8001
 TPM_ST_SESSIONS = 0x8002
 TPM_ST_ATTEST_NV = 0x8014
@@ -242,6 +243,7 @@ class CommandCode(object):
 
     Allows alternativing between command codes and command strings.
     """
+
     @staticmethod
     def get_code(cc_string: str) -> Optional[int]:
         """Returns associated command code.
@@ -488,6 +490,7 @@ class ResponseCode(object):
 
     Allows alternativing between response codes and response strings.
     """
+
     @staticmethod
     def get_simple_string(rc_code: int) -> Optional[str]:
         """Returns associated response string.
@@ -539,76 +542,76 @@ class ResponseCode(object):
     def parse_code(rc_code: int) -> tuple:
         """Returns a Tuple representing the parsed response code."""
         generic_errors = {
-            0x000: 'TPM_RC_INITIALIZE',
-            0x001: 'TPM_RC_FAILURE',
-            0x003: 'TPM_RC_SEQUENCE',
-            0x00B: 'TPM_RC_PRIVATE',
-            0x019: 'TPM_RC_HMAC',
-            0x020: 'TPM_RC_DISABLED',
-            0x021: 'TPM_RC_EXCLUSIVE',
-            0x024: 'TPM_RC_AUTH_TYPE',
-            0x025: 'TPM_RC_AUTH_MISSING',
-            0x026: 'TPM_RC_POLICY',
-            0x027: 'TPM_RC_PCR',
-            0x028: 'TPM_RC_PCR_CHANGED',
-            0x02D: 'TPM_RC_UPGRADE',
-            0x02E: 'TPM_RC_TOO_MANY_CONTEXTS',
-            0x02F: 'TPM_RC_AUTH_UNAVAILABLE',
-            0x030: 'TPM_RC_REBOOT',
-            0x031: 'TPM_RC_UNBALANCED',
-            0x042: 'TPM_RC_COMMAND_SIZE',
-            0x043: 'TPM_RC_COMMAND_CODE',
-            0x044: 'TPM_RC_AUTHSIZE',
-            0x045: 'TPM_RC_AUTH_CONTEXT',
-            0x046: 'TPM_RC_NV_RANGE',
-            0x047: 'TPM_RC_NV_SIZE',
-            0x048: 'TPM_RC_NV_LOCKED',
-            0x049: 'TPM_RC_NV_AUTHORIZATION',
-            0x04A: 'TPM_RC_NV_UNINITIALIZED',
-            0x04B: 'TPM_RC_NV_SPACE',
-            0x04C: 'TPM_RC_NV_DEFINED',
-            0x050: 'TPM_RC_BAD_CONTEXT',
-            0x051: 'TPM_RC_CPHASH',
-            0x052: 'TPM_RC_PARENT',
-            0x053: 'TPM_RC_NEEDS_TEST',
-            0x054: 'TPM_RC_NO_RESULT',
-            0x055: 'TPM_RC_SENSITIVE',
+            0x000: "TPM_RC_INITIALIZE",
+            0x001: "TPM_RC_FAILURE",
+            0x003: "TPM_RC_SEQUENCE",
+            0x00B: "TPM_RC_PRIVATE",
+            0x019: "TPM_RC_HMAC",
+            0x020: "TPM_RC_DISABLED",
+            0x021: "TPM_RC_EXCLUSIVE",
+            0x024: "TPM_RC_AUTH_TYPE",
+            0x025: "TPM_RC_AUTH_MISSING",
+            0x026: "TPM_RC_POLICY",
+            0x027: "TPM_RC_PCR",
+            0x028: "TPM_RC_PCR_CHANGED",
+            0x02D: "TPM_RC_UPGRADE",
+            0x02E: "TPM_RC_TOO_MANY_CONTEXTS",
+            0x02F: "TPM_RC_AUTH_UNAVAILABLE",
+            0x030: "TPM_RC_REBOOT",
+            0x031: "TPM_RC_UNBALANCED",
+            0x042: "TPM_RC_COMMAND_SIZE",
+            0x043: "TPM_RC_COMMAND_CODE",
+            0x044: "TPM_RC_AUTHSIZE",
+            0x045: "TPM_RC_AUTH_CONTEXT",
+            0x046: "TPM_RC_NV_RANGE",
+            0x047: "TPM_RC_NV_SIZE",
+            0x048: "TPM_RC_NV_LOCKED",
+            0x049: "TPM_RC_NV_AUTHORIZATION",
+            0x04A: "TPM_RC_NV_UNINITIALIZED",
+            0x04B: "TPM_RC_NV_SPACE",
+            0x04C: "TPM_RC_NV_DEFINED",
+            0x050: "TPM_RC_BAD_CONTEXT",
+            0x051: "TPM_RC_CPHASH",
+            0x052: "TPM_RC_PARENT",
+            0x053: "TPM_RC_NEEDS_TEST",
+            0x054: "TPM_RC_NO_RESULT",
+            0x055: "TPM_RC_SENSITIVE",
         }
 
         handle_errors = {
-            0x001: 'TPM_RC_ASYMMETRIC',
-            0x002: 'TPM_RC_ATTRIBUTES',
-            0x003: 'TPM_RC_HASH',
-            0x004: 'TPM_RC_VALUE',
-            0x005: 'TPM_RC_HIERARCHY',
-            0x007: 'TPM_RC_KEY_SIZE',
-            0x008: 'TPM_RC_MGF',
-            0x009: 'TPM_RC_MODE',
-            0x00A: 'TPM_RC_TYPE',
-            0x00B: 'TPM_RC_HANDLE',
-            0x00C: 'TPM_RC_KDF',
-            0x00D: 'TPM_RC_RANGE',
-            0x00E: 'TPM_RC_AUTH_FAIL',
-            0x00F: 'TPM_RC_NONCE',
-            0x010: 'TPM_RC_PP',
-            0x012: 'TPM_RC_SCHEME',
-            0x015: 'TPM_RC_SIZE',
-            0x016: 'TPM_RC_SYMMETRIC',
-            0x017: 'TPM_RC_TAG',
-            0x018: 'TPM_RC_SELECTOR',
-            0x01A: 'TPM_RC_INSUFFICIENT',
-            0x01B: 'TPM_RC_SIGNATURE',
-            0x01C: 'TPM_RC_KEY',
-            0x01D: 'TPM_RC_POLICY_FAIL',
-            0x01F: 'TPM_RC_INTEGRITY',
-            0x020: 'TPM_RC_TICKET',
-            0x021: 'TPM_RC_RESERVED_BITS',
-            0x022: 'TPM_RC_BAD_AUTH',
-            0x023: 'TPM_RC_EXPIRED',
-            0x024: 'TPM_RC_POLICY_CC',
-            0x025: 'TPM_RC_BINDING',
-            0x026: 'TPM_RC_CURVE',
-            0x027: 'TPM_RC_ECC_POINT',
+            0x001: "TPM_RC_ASYMMETRIC",
+            0x002: "TPM_RC_ATTRIBUTES",
+            0x003: "TPM_RC_HASH",
+            0x004: "TPM_RC_VALUE",
+            0x005: "TPM_RC_HIERARCHY",
+            0x007: "TPM_RC_KEY_SIZE",
+            0x008: "TPM_RC_MGF",
+            0x009: "TPM_RC_MODE",
+            0x00A: "TPM_RC_TYPE",
+            0x00B: "TPM_RC_HANDLE",
+            0x00C: "TPM_RC_KDF",
+            0x00D: "TPM_RC_RANGE",
+            0x00E: "TPM_RC_AUTH_FAIL",
+            0x00F: "TPM_RC_NONCE",
+            0x010: "TPM_RC_PP",
+            0x012: "TPM_RC_SCHEME",
+            0x015: "TPM_RC_SIZE",
+            0x016: "TPM_RC_SYMMETRIC",
+            0x017: "TPM_RC_TAG",
+            0x018: "TPM_RC_SELECTOR",
+            0x01A: "TPM_RC_INSUFFICIENT",
+            0x01B: "TPM_RC_SIGNATURE",
+            0x01C: "TPM_RC_KEY",
+            0x01D: "TPM_RC_POLICY_FAIL",
+            0x01F: "TPM_RC_INTEGRITY",
+            0x020: "TPM_RC_TICKET",
+            0x021: "TPM_RC_RESERVED_BITS",
+            0x022: "TPM_RC_BAD_AUTH",
+            0x023: "TPM_RC_EXPIRED",
+            0x024: "TPM_RC_POLICY_CC",
+            0x025: "TPM_RC_BINDING",
+            0x026: "TPM_RC_CURVE",
+            0x027: "TPM_RC_ECC_POINT",
         }
 
         warnings = {
@@ -644,43 +647,43 @@ class ResponseCode(object):
 
         # Check for TPM_RC_SUCCESS.
         if rc_code == 0x00:
-            return ('Success', 'None', 0, 'TPM_RC_SUCCESS', 'NA')
+            return ("Success", "None", 0, "TPM_RC_SUCCESS", "NA")
 
         # Check for TPM 1.2 response.
         if not (rc_code & (0b11 << 7)):
-            return ('Tpm1.2 Response', 'None', 0, 0, 'NA')
+            return ("Tpm1.2 Response", "None", 0, 0, "NA")
 
         # Check bit 7.
         if not (rc_code & (1 << 7)):
             # Check bit 10.
-            if (rc_code & (1 << 10)):
-                return ('Vendor Defined Code', 'None', 0, 0, 'NA')
+            if rc_code & (1 << 10):
+                return ("Vendor Defined Code", "None", 0, 0, "NA")
 
             # At this point the code will be in [6:0]...
             code = rc_code & 0b1111111
 
             # Check bit 11.
-            if (rc_code & (1 << 11)):
-                return ('Warning', 'None', 0, warnings[code], 'NA')  # TODO: Complete this.
+            if rc_code & (1 << 11):
+                return ("Warning", "None", 0, warnings[code], "NA")  # TODO: Complete this.
             else:
-                return ('Error', 'None', 0, code, generic_errors[code])
+                return ("Error", "None", 0, code, generic_errors[code])
 
         # At this point the code will always be in [5:0]...
         code = rc_code & 0b111111
 
         # Check bit 6.
-        if (rc_code & (1 << 6)):
+        if rc_code & (1 << 6):
             number = (rc_code >> 8) & 0b1111
-            return ('Error', 'Parameter', number, code, 'NA')  # TODO: Complete this.
+            return ("Error", "Parameter", number, code, "NA")  # TODO: Complete this.
 
         # At this point the nubmer will always be in [10:8]...
         number = (rc_code >> 8) & 0b111
 
         # Check bit 11.
         if not (rc_code & (1 << 11)):
-            return ('Error', 'Handle', number, code, handle_errors[code])  # TODO: Complete this.
+            return ("Error", "Handle", number, code, handle_errors[code])  # TODO: Complete this.
         else:
-            return ('Error', 'Session', number, code, 'NA')  # TODO: Complete this.
+            return ("Error", "Session", number, code, "NA")  # TODO: Complete this.
 
         raise ValueError("Code '0x%x' could not be parsed!" % rc_code)
         return None

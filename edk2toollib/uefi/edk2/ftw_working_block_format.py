@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Module contains helper classes for working with FaultTolerant Working block content."""
+
 import struct
 import sys
 import uuid
@@ -33,7 +34,8 @@ class EfiFtwWorkingBlockHeader(object):
         UINT64    WriteQueueSize;
     } EFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER;
     """
-    def __init__(self) -> 'EfiFtwWorkingBlockHeader':
+
+    def __init__(self) -> "EfiFtwWorkingBlockHeader":
         """Initializes an empty object."""
         self.StructString = "=16sLBBBBQ"  # spell-checker: disable-line
         self.Signature = None
@@ -44,7 +46,7 @@ class EfiFtwWorkingBlockHeader(object):
         self.Reserved3 = None
         self.WriteQueueSize = None
 
-    def load_from_file(self, file: IO) -> 'EfiFtwWorkingBlockHeader':
+    def load_from_file(self, file: IO) -> "EfiFtwWorkingBlockHeader":
         """Loads an EFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER from a file.
 
         Args:
@@ -63,11 +65,18 @@ class EfiFtwWorkingBlockHeader(object):
         file.seek(orig_seek)
 
         # Load this object with the contents of the data.
-        (signature_bin, self.Crc, self.WorkingBlockValidFields, self.Reserved1, self.Reserved2, self.Reserved3,
-         self.WriteQueueSize) = struct.unpack(self.StructString, struct_bytes)
+        (
+            signature_bin,
+            self.Crc,
+            self.WorkingBlockValidFields,
+            self.Reserved1,
+            self.Reserved2,
+            self.Reserved3,
+            self.WriteQueueSize,
+        ) = struct.unpack(self.StructString, struct_bytes)
 
         # Update the GUID to be a UUID object.
-        if sys.byteorder == 'big':
+        if sys.byteorder == "big":
             self.Signature = uuid.UUID(bytes=signature_bin)
         else:
             self.Signature = uuid.UUID(bytes_le=signature_bin)
@@ -84,9 +93,17 @@ class EfiFtwWorkingBlockHeader(object):
         Returns:
             (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
         """
-        signature_bin = self.Signature.bytes if sys.byteorder == 'big' else self.Signature.bytes_le
-        return struct.pack(self.StructString, signature_bin, self.Crc, self.WorkingBlockValidFields,
-                           self.Reserved1, self.Reserved2, self.Reserved3, self.WriteQueueSize)
+        signature_bin = self.Signature.bytes if sys.byteorder == "big" else self.Signature.bytes_le
+        return struct.pack(
+            self.StructString,
+            signature_bin,
+            self.Crc,
+            self.WorkingBlockValidFields,
+            self.Reserved1,
+            self.Reserved2,
+            self.Reserved3,
+            self.WriteQueueSize,
+        )
 
 
 class EfiFtwWriteHeader(object):
@@ -104,7 +121,8 @@ class EfiFtwWriteHeader(object):
         UINT64    PrivateDataSize;
     } EFI_FAULT_TOLERANT_WRITE_HEADER;
     """
-    def __init__(self) -> 'EfiFtwWriteHeader':
+
+    def __init__(self) -> "EfiFtwWriteHeader":
         """Initializes an empty object."""
         self.StructString = "=BBBB16sLQQ"
         self.StatusBits = None
@@ -116,7 +134,7 @@ class EfiFtwWriteHeader(object):
         self.NumberOfWrites = None
         self.PrivateDataSize = None
 
-    def load_from_file(self, file: IO) -> 'EfiFtwWriteHeader':
+    def load_from_file(self, file: IO) -> "EfiFtwWriteHeader":
         """Loads an EFI_FAULT_TOLERANT_WRITE_HEADER from a file.
 
         Args:
@@ -132,9 +150,16 @@ class EfiFtwWriteHeader(object):
         file.seek(orig_seek)
 
         # Load this object with the contents of the data.
-        (self.StatusBits, self.ReservedByte1, self.ReservedByte2, self.ReservedByte3, self.CallerId,
-         self.ReservedUint32, self.NumberOfWrites, self.PrivateDataSize) = struct.unpack(self.StructString,
-                                                                                         struct_bytes)
+        (
+            self.StatusBits,
+            self.ReservedByte1,
+            self.ReservedByte2,
+            self.ReservedByte3,
+            self.CallerId,
+            self.ReservedUint32,
+            self.NumberOfWrites,
+            self.PrivateDataSize,
+        ) = struct.unpack(self.StructString, struct_bytes)
 
         return self
 
@@ -144,9 +169,17 @@ class EfiFtwWriteHeader(object):
         Returns:
             (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
         """
-        return struct.pack(self.StructString, self.StatusBits, self.ReservedByte1, self.ReservedByte2,
-                           self.ReservedByte3, self.CallerId, self.ReservedUint32, self.NumberOfWrites,
-                           self.PrivateDataSize)
+        return struct.pack(
+            self.StructString,
+            self.StatusBits,
+            self.ReservedByte1,
+            self.ReservedByte2,
+            self.ReservedByte3,
+            self.CallerId,
+            self.ReservedUint32,
+            self.NumberOfWrites,
+            self.PrivateDataSize,
+        )
 
 
 class EfiFtwWriteRecord(object):
@@ -165,7 +198,8 @@ class EfiFtwWriteRecord(object):
         INT64   RelativeOffset;
     } EFI_FAULT_TOLERANT_WRITE_RECORD;
     """
-    def __init__(self) -> 'EfiFtwWriteRecord':
+
+    def __init__(self) -> "EfiFtwWriteRecord":
         """Initializes an empty object."""
         self.StructString = "=BBBBLQQQQ"  # spell-checker: disable-line
         self.StatusBits = None
@@ -178,7 +212,7 @@ class EfiFtwWriteRecord(object):
         self.Length = None
         self.RelativeOffset = None
 
-    def load_from_file(self, file: IO) -> 'EfiFtwWriteRecord':
+    def load_from_file(self, file: IO) -> "EfiFtwWriteRecord":
         """Loads an EFI_FAULT_TOLERANT_WRITE_RECORD from a file.
 
         Args:
@@ -194,8 +228,17 @@ class EfiFtwWriteRecord(object):
         file.seek(orig_seek)
 
         # Load this object with the contents of the data.
-        (self.StatusBits, self.ReservedByte1, self.ReservedByte2, self.ReservedByte3, self.ReservedUint32, self.Lba,
-         self.Offset, self.Length, self.RelativeOffset) = struct.unpack(self.StructString, struct_bytes)
+        (
+            self.StatusBits,
+            self.ReservedByte1,
+            self.ReservedByte2,
+            self.ReservedByte3,
+            self.ReservedUint32,
+            self.Lba,
+            self.Offset,
+            self.Length,
+            self.RelativeOffset,
+        ) = struct.unpack(self.StructString, struct_bytes)
 
         return self
 
@@ -205,6 +248,15 @@ class EfiFtwWriteRecord(object):
         Returns:
             (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
         """
-        return struct.pack(self.StructString, self.StatusBits, self.ReservedByte1, self.ReservedByte2,
-                           self.ReservedByte3, self.ReservedUint32, self.Lba, self.Offset, self.Length,
-                           self.RelativeOffset)
+        return struct.pack(
+            self.StructString,
+            self.StatusBits,
+            self.ReservedByte1,
+            self.ReservedByte2,
+            self.ReservedByte3,
+            self.ReservedUint32,
+            self.Lba,
+            self.Offset,
+            self.Length,
+            self.RelativeOffset,
+        )

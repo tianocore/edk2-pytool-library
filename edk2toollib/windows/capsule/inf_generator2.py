@@ -10,25 +10,31 @@
 
 Supports targeting multiple ESRT nodes with the same INF
 """
+
 import re
 import textwrap
 import uuid
 from datetime import datetime
 from typing import Optional
 
-SUPPORTED_ARCH = {'amd64': 'amd64',
-                  'x64': 'amd64',
-                  'arm': 'arm',
-                  'arm64': 'ARM64',
-                  'aarch64': 'ARM64'
-                  }
+SUPPORTED_ARCH = {"amd64": "amd64", "x64": "amd64", "arm": "arm", "arm64": "ARM64", "aarch64": "ARM64"}
 
-OS_BUILD_VERSION_DIRID13_SUPPORT = '10.0...17134'
+OS_BUILD_VERSION_DIRID13_SUPPORT = "10.0...17134"
+
 
 class InfHeader(object):
     """The INF header at the start of the INF file."""
-    def __init__(self, Name: str, VersionStr: str, CreationDate: str, Arch: str, Provider: str, Manufacturer: str,
-                 InfStrings: 'InfStrings') -> 'InfHeader':
+
+    def __init__(
+        self,
+        Name: str,
+        VersionStr: str,
+        CreationDate: str,
+        Arch: str,
+        Provider: str,
+        Manufacturer: str,
+        InfStrings: "InfStrings",
+    ) -> "InfHeader":
         """Instantiate an INF header object.
 
         Args:
@@ -60,7 +66,7 @@ class InfHeader(object):
             (ValueError): Invalid chars in string
         """
         # test here for invalid chars
-        if not (re.compile(r'[\w-]*$')).match(value):
+        if not (re.compile(r"[\w-]*$")).match(value):
             raise ValueError("Name has invalid chars.")
         self._name = value
 
@@ -100,7 +106,7 @@ class InfHeader(object):
     def Arch(self, value: str) -> str:
         """Validates the Architecture before setting the attribute."""
         key = value.lower()
-        if (key not in SUPPORTED_ARCH.keys()):
+        if key not in SUPPORTED_ARCH.keys():
             raise ValueError("Unsupported Architecture")
         self._arch = SUPPORTED_ARCH[key]
 
@@ -130,9 +136,18 @@ class InfHeader(object):
 class InfFirmware(object):
     """Individual firmware sections within the INF."""
 
-    def __init__(self, Tag: str, Description: str, EsrtGuid: str, VersionInt: str, FirmwareFile: str,
-                 InfStrings: 'InfStrings', InfSourceFiles: 'InfSourceFiles', Rollback: Optional[bool] = False,
-                 IntegrityFile: Optional[str] = None) -> 'InfFirmware':
+    def __init__(
+        self,
+        Tag: str,
+        Description: str,
+        EsrtGuid: str,
+        VersionInt: str,
+        FirmwareFile: str,
+        InfStrings: "InfStrings",
+        InfSourceFiles: "InfSourceFiles",
+        Rollback: Optional[bool] = False,
+        IntegrityFile: Optional[str] = None,
+    ) -> "InfFirmware":
         """Instantiate an INF firmware object.
 
         Args:
@@ -158,7 +173,7 @@ class InfFirmware(object):
         InfSourceFiles.AddFile(FirmwareFile)
         self.Rollback = Rollback
         self.IntegrityFile = IntegrityFile
-        if (self.IntegrityFile is not None):
+        if self.IntegrityFile is not None:
             InfSourceFiles.AddFile(IntegrityFile)
         InfStrings.AddNonLocalizableString("REG_DWORD", "0x00010001")
 
@@ -175,7 +190,7 @@ class InfFirmware(object):
             (ValueError): Invalid character for a tag
         """
         # test here for invalid chars
-        if not (re.compile(r'[\w-]*$')).match(value):
+        if not (re.compile(r"[\w-]*$")).match(value):
             raise ValueError("Tag has invalid chars.")
         self._tag = value
 
@@ -203,7 +218,7 @@ class InfFirmware(object):
     def __str__(self) -> str:
         """Return the string representation of this InfFirmware object."""
         # build rollback string, if required.
-        if (self.Rollback):
+        if self.Rollback:
             RollbackStr = textwrap.dedent(f"""\
                 AddReg = {self.Tag}_DowngradePolicy_AddReg
 
@@ -214,7 +229,7 @@ class InfFirmware(object):
             RollbackStr = ""
 
         # build integrity file string, if required.
-        if (self.IntegrityFile is not None):
+        if self.IntegrityFile is not None:
             IntegrityFile = f"{self.IntegrityFile}\n"
             IntegrityFileReg = f"HKR,,FirmwareIntegrityFilename,,%13%\\{self.IntegrityFile}\n"
         else:
@@ -250,7 +265,8 @@ class InfFirmware(object):
 
 class InfFirmwareSections(object):
     """A collection of firmware sections and associated common metadata."""
-    def __init__(self, Arch: str, InfStrings: 'InfStrings') -> 'InfFirmwareSections':
+
+    def __init__(self, Arch: str, InfStrings: "InfStrings") -> "InfFirmwareSections":
         """Instantiate an INF firmware sections object.
 
         Args:
@@ -270,7 +286,7 @@ class InfFirmwareSections(object):
     def Arch(self, value: str) -> str:
         """Validates the Architecture before setting the attribute."""
         key = value.lower()
-        if (key not in SUPPORTED_ARCH.keys()):
+        if key not in SUPPORTED_ARCH.keys():
             raise ValueError("Unsupported Architecture")
         self._arch = SUPPORTED_ARCH[key]
 
@@ -300,7 +316,8 @@ class InfFirmwareSections(object):
 
 class InfSourceFiles(object):
     """The collection of source files that are referenced by other sections of the INF."""
-    def __init__(self, DiskName: str, InfStrings: 'InfStrings') -> 'InfSourceFiles':
+
+    def __init__(self, DiskName: str, InfStrings: "InfStrings") -> "InfSourceFiles":
         """Instantiate an INF source files object.
 
         Args:
@@ -308,8 +325,8 @@ class InfSourceFiles(object):
             InfStrings (InfStrings): An InfStrings object representing the "Strings" section of this INF file.
         """
         self.Files = []
-        InfStrings.AddLocalizableString('DiskName', DiskName)
-        InfStrings.AddNonLocalizableString('DIRID_WINDOWS', "10")
+        InfStrings.AddLocalizableString("DiskName", DiskName)
+        InfStrings.AddNonLocalizableString("DIRID_WINDOWS", "10")
 
     def AddFile(self, Filename: str) -> None:
         """Adds a new file to this InfSourceFiles object.
@@ -318,15 +335,15 @@ class InfSourceFiles(object):
             Filename (str): Filename (basename only) of the file to be added. (e.g. "Firmware1234.bin")
         """
         # test here for invalid chars. For filenames, this permits a-z, A-Z, 0-9, _, -, and . characters.
-        if not (re.compile(r'[\.\w-]*$')).match(Filename):
+        if not (re.compile(r"[\.\w-]*$")).match(Filename):
             raise ValueError("Filename has invalid chars.")
 
-        if (Filename not in self.Files):
+        if Filename not in self.Files:
             self.Files.append(Filename)
 
     def __str__(self) -> str:
         """Return the string representation of this InfSourceFIles object."""
-        Files = ''.join("{0} = 1\n".format(file) for file in self.Files)
+        Files = "".join("{0} = 1\n".format(file) for file in self.Files)
         outstr = textwrap.dedent("""\
             [SourceDisksNames]
             1 = %DiskName%
@@ -347,7 +364,8 @@ class InfStrings(object):
 
     strings can be localizable or non-localizable
     """
-    def __init__(self) -> 'InfStrings':
+
+    def __init__(self) -> "InfStrings":
         """Instantiate an INF strings object."""
         self.LocalizableStrings = {}
         self.NonLocalizableStrings = {}
@@ -363,7 +381,7 @@ class InfStrings(object):
         """
         # The inf spec says keys here should be "letters, digits, and/or other explicitly visible characters".
         # for simplicity, this just enforces that it must be a string that matches \w+
-        if not (re.compile(r'\w+$')).match(Key):
+        if not (re.compile(r"\w+$")).match(Key):
             raise ValueError("Key has invalid chars.")
         self.LocalizableStrings[Key] = Value
 
@@ -378,7 +396,7 @@ class InfStrings(object):
         """
         # The inf spec says keys here should be "letters, digits, and/or other explicitly visible characters".
         # for simplicity, this just enforces that it must be a string that matches \w+
-        if not (re.compile(r'\w+$')).match(Key):
+        if not (re.compile(r"\w+$")).match(Key):
             raise ValueError("Key has invalid chars.")
         self.NonLocalizableStrings[Key] = Value
 
@@ -386,12 +404,12 @@ class InfStrings(object):
         """Return the string representation of this InfStrings object."""
         LocalizedStrings = ""
         LongestKey = max(len(Key) for Key in self.LocalizableStrings.keys())
-        for (Key, Value) in self.LocalizableStrings.items():
+        for Key, Value in self.LocalizableStrings.items():
             LocalizedStrings += '{0:{width}} = "{1}"\n'.format(Key, Value, width=LongestKey)
 
         NonLocalizedStrings = ""
         LongestKey = max(len(Key) for Key in self.NonLocalizableStrings.keys())
-        for (Key, Value) in self.NonLocalizableStrings.items():
+        for Key, Value in self.NonLocalizableStrings.items():
             NonLocalizedStrings += "{0:{width}} = {1}\n".format(Key, Value, width=LongestKey)
 
         outstr = textwrap.dedent("""\
@@ -408,8 +426,17 @@ class InfStrings(object):
 
 class InfFile(object):
     """An object representing an INF file."""
-    def __init__(self, Name: str, VersionStr: str, CreationDate: str, Provider: str, ManufacturerName: str,
-                 Arch: Optional[str] = 'amd64', DiskName: Optional[str] = "Firmware Update") -> 'InfFile':
+
+    def __init__(
+        self,
+        Name: str,
+        VersionStr: str,
+        CreationDate: str,
+        Provider: str,
+        ManufacturerName: str,
+        Arch: Optional[str] = "amd64",
+        DiskName: Optional[str] = "Firmware Update",
+    ) -> "InfFile":
         """Instantiate an INF file object.
 
         This object represents the entire INF file.
@@ -431,8 +458,16 @@ class InfFile(object):
         self.InfHeader = InfHeader(Name, VersionStr, CreationDate, Arch, Provider, ManufacturerName, self.InfStrings)
         self.InfFirmwareSections = InfFirmwareSections(Arch, self.InfStrings)
 
-    def AddFirmware(self, Tag: str, Description: str, EsrtGuid: str, VersionInt: str, FirmwareFile: str,
-                    Rollback: Optional[bool] = False, IntegrityFile: Optional[str] = None) -> None:
+    def AddFirmware(
+        self,
+        Tag: str,
+        Description: str,
+        EsrtGuid: str,
+        VersionInt: str,
+        FirmwareFile: str,
+        Rollback: Optional[bool] = False,
+        IntegrityFile: Optional[str] = None,
+    ) -> None:
         """Adds a firmware target to the INF.
 
         Args:
@@ -446,8 +481,17 @@ class InfFile(object):
             IntegrityFile (:obj:`str`, optional): Filename (basename only) of the integrity file associated with this
                 firmware (e.g. "integrity123.bin"). Optional - if not specified, no integrity file will be included.
         """
-        firmwareSection = InfFirmware(Tag, Description, EsrtGuid, VersionInt, FirmwareFile,
-                                      self.InfStrings, self.InfSourceFiles, Rollback, IntegrityFile)
+        firmwareSection = InfFirmware(
+            Tag,
+            Description,
+            EsrtGuid,
+            VersionInt,
+            FirmwareFile,
+            self.InfStrings,
+            self.InfSourceFiles,
+            Rollback,
+            IntegrityFile,
+        )
         self.InfFirmwareSections.AddSection(firmwareSection)
 
     def __str__(self) -> str:

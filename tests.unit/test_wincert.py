@@ -52,7 +52,6 @@ class WinCertPkcs1Tests(unittest.TestCase):
 
         # write to a filestream
         with io.BytesIO() as f0, io.BytesIO() as f1, io.BytesIO() as f2:
-
             # Write the data to the first filestream
             wincert0.write(f0)
 
@@ -111,9 +110,7 @@ class WinCertPkcs1Tests(unittest.TestCase):
 
 
 class WinCertUefiGuidTest(unittest.TestCase):
-
     def test_add_cert_data_raises_exceptions(self):
-
         wincert = WinCertUefiGuid()
 
         # Attempt to add Cert Data and capture the error
@@ -176,7 +173,7 @@ class WinCertUefiGuidTest(unittest.TestCase):
             self.assertTrue(wincert1.encode(), wincert1_encode)
 
     def test_add_cert_data(self):
-        """"Tests add_cert_data, get_certificate, dump_info and string"""
+        """ "Tests add_cert_data, get_certificate, dump_info and string"""
         wincert0 = WinCertUefiGuid()
 
         # TEST_SIGNATURE_PKCS7 is a signed variable, so we need to remove data we don't need for this test
@@ -226,7 +223,6 @@ class WinCertUefiGuidTest(unittest.TestCase):
 
 
 class WinCertTests(unittest.TestCase):
-
     def test_factory(self):
         wincert_guid_type = WinCertUefiGuid()
         # TEST_SIGNATURE_PKCS7 is a signed variable, so we need to remove data we don't need for this test

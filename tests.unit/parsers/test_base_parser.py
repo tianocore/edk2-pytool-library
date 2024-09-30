@@ -16,15 +16,9 @@ from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 
 class TestBaseParser(unittest.TestCase):
-
     def test_replace_boolean_constants(self):
         parser = BaseParser("")
-        parser.SetInputVars({
-            "true": "True",
-            "false": "False",
-            "b_true": True,
-            "b_false": False
-        })
+        parser.SetInputVars({"true": "True", "false": "False", "b_true": True, "b_false": False})
         line = "$(true)"
         self.assertEqual(parser.ReplaceVariables(line), "TRUE")
         line = "$(false)"
@@ -36,37 +30,28 @@ class TestBaseParser(unittest.TestCase):
 
     def test_replace_macro_using_dollarsign(self):
         parser = BaseParser("")
-        parser.SetInputVars({
-            "name": "sean"
-        })
+        parser.SetInputVars({"name": "sean"})
         line = "Hello $(name)!"
         self.assertEqual(parser.ReplaceVariables(line), "Hello sean!")
 
     def test_replace_macro_local_var_priority(self):
         parser = BaseParser("")
-        parser.SetInputVars({
-            "name": "sean"
-        })
+        parser.SetInputVars({"name": "sean"})
         parser.LocalVars["name"] = "fred"
         line = "Hello $(name)!"
         self.assertEqual(parser.ReplaceVariables(line), "Hello fred!")
 
 
 class TestBaseParserConditionals(unittest.TestCase):
-
     def test_replace_macro_without_resolution(self):
         parser = BaseParser("")
-        parser.SetInputVars({
-            "name": "sean"
-        })
+        parser.SetInputVars({"name": "sean"})
         line = "!if $(Unknown_Token)!"
         self.assertEqual(parser.ReplaceVariables(line), "!if 0!")
 
     def test_replace_macro_ifdef_dollarsign(self):
         parser = BaseParser("")
-        parser.SetInputVars({
-            "name": "sean"
-        })
+        parser.SetInputVars({"name": "sean"})
         line = "!ifdef $(name)"
         self.assertEqual(parser.ReplaceVariables(line), "!ifdef sean")
 
@@ -78,9 +63,7 @@ class TestBaseParserConditionals(unittest.TestCase):
 
     def test_replace_macro_ifndef_dollarsign(self):
         parser = BaseParser("")
-        parser.SetInputVars({
-            "name": "sean"
-        })
+        parser.SetInputVars({"name": "sean"})
         line = "!IfNDef $(name)"
         self.assertEqual(parser.ReplaceVariables(line), "!IfNDef sean")
 
@@ -92,9 +75,7 @@ class TestBaseParserConditionals(unittest.TestCase):
 
     def test_replace_macro_ifdef(self):
         parser = BaseParser("")
-        parser.SetInputVars({
-            "name": "sean"
-        })
+        parser.SetInputVars({"name": "sean"})
         line = "!ifdef name"
         self.assertEqual(parser.ReplaceVariables(line), "!ifdef sean")
 
@@ -106,9 +87,7 @@ class TestBaseParserConditionals(unittest.TestCase):
 
     def test_replace_macro_ifndef(self):
         parser = BaseParser("")
-        parser.SetInputVars({
-            "name": "sean"
-        })
+        parser.SetInputVars({"name": "sean"})
         line = "!IfNDef name"
         self.assertEqual(parser.ReplaceVariables(line), "!IfNDef sean")
 
@@ -120,9 +99,7 @@ class TestBaseParserConditionals(unittest.TestCase):
 
     def test_replace_macro_elseif(self):
         parser = BaseParser("")
-        parser.SetInputVars({
-            "name": "matt"
-        })
+        parser.SetInputVars({"name": "matt"})
         line = "!elseif $(name)"
         self.assertEqual(parser.ReplaceVariables(line), "!elseif matt")
 
@@ -400,56 +377,57 @@ class TestBaseParserConditionals(unittest.TestCase):
     def test_process_in_conditional(self):
         parser = BaseParser("")
         parser.SetInputVars({"TOOL_CHAIN_TAG": "GCC5_TEST"})
-        self.assertTrue(parser.ProcessConditional(
-            '!if ("GCC49" in $(TOOL_CHAIN_TAG)) OR ("GCC5" in $(TOOL_CHAIN_TAG))'))
+        self.assertTrue(
+            parser.ProcessConditional('!if ("GCC49" in $(TOOL_CHAIN_TAG)) OR ("GCC5" in $(TOOL_CHAIN_TAG))')
+        )
         self.assertTrue(parser.InActiveCode())
         parser.ResetParserState()
         parser.SetInputVars({"TOOL_CHAIN_TAG": "TESTGCC49"})
-        self.assertTrue(parser.ProcessConditional(
-            '!if ("GCC49" in $(TOOL_CHAIN_TAG)) OR ("GCC5" in $(TOOL_CHAIN_TAG))'))
+        self.assertTrue(
+            parser.ProcessConditional('!if ("GCC49" in $(TOOL_CHAIN_TAG)) OR ("GCC5" in $(TOOL_CHAIN_TAG))')
+        )
         self.assertTrue(parser.InActiveCode())
         parser.ResetParserState()
         # Don't give it a tool chain tag that isn't in the things we're searching for
         parser.SetInputVars({"TOOL_CHAIN_TAG": "NOTFOUND"})
-        self.assertTrue(parser.ProcessConditional(
-            '!if ("GCC49" in $(TOOL_CHAIN_TAG)) OR ("GCC5" in $(TOOL_CHAIN_TAG))'))
+        self.assertTrue(
+            parser.ProcessConditional('!if ("GCC49" in $(TOOL_CHAIN_TAG)) OR ("GCC5" in $(TOOL_CHAIN_TAG))')
+        )
         self.assertFalse(parser.InActiveCode())
 
     def test_process_or_operation_conditional(self):
         parser = BaseParser("")
-        self.assertTrue(parser.EvaluateConditional('!IF TRUE OR FALSE'))
-        self.assertTrue(parser.EvaluateConditional('!if FALSE OR TRUE'))
-        self.assertTrue(parser.EvaluateConditional('!if FALSE || TRUE'))
-        self.assertTrue(parser.EvaluateConditional('!if TRUE OR TRUE'))
-        self.assertFalse(parser.EvaluateConditional('!if FALSE OR FALSE'))
-        self.assertFalse(parser.EvaluateConditional('!if FALSE || FALSE'))
+        self.assertTrue(parser.EvaluateConditional("!IF TRUE OR FALSE"))
+        self.assertTrue(parser.EvaluateConditional("!if FALSE OR TRUE"))
+        self.assertTrue(parser.EvaluateConditional("!if FALSE || TRUE"))
+        self.assertTrue(parser.EvaluateConditional("!if TRUE OR TRUE"))
+        self.assertFalse(parser.EvaluateConditional("!if FALSE OR FALSE"))
+        self.assertFalse(parser.EvaluateConditional("!if FALSE || FALSE"))
 
     def test_process_and_operation_conditional(self):
         parser = BaseParser("")
-        self.assertFalse(parser.EvaluateConditional('!if TRUE AND FALSE'))
-        self.assertFalse(parser.EvaluateConditional('!if FALSE AND TRUE'))
-        self.assertTrue(parser.EvaluateConditional('!if TRUE AND TRUE'))
-        self.assertTrue(parser.EvaluateConditional('!if TRUE && TRUE'))
-        self.assertFalse(parser.EvaluateConditional('!if FALSE AND FALSE'))
-        self.assertFalse(parser.EvaluateConditional('!if FALSE && FALSE'))
+        self.assertFalse(parser.EvaluateConditional("!if TRUE AND FALSE"))
+        self.assertFalse(parser.EvaluateConditional("!if FALSE AND TRUE"))
+        self.assertTrue(parser.EvaluateConditional("!if TRUE AND TRUE"))
+        self.assertTrue(parser.EvaluateConditional("!if TRUE && TRUE"))
+        self.assertFalse(parser.EvaluateConditional("!if FALSE AND FALSE"))
+        self.assertFalse(parser.EvaluateConditional("!if FALSE && FALSE"))
 
     def test_process_invalid_conditional(self):
         parser = BaseParser("")
         with self.assertRaises(RuntimeError):
-            parser.EvaluateConditional('!if TRUE AND FALSE AND')
+            parser.EvaluateConditional("!if TRUE AND FALSE AND")
         with self.assertRaises(RuntimeError):
-            parser.EvaluateConditional('TRUE AND FALSE AND')
+            parser.EvaluateConditional("TRUE AND FALSE AND")
 
     def test_emulator_conditional_or_double_in(self):
         parser = BaseParser("")
         parser.SetInputVars({"ARCH": "X64"})
-        self.assertTrue(parser.ProcessConditional(
-            '!if "IA32" in $(ARCH) || "X64" in $(ARCH)'))
+        self.assertTrue(parser.ProcessConditional('!if "IA32" in $(ARCH) || "X64" in $(ARCH)'))
         self.assertTrue(parser.InActiveCode())
         parser.ResetParserState()
         parser.SetInputVars({"ARCH": "IA32"})
-        self.assertTrue(parser.ProcessConditional(
-            '!if "IA32" in $(ARCH) || "X64" in $(ARCH)'))
+        self.assertTrue(parser.ProcessConditional('!if "IA32" in $(ARCH) || "X64" in $(ARCH)'))
         self.assertTrue(parser.InActiveCode())
         parser.ResetParserState()
 
@@ -461,86 +439,85 @@ class TestBaseParserConditionals(unittest.TestCase):
         parser.ResetParserState()
 
     def test_emulator_conditional_parens_order(self):
-        '''Makes sure the parenthesis affect the order of expressions'''
+        """Makes sure the parenthesis affect the order of expressions"""
         parser = BaseParser("")
-        self.assertFalse(parser.EvaluateConditional('!if TRUE OR FALSE AND FALSE'))
-        self.assertTrue(parser.EvaluateConditional('!if TRUE OR (FALSE AND FALSE)'))
+        self.assertFalse(parser.EvaluateConditional("!if TRUE OR FALSE AND FALSE"))
+        self.assertTrue(parser.EvaluateConditional("!if TRUE OR (FALSE AND FALSE)"))
         parser.ResetParserState()
 
     def test_emulator_conditional_not_or(self):
-        '''Makes sure we can use the not with other operators'''
+        """Makes sure we can use the not with other operators"""
         parser = BaseParser("")
-        self.assertTrue(parser.EvaluateConditional('!if FALSE NOT OR FALSE'))
-        self.assertFalse(parser.EvaluateConditional('!if TRUE NOT OR FALSE'))
-        self.assertFalse(parser.EvaluateConditional('!if FALSE NOT OR TRUE'))
-        self.assertFalse(parser.EvaluateConditional('!if TRUE NOT OR TRUE'))
+        self.assertTrue(parser.EvaluateConditional("!if FALSE NOT OR FALSE"))
+        self.assertFalse(parser.EvaluateConditional("!if TRUE NOT OR FALSE"))
+        self.assertFalse(parser.EvaluateConditional("!if FALSE NOT OR TRUE"))
+        self.assertFalse(parser.EvaluateConditional("!if TRUE NOT OR TRUE"))
 
     def test_emulator_conditional_not_it_all(self):
-        '''Makes sure the parenthesis affect the order of expressions'''
+        """Makes sure the parenthesis affect the order of expressions"""
         parser = BaseParser("")
-        self.assertTrue(parser.EvaluateConditional('!if NOT FALSE OR FALSE'))
-        self.assertFalse(parser.EvaluateConditional('!if NOT TRUE OR FALSE'))
+        self.assertTrue(parser.EvaluateConditional("!if NOT FALSE OR FALSE"))
+        self.assertFalse(parser.EvaluateConditional("!if NOT TRUE OR FALSE"))
         # check to make sure it works with parenthesis
-        self.assertFalse(parser.EvaluateConditional('!if NOT(TRUE)'))
-        self.assertTrue(parser.EvaluateConditional('!if NOT(FALSE)'))
+        self.assertFalse(parser.EvaluateConditional("!if NOT(TRUE)"))
+        self.assertTrue(parser.EvaluateConditional("!if NOT(FALSE)"))
         # make sure it works with the bang symbol
-        self.assertFalse(parser.EvaluateConditional('!if !(TRUE)'))
-        self.assertTrue(parser.EvaluateConditional('!if !(FALSE)'))
+        self.assertFalse(parser.EvaluateConditional("!if !(TRUE)"))
+        self.assertTrue(parser.EvaluateConditional("!if !(FALSE)"))
 
         parser.ResetParserState()
 
     def test_conditional_with_variable(self):
-        '''Makes sure conversions are correct when using variables'''
+        """Makes sure conversions are correct when using variables"""
         parser = BaseParser("")
-        parser.LocalVars = {"MAX_SOCKET": '4', 'TARGET': 'DEBUG'}
+        parser.LocalVars = {"MAX_SOCKET": "4", "TARGET": "DEBUG"}
 
-        self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET) <= 4'))
+        self.assertTrue(parser.ProcessConditional("!if $(MAX_SOCKET) <= 4"))
         self.assertTrue(parser.InActiveCode())
-        self.assertTrue(parser.ProcessConditional('!endif'))
+        self.assertTrue(parser.ProcessConditional("!endif"))
 
         self.assertTrue(parser.ProcessConditional('!if $(TARGET) == "DEBUG" && $(MAX_SOCKET) <= 4'))
         self.assertTrue(parser.InActiveCode())
-        self.assertTrue(parser.ProcessConditional('!endif'))
+        self.assertTrue(parser.ProcessConditional("!endif"))
 
-        self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET) <= 3'))
+        self.assertTrue(parser.ProcessConditional("!if $(MAX_SOCKET) <= 3"))
         self.assertFalse(parser.InActiveCode())
-        self.assertTrue(parser.ProcessConditional('!endif'))
+        self.assertTrue(parser.ProcessConditional("!endif"))
 
         self.assertTrue(parser.ProcessConditional('!if ($(TARGET) == "RELEASE") && ($(MAX_SOCKET) <= 4)'))
         self.assertFalse(parser.InActiveCode())
-        self.assertTrue(parser.ProcessConditional('!endif'))
+        self.assertTrue(parser.ProcessConditional("!endif"))
 
     def test_conditional_without_spaces(self):
         parser = BaseParser("")
-        parser.LocalVars = {"MAX_SOCKET": '4'}
+        parser.LocalVars = {"MAX_SOCKET": "4"}
 
-        self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET)<=4'))
+        self.assertTrue(parser.ProcessConditional("!if $(MAX_SOCKET)<=4"))
         self.assertTrue(parser.InActiveCode())
-        self.assertTrue(parser.ProcessConditional('!endif'))
+        self.assertTrue(parser.ProcessConditional("!endif"))
 
-        self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET) <=4'))
+        self.assertTrue(parser.ProcessConditional("!if $(MAX_SOCKET) <=4"))
         self.assertTrue(parser.InActiveCode())
-        self.assertTrue(parser.ProcessConditional('!endif'))
+        self.assertTrue(parser.ProcessConditional("!endif"))
 
-        self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET)<= 4'))
+        self.assertTrue(parser.ProcessConditional("!if $(MAX_SOCKET)<= 4"))
         self.assertTrue(parser.InActiveCode())
-        self.assertTrue(parser.ProcessConditional('!endif'))
+        self.assertTrue(parser.ProcessConditional("!endif"))
 
-        self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET)>=4'))
+        self.assertTrue(parser.ProcessConditional("!if $(MAX_SOCKET)>=4"))
         self.assertTrue(parser.InActiveCode())
-        self.assertTrue(parser.ProcessConditional('!endif'))
+        self.assertTrue(parser.ProcessConditional("!endif"))
 
-        self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET)==4'))
+        self.assertTrue(parser.ProcessConditional("!if $(MAX_SOCKET)==4"))
         self.assertTrue(parser.InActiveCode())
-        self.assertTrue(parser.ProcessConditional('!endif'))
+        self.assertTrue(parser.ProcessConditional("!endif"))
 
-        self.assertTrue(parser.ProcessConditional('!if $(MAX_SOCKET)!=3'))
+        self.assertTrue(parser.ProcessConditional("!if $(MAX_SOCKET)!=3"))
         self.assertTrue(parser.InActiveCode())
-        self.assertTrue(parser.ProcessConditional('!endif'))
+        self.assertTrue(parser.ProcessConditional("!endif"))
 
 
 class TestBaseParserGuids(unittest.TestCase):
-
     def test_is_guid(self):
         guid1 = "= { 0xD3B36F2C, 0xD551, 0x11D4, {0x9A, 0x46, 0x0, 0x90, 0x27, 0x3F, 0xC1,0xD }}"
         parser = BaseParser("")
@@ -579,7 +556,6 @@ class TestBaseParserGuids(unittest.TestCase):
 
 
 class TestBaseParserVariables(unittest.TestCase):
-
     def test_replace_input_variables(self):
         parser = BaseParser("")
         variables = {
@@ -638,7 +614,6 @@ class TestBaseParserVariables(unittest.TestCase):
 
 
 class TestBaseParserPathAndFile(unittest.TestCase):
-
     # because of how this works we use WriteLines, SetAbsPath, and SetPackagePath
     def test_find_path(self):
         # we're using write lines to make sure everything wo

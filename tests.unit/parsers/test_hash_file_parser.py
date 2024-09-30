@@ -13,7 +13,6 @@ from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 
 
 class TestBaseParser(unittest.TestCase):
-
     def test_parse_new_section(self):
         parser = HashFileParser("")
         section1 = "[Defines]"
@@ -47,14 +46,14 @@ class TestBaseParser(unittest.TestCase):
             ("gMyPkgTokenSpaceGuid.MyThing|'Value'|VOID*|0x10000000", " # My Comment"),
             ('gMyPkgTokenSpaceGuid.MyThing|"Value"|VOID*|0x10000000', "# My Comment"),
             ('gMyPkgTokenSpaceGuid.MyThing|"#Value"|VOID*|0x10000000', "# My Comment"),
-            ('file_data = "DEFINE TEST DEFINE = \"DEFINE_VALUE\""', ' # "Test String" # Test String'),
+            ('file_data = "DEFINE TEST DEFINE = "DEFINE_VALUE""', ' # "Test String" # Test String'),
             ("file_data = 'DEFINE TEST DEFINE = \"DEFINE_VALUE\"'", ' # "Test String" # Test String'),
-            ('file_data = "DEFINE TEST DEFINE = \"DEFINE_VALUE\" \' more to check \'"', ' # "Test String" # Test String'),
-            ('file_data = \'DEFINE\" # TEMP \" UPDATE \'', "# Found a quote"),
-            (r'test = \"', r' # Temp \"'),
-            ('file_data = "DEFINE TEST DEFINE = \"DEFINE\\"_VALUE\""', ' # "Test String" # Test String'),
-            ('file_data = "DEFINE TEST DEFINE = \"DEFINE\\\'_VALUE\""', ' # "Test String" # Test String'),
+            ('file_data = "DEFINE TEST DEFINE = "DEFINE_VALUE" \' more to check \'"', ' # "Test String" # Test String'),
+            ("file_data = 'DEFINE\" # TEMP \" UPDATE '", "# Found a quote"),
+            (r"test = \"", r" # Temp \""),
+            ('file_data = "DEFINE TEST DEFINE = "DEFINE\\"_VALUE""', ' # "Test String" # Test String'),
+            ('file_data = "DEFINE TEST DEFINE = "DEFINE\\\'_VALUE""', ' # "Test String" # Test String'),
         ]
 
         for line in lines_to_test:
-            self.assertEqual(parser.StripComment(line[0]+line[1]), line[0])
+            self.assertEqual(parser.StripComment(line[0] + line[1]), line[0])

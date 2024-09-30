@@ -9,8 +9,7 @@ import unittest
 from edk2toollib.uefi.status_codes import UefiStatusCode
 
 
-class TestUefiStatusCodes (unittest.TestCase):
-
+class TestUefiStatusCodes(unittest.TestCase):
     def test_Hex64ToString_NotError(self):
         StatusCode = "0x0000000000000000"
         self.assertEqual(UefiStatusCode().ConvertHexString64ToString(StatusCode), "Success")

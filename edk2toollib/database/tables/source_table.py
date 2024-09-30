@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """A module to Parse all Source files and add them to the database."""
+
 import logging
 import re
 import time
@@ -24,7 +25,8 @@ SOURCE_EXT_LIST = ["*.c", "*.h", "*.cpp", "*.asm", "*.s", "*.nasm", "*.masm", "*
 
 class SourceTable(TableGenerator):
     """A Table Generator that parses all c and h files in the workspace."""
-    def __init__(self, *args: Any, **kwargs: Any) -> 'SourceTable':
+
+    def __init__(self, *args: Any, **kwargs: Any) -> "SourceTable":
         """Initializes the Source Table Parser.
 
         Args:
@@ -69,12 +71,13 @@ class SourceTable(TableGenerator):
 
         logging.debug(
             f"{self.__class__.__name__}: Parsed {len(src_entries)} files; "
-            f"took {round(time.time() - start, 2)} seconds.")
+            f"took {round(time.time() - start, 2)} seconds."
+        )
 
     def _parse_file(self, filename: Path) -> dict:
         """Parse a C file and return the results."""
         license = ""
-        with open(filename, 'r', encoding='cp850') as f:
+        with open(filename, "r", encoding="cp850") as f:
             lines = f.readlines()
             for line in lines:
                 match = re.search(r"SPDX-License-Identifier:\s*(.*)$", line)  # TODO: This is not a standard format.
@@ -94,7 +97,7 @@ class SourceTable(TableGenerator):
         path = self.pathobj.GetEdk2RelativePathFromAbsolutePath(filename.as_posix())
         return Source(
             path=path,
-            license=license or 'Unknown',
+            license=license or "Unknown",
             total_lines=total_lines,
             code_lines=code_lines,
             comment_lines=comment_lines,

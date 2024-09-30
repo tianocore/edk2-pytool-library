@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """A module to run generate a table containing information about each INF in the workspace."""
+
 import logging
 import time
 from pathlib import Path
@@ -22,8 +23,9 @@ from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 class InfTable(TableGenerator):
     """A Table Generator that parses all INF files in the workspace and generates a table."""
+
     # TODO: Add phase, protocol, guid, ppi, pcd tables and associations once necessary
-    def __init__(self, *args: Any, **kwargs: Any) -> 'InfTable':
+    def __init__(self, *args: Any, **kwargs: Any) -> "InfTable":
         """Initializes the INF Table Parser.
 
         Args:
@@ -34,7 +36,6 @@ class InfTable(TableGenerator):
             n_jobs (int): Number of files to run in parallel
         """
         self.n_jobs = kwargs.get("n_jobs", -1)
-
 
     def parse(self, session: Session, pathobj: Edk2Path, env_id: str, env: dict) -> None:
         """Parse the workspace and update the database."""
@@ -73,7 +74,8 @@ class InfTable(TableGenerator):
 
         logging.debug(
             f"{self.__class__.__name__}: Parsed {len(inf_entries)} .inf files took; "
-            f"{round(time.time() - start, 2)} seconds.")
+            f"{round(time.time() - start, 2)} seconds."
+        )
 
     def _parse_file(self, filename: str, pathobj: Edk2Path) -> dict:
         inf_parser = InfP().SetEdk2Path(pathobj)
@@ -89,10 +91,14 @@ class InfTable(TableGenerator):
             source = Path(pathobj.GetEdk2RelativePathFromAbsolutePath(str(source))).as_posix()
             source_list.append(source)
 
-        return (Inf(
-            path = Path(path).as_posix(),
-            guid = inf_parser.Dict.get("FILE_GUID", ""),
-            library_class = inf_parser.LibraryClass or None,
-            package_name = pkg,
-            module_type = inf_parser.Dict.get("MODULE_TYPE", None),
-        ), source_list, inf_parser.LibrariesUsed)
+        return (
+            Inf(
+                path=Path(path).as_posix(),
+                guid=inf_parser.Dict.get("FILE_GUID", ""),
+                library_class=inf_parser.LibraryClass or None,
+                package_name=pkg,
+                module_type=inf_parser.Dict.get("MODULE_TYPE", None),
+            ),
+            source_list,
+            inf_parser.LibrariesUsed,
+        )

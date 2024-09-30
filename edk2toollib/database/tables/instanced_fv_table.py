@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """A module to generate a table containing fv information."""
+
 import logging
 import re
 from pathlib import Path
@@ -25,9 +26,9 @@ class InstancedFvTable(TableGenerator):
         This table generator relies on the instanced_inf_table generator to be run first.
     """  # noqa: E501
 
-    INFOPTS = re.compile(r'(RuleOverride|file_guid|version|ui|use)\s*=.+\s+(.+\.inf)', re.IGNORECASE)
+    INFOPTS = re.compile(r"(RuleOverride|file_guid|version|ui|use)\s*=.+\s+(.+\.inf)", re.IGNORECASE)
 
-    def __init__(self, *args: Any, **kwargs: Any) -> 'InstancedFvTable':
+    def __init__(self, *args: Any, **kwargs: Any) -> "InstancedFvTable":
         """Initialize the query with the specific settings."""
 
     def parse(self, session: Session, pathobj: Edk2Path, env_id: str, env: dict) -> None:
@@ -52,7 +53,6 @@ class InstancedFvTable(TableGenerator):
 
         all_components = {inf.path: inf for inf in session.query(InstancedInf).filter_by(env=env_id, cls=None).all()}
         for fv in fdfp.FVs:
-
             inf_list = []  # Some INF's have extra options. We only need the INF
             for inf in fdfp.FVs[fv]["Infs"]:
                 options = InstancedFvTable.INFOPTS.findall(inf)
@@ -72,15 +72,10 @@ class InstancedFvTable(TableGenerator):
             filtered = []
             for inf in inf_list:
                 if inf not in all_components:
-                    logging.warning(f'INF [{inf}] not found in database.')
+                    logging.warning(f"INF [{inf}] not found in database.")
                 else:
                     filtered.append(inf)
 
-            fv = Fv(
-                env = env_id,
-                name = fv,
-                fdf = self.fdf,
-                infs = [all_components.get(inf) for inf in filtered]
-            )
+            fv = Fv(env=env_id, name=fv, fdf=self.fdf, infs=[all_components.get(inf) for inf in filtered])
             session.add(fv)
             session.commit()

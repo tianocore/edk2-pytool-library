@@ -12,9 +12,13 @@ import os
 
 from edk2toollib.uefi.edk2.parsers.override_parser import OverrideParser
 
-SAMPLE_DATA_SINGLE_OVERRIDE = """#Override : 00000001 | My/Path/1 | 4e367990b327501d1ea6fbee4002f9c8 | 2018-11-27T22-36-30"""  # noqa: E501
+SAMPLE_DATA_SINGLE_OVERRIDE = (
+    """#Override : 00000001 | My/Path/1 | 4e367990b327501d1ea6fbee4002f9c8 | 2018-11-27T22-36-30"""  # noqa: E501
+)
 
-SAMPLE_DATA_BAD_VERSION = """#Override : 0000000X | My/Path/1 | 4e367990b327501d1ea6fbee4002f9c8 | 2018-11-27T22-36-30"""      # noqa: E501
+SAMPLE_DATA_BAD_VERSION = (
+    """#Override : 0000000X | My/Path/1 | 4e367990b327501d1ea6fbee4002f9c8 | 2018-11-27T22-36-30"""  # noqa: E501
+)
 SAMPLE_DATA_BAD_DATE = """#Override : 00000001 | My/Path/1 | 4e367990b327501d1ea6fbee4002f9c8 | NOTADATE"""
 
 SAMPLE_DATA_TRIPLE_OVERRIDE = """
@@ -69,7 +73,6 @@ SAMPLE_DATA_REAL_WORLD = """## @file
 
 
 class TestOverrideParser(unittest.TestCase):
-
     def test_no_inputs_raises_error(self):
         with self.assertRaises(ValueError):
             OverrideParser()
@@ -90,12 +93,12 @@ class TestOverrideParser(unittest.TestCase):
         self.assertEqual(len(parser.override_lines), 1)
         self.assertEqual(len(parser.overrides), 1)
 
-        self.assertEqual(parser.overrides[0]['version'], 1)
-        self.assertEqual(parser.overrides[0]['original_path'].upper(), os.path.normpath('MY/PATH/1'))
-        self.assertEqual(parser.overrides[0]['current_hash'].upper(), '4E367990B327501D1EA6FBEE4002F9C8')
-        self.assertEqual(parser.overrides[0]['datetime'].year, 2018)
-        self.assertEqual(parser.overrides[0]['datetime'].month, 11)
-        self.assertEqual(parser.overrides[0]['datetime'].day, 27)
+        self.assertEqual(parser.overrides[0]["version"], 1)
+        self.assertEqual(parser.overrides[0]["original_path"].upper(), os.path.normpath("MY/PATH/1"))
+        self.assertEqual(parser.overrides[0]["current_hash"].upper(), "4E367990B327501D1EA6FBEE4002F9C8")
+        self.assertEqual(parser.overrides[0]["datetime"].year, 2018)
+        self.assertEqual(parser.overrides[0]["datetime"].month, 11)
+        self.assertEqual(parser.overrides[0]["datetime"].day, 27)
 
     def test_real_world_override_is_parsed(self):
         parser = OverrideParser(inf_contents=SAMPLE_DATA_REAL_WORLD)
@@ -103,13 +106,15 @@ class TestOverrideParser(unittest.TestCase):
         self.assertEqual(len(parser.override_lines), 1)
         self.assertEqual(len(parser.overrides), 1)
 
-        self.assertEqual(parser.overrides[0]['version'], 1)
-        self.assertEqual(parser.overrides[0]['original_path'],
-                         os.path.normpath('MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf'))
-        self.assertEqual(parser.overrides[0]['current_hash'].upper(), '2EBA0BC48B8AB3B1399C26800D057102')
-        self.assertEqual(parser.overrides[0]['datetime'].year, 2018)
-        self.assertEqual(parser.overrides[0]['datetime'].month, 10)
-        self.assertEqual(parser.overrides[0]['datetime'].day, 5)
+        self.assertEqual(parser.overrides[0]["version"], 1)
+        self.assertEqual(
+            parser.overrides[0]["original_path"],
+            os.path.normpath("MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf"),
+        )
+        self.assertEqual(parser.overrides[0]["current_hash"].upper(), "2EBA0BC48B8AB3B1399C26800D057102")
+        self.assertEqual(parser.overrides[0]["datetime"].year, 2018)
+        self.assertEqual(parser.overrides[0]["datetime"].month, 10)
+        self.assertEqual(parser.overrides[0]["datetime"].day, 5)
 
     def test_triple_override_is_parsed(self):
         parser = OverrideParser(inf_contents=SAMPLE_DATA_TRIPLE_OVERRIDE)
@@ -117,12 +122,12 @@ class TestOverrideParser(unittest.TestCase):
         self.assertEqual(len(parser.override_lines), 3)
         self.assertEqual(len(parser.overrides), 3)
 
-        self.assertEqual(parser.overrides[0]['version'], 1)
-        self.assertEqual(parser.overrides[0]['current_hash'].upper(), '4E367990B327501D1EA6FBEE4002F9C8')
-        self.assertEqual(parser.overrides[1]['version'], 1)
-        self.assertEqual(parser.overrides[1]['current_hash'].upper(), '4E367990B327501D1EA6FBEE4002F9C8')
-        self.assertEqual(parser.overrides[2]['version'], 1)
-        self.assertEqual(parser.overrides[2]['current_hash'].upper(), '4E367990B327501D1EA6FBEE4002F9C8')
+        self.assertEqual(parser.overrides[0]["version"], 1)
+        self.assertEqual(parser.overrides[0]["current_hash"].upper(), "4E367990B327501D1EA6FBEE4002F9C8")
+        self.assertEqual(parser.overrides[1]["version"], 1)
+        self.assertEqual(parser.overrides[1]["current_hash"].upper(), "4E367990B327501D1EA6FBEE4002F9C8")
+        self.assertEqual(parser.overrides[2]["version"], 1)
+        self.assertEqual(parser.overrides[2]["current_hash"].upper(), "4E367990B327501D1EA6FBEE4002F9C8")
 
     def test_mixed_case_override_is_parsed(self):
         parser = OverrideParser(inf_contents=SAMPLE_DATA_MIXED_CASE_OVERRIDE)
@@ -130,12 +135,12 @@ class TestOverrideParser(unittest.TestCase):
         self.assertEqual(len(parser.override_lines), 3)
         self.assertEqual(len(parser.overrides), 3)
 
-        self.assertEqual(parser.overrides[0]['version'], 1)
-        self.assertEqual(parser.overrides[0]['current_hash'].upper(), '4E367990B327501D1EA6FBEE4002F9C8')
-        self.assertEqual(parser.overrides[1]['version'], 1)
-        self.assertEqual(parser.overrides[1]['current_hash'].upper(), '4E367990B327501D1EA6FBEE4002F9C8')
-        self.assertEqual(parser.overrides[2]['version'], 1)
-        self.assertEqual(parser.overrides[2]['current_hash'].upper(), '4E367990B327501D1EA6FBEE4002F9C8')
+        self.assertEqual(parser.overrides[0]["version"], 1)
+        self.assertEqual(parser.overrides[0]["current_hash"].upper(), "4E367990B327501D1EA6FBEE4002F9C8")
+        self.assertEqual(parser.overrides[1]["version"], 1)
+        self.assertEqual(parser.overrides[1]["current_hash"].upper(), "4E367990B327501D1EA6FBEE4002F9C8")
+        self.assertEqual(parser.overrides[2]["version"], 1)
+        self.assertEqual(parser.overrides[2]["current_hash"].upper(), "4E367990B327501D1EA6FBEE4002F9C8")
 
     def test_parses_all_versions(self):
         # TODO: Fill out this test if it's ever needed.

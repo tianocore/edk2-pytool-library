@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Code to help parse an Edk2 Build Report."""
+
 import logging
 import os
 from enum import Enum
@@ -29,7 +30,8 @@ class ModuleSummary(object):
         PackagePathList (list): list of package paths
         FvName (str): Name of Fv
     """
-    def __init__(self, content: str, ws: str, packagepatahlist: list, pathconverter: pu.Edk2Path) -> 'ModuleSummary':
+
+    def __init__(self, content: str, ws: str, packagepatahlist: list, pathconverter: pu.Edk2Path) -> "ModuleSummary":
         """Inits an empty Module Summary Object."""
         self._RawContent = content
         self.Guid = ""
@@ -55,35 +57,40 @@ class ModuleSummary(object):
 
         i = 0
         try:
-
             while i < len(self._RawContent):
                 line = self._RawContent[i].strip()
 
                 # parse start and end
-                if line == ">----------------------------------------------------------------------------------------------------------------------<":      # noqa: E501
+                if (
+                    line
+                    == ">----------------------------------------------------------------------------------------------------------------------<"
+                ):  # noqa: E501
                     nextLineSection = True
 
-                elif line == "<---------------------------------------------------------------------------------------------------------------------->":    # noqa: E501
+                elif (
+                    line
+                    == "<---------------------------------------------------------------------------------------------------------------------->"
+                ):  # noqa: E501
                     inPcdSection = False
                     inLibSection = False
                     inDepSection = False
                     nextLineSection = False
 
                 # parse section header
-                elif (nextLineSection):
+                elif nextLineSection:
                     nextLineSection = False
-                    if (line == "Library"):
+                    if line == "Library":
                         inLibSection = True
                         i += 1  # add additional line to skip the dashed line
 
-                    elif (line == "PCD"):
+                    elif line == "PCD":
                         inPcdSection = True
                         i += 1  # add additional line to skip the dashed line
 
-                    elif (line == "Final Dependency Expression (DEPEX) Instructions"):
+                    elif line == "Final Dependency Expression (DEPEX) Instructions":
                         inDepSection = True
                         i += 1  # add additional line to skip the dashed line
-                    elif (line == "Dependency Expression (DEPEX) from INF"):
+                    elif line == "Dependency Expression (DEPEX) from INF":
                         # For some reason, "Final Dependency Expression (DEPEX) Instructions" does not exist
                         # For all modules, so we need to check for this as well.
                         inDepSection = True
@@ -96,11 +103,11 @@ class ModuleSummary(object):
 
                 # Normal section parsing
                 else:
-                    if (inLibSection):
+                    if inLibSection:
                         logging.debug("InLibSection: %s" % line)
                         # get the whole statement library class statement
                         templine = line.strip()
-                        while ('}' not in templine):
+                        while "}" not in templine:
                             i += 1
                             templine += self._RawContent[i].strip()
 
@@ -108,46 +115,46 @@ class ModuleSummary(object):
                         # first is the library instance INF
                         # second is the library class
 
-                        lib_class = templine.partition('{')[2].partition('}')[0].partition(':')[0].strip()
-                        lib_instance = templine.partition('{')[0].strip()
+                        lib_class = templine.partition("{")[2].partition("}")[0].partition(":")[0].strip()
+                        lib_instance = templine.partition("{")[0].strip()
 
                         # Take absolute path and convert to EDK build path
                         RelativePath = self.pathConverter.GetEdk2RelativePathFromAbsolutePath(lib_instance)
-                        if (RelativePath is not None):
+                        if RelativePath is not None:
                             self.Libraries[lib_class] = RelativePath
                         else:
                             self.Libraries[lib_class] = lib_instance
                         i += 1
                         continue
 
-                    elif (inPcdSection):
+                    elif inPcdSection:
                         # this is the namespace token line
-                        if (len(line.split()) == 1):
+                        if len(line.split()) == 1:
                             tokenspace = line
 
                         # this is the main line of the PCD value
-                        elif (line.count("=") == 1 and line.count(":") == 1):
-                            while (line.count("\"") % 2) != 0:
+                        elif line.count("=") == 1 and line.count(":") == 1:
+                            while (line.count('"') % 2) != 0:
                                 i += 1
                                 line += " " + self._RawContent[i].rstrip()
-                            while (line.count('{') != line.count('}')):
+                            while line.count("{") != line.count("}"):
                                 i += 1
                                 line += " " + self._RawContent[i].rstrip()
 
-                            token = line.partition('=')[2]
-                            if (line.partition(':')[0].split() == []):
+                            token = line.partition("=")[2]
+                            if line.partition(":")[0].split() == []:
                                 token2 = ""
                             else:
-                                token2 = line.partition(':')[0].split()[-1]
+                                token2 = line.partition(":")[0].split()[-1]
                             self.PCDs[tokenspace + "." + token2] = token.strip()
 
                         # this is the secondary lines of PCD values showing Defaults
                         elif line.count(":") == 0 and line.count("=") == 1:
-                            while (line.count("\"") % 2) != 0:
+                            while (line.count('"') % 2) != 0:
                                 i += 1
                                 line += self._RawContent[i].rstrip()
 
-                    elif (inDepSection):
+                    elif inDepSection:
                         if line == "Dependency Expression (DEPEX) from INF":
                             inOverallDepex = True
                         elif line.startswith("-----"):
@@ -158,25 +165,25 @@ class ModuleSummary(object):
 
                     else:
                         # not in section...Must be header section
-                        line_partitioned = line.partition(':')
-                        if (line_partitioned[2] == ""):
+                        line_partitioned = line.partition(":")
+                        if line_partitioned[2] == "":
                             pass  # not a name: value pair
                         else:
                             key = line_partitioned[0].strip().lower()
                             value = line_partitioned[2].strip()
-                            if (key == "module name"):
+                            if key == "module name":
                                 logging.debug("Parsing Mod: %s" % value)
                                 self.Name = value
-                            elif (key == "module inf path"):
-                                while (".inf" not in value.lower()):
+                            elif key == "module inf path":
+                                while ".inf" not in value.lower():
                                     i += 1
                                     value += self._RawContent[i].strip()
                                 self.InfPath = value.replace("\\", "/")
-                            elif (key == "file guid"):
+                            elif key == "file guid":
                                 self.Guid = value
-                            elif (key == "driver type"):
+                            elif key == "driver type":
                                 value = value.strip()
-                                self.Type = value[value.index('(') + 1:-1]
+                                self.Type = value[value.index("(") + 1 : -1]
 
                 i += 1
         except Exception:
@@ -199,14 +206,16 @@ class BuildReport(object):
         ProtectedWords (dict): Dict of protected words
         PathConverter (Edk2Path): path utilities
     """
+
     class RegionTypes(Enum):
         """Enum for different Region Types."""
-        PCD = 'PCD'
-        FD = 'FD'
-        MODULE = 'MODULE'
-        UNKNOWN = 'UNKNOWN'
 
-    def __init__(self, filepath: str, ws: str, packagepathcsv: str, protectedWordsDict: dict) -> 'RegionTypes':
+        PCD = "PCD"
+        FD = "FD"
+        MODULE = "MODULE"
+        UNKNOWN = "UNKNOWN"
+
+    def __init__(self, filepath: str, ws: str, packagepathcsv: str, protectedWordsDict: dict) -> "RegionTypes":
         """Inits an empty BuildReport object."""
         self.PlatformName = ""
         self.DscPath = ""
@@ -220,7 +229,7 @@ class BuildReport(object):
         self.PackagePathList = []
         for a in packagepathcsv.split(","):
             a = a.strip()
-            if (len(a) > 0):
+            if len(a) > 0:
                 self.PackagePathList.append(a)
         self.ProtectedWords = protectedWordsDict
         self.PathConverter = pu.Edk2Path(self.Workspace, self.PackagePathList)
@@ -234,7 +243,7 @@ class BuildReport(object):
 
         Gets the layout, lists, and dictionaries setup.
         """
-        if (not os.path.isfile(self.ReportFile)):
+        if not os.path.isfile(self.ReportFile):
             raise Exception("Report File path invalid!")
 
         # read report
@@ -244,7 +253,7 @@ class BuildReport(object):
         #
         # replace protected words
         #
-        for (k, v) in self.ProtectedWords.items():
+        for k, v in self.ProtectedWords.items():
             self._ReportContents = [x.replace(k, v) for x in self._ReportContents]
 
         logging.debug("Report File is: %s" % self.ReportFile)
@@ -256,7 +265,7 @@ class BuildReport(object):
         # fail but it doesn't seem critical
         #
         linenum = self._GetNextRegionStart(0)
-        while (linenum is not None):
+        while linenum is not None:
             start = linenum
             end = self._GetEndOfRegion(start)
             type = self._GetRegionType(start)
@@ -271,38 +280,38 @@ class BuildReport(object):
         #
         for n in range(self._Regions[0][1]):  # loop thru from 0 to start of first region
             line = self._ReportContents[n].strip()
-            line_partitioned = line.partition(':')
-            if (line_partitioned[2] == ""):
+            line_partitioned = line.partition(":")
+            if line_partitioned[2] == "":
                 continue
 
             key = line_partitioned[0].strip().lower()
             value = line_partitioned[2].strip()
 
-            if (key == "platform name"):
+            if key == "platform name":
                 self.PlatformName = value
-            elif (key == "platform dsc path"):
+            elif key == "platform dsc path":
                 self.DscPath = value
-            elif (key == "output path"):
+            elif key == "output path":
                 self.BuildOutputDir = value
 
         #
         # now for each module summary
         # parse it
         for r in self._Regions:
-            if (r[0] == BuildReport.RegionTypes.MODULE):
-                mod = ModuleSummary(self._ReportContents[r[1]:r[2]],
-                                    self.Workspace, self.PackagePathList,
-                                    self.PathConverter)
+            if r[0] == BuildReport.RegionTypes.MODULE:
+                mod = ModuleSummary(
+                    self._ReportContents[r[1] : r[2]], self.Workspace, self.PackagePathList, self.PathConverter
+                )
                 mod.Parse()
                 self.Modules[mod.Guid] = mod
 
         # now that all modules are parsed lets parse the FD region so we can get the FV name for each module
         for r in self._Regions:
             # if FD region parse out all INFs in the all of the flash
-            if (r[0] == BuildReport.RegionTypes.FD):
-                self._ParseFdRegionForModules(self._ReportContents[r[1]:r[2]])
+            if r[0] == BuildReport.RegionTypes.FD:
+                self._ParseFdRegionForModules(self._ReportContents[r[1] : r[2]])
 
-    def FindComponentByInfPath(self, InfPath: str) -> Optional['ModuleSummary']:
+    def FindComponentByInfPath(self, InfPath: str) -> Optional["ModuleSummary"]:
         """Attempts to find the Component the Inf is apart of.
 
         Args:
@@ -312,10 +321,10 @@ class BuildReport(object):
             (ModuleSummary): Module if found
             (None): If not found
         """
-        for (k, v) in self.Modules.items():
+        for k, v in self.Modules.items():
             if os.path.isabs(v.InfPath):
                 v.InfPath = self.PathConverter.GetEdk2RelativePathFromAbsolutePath(v.InfPath)
-            if (v.InfPath.lower() == InfPath.lower()):
+            if v.InfPath.lower() == InfPath.lower():
                 logging.debug("Found Module by InfPath: %s" % InfPath)
                 return v
 
@@ -331,19 +340,19 @@ class BuildReport(object):
         while index < len(rawcontents):
             a = rawcontents[index]
             tokens = a.split()
-            if a.startswith("0x") and (len(tokens) == 3) and (a.count('(') == 1):
-                if ".inf" not in a.lower() or (a.count('(') != a.count(")")):
+            if a.startswith("0x") and (len(tokens) == 3) and (a.count("(") == 1):
+                if ".inf" not in a.lower() or (a.count("(") != a.count(")")):
                     a = a + rawcontents[index + 1].strip()
                     index += 1
                     tokens = a.split()
 
-                i = a.split()[2].strip().strip('()')
+                i = a.split()[2].strip().strip("()")
 
                 logging.debug("Found INF in FV Region: " + i)
 
                 # Take absolute path and convert to EDK build path
                 RelativePath = self.PathConverter.GetEdk2RelativePathFromAbsolutePath(i)
-                if (RelativePath is not None):
+                if RelativePath is not None:
                     comp = self.FindComponentByInfPath(RelativePath)
                     if comp is not None:
                         comp.FvName = FvName
@@ -365,8 +374,11 @@ class BuildReport(object):
     #
     def _GetNextRegionStart(self, number: int) -> Optional[int]:
         lineNumber = number
-        while (lineNumber < len(self._ReportContents)):
-            if self._ReportContents[lineNumber] == ">======================================================================================================================<":  # noqa: E501
+        while lineNumber < len(self._ReportContents):
+            if (
+                self._ReportContents[lineNumber]
+                == ">======================================================================================================================<"
+            ):  # noqa: E501
                 return lineNumber + 1
             lineNumber += 1
         logging.debug("Failed to find a Start Next Region after lineNumber: %d" % number)
@@ -378,8 +390,11 @@ class BuildReport(object):
     #
     def _GetEndOfRegion(self, number: int) -> Optional[int]:
         lineNumber = number
-        while (lineNumber < len(self._ReportContents)):
-            if self._ReportContents[lineNumber] == "<======================================================================================================================>":  # noqa: E501
+        while lineNumber < len(self._ReportContents):
+            if (
+                self._ReportContents[lineNumber]
+                == "<======================================================================================================================>"
+            ):  # noqa: E501
                 return lineNumber - 1
             lineNumber += 1
 
@@ -387,13 +402,13 @@ class BuildReport(object):
         # didn't find new region
         return None
 
-    def _GetRegionType(self, lineNumber: int) -> 'BuildReport.RegionTypes':
+    def _GetRegionType(self, lineNumber: int) -> "BuildReport.RegionTypes":
         line = self._ReportContents[lineNumber].strip()
-        if (line == "Firmware Device (FD)"):
+        if line == "Firmware Device (FD)":
             return BuildReport.RegionTypes.FD
-        elif (line == "Platform Configuration Database Report"):
+        elif line == "Platform Configuration Database Report":
             return BuildReport.RegionTypes.PCD
-        elif (line == "Module Summary"):
+        elif line == "Module Summary":
             return BuildReport.RegionTypes.MODULE
         else:
             return BuildReport.RegionTypes.UNKNOWN

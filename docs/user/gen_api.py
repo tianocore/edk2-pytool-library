@@ -10,6 +10,7 @@
 Used in conjunction with mkdocs to generate static markdown files for each
 file inside the edk2toollib package for ReadTheDocs hosting.
 """
+
 import glob
 import os
 
@@ -37,7 +38,7 @@ def main():
 
         filename = f"api{os.sep}{file_path}"
         with mkdocs_gen_files.open(filename, "w") as f:
-            ff = file_path.replace(os.sep, '.').replace('.md', '')
+            ff = file_path.replace(os.sep, ".").replace(".md", "")
             ff = f"edk2toollib.{ff}"
             print(f"::: {ff}", file=f)
             print("    handler: python", file=f)
@@ -51,7 +52,7 @@ def main():
             print("        show_source: False", file=f)
 
         # Point the "Edit on Github" button in the docs to point at the source code
-        edit_path = os.path.join('..', 'edk2toollib', edit_path)
+        edit_path = os.path.join("..", "edk2toollib", edit_path)
         mkdocs_gen_files.set_edit_path(filename, edit_path)
 
     with mkdocs_gen_files.open("api/.pages", "w") as f:

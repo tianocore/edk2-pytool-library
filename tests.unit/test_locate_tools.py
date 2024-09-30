@@ -16,7 +16,6 @@ import edk2toollib.windows.locate_tools as locate_tools
 
 
 class LocateToolsTest(unittest.TestCase):
-
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_GetVsWherePath(self):
         # Gets VSWhere
@@ -102,10 +101,11 @@ class LocateToolsTest(unittest.TestCase):
         results = locate_tools.FindToolInWinSdk("WontFind.exe", product="YouWontFindThis")
         self.assertIsNone(results)
 
-@pytest.mark.skipif(not sys.platform.startswith("win"), reason = "requires Windows")
+
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="requires Windows")
 def test_QueryVcVariablesWithLargePathEnv(caplog):
     """Tests QueryVcVariables with a PATH Env over 8191 characters.
-    
+
     When calling a .bat file, the environment is passed in, however any environment variable greater
     than 8191 is quietly ignored. This can sometimes happen with the PATH variable, but we almost
     always need the PATH env variable when querying VcVariables, so we want to warn when the user
@@ -118,17 +118,17 @@ def test_QueryVcVariablesWithLargePathEnv(caplog):
 
         old_env = os.environ
 
-        os.environ["PATH"] += "TEST;" * 1640 # Makes path over 8191 characters
+        os.environ["PATH"] += "TEST;" * 1640  # Makes path over 8191 characters
         locate_tools.QueryVcVariables(keys)
         assert (len(caplog.records)) == 1
 
         os.environ = old_env
 
 
-@pytest.mark.skipif(not sys.platform.startswith("win"), reason = "requires Windows")
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="requires Windows")
 def test_QueryVcVariablesWithLargEnv(caplog):
     """Tests QueryVcVariables when the entire Env is over 8191 character.
-    
+
     calling a command on the cmd is limited to 8191 characters. The enviornment is counted in this limit. When the
     character limit is reached, the command simply errors out. Windows tries to fix this by not including any
     environment over 8191 characters (as seen in the test above), but when no individual environment variable is over
@@ -137,7 +137,7 @@ def test_QueryVcVariablesWithLargEnv(caplog):
     keys = ["WindowsSdkDir", "WindowsSDKVersion"]
     old_env = os.environ
 
-    os.environ["PATH"] = "TEST;" * 1630 # Get close, but don't go over 8191 characters
+    os.environ["PATH"] = "TEST;" * 1630  # Get close, but don't go over 8191 characters
     with pytest.raises(RuntimeError):
         locate_tools.QueryVcVariables(keys)
 

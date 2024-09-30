@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Module contains helper classes and functions to work with UEFI Variables."""
+
 import struct
 import sys
 import uuid
@@ -45,7 +46,8 @@ class VariableStoreHeader(object):
         UINT32  Reserved1;
     } VARIABLE_STORE_HEADER;
     """
-    def __init__(self) -> 'VariableStoreHeader':
+
+    def __init__(self) -> "VariableStoreHeader":
         """Init the empty structure."""
         self.StructString = "=16sLBBHL"  # spell-checker: disable-line
         self.StructSize = struct.calcsize(self.StructString)
@@ -55,9 +57,9 @@ class VariableStoreHeader(object):
         self.State = None
         self.Reserved0 = None
         self.Reserved1 = None
-        self.Type = 'Var'
+        self.Type = "Var"
 
-    def load_from_file(self, file: str) -> 'VariableStoreHeader':
+    def load_from_file(self, file: str) -> "VariableStoreHeader":
         """Load the structure from a file."""
         # This function assumes that the file has been seeked
         # to the correct starting location.
@@ -66,11 +68,12 @@ class VariableStoreHeader(object):
         file.seek(orig_seek)
 
         # Load this object with the contents of the data.
-        (signature_bin, self.Size, self.Format, self.State, self.Reserved0,
-            self.Reserved1) = struct.unpack(self.StructString, struct_bytes)
+        (signature_bin, self.Size, self.Format, self.State, self.Reserved0, self.Reserved1) = struct.unpack(
+            self.StructString, struct_bytes
+        )
 
         # Update the GUID to be a UUID object.
-        if sys.byteorder == 'big':
+        if sys.byteorder == "big":
             self.Signature = uuid.UUID(bytes=signature_bin)
         else:
             self.Signature = uuid.UUID(bytes_le=signature_bin)
@@ -79,15 +82,16 @@ class VariableStoreHeader(object):
         if self.Signature != EfiVariableGuid and self.Signature != EfiAuthenticatedVariableGuid:
             raise Exception("VarStore is of unknown type! %s" % self.Signature)
         if self.Signature == EfiAuthenticatedVariableGuid:
-            self.Type = 'AuthVar'
+            self.Type = "AuthVar"
 
         return self
 
     def serialize(self) -> bytes:
         """Serialize the structure."""
-        signature_bin = self.Signature.bytes if sys.byteorder == 'big' else self.Signature.bytes_le
-        return struct.pack(self.StructString, signature_bin, self.Size, self.Format,
-                           self.State, self.Reserved0, self.Reserved1)
+        signature_bin = self.Signature.bytes if sys.byteorder == "big" else self.Signature.bytes_le
+        return struct.pack(
+            self.StructString, signature_bin, self.Size, self.Format, self.State, self.Reserved0, self.Reserved1
+        )
 
 
 #
@@ -110,13 +114,14 @@ class VariableHeader(object):
         EFI_GUID    VendorGuid;
     } VARIABLE_HEADER;
     """
-    def __init__(self) -> 'VariableHeader':
+
+    def __init__(self) -> "VariableHeader":
         """Init the structure."""
         self.StructString = "=HBBLLL16s"  # spell-checker: disable-line
         self.StructSize = struct.calcsize(self.StructString)
         self.StartId = VARIABLE_DATA
         self.State = VAR_ADDED
-        self.Attributes = (ump.EFI_VARIABLE_NON_VOLATILE | ump.EFI_VARIABLE_BOOTSERVICE_ACCESS)
+        self.Attributes = ump.EFI_VARIABLE_NON_VOLATILE | ump.EFI_VARIABLE_BOOTSERVICE_ACCESS
         self.NameSize = 0
         self.DataSize = 0
         self.VendorGuid = uuid.uuid4()
@@ -125,16 +130,17 @@ class VariableHeader(object):
 
     def populate_structure_fields(self, in_bytes: bytes) -> None:
         """Populate the structure field from bytes."""
-        (self.StartId, self.State, reserved, self.Attributes, self.NameSize,
-            self.DataSize, self.VendorGuid) = struct.unpack(self.StructString, in_bytes)
+        (self.StartId, self.State, reserved, self.Attributes, self.NameSize, self.DataSize, self.VendorGuid) = (
+            struct.unpack(self.StructString, in_bytes)
+        )
 
-    def load_from_bytes(self, in_bytes: bytes) -> 'VariableHeader':
+    def load_from_bytes(self, in_bytes: bytes) -> "VariableHeader":
         """Load the structure from a bytes."""
         # Load this object with the contents of the data.
-        self.populate_structure_fields(in_bytes[0:self.StructSize])
+        self.populate_structure_fields(in_bytes[0 : self.StructSize])
 
         # Update the GUID to be a UUID object.
-        if sys.byteorder == 'big':
+        if sys.byteorder == "big":
             self.VendorGuid = uuid.UUID(bytes=self.VendorGuid)
         else:
             self.VendorGuid = uuid.UUID(bytes_le=self.VendorGuid)
@@ -145,14 +151,14 @@ class VariableHeader(object):
 
         # Finally, load the data.
         data_offset = self.StructSize
-        self.Name = in_bytes[data_offset:(data_offset + self.NameSize)].decode('utf-16')
+        self.Name = in_bytes[data_offset : (data_offset + self.NameSize)].decode("utf-16")
         self.Name = self.Name[:-1]  # Strip the terminating char.
         data_offset += self.NameSize
-        self.Data = in_bytes[data_offset:(data_offset + self.DataSize)]
+        self.Data = in_bytes[data_offset : (data_offset + self.DataSize)]
 
         return self
 
-    def load_from_file(self, file: str) -> 'VariableHeader':
+    def load_from_file(self, file: str) -> "VariableHeader":
         """Load the struct from a file."""
         # This function assumes that the file has been seeked
         # to the correct starting location.
@@ -163,7 +169,7 @@ class VariableHeader(object):
         self.populate_structure_fields(struct_bytes)
 
         # Update the GUID to be a UUID object.
-        if sys.byteorder == 'big':
+        if sys.byteorder == "big":
             self.VendorGuid = uuid.UUID(bytes=self.VendorGuid)
         else:
             self.VendorGuid = uuid.UUID(bytes_le=self.VendorGuid)
@@ -174,7 +180,7 @@ class VariableHeader(object):
             raise EOFError("No variable data!")
 
         # Finally, load the data.
-        self.Name = file.read(self.NameSize).decode('utf-16')[:-1]  # Strip the terminating char.
+        self.Name = file.read(self.NameSize).decode("utf-16")[:-1]  # Strip the terminating char.
         self.Data = file.read(self.DataSize)
 
         file.seek(orig_seek)
@@ -200,7 +206,7 @@ class VariableHeader(object):
         """Get the name attribute."""
         # Make sure to replace the terminating char.
         # name_bytes = b"\x00".join([char for char in (self.Name + b'\x00')])
-        name_bytes = self.Name.encode('utf-16')
+        name_bytes = self.Name.encode("utf-16")
 
         # Python encode will leave an "0xFFFE" on the front
         # to declare the encoding type. UEFI does not use this.
@@ -223,11 +229,12 @@ class VariableHeader(object):
 
     def pack_struct(self) -> bytes:
         """Pack the object."""
-        vendor_guid = self.VendorGuid.bytes if sys.byteorder == 'big' else self.VendorGuid.bytes_le
-        return struct.pack(self.StructString, self.StartId, self.State, 0, self.Attributes,
-                           self.NameSize, self.DataSize, vendor_guid)
+        vendor_guid = self.VendorGuid.bytes if sys.byteorder == "big" else self.VendorGuid.bytes_le
+        return struct.pack(
+            self.StructString, self.StartId, self.State, 0, self.Attributes, self.NameSize, self.DataSize, vendor_guid
+        )
 
-    def serialize(self, with_padding: bool=False) -> bytes:
+    def serialize(self, with_padding: bool = False) -> bytes:
         """Serialize the object."""
         bytes = self.pack_struct()
 
@@ -237,7 +244,7 @@ class VariableHeader(object):
 
         # Add padding if necessary.
         if with_padding:
-            bytes += b"\xFF" * self.get_buffer_padding_size()
+            bytes += b"\xff" * self.get_buffer_padding_size()
 
         return bytes
 
@@ -260,26 +267,48 @@ class AuthenticatedVariableHeader(VariableHeader):
         EFI_GUID    VendorGuid;
     } AUTHENTICATED_VARIABLE_HEADER;
     """
-    def __init__(self) -> 'AuthenticatedVariableHeader':
+
+    def __init__(self) -> "AuthenticatedVariableHeader":
         """Initializes the struct."""
         super(AuthenticatedVariableHeader, self).__init__()
         self.StructString = "=HBBLQ16sLLL16s"  # spell-checker: disable-line
         self.StructSize = struct.calcsize(self.StructString)
         self.MonotonicCount = 0
-        self.TimeStamp = b''
+        self.TimeStamp = b""
         self.PubKeyIndex = 0
 
     def populate_structure_fields(self, in_bytes: bytes) -> None:
         """Populates the struct."""
-        (self.StartId, self.State, reserved, self.Attributes, self.MonotonicCount, self.TimeStamp, self.PubKeyIndex,
-         self.NameSize, self.DataSize, self.VendorGuid) = struct.unpack(self.StructString, in_bytes)
+        (
+            self.StartId,
+            self.State,
+            reserved,
+            self.Attributes,
+            self.MonotonicCount,
+            self.TimeStamp,
+            self.PubKeyIndex,
+            self.NameSize,
+            self.DataSize,
+            self.VendorGuid,
+        ) = struct.unpack(self.StructString, in_bytes)
 
-    def pack_struct(self, with_padding: bool=False) -> bytes:
+    def pack_struct(self, with_padding: bool = False) -> bytes:
         """Packs the struct."""
-        vendor_guid = self.VendorGuid.bytes if sys.byteorder == 'big' else self.VendorGuid.bytes_le
-        return struct.pack(self.StructString, self.StartId, self.State, 0, self.Attributes, self.MonotonicCount,
-                           self.TimeStamp, self.PubKeyIndex, self.NameSize, self.DataSize, vendor_guid)
+        vendor_guid = self.VendorGuid.bytes if sys.byteorder == "big" else self.VendorGuid.bytes_le
+        return struct.pack(
+            self.StructString,
+            self.StartId,
+            self.State,
+            0,
+            self.Attributes,
+            self.MonotonicCount,
+            self.TimeStamp,
+            self.PubKeyIndex,
+            self.NameSize,
+            self.DataSize,
+            vendor_guid,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

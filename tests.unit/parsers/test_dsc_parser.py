@@ -15,14 +15,12 @@ from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 
 class TestDscParserBasic(unittest.TestCase):
-
     def test_creation(self):
         a = DscParser()
         self.assertNotEqual(a, None)
 
 
 class TestDscParserIncludes(unittest.TestCase):
-
     @staticmethod
     def write_to_file(file_path, data):
         f = open(file_path, "w")
@@ -30,7 +28,7 @@ class TestDscParserIncludes(unittest.TestCase):
         f.close()
 
     def test_dsc_include_single_file(self):
-        ''' This tests whether includes work properly '''
+        """This tests whether includes work properly"""
         workspace = tempfile.mkdtemp()
 
         file1_name = "file1.dsc"
@@ -53,7 +51,7 @@ class TestDscParserIncludes(unittest.TestCase):
         self.assertEqual(len(parser.GetAllDscPaths()), 2)  # make sure we have two dsc paths
 
     def test_dsc_include_missing_file(self):
-        ''' This tests whether includes work properly '''
+        """This tests whether includes work properly"""
         workspace = tempfile.mkdtemp()
 
         file1_name = "file1.dsc"
@@ -69,7 +67,7 @@ class TestDscParserIncludes(unittest.TestCase):
             parser.ParseFile(file1_path)
 
     def test_dsc_include_missing_file_no_fail_mode(self):
-        ''' This tests whether includes work properly if no fail mode is on'''
+        """This tests whether includes work properly if no fail mode is on"""
         workspace = tempfile.mkdtemp()
 
         file1_name = "file1.dsc"
@@ -85,7 +83,7 @@ class TestDscParserIncludes(unittest.TestCase):
         parser.ParseFile(file1_path)
 
     def test_dsc_parse_file_on_package_path(self):
-        ''' This tests whether includes work properly if no fail mode is on'''
+        """This tests whether includes work properly if no fail mode is on"""
         workspace = tempfile.mkdtemp()
         working_dir_name = "working"
         working2_dir_name = "working2"
@@ -108,12 +106,16 @@ class TestDscParserIncludes(unittest.TestCase):
 
         parser = DscParser()
         parser.SetEdk2Path(Edk2Path(workspace, []))
-        parser.SetPackagePaths([working_folder, ])
+        parser.SetPackagePaths(
+            [
+                working_folder,
+            ]
+        )
         parser.ParseFile(file1_short_path)
         self.assertEqual(parser.LocalVars["INCLUDED"], "TRUE")  # make sure we got the defines
 
     def test_dsc_include_relative_path(self):
-        ''' This tests whether includes work properly with a relative path'''
+        """This tests whether includes work properly with a relative path"""
         workspace = tempfile.mkdtemp()
         outside_folder = os.path.join(workspace, "outside")
         inside_folder = os.path.join(outside_folder, "inside")
@@ -125,7 +127,6 @@ class TestDscParserIncludes(unittest.TestCase):
         cwd = os.getcwd()
         os.chdir(random_folder)
         try:
-
             file1_name = "file1.dsc"
             file1_path = os.path.join(outside_folder, file1_name)
 

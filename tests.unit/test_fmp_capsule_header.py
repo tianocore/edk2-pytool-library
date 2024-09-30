@@ -19,22 +19,22 @@ class TestFmpCapsuleHeaderClass(unittest.TestCase):
     def test_embedded_driver_count_should_track_additions(self):
         test_header = FmpCapsuleHeaderClass()
         self.assertEqual(test_header.EmbeddedDriverCount, 0)
-        test_header.AddEmbeddedDriver(b'dummydriver')
+        test_header.AddEmbeddedDriver(b"dummydriver")
         self.assertEqual(test_header.EmbeddedDriverCount, 1)
-        test_header.AddEmbeddedDriver(b'dummydriver2')
+        test_header.AddEmbeddedDriver(b"dummydriver2")
         self.assertEqual(test_header.EmbeddedDriverCount, 2)
 
     def test_payload_item_count_should_track_additions(self):
         test_header = FmpCapsuleHeaderClass()
         self.assertEqual(test_header.PayloadItemCount, 0)
-        test_header.AddFmpCapsuleImageHeader(b'dummyheader')
+        test_header.AddFmpCapsuleImageHeader(b"dummyheader")
         self.assertEqual(test_header.PayloadItemCount, 1)
-        test_header.AddFmpCapsuleImageHeader(b'dummyheader2')
+        test_header.AddFmpCapsuleImageHeader(b"dummyheader2")
         self.assertEqual(test_header.PayloadItemCount, 2)
 
     def test_encoding_twice_should_yield_identical_results(self):
         test_header = FmpCapsuleHeaderClass()
-        test_header.AddEmbeddedDriver(b'dummydriver')
+        test_header.AddEmbeddedDriver(b"dummydriver")
         encode_1 = test_header.Encode()
         encode_2 = test_header.Encode()
         self.assertEqual(encode_1, encode_2)

@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Module containing utility functions to support re-use in python scripts."""
+
 import datetime
 import importlib
 import inspect
@@ -39,7 +40,7 @@ class PropagatingThread(threading.Thread):  # noqa
     def run(self):  # noqa
         self.exc = None
         try:
-            if hasattr(self, '_Thread__target'):
+            if hasattr(self, "_Thread__target"):
                 # Thread uses name mangling prior to Python 3.
                 self.ret = self._Thread__target(*self._Thread__args, **self._Thread__kwargs)
             else:
@@ -56,7 +57,7 @@ class PropagatingThread(threading.Thread):  # noqa
 
 # http://stackoverflow.com/questions/19423008/logged-subprocess-communicate
 # TODO make this a private function
-def reader(filepath, outstream, stream, logging_level=logging.INFO, encodingErrors='strict'):  # noqa
+def reader(filepath, outstream, stream, logging_level=logging.INFO, encodingErrors="strict"):  # noqa
     """Helper functions for running commands from the shell in python environment.
 
     Don't use directly
@@ -66,22 +67,22 @@ def reader(filepath, outstream, stream, logging_level=logging.INFO, encodingErro
     """
     f = None
     # open file if caller provided path
-    if (filepath):
+    if filepath:
         f = open(filepath, "w")
 
     while True:
-        s = stream.readline().decode(sys.stdout.encoding or 'utf-8', errors=encodingErrors)
+        s = stream.readline().decode(sys.stdout.encoding or "utf-8", errors=encodingErrors)
         if not s:
             break
-        if (f is not None):
+        if f is not None:
             # write to file if caller provided file
             f.write(s)
-        if (outstream is not None):
+        if outstream is not None:
             # write to stream object if caller provided object
             outstream.write(s)
         logging.log(logging_level, s.rstrip())
     stream.close()
-    if (f is not None):
+    if f is not None:
         f.close()
 
 
@@ -91,7 +92,7 @@ def GetHostInfo() -> namedtuple:
     Returns:
         (namedTuple[Host(os, arch, bit)]): Host(os=OS Type, arch=System Architecture, bit=Highest Order Bit)
     """
-    Host = namedtuple('Host', 'os arch bit')
+    Host = namedtuple("Host", "os arch bit")
     host_info = platform.uname()
     os = host_info.system
     processor_info = host_info.machine
@@ -129,27 +130,29 @@ def timing(f: Callable) -> Callable:
             def function_i_want_to_time():
         ```
     """
+
     def wrap(*args: Any) -> int:  #
         time1 = time.time()
         ret = f(*args)
         time2 = time.time()
-        logging.debug('{:s} function took {:.3f} ms'.format(f.__name__, (time2 - time1) * 1000.0))
+        logging.debug("{:s} function took {:.3f} ms".format(f.__name__, (time2 - time1) * 1000.0))
         return ret
+
     return wrap
 
 
 def RunCmd(
     cmd: str,
     parameters: str,
-    capture: bool=True,
-    workingdir: str=None,
-    outfile: Optional[str]=None,
-    outstream: Optional[str]=None,
-    environ: Optional[dict]=None,
-    logging_level: int=logging.INFO,
-    raise_exception_on_nonzero: bool=False,
-    encodingErrors: str='strict',
-    close_fds: bool=True
+    capture: bool = True,
+    workingdir: str = None,
+    outfile: Optional[str] = None,
+    outstream: Optional[str] = None,
+    environ: Optional[dict] = None,
+    logging_level: int = logging.INFO,
+    raise_exception_on_nonzero: bool = False,
+    encodingErrors: str = "strict",
+    close_fds: bool = True,
 ) -> int:
     """Run a shell command and print the output to the log file.
 
@@ -177,7 +180,7 @@ def RunCmd(
     Returns:
         (int): returncode of called cmd
     """
-    cmd = cmd.strip('"\'')
+    cmd = cmd.strip("\"'")
     if " " in cmd:
         cmd = '"' + cmd + '"'
     if parameters is not None:
@@ -188,9 +191,16 @@ def RunCmd(
     logging.log(logging_level, "------------------------------------------------")
     logging.log(logging_level, "--------------Cmd Output Starting---------------")
     logging.log(logging_level, "------------------------------------------------")
-    c = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                         cwd=workingdir, shell=True, env=environ, close_fds=close_fds)
-    if (capture):
+    c = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=workingdir,
+        shell=True,
+        env=environ,
+        close_fds=close_fds,
+    )
+    if capture:
         thread = PropagatingThread(target=reader, args=(outfile, outstream, c.stdout, logging_level, encodingErrors))
         thread.start()
         c.wait()
@@ -216,13 +226,13 @@ def RunCmd(
 def RunPythonScript(
     pythonfile: str,
     params: str,
-    capture: bool=True,
-    workingdir: Optional[str]=None,
-    outfile: Optional[str]=None,
-    outstream: Optional[str]=None,
-    environ:Optional[dict]=None,
-    logging_level: int=logging.INFO,
-    raise_exception_on_nonzero: bool=False
+    capture: bool = True,
+    workingdir: Optional[str] = None,
+    outfile: Optional[str] = None,
+    outstream: Optional[str] = None,
+    environ: Optional[dict] = None,
+    logging_level: int = logging.INFO,
+    raise_exception_on_nonzero: bool = False,
 ) -> int:
     """Run a python script and print the output to the log file.
 
@@ -244,14 +254,14 @@ def RunPythonScript(
         (int): returncode of called cmd
     """
     # locate python file on path
-    pythonfile.strip('"\'')
+    pythonfile.strip("\"'")
     if " " in pythonfile:
         pythonfile = '"' + pythonfile + '"'
     params.strip()
     logging.debug("RunPythonScript: {0} {1}".format(pythonfile, params))
-    if (os.path.isabs(pythonfile)):
+    if os.path.isabs(pythonfile):
         logging.debug("Python Script was given as absolute path: %s" % pythonfile)
-    elif (os.path.isfile(os.path.join(os.getcwd(), pythonfile))):
+    elif os.path.isfile(os.path.join(os.getcwd(), pythonfile)):
         pythonfile = os.path.join(os.getcwd(), pythonfile)
         logging.debug("Python Script was given as relative path: %s" % pythonfile)
     else:
@@ -263,9 +273,17 @@ def RunPythonScript(
                 logging.debug("Python Script was found on the path: %s" % pythonfile)
                 break
     params = pythonfile + " " + params
-    return RunCmd(sys.executable, params, capture=capture, workingdir=workingdir, outfile=outfile,
-                  outstream=outstream, environ=environ, logging_level=logging_level,
-                  raise_exception_on_nonzero=raise_exception_on_nonzero)
+    return RunCmd(
+        sys.executable,
+        params,
+        capture=capture,
+        workingdir=workingdir,
+        outfile=outfile,
+        outstream=outstream,
+        environ=environ,
+        logging_level=logging_level,
+        raise_exception_on_nonzero=raise_exception_on_nonzero,
+    )
 
 
 def DetachedSignWithSignTool(
@@ -273,9 +291,9 @@ def DetachedSignWithSignTool(
     ToSignFilePath: str,
     SignatureOutputFile: str,
     PfxFilePath: str,
-    PfxPass: Optional[str]=None,
-    Oid: str="1.2.840.113549.1.7.2",
-    Eku: Optional[str]=None
+    PfxPass: Optional[str] = None,
+    Oid: str = "1.2.840.113549.1.7.2",
+    Eku: Optional[str] = None,
 ) -> int:
     """Locally Sign input file using Windows SDK signtool.
 
@@ -299,20 +317,21 @@ def DetachedSignWithSignTool(
     # Signtool parameters from
     #   https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/secure-boot-key-generation-and-signing-using-hsm--example  # noqa: E501
     # Search for "Secure Boot Key Generation and Signing Using HSM"
-    params = 'sign /fd sha256 /p7ce DetachedSignedData /p7co ' + Oid + ' /p7 "' + \
-             OutputDir + '" /f "' + PfxFilePath + '"'
+    params = (
+        "sign /fd sha256 /p7ce DetachedSignedData /p7co " + Oid + ' /p7 "' + OutputDir + '" /f "' + PfxFilePath + '"'
+    )
     if Eku is not None:
-        params += ' /u ' + Eku
+        params += " /u " + Eku
     if PfxPass is not None:
         # add password if set
-        params = params + ' /p ' + PfxPass
+        params = params + " /p " + PfxPass
     params = params + ' /debug /v "' + ToSignFilePath + '" '
     ret = RunCmd(SignToolPath, params)
-    if (ret != 0):
+    if ret != 0:
         logging.error("Signtool failed %d" % ret)
         return ret
     signedfile = os.path.join(OutputDir, os.path.basename(ToSignFilePath) + ".p7")
-    if (not os.path.isfile(signedfile)):
+    if not os.path.isfile(signedfile):
         raise Exception("Output file doesn't exist %s" % signedfile)
 
     shutil.move(signedfile, SignatureOutputFile)
@@ -320,10 +339,7 @@ def DetachedSignWithSignTool(
 
 
 def CatalogSignWithSignTool(
-    SignToolPath: str,
-    ToSignFilePath: str,
-    PfxFilePath: str,
-    PfxPass: Optional[str]=None
+    SignToolPath: str, ToSignFilePath: str, PfxFilePath: str, PfxPass: Optional[str] = None
 ) -> int:
     """Locally sign input file using Windows SDK signtool.
 
@@ -349,10 +365,10 @@ def CatalogSignWithSignTool(
     params = "sign /a /fd SHA256 /f " + PfxFilePath
     if PfxPass is not None:
         # add password if set
-        params = params + ' /p ' + PfxPass
+        params = params + " /p " + PfxPass
     params = params + ' /debug /v "' + ToSignFilePath + '" '
     ret = RunCmd(SignToolPath, params, workingdir=OutputDir)
-    if (ret != 0):
+    if ret != 0:
         logging.error("Signtool failed %d" % ret)
     return ret
 
@@ -363,8 +379,10 @@ def CatalogSignWithSignTool(
 # https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
 def version_compare(version1: str, version2: str) -> bool:
     """Compare two versions."""
+
     def normalize(v: str) -> bool:
-        return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split(".")]
+        return [int(x) for x in re.sub(r"(\.0+)*$", "", v).split(".")]
+
     (a, b) = (normalize(version1), normalize(version2))
     return (a > b) - (a < b)
 
@@ -399,8 +417,7 @@ def locate_class_in_module(Module: Any, DesiredClass: Any) -> Any:  # noqa: ANN4
     # Pull out the contents of the module that was provided
     module_contents = dir(Module)
     # Filter through the Module, we're only looking for classes.
-    classList = [getattr(Module, obj) for obj in module_contents
-                 if inspect.isclass(getattr(Module, obj))]
+    classList = [getattr(Module, obj) for obj in module_contents if inspect.isclass(getattr(Module, obj))]
 
     for _class in classList:
         # Classes that the module import show up in this list too so we need
@@ -427,8 +444,8 @@ def RemoveTree(dir_path: str, ignore_errors: bool = False) -> None:
     """
     # Allows for finding paths over the 260 character limit, even if the registry key (LongPathsEnabled)
     # Is not enabled.
-    if sys.platform.startswith('win'):
-        dir_path = '\\\\?\\' + os.path.abspath(dir_path)
+    if sys.platform.startswith("win"):
+        dir_path = "\\\\?\\" + os.path.abspath(dir_path)
 
     def _remove_readonly(func: Callable, path: str, _: any) -> None:
         """Private function to attempt to change permissions on file/folder being deleted."""
@@ -448,11 +465,11 @@ def RemoveTree(dir_path: str, ignore_errors: bool = False) -> None:
 
 def PrintByteList(
     ByteList: bytearray,
-    IncludeAscii: bool=True,
-    IncludeOffset: bool=True,
-    IncludeHexSep: bool=True,
-    OffsetStart: int=0,
-    **kwargs: Any  #
+    IncludeAscii: bool = True,
+    IncludeOffset: bool = True,
+    IncludeHexSep: bool = True,
+    OffsetStart: int = 0,
+    **kwargs: Any,  #
 ) -> None:
     """Print a byte array as hex and optionally output ascii as well as offset within the buffer."""
     outfs = kwargs.get("outfs", sys.stdout)
@@ -461,13 +478,12 @@ def PrintByteList(
     kwargs["include_offset"] = IncludeOffset
 
     warn(
-        "This function is being replaced by hexdump, if you rely on this behavior switch to hexdump",
-        DeprecationWarning
+        "This function is being replaced by hexdump, if you rely on this behavior switch to hexdump", DeprecationWarning
     )
     hexdump(ByteList, offset_start=OffsetStart, outfs=outfs, **kwargs)
 
 
-def hexdump(byte_list: bytearray, offset_start: int=0, outfs: BytesIO=sys.stdout, **kwargs: Any) -> None:  #
+def hexdump(byte_list: bytearray, offset_start: int = 0, outfs: BytesIO = sys.stdout, **kwargs: Any) -> None:  #
     """Print a byte array as hex and optionally output ascii as well as offset within the buffer.
 
     Args:
@@ -484,9 +500,9 @@ def hexdump(byte_list: bytearray, offset_start: int=0, outfs: BytesIO=sys.stdout
     Returns:
         None
     """
-    include_ascii = kwargs.get('include_ascii', True)
-    include_offset = kwargs.get('include_offset', True)
-    include_hex_sep = kwargs.get('include_hex_sep', True)
+    include_ascii = kwargs.get("include_ascii", True)
+    include_offset = kwargs.get("include_offset", True)
+    include_hex_sep = kwargs.get("include_hex_sep", True)
 
     ascii_string = ""
     index = 0
@@ -575,7 +591,7 @@ def export_c_type_array(buffer_fs: BytesIO, variable_name: str, out_fs: StringIO
     length = end - start
 
     # for some reason os.linesep causes twice the amount of desired newlines
-    newline = '\n'
+    newline = "\n"
 
     if length == 0:
         raise ValueError("Binary file length was 0")
@@ -588,7 +604,7 @@ def export_c_type_array(buffer_fs: BytesIO, variable_name: str, out_fs: StringIO
 
     ascii_string = ""
     i = 0
-    byte = ''
+    byte = ""
 
     for i, byte in enumerate(buffer_fs.read()):
         if i % bytes_per_row == 0:
@@ -629,5 +645,4 @@ def export_c_type_array(buffer_fs: BytesIO, variable_name: str, out_fs: StringIO
     out_fs.write(f"{newline}}};{newline*2}")
 
     if length_variable_name:
-        out_fs.write(
-            f"{length_data_type} {length_variable_name} = sizeof {variable_name};{newline*2}")
+        out_fs.write(f"{length_data_type} {length_variable_name} = sizeof {variable_name};{newline*2}")

@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Module for handling basic logging by streaming into StringIO."""
+
 import io
 import logging
 from logging import LogRecord
@@ -13,9 +14,10 @@ from logging import LogRecord
 
 class StringStreamHandler(logging.StreamHandler):
     """Class for logging via StringIO."""
-    terminator = '\n'
 
-    def __init__(self) -> 'StringStreamHandler':
+    terminator = "\n"
+
+    def __init__(self) -> "StringStreamHandler":
         """Init a StringStreamHandler."""
         logging.Handler.__init__(self)
         self.stream = io.StringIO()
@@ -37,7 +39,7 @@ class StringStreamHandler(logging.StreamHandler):
                 self.release()
         return rv
 
-    def readlines(self, hint: int=-1) -> list[str]:
+    def readlines(self, hint: int = -1) -> list[str]:
         """Reads lines from stream and returns them."""
         return self.stream.readlines(hint)
 

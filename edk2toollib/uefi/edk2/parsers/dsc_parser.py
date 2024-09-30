@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Code to help parse DSC files."""
+
 import logging
 import os
 import re
@@ -35,14 +36,15 @@ class DscParser(HashFileParser):
         in the scope of "common", but one filters to only PEI (MyLib| PEI_CORE) and the other
         filters to PEIM (MyLib| PEIM).
     """
+
     SECTION_LIBRARY = "libraryclasses"
     SECTION_COMPONENT = "components"
     SECTION_REGEX = re.compile(r"\[(.*)\]")
     OVERRIDE_REGEX = re.compile(r"\<(.*)\>")
 
-    def __init__(self) -> 'HashFileParser':
+    def __init__(self) -> "HashFileParser":
         """Init an empty Parser."""
-        super(DscParser, self).__init__('DscParser')
+        super(DscParser, self).__init__("DscParser")
         self.SixMods = []
         self.SixModsEnhanced = []
         self.ThreeMods = []
@@ -67,13 +69,13 @@ class DscParser(HashFileParser):
                 line = line.replace(tokens[1], self.PcdValueDict[tokens[1]])
         return line
 
-    def __ParseLine(self, Line: str, file_name: Optional[str]=None, lineno: int=None) -> tuple:
+    def __ParseLine(self, Line: str, file_name: Optional[str] = None, lineno: int = None) -> tuple:
         line_stripped = self.StripComment(Line).strip()
-        if (len(line_stripped) < 1):
+        if len(line_stripped) < 1:
             return ("", [], None)
         line_stripped = self.ReplacePcds(line_stripped)
         line_resolved = self.ReplaceVariables(line_stripped)
-        if (self.ProcessConditional(line_resolved)):
+        if self.ProcessConditional(line_resolved):
             # was a conditional
             # Other parser returns line_resolved, [].  Need to figure out which is right
             return ("", [], None)
@@ -81,11 +83,11 @@ class DscParser(HashFileParser):
         # not conditional keep processing
 
         # check if conditional is active
-        if (not self.InActiveCode()):
+        if not self.InActiveCode():
             return ("", [], None)
 
         # check for include file and import lines from file
-        if (line_resolved.strip().lower().startswith("!include")):
+        if line_resolved.strip().lower().startswith("!include"):
             # include line.
             tokens = line_resolved.split()
             include_file = tokens[1]
@@ -101,27 +103,27 @@ class DscParser(HashFileParser):
 
         # check for new section
         (IsNew, Section) = self.ParseNewSection(line_resolved)
-        if (IsNew):
+        if IsNew:
             self.CurrentSection = Section.upper()
             self.Logger.debug("New Section: %s" % self.CurrentSection)
             self.Logger.debug("FullSection: %s" % self.CurrentFullSection)
             return (line_resolved, [], None)
 
         # process line in x64 components
-        if (self.CurrentFullSection.upper() == "COMPONENTS.X64"):
-            if (self.ParsingInBuildOption > 0):
-                if (".inf" in line_resolved.lower()):
+        if self.CurrentFullSection.upper() == "COMPONENTS.X64":
+            if self.ParsingInBuildOption > 0:
+                if ".inf" in line_resolved.lower():
                     p = self.ParseInfPathLib(line_resolved)
                     self.Libs.append(p)
                     self.Logger.debug("Found Library in a 64bit BuildOptions Section: %s" % p)
                 elif self.RegisterPcds(line_resolved):
                     self.Logger.debug("Found a Pcd in a 64bit Module Override section")
             else:
-                if (".inf" in line_resolved.lower()):
+                if ".inf" in line_resolved.lower():
                     p = self.ParseInfPathMod(line_resolved)
                     self.SixMods.append(p)
                     if file_name is not None and lineno is not None:
-                        self.SixModsEnhanced.append({'file': os.path.normpath(file_name), 'lineno': lineno, 'data': p})
+                        self.SixModsEnhanced.append({"file": os.path.normpath(file_name), "lineno": lineno, "data": p})
                     self.Logger.debug("Found 64bit Module: %s" % p)
 
             self.ParsingInBuildOption = self.ParsingInBuildOption + line_resolved.count("{")
@@ -129,24 +131,25 @@ class DscParser(HashFileParser):
             return (line_resolved, [], None)
 
         # process line in ia32 components
-        elif (self.CurrentFullSection.upper() == "COMPONENTS.IA32"):
-            if (self.ParsingInBuildOption > 0):
-                if (".inf" in line_resolved.lower()):
+        elif self.CurrentFullSection.upper() == "COMPONENTS.IA32":
+            if self.ParsingInBuildOption > 0:
+                if ".inf" in line_resolved.lower():
                     p = self.ParseInfPathLib(line_resolved)
                     self.Libs.append(p)
                     if file_name is not None and lineno is not None:
-                        self.LibsEnhanced.append({'file': os.path.normpath(file_name), 'lineno': lineno, 'data': p})
+                        self.LibsEnhanced.append({"file": os.path.normpath(file_name), "lineno": lineno, "data": p})
                     self.Logger.debug("Found Library in a 32bit BuildOptions Section: %s" % p)
                 elif self.RegisterPcds(line_resolved):
                     self.Logger.debug("Found a Pcd in a 32bit Module Override section")
 
             else:
-                if (".inf" in line_resolved.lower()):
+                if ".inf" in line_resolved.lower():
                     p = self.ParseInfPathMod(line_resolved)
                     self.ThreeMods.append(p)
                     if file_name is not None and lineno is not None:
-                        self.ThreeModsEnhanced.append({'file': os.path.normpath(file_name),
-                                                       'lineno': lineno, 'data': p})
+                        self.ThreeModsEnhanced.append(
+                            {"file": os.path.normpath(file_name), "lineno": lineno, "data": p}
+                        )
                     self.Logger.debug("Found 32bit Module: %s" % p)
 
             self.ParsingInBuildOption = self.ParsingInBuildOption + line_resolved.count("{")
@@ -154,9 +157,9 @@ class DscParser(HashFileParser):
             return (line_resolved, [], None)
 
         # process line in other components
-        elif ("COMPONENTS" in self.CurrentFullSection.upper()):
-            if (self.ParsingInBuildOption > 0):
-                if (".inf" in line_resolved.lower()):
+        elif "COMPONENTS" in self.CurrentFullSection.upper():
+            if self.ParsingInBuildOption > 0:
+                if ".inf" in line_resolved.lower():
                     p = self.ParseInfPathLib(line_resolved)
                     self.Libs.append(p)
                     self.Logger.debug("Found Library in a BuildOptions Section: %s" % p)
@@ -164,7 +167,7 @@ class DscParser(HashFileParser):
                     self.Logger.debug("Found a Pcd in a Module Override section")
 
             else:
-                if (".inf" in line_resolved.lower()):
+                if ".inf" in line_resolved.lower():
                     p = self.ParseInfPathMod(line_resolved)
                     self.OtherMods.append(p)
                     self.Logger.debug("Found Module: %s" % p)
@@ -174,14 +177,14 @@ class DscParser(HashFileParser):
             return (line_resolved, [], None)
 
         # process line in library class section (don't use full name)
-        elif (self.CurrentSection.upper() == "LIBRARYCLASSES"):
-            if (".inf" in line_resolved.lower()):
+        elif self.CurrentSection.upper() == "LIBRARYCLASSES":
+            if ".inf" in line_resolved.lower():
                 p = self.ParseInfPathLib(line_resolved)
                 self.Libs.append(p)
                 self.Logger.debug("Found Library in Library Class Section: %s" % p)
             return (line_resolved, [], None)
         # process line in PCD section
-        elif (self.CurrentSection.upper().startswith("PCDS")):
+        elif self.CurrentSection.upper().startswith("PCDS"):
             if self.RegisterPcds(line_resolved):
                 self.Logger.debug("Found a Pcd in a PCD section")
             return (line_resolved, [], None)
@@ -190,14 +193,14 @@ class DscParser(HashFileParser):
 
     def __ParseDefineLine(self, Line: str) -> tuple:
         line_stripped = self.StripComment(Line).strip()
-        if (len(line_stripped) < 1):
+        if len(line_stripped) < 1:
             return ("", [])
 
         # this line needs to be here to resolve any symbols inside the !include lines, if any
         self.RegisterPcds(line_stripped)
         line_stripped = self.ReplacePcds(line_stripped)
         line_resolved = self.ReplaceVariables(line_stripped)
-        if (self.ProcessConditional(line_resolved)):
+        if self.ProcessConditional(line_resolved):
             # was a conditional
             # Other parser returns line_resolved, [].  Need to figure out which is right
             return ("", [])
@@ -205,11 +208,11 @@ class DscParser(HashFileParser):
         # not conditional keep processing
 
         # check if conditional is active
-        if (not self.InActiveCode()):
+        if not self.InActiveCode():
             return ("", [])
 
         # check for include file and import lines from file
-        if (line_resolved.strip().lower().startswith("!include")):
+        if line_resolved.strip().lower().startswith("!include"):
             # include line.
             tokens = line_resolved.split()
             include_file = tokens[1]
@@ -225,7 +228,7 @@ class DscParser(HashFileParser):
 
         # check for new section
         (IsNew, Section) = self.ParseNewSection(line_resolved)
-        if (IsNew):
+        if IsNew:
             self.CurrentSection = Section.upper()
             self.Logger.debug("New Section: %s" % self.CurrentSection)
             self.Logger.debug("FullSection: %s" % self.CurrentFullSection)
@@ -236,7 +239,7 @@ class DscParser(HashFileParser):
             if line_resolved.count("=") >= 1:
                 tokens = line_resolved.split("=", 1)
                 leftside = tokens[0].split()
-                if (len(leftside) == 2):
+                if len(leftside) == 2:
                     left = leftside[1]
                 else:
                     left = leftside[0]
@@ -254,11 +257,11 @@ class DscParser(HashFileParser):
 
     def ParseInfPathLib(self, line: str) -> str:
         """Parses a line with an INF path Lib."""
-        if (line.count("|") > 0):
+        if line.count("|") > 0:
             line_parts = []
             c = line.split("|")[0].strip()
             i = line.split("|")[1].strip()
-            if (c in self.LibraryClassToInstanceDict):
+            if c in self.LibraryClassToInstanceDict:
                 line_parts = self.LibraryClassToInstanceDict.get(c)
             sp = self.FindPath(i)
             line_parts.append(sp)
@@ -271,19 +274,19 @@ class DscParser(HashFileParser):
         """Parses a line with an INF path."""
         return line.strip().split()[0].rstrip("{")
 
-    def __ProcessMore(self, lines: list, file_name: Optional[str]=None) -> None:
+    def __ProcessMore(self, lines: list, file_name: Optional[str] = None) -> None:
         """Runs after ProcessDefines and does a full parsing of the DSC.
 
         Everything is resolved to a final state
         """
-        if (len(lines) == 0):
+        if len(lines) == 0:
             return
         for index in range(len(lines)):
             # we try here so that we can catch exceptions from individual lines
             try:
                 raw_line = lines[index]
                 (line, add, new_file) = self.__ParseLine(raw_line, file_name=file_name, lineno=index + 1)
-                if (len(line) > 0):
+                if len(line) > 0:
                     self.Lines.append(line)
                 self.__ProcessMore(add, file_name=new_file)
             except Exception as e:
@@ -303,7 +306,7 @@ class DscParser(HashFileParser):
         Ideally this should be run until we reach stable state but this parser is not
         accurate and is more of an approximation of what the real parser does.
         """
-        if (len(lines) == 0):
+        if len(lines) == 0:
             return
         for raw_line in lines:
             # we want to catch exceptions here since we are doing includes as we potentially might blow up
@@ -440,7 +443,7 @@ class DscParser(HashFileParser):
             if self.OVERRIDE_REGEX.match(l_line):
                 if l_line == f"<{self.SECTION_LIBRARY}>":
                     section = self.SECTION_LIBRARY
-                else: # Add more sections here if needed
+                else:  # Add more sections here if needed
                     section = ""
                 continue
 
@@ -458,7 +461,7 @@ class DscParser(HashFileParser):
                     library_override_dictionary[lib] = instance
         return library_override_dictionary
 
-    def SetNoFailMode(self, enabled: bool=True) -> None:
+    def SetNoFailMode(self, enabled: bool = True) -> None:
         """The parser won't throw exceptions when this is turned on.
 
         WARNING: This can result in some weird behavior
@@ -522,12 +525,9 @@ class DscParser(HashFileParser):
 
     def RegisterPcds(self, line: str) -> None:
         """Reads the line and registers any PCDs found."""
-        if ("tokenspaceguid" in line.lower() and
-            line.count('|') > 0 and
-            line.count('.') > 0):
-
+        if "tokenspaceguid" in line.lower() and line.count("|") > 0 and line.count(".") > 0:
             # should be a pcd statement
-            p = line.partition('|')
+            p = line.partition("|")
             self.Pcds.append(p[0].strip())
             self.PcdValueDict[p[0].strip()] = p[2].strip()
             self.Logger.debug("Found a Pcd: %s" % p[0].strip())

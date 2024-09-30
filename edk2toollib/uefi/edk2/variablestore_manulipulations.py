@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Contains classes and helper functions to modify variables in a UEFI ROM image."""
+
 import mmap
 import os
 from typing import Optional
@@ -16,7 +17,10 @@ import edk2toollib.uefi.pi_firmware_volume as PiFV
 
 class VariableStore(object):
     """Class representing the variable store."""
-    def __init__(self, romfile: str, store_base: Optional[int]=None, store_size: Optional[int]=None) -> 'VariableStore':
+
+    def __init__(
+        self, romfile: str, store_base: Optional[int] = None, store_size: Optional[int] = None
+    ) -> "VariableStore":
         """Initialize the Variable store and read necessary files.
 
         Loads the data.
@@ -30,12 +34,12 @@ class VariableStore(object):
         if not os.path.isfile(self.rom_file_path):
             raise Exception("'%s' is not the path to a file!" % self.rom_file_path)
 
-        self.rom_file = open(self.rom_file_path, 'r+b')
+        self.rom_file = open(self.rom_file_path, "r+b")
         self.rom_file_map = mmap.mmap(self.rom_file.fileno(), 0)
 
         # Sanity check some things.
         file_size = self.rom_file_map.size()
-        if (store_base is not None and store_size is not None and (store_base + store_size) > file_size):
+        if store_base is not None and store_size is not None and (store_base + store_size) > file_size:
             raise Exception("ROM file is %d bytes. Cannot seek to %d+%d bytes!" % (file_size, store_base, store_size))
 
         # Go ahead and advance the file cursor and load the FV header.
@@ -49,8 +53,10 @@ class VariableStore(object):
         # Advance the file cursor and load the VarStore header.
         self.rom_file.seek(self.fv_header.HeaderLength, os.SEEK_CUR)
         self.var_store_header = VF.VariableStoreHeader().load_from_file(self.rom_file)
-        if self.var_store_header.Format != VF.VARIABLE_STORE_FORMATTED or \
-                self.var_store_header.State != VF.VARIABLE_STORE_HEALTHY:
+        if (
+            self.var_store_header.Format != VF.VARIABLE_STORE_FORMATTED
+            or self.var_store_header.State != VF.VARIABLE_STORE_HEALTHY
+        ):
             raise Exception("VarStore is invalid or cannot be processed with this helper!")
 
         # Now we're finally ready to read some variables.
@@ -84,7 +90,7 @@ class VariableStore(object):
 
     def get_new_var_class(self) -> VF.VariableHeader | VF.AuthenticatedVariableHeader:
         """Var class builder method depending on var type."""
-        if self.var_store_header.Type == 'Var':
+        if self.var_store_header.Type == "Var":
             new_var = VF.VariableHeader()
         else:
             new_var = VF.AuthenticatedVariableHeader()
@@ -103,18 +109,19 @@ class VariableStore(object):
         dummy_var = self.get_new_var_class()
         var_size += dummy_var.StructSize
         if var_size > self.var_store_header.Size:
-            raise Exception("Total variable size %d is too large to fit in VarStore %d!" %
-                            (var_size, self.var_store_header.Size))
+            raise Exception(
+                "Total variable size %d is too large to fit in VarStore %d!" % (var_size, self.var_store_header.Size)
+            )
 
         # Now, we just have to serialize each variable in turn and write them to the mmap buffer.
         var_offset = self.store_base + self.fv_header.HeaderLength + self.var_store_header.StructSize
         for var in self.variables:
             var_buffer_size = var.get_buffer_size()
-            self.rom_file_map[var_offset:(var_offset + var_buffer_size)] = var.serialize(True)
+            self.rom_file_map[var_offset : (var_offset + var_buffer_size)] = var.serialize(True)
             var_offset += var_buffer_size
 
         # Add a terminating Variable Header.
-        self.rom_file_map[var_offset:(var_offset + dummy_var.StructSize)] = b'\xFF' * dummy_var.StructSize
+        self.rom_file_map[var_offset : (var_offset + dummy_var.StructSize)] = b"\xff" * dummy_var.StructSize
 
         # Now we have to flush the mmap to the file.
         self.rom_file_map.flush()

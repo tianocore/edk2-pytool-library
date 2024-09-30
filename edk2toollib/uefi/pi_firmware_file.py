@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Module containing helper classes and functions for working with UEFI FFs."""
+
 import struct
 import sys
 import uuid
@@ -28,7 +29,8 @@ class EfiFirmwareFileSystemHeader(object):
     } EFI_FFS_FILE_HEADER;
     ```
     """
-    def __init__(self) -> 'EfiFirmwareFileSystemHeader':
+
+    def __init__(self) -> "EfiFirmwareFileSystemHeader":
         """Inits an empty object."""
         self.StructString = "=16sHBBBBBB"  # spell-checker: disable-line
         self.FileSystemGuid = None
@@ -43,7 +45,7 @@ class EfiFirmwareFileSystemHeader(object):
         """Returns the size of the header."""
         return self.Size0 + (self.Size1 << 8) + (self.Size2 << 16)
 
-    def load_from_file(self, file: IO) -> 'EfiFirmwareFileSystemHeader':
+    def load_from_file(self, file: IO) -> "EfiFirmwareFileSystemHeader":
         """Loads data into the object from a filestream.
 
         Args:
@@ -57,11 +59,19 @@ class EfiFirmwareFileSystemHeader(object):
         file.seek(orig_seek)
 
         # Load this object with the contents of the data.
-        (self.FileSystemGuid, self.Checksum, self.Type, self.Attributes, self.Size0, self.Size1,
-            self.Size2, self.State) = struct.unpack(self.StructString, struct_bytes)
+        (
+            self.FileSystemGuid,
+            self.Checksum,
+            self.Type,
+            self.Attributes,
+            self.Size0,
+            self.Size1,
+            self.Size2,
+            self.State,
+        ) = struct.unpack(self.StructString, struct_bytes)
 
         # Update the GUID to be a UUID object.
-        if sys.byteorder == 'big':
+        if sys.byteorder == "big":
             self.FileSystemGuid = uuid.UUID(bytes=self.FileSystemGuid)
         else:
             self.FileSystemGuid = uuid.UUID(bytes_le=self.FileSystemGuid)
@@ -74,6 +84,15 @@ class EfiFirmwareFileSystemHeader(object):
         Returns:
             (bytes): string representing packed data as bytes (i.e. b'\x01\x00\x03')
         """
-        file_system_guid_bin = self.FileSystemGuid.bytes if sys.byteorder == 'big' else self.FileSystemGuid.bytes_le
-        return struct.pack(self.StructString, file_system_guid_bin, self.Checksum,
-                           self.Type, self.Attributes, self.Size0, self.Size1, self.Size2, self.State)
+        file_system_guid_bin = self.FileSystemGuid.bytes if sys.byteorder == "big" else self.FileSystemGuid.bytes_le
+        return struct.pack(
+            self.StructString,
+            file_system_guid_bin,
+            self.Checksum,
+            self.Type,
+            self.Attributes,
+            self.Size0,
+            self.Size1,
+            self.Size2,
+            self.State,
+        )

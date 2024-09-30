@@ -21,33 +21,35 @@ def test_valid_inf(empty_tree: Tree):
     """Tests that a valid Inf with typical settings is properly parsed."""
     edk2path = Edk2Path(str(empty_tree.ws), [])
     db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
-    db.register(InfTable(n_jobs = 1))
+    db.register(InfTable(n_jobs=1))
 
     # Configure inf
     libs = ["TestLib2", "TestLib3"]
-    protocols = ['gEfiTestProtocolGuid']
-    guids = ['gEfiTestTokenSpaceGuid']
-    sources = ['Test.c']
-    sources_ia32 = ['IA32/Test.c']
-    sources_x64 = ['X64/Test.c']
+    protocols = ["gEfiTestProtocolGuid"]
+    guids = ["gEfiTestTokenSpaceGuid"]
+    sources = ["Test.c"]
+    sources_ia32 = ["IA32/Test.c"]
+    sources_x64 = ["X64/Test.c"]
 
     lib1 = empty_tree.create_library(
-        "TestLib1", "TestCls",
-        libraryclasses = libs,
-        protocols = protocols,
-        guids = guids,
-        sources = sources,
-        sources_ia32 = sources_ia32,
-        sources_x64 = sources_x64,
+        "TestLib1",
+        "TestCls",
+        libraryclasses=libs,
+        protocols=protocols,
+        guids=guids,
+        sources=sources,
+        sources_ia32=sources_ia32,
+        sources_x64=sources_x64,
     )
     lib2 = empty_tree.create_library(
-        "TestLib2", "TestCls",
-        libraryclasses = libs,
-        protocols = protocols,
-        guids = guids,
-        sources = sources,
-        sources_ia32 = sources_ia32,
-        sources_x64 = sources_x64,
+        "TestLib2",
+        "TestCls",
+        libraryclasses=libs,
+        protocols=protocols,
+        guids=guids,
+        sources=sources,
+        sources_ia32=sources_ia32,
+        sources_x64=sources_x64,
     )
 
     (empty_tree.library_folder / "IA32").mkdir()
@@ -73,14 +75,8 @@ def test_source_path_with_dot_dot(empty_tree: Tree):
     """Tests that paths with .. are correctly resolved."""
     edk2path = Edk2Path(str(empty_tree.ws), [])
     db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
-    db.register(InfTable(n_jobs = 1))
-    empty_tree.create_library(
-        "TestLib", "TestCls",
-        sources = [
-            "../Test1.c",
-            "Test2.c"
-        ]
-    )
+    db.register(InfTable(n_jobs=1))
+    empty_tree.create_library("TestLib", "TestCls", sources=["../Test1.c", "Test2.c"])
     file1 = empty_tree.package / "Test1.c"
     file1.touch()
     file2 = empty_tree.library_folder / "Test2.c"
@@ -91,6 +87,7 @@ def test_source_path_with_dot_dot(empty_tree: Tree):
         for row in session.query(Inf).all():
             for source in row.sources:
                 assert empty_tree.ws / source.path in [file1, file2]
+
 
 def test_pkg_not_pkg_path_relative(empty_tree: Tree):
     """Tests when a package is not itself relative to a package path.
@@ -103,12 +100,7 @@ def test_pkg_not_pkg_path_relative(empty_tree: Tree):
         assert pkg1.relative == "Package1"
         assert pkg2.relative == "Packges/Package2"
     """
-    empty_tree.create_library(
-        "TestLib", "TestCls",
-        sources = [
-            "Test2.c"
-        ]
-    )
+    empty_tree.create_library("TestLib", "TestCls", sources=["Test2.c"])
     file2 = empty_tree.library_folder / "Test2.c"
     file2.touch()
 
@@ -120,7 +112,7 @@ def test_pkg_not_pkg_path_relative(empty_tree: Tree):
 
     edk2path = Edk2Path(str(ws), [])
     db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
-    db.register(InfTable(n_jobs = 1))
+    db.register(InfTable(n_jobs=1))
     db.parse({})
 
     with db.session() as session:
@@ -128,4 +120,3 @@ def test_pkg_not_pkg_path_relative(empty_tree: Tree):
         assert len(inf.sources) == 1
         assert inf.sources[0].path == Path("Common", "TestPkg", "Library", "Test2.c").as_posix()
         assert inf.path == Path("Common", "TestPkg", "Library", "TestLib.inf").as_posix()
-

@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 """Translates a DSC object into a file."""
+
 import logging
 import os
 
@@ -21,10 +22,11 @@ from edk2toollib.uefi.edk2.build_objects.dsc import (
 )
 
 
-class DscTranslator():
+class DscTranslator:
     """A class used to translate DSCs."""
+
     @classmethod
-    def dsc_to_file(cls: 'DscTranslator', dsc_obj: dsc, filepath: str) -> None:
+    def dsc_to_file(cls: "DscTranslator", dsc_obj: dsc, filepath: str) -> None:
         """Transforms the DSC object to a file."""
         file_path = os.path.abspath(filepath)
         f = open(file_path, "w")
@@ -34,10 +36,10 @@ class DscTranslator():
         f.close()
 
     @classmethod
-    def _GetDscLinesFromDscObj(cls: 'DscTranslator', obj: dsc, depth: int=0) -> list:
+    def _GetDscLinesFromDscObj(cls: "DscTranslator", obj: dsc, depth: int = 0) -> list:
         """Gets the DSC strings for an data model objects."""
         lines = []
-        depth_pad = ''.ljust(depth)
+        depth_pad = "".ljust(depth)
         org_depth = depth
         depth += 2
 
@@ -101,12 +103,10 @@ class DscTranslator():
             if obj.default is None:
                 lines.append(f"{pcd_name}|{obj.var_guid}|{obj.var_offset}")
             elif len(obj.attributes) == 0:
-                lines.append(
-                    f"{pcd_name}|{obj.var_guid}|{obj.var_offset}|{obj.default}")
+                lines.append(f"{pcd_name}|{obj.var_guid}|{obj.var_offset}|{obj.default}")
             else:
                 attr = ", ".join(obj.attributes)
-                lines.append(
-                    f"{pcd_name}|{obj.var_guid}|{obj.var_offset}|{obj.default}|{attr}")
+                lines.append(f"{pcd_name}|{obj.var_guid}|{obj.var_offset}|{obj.default}|{attr}")
 
         elif type(obj) is build_option:
             rep = depth_pad if obj.family is None else f"{depth_pad}{obj.family}:"
@@ -118,12 +118,15 @@ class DscTranslator():
         return lines
 
     @classmethod
-    def _FormatComponent(cls: 'DscTranslator', comp: dsc, depth: int=0) -> list[str]:
-        has_subsection = len(comp.pcds) > 0 or len(comp.defines) > 0 or len(
-            comp.build_options) > 0 or len(comp.library_classes) > 0
-        depth_pad = ''.ljust(depth)
+    def _FormatComponent(cls: "DscTranslator", comp: dsc, depth: int = 0) -> list[str]:
+        has_subsection = (
+            len(comp.pcds) > 0 or len(comp.defines) > 0 or len(comp.build_options) > 0 or len(comp.library_classes) > 0
+        )
+        depth_pad = "".ljust(depth)
         if not has_subsection:
-            return [f"{depth_pad}{comp.inf}", ]
+            return [
+                f"{depth_pad}{comp.inf}",
+            ]
         lines = []
         org_depth_pad = depth_pad
         depth_pad += "   "  # add two more onto our pad

@@ -16,7 +16,6 @@ from edk2toollib.uefi.edk2.build_objects.dsc import dsc_section_type
 
 
 class TestDscObject(unittest.TestCase):
-
     def test_null_creation(self):
         d = dsc()
         self.assertNotEqual(d, None)
@@ -51,7 +50,7 @@ class TestDscObject(unittest.TestCase):
         self.assertEqual(len(d.library_classes[IA32_section]), 2)
 
     def test_get_library_classes(self):
-        ''' This serves more as an example of how to walk the DSC to get a library class for a componenet '''
+        """This serves more as an example of how to walk the DSC to get a library class for a componenet"""
         pass
 
     def test_put_in_bad_things(self):

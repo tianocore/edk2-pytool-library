@@ -16,7 +16,6 @@ from edk2toollib.uefi.edk2.guid_list import GuidList, GuidListEntry
 
 
 class TestGuidListEntry(unittest.TestCase):
-
     def test_valid_input(self):
         GUID = "66341ae8-668f-4192-b44d-5f87b868f041"
         NAME = "testguid"
@@ -31,9 +30,7 @@ class TestGuidListEntry(unittest.TestCase):
 
 
 class TestGuidList(unittest.TestCase):
-
-    SAMPLE_DEC_FILE = \
-        """## @file
+    SAMPLE_DEC_FILE = """## @file
 TestDecFile
 ##
 
@@ -69,8 +66,7 @@ TestDecFile
   PcAtChipsetPkgExtra.uni
 """
 
-    SAMPLE_INF_FILE = \
-        """## @file
+    SAMPLE_INF_FILE = """## @file
 #  Sample UEFI Application Reference EDKII Module.
 #
 #  This is a sample shell application that will print "UEFI Hello World!" to the
