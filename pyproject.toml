@@ -14,7 +14,7 @@ dependencies = [
     "pyasn1 >= 0.4.8",
     "pyasn1-modules >= 0.2.8",
     "cryptography >= 39.0.1",
-    "joblib >= 1.3.2",  
+    "joblib >= 1.3.2",
     "GitPython >= 3.1.30",
     "sqlalchemy >= 2.0.0",
     "pygount >= 1.6.1",
@@ -67,6 +67,10 @@ include = ["edk2toollib/*"]
 
 [tool.ruff]
 src = ["edk2toollib"]
+line-length = 120
+
+[lint]
+ignore = ["ANN101"]
 select = [
     "E", # Pycodestyle errors
     "W", # Pycodestyle warnings
@@ -74,16 +78,14 @@ select = [
     "D", # pydocstyle
     "I", # isort
     "PIE", # flake8 - PIEpip
-    "ANN", 
+    "ANN",
 ]
-line-length = 120
-ignore = ["ANN101"]
 
-[tool.ruff.pydocstyle]
-convention = "google"
-
-[tool.ruff.flake8-annotations]
+[lint.flake8-annotations]
 allow-star-arg-any = true
+
+[lint.pydocstyle]
+convention = "google"
 
 [tool.pytest.ini_options]
 testpaths = [
