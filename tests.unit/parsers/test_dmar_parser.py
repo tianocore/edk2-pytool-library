@@ -34,7 +34,7 @@ class DmarParserTest(unittest.TestCase):
         try:
             dse_01_str = str(DmarParserTest.dse_t_01h)
             self.assertNotEqual(dse_01_str, None)
-        except:
+        except Exception:
             self.assertFalse(False, "Failed to convert Device Scope Entry type 0 object to string")
 
     def test_dmar_parser_dse_03h(self):
@@ -53,7 +53,7 @@ class DmarParserTest(unittest.TestCase):
         try:
             dse_03_str = str(DmarParserTest.dse_t_03h)
             self.assertNotEqual(dse_03_str, None)
-        except:
+        except Exception:
             self.assertFalse(False, "Failed to convert Device Scope Entry type 3 object to string")
 
     def test_dmar_parser_dse_04h(self):
@@ -72,7 +72,7 @@ class DmarParserTest(unittest.TestCase):
         try:
             dse_04_str = str(DmarParserTest.dse_t_04h)
             self.assertNotEqual(dse_04_str, None)
-        except:
+        except Exception:
             self.assertFalse(False, "Failed to convert Device Scope Entry type 4 object to string")
 
     def test_dmar_parser_drhd(self):
@@ -111,13 +111,13 @@ class DmarParserTest(unittest.TestCase):
         try:
             drhd_xml = DmarParserTest.drhd_t.toXml()
             self.assertNotEqual(drhd_xml, None)
-        except:
+        except Exception:
             self.assertFalse(False, "Failed to convert DRHD object to xml")
 
         try:
             drhd_str = str(DmarParserTest.drhd_t)
             self.assertNotEqual(drhd_str, None)
-        except:
+        except Exception:
             self.assertFalse(False, "Failed to convert DRHD object to string")
 
     def test_dmar_parser_rmrr(self):
@@ -164,13 +164,13 @@ class DmarParserTest(unittest.TestCase):
         try:
             rmrr_xml = DmarParserTest.rmrr_t.toXml()
             self.assertNotEqual(rmrr_xml, None)
-        except:
+        except Exception:
             self.assertFalse(False, "Failed to convert RMRR object to xml")
 
         try:
             rmrr_str = str(DmarParserTest.rmrr_t)
             self.assertNotEqual(rmrr_str, None)
-        except:
+        except Exception:
             self.assertFalse(False, "Failed to convert RMRR object to string")
 
     def test_dmar_parser_acpi_header(self):
@@ -246,13 +246,13 @@ class DmarParserTest(unittest.TestCase):
         try:
             dmar_xml = acpi_header.toXml()
             self.assertNotEqual(dmar_xml, None)
-        except:
+        except Exception:
             self.assertFalse(False, "Failed to convert ACPI header object to xml")
 
         try:
             dmar_str = str(acpi_header)
             self.assertNotEqual(dmar_str, None)
-        except:
+        except Exception:
             self.assertFalse(False, "Failed to convert ACPI header object to string")
 
     def test_dmar_parser_ivrs_full(self):
@@ -408,13 +408,13 @@ class DmarParserTest(unittest.TestCase):
         try:
             dmar_xml = dmar_table.toXml()
             self.assertNotEqual(dmar_xml, None)
-        except:
+        except Exception:
             self.assertFalse(False, "Failed to convert DMAR object to xml")
 
         try:
             dmar_str = str(dmar_table)
             self.assertNotEqual(dmar_str, None)
-        except:
+        except Exception:
             self.assertFalse(False, "Failed to convert DMAR object to string")
 
 
