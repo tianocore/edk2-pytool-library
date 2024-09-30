@@ -181,7 +181,13 @@ class IgnoreRule(collections.namedtuple("IgnoreRule_", IGNORE_RULE_FIELDS)):
         """Returns True or False if the path matches the rule."""
         matched = False
         if self.base_path:
-            rel_path = _normalize_path(abs_path).relative_to(self.base_path).as_posix()
+            try:
+                rel_path = _normalize_path(abs_path).relative_to(self.base_path).as_posix()
+            except ValueError as e:
+                if "is not in the subpath of" in str(e):
+                    return False
+                else:
+                    raise
         else:
             rel_path = _normalize_path(abs_path).as_posix()
         # Path() strips the trailing following symbols on windows, so we need to
