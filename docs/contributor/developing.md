@@ -90,7 +90,7 @@ as described above.
               open the Python file and use `Alt+Shift+F` to auto format. See the [Ruff VSCode extension](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
               for more information.
 
-      * Note: `ruff` is a wrapper around tools likke `pydocstyle`. See [`pyproject.toml`](../../pyproject.toml) for
+      * Note: `ruff` is a wrapper around tools like `pydocstyle`. See [`pyproject.toml`](../../pyproject.toml) for
         more details.
 
 2. Run the `BasicDevTests.py` script to check file encoding, file naming, etc
