@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Code to support parsing EDK2 files."""
+
 import logging
 import os
 from typing import Optional, Union
@@ -27,9 +28,10 @@ class BaseParser(object):
         PPs (list): List of PPs
         TargetFilePath (list): file being parsed
     """
+
     operators = ["OR", "AND", "IN", "==", "!=", ">", "<", "<=", ">="]
 
-    def __init__(self, log: str="BaseParser") -> 'BaseParser':
+    def __init__(self, log: str = "BaseParser") -> "BaseParser":
         """Inits an empty Parser."""
         self.Logger = logging.getLogger(log)
         self.Lines = []
@@ -50,7 +52,7 @@ class BaseParser(object):
     # For include files set the base root path
     #
 
-    def SetEdk2Path(self, pathobj: path_utilities.Edk2Path) -> 'BaseParser':
+    def SetEdk2Path(self, pathobj: path_utilities.Edk2Path) -> "BaseParser":
         """Sets the internal attribute Edk2PathUtil.
 
         !!! note
@@ -88,7 +90,7 @@ class BaseParser(object):
         self._Edk2PathUtil = pathobj
         return self
 
-    def SetBaseAbsPath(self, path: str) -> 'BaseParser':
+    def SetBaseAbsPath(self, path: str) -> "BaseParser":
         """Sets the attribute RootPath.
 
         Args:
@@ -106,7 +108,7 @@ class BaseParser(object):
         """Creates the path utility object based on the root path and package paths."""
         self._Edk2PathUtil = path_utilities.Edk2Path(self.RootPath, self.PPs, error_on_invalid_pp=False)
 
-    def SetPackagePaths(self, pps: Optional[list[str]]=None) -> 'BaseParser':
+    def SetPackagePaths(self, pps: Optional[list[str]] = None) -> "BaseParser":
         """Sets the attribute PPs.
 
         Args:
@@ -122,7 +124,7 @@ class BaseParser(object):
         self._ConfigEdk2PathUtil()
         return self
 
-    def SetInputVars(self, inputdict: dict) -> 'BaseParser':
+    def SetInputVars(self, inputdict: dict) -> "BaseParser":
         """Sets the attribute InputVars.
 
         Args:
@@ -202,12 +204,12 @@ class BaseParser(object):
         ivalue = value
         ivalue2 = value2
         if isinstance(value, str):
-            ivalue = value.strip("\"")
+            ivalue = value.strip('"')
         if isinstance(value2, str):
-            ivalue2 = value2.strip("\"")
+            ivalue2 = value2.strip('"')
 
         # convert it to interpretted value
-        if (cond.upper() == "IN"):
+        if cond.upper() == "IN":
             # strip quotes
             self.Logger.debug(f"{ivalue} in {ivalue2}")
 
@@ -218,7 +220,7 @@ class BaseParser(object):
         except ValueError:
             pass
         try:
-            if (cond.lower() == "in"):
+            if cond.lower() == "in":
                 ivalue2 = set(ivalue2.split())
             else:
                 ivalue2 = self.ConvertToInt(ivalue2)
@@ -226,23 +228,24 @@ class BaseParser(object):
             pass
 
         # First check our boolean operators
-        if (cond.upper() == "OR"):
+        if cond.upper() == "OR":
             return ivalue or ivalue2
-        if (cond.upper() == "AND"):
+        if cond.upper() == "AND":
             return ivalue and ivalue2
 
         # check our truthyness
-        if (cond == "=="):
+        if cond == "==":
             # equal
             return (ivalue == ivalue2) or (value == value2)
 
-        elif (cond == "!="):
+        elif cond == "!=":
             # not equal
             return (ivalue != ivalue2) and (value != value2)
 
         # check to make sure we only have digits from here on out
-        if (isinstance(value, str) and value.upper() in ["TRUE", "FALSE"]) \
-            or (isinstance(value, str) and value2.upper() in ["TRUE", "FALSE"]):
+        if (isinstance(value, str) and value.upper() in ["TRUE", "FALSE"]) or (
+            isinstance(value, str) and value2.upper() in ["TRUE", "FALSE"]
+        ):
             self.Logger.error(f"Invalid comparison: {value} {cond} {value2}")
             self.Logger.debug(f"Invalid comparison: {value} {cond} {value2}")
             raise ValueError("Invalid comparison")
@@ -257,17 +260,17 @@ class BaseParser(object):
             self.Logger.debug(f"{self.__class__}: Conditional: {value} {cond} {value2}")
             raise ValueError("Unknown value")
 
-        if (cond == "<"):
-            return (ivalue < ivalue2)
+        if cond == "<":
+            return ivalue < ivalue2
 
-        elif (cond == "<="):
-            return (ivalue <= ivalue2)
+        elif cond == "<=":
+            return ivalue <= ivalue2
 
-        elif (cond == ">"):
-            return (ivalue > ivalue2)
+        elif cond == ">":
+            return ivalue > ivalue2
 
-        elif (cond == ">="):
-            return (ivalue >= ivalue2)
+        elif cond == ">=":
+            return ivalue >= ivalue2
 
         else:
             self.Logger.error(f"{self.__class__}: Unknown conditional: {cond}")
@@ -317,29 +320,28 @@ class BaseParser(object):
 
         Returns (bool, bool): (value, already_true)
         """
-        if (len(self.ConditionalStack) > 0):
+        if len(self.ConditionalStack) > 0:
             return self.ConditionalStack.pop()
         else:
             self.Logger.critical("Tried to pop an empty conditional stack.  Line Number %d" % self.CurrentLine)
             return self.ConditionalStack.pop()  # this should cause a crash but will give trace.
 
-    def _FindReplacementForToken(self, token: str, replace_if_not_found: bool=False) -> str:
-
+    def _FindReplacementForToken(self, token: str, replace_if_not_found: bool = False) -> str:
         v = self.LocalVars.get(token)
 
-        if (v is None):
+        if v is None:
             v = self.InputVars.get(token)
 
-        if (v is None and replace_if_not_found):
+        if v is None and replace_if_not_found:
             v = self._MacroNotDefinedValue
 
-        elif (v is None):
+        elif v is None:
             return None
 
-        if (isinstance(v, bool)):
+        if isinstance(v, bool):
             v = "true" if v else "false"
 
-        if (isinstance(v, str) and (v.upper() == "TRUE" or v.upper() == "FALSE")):
+        if isinstance(v, str) and (v.upper() == "TRUE" or v.upper() == "FALSE"):
             v = v.upper()
 
         return str(v)
@@ -368,12 +370,12 @@ class BaseParser(object):
         # use line to avoid change by handling above
         rep = line.count("$")
         index = 0
-        while (rep > 0):
+        while rep > 0:
             start = line.find("$(", index)
             end = line.find(")", start)
 
-            token = line[start + 2:end]
-            replacement_token = line[start:end + 1]
+            token = line[start + 2 : end]
+            replacement_token = line[start : end + 1]
             self.Logger.debug("Token is %s" % token)
             v = self._FindReplacementForToken(token, replace)
             if v is not None:
@@ -398,12 +400,12 @@ class BaseParser(object):
             tokens = tokens[0].split() + [tokens[1]] + tokens[2].split()
         else:
             tokens = text.split()
-        if (tokens[0].lower() == "!if"):
+        if tokens[0].lower() == "!if":
             result = self.EvaluateConditional(text)
             self.PushConditional(result, result)
             return True
 
-        elif (tokens[0].lower() == "!elseif"):
+        elif tokens[0].lower() == "!elseif":
             if not self.InActiveCode():
                 (_, already_been_true) = self.PopConditional()
 
@@ -418,21 +420,21 @@ class BaseParser(object):
                 self.PushConditional(False, True)
             return True
 
-        elif (tokens[0].lower() == "!ifdef"):
+        elif tokens[0].lower() == "!ifdef":
             if len(tokens) != 2:
                 self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
                 raise RuntimeError("Invalid conditional", text)
             self.PushConditional((tokens[1] != self._MacroNotDefinedValue))
             return True
 
-        elif (tokens[0].lower() == "!ifndef"):
+        elif tokens[0].lower() == "!ifndef":
             if len(tokens) != 2:
                 self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
                 raise RuntimeError("Invalid conditional", text)
             self.PushConditional((tokens[1] == self._MacroNotDefinedValue))
             return True
 
-        elif (tokens[0].lower() == "!else"):
+        elif tokens[0].lower() == "!else":
             if len(tokens) != 1:
                 self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
                 raise RuntimeError("Invalid conditional", text)
@@ -447,7 +449,7 @@ class BaseParser(object):
                 self.PushConditional(True, True)
             return True
 
-        elif (tokens[0].lower() == "!endif"):
+        elif tokens[0].lower() == "!endif":
             if len(tokens) != 1:
                 self.Logger.error("!ifdef conditionals need to be formatted correctly (spaces between each token)")
                 raise RuntimeError("Invalid conditional", text)
@@ -497,8 +499,10 @@ class BaseParser(object):
                 operator1 = self.ConvertToInt(operator1_raw)
                 result = not operator1
                 # grab what was before the operator and the operand, then squish it all together
-                new_expression = expression[:first_operand_index - 1] if first_operand_index > 1 else []
-                new_expression += [result, ] + expression[first_operand_index + 1:]
+                new_expression = expression[: first_operand_index - 1] if first_operand_index > 1 else []
+                new_expression += [
+                    result,
+                ] + expression[first_operand_index + 1 :]
                 expression = new_expression
             else:
                 if first_operand_index < 2:
@@ -517,8 +521,10 @@ class BaseParser(object):
                 if do_invert:
                     result = not result
                 # grab what was before the operator and the operand, then smoosh it all together
-                new_expression = expression[:first_operand_index - 2] if first_operand_index > 2 else []
-                new_expression += [result, ] + expression[first_operand_index + 1:]
+                new_expression = expression[: first_operand_index - 2] if first_operand_index > 2 else []
+                new_expression += [
+                    result,
+                ] + expression[first_operand_index + 1 :]
                 expression = new_expression
 
         final = self.ConvertToInt(expression[0])
@@ -527,7 +533,7 @@ class BaseParser(object):
         return bool(final)
 
     @classmethod
-    def _TokenizeConditional(cls: 'BaseParser', text: str) -> str:
+    def _TokenizeConditional(cls: "BaseParser", text: str) -> str:
         """Takes in a string that has macros replaced."""
         # TOKENIZER
         # first we create tokens
@@ -540,17 +546,17 @@ class BaseParser(object):
         mode = 0
         tokens = []
         for character in text:
-            if character == "\"" and len(token) == 0:
+            if character == '"' and len(token) == 0:
                 mode = QUOTE_MODE
-            elif character == "\"" and mode == QUOTE_MODE:
+            elif character == '"' and mode == QUOTE_MODE:
                 if len(token) > 0:
-                    tokens.append(f"\"{token}\"")
+                    tokens.append(f'"{token}"')
                     token = ""
                 mode = TEXT_MODE
             elif character == "$" and len(token) == 0:
                 token += character
                 mode = MACRO_MODE
-            elif character == ')' and mode == MACRO_MODE:
+            elif character == ")" and mode == MACRO_MODE:
                 token += character
                 tokens.append(token)
                 token = ""
@@ -576,12 +582,12 @@ class BaseParser(object):
             elif character not in CONDITION_CHARACTERS and mode == CONDITION_MODE:
                 if len(token) > 0:
                     tokens.append(token)
-                token = character if character != " " else ''
+                token = character if character != " " else ""
                 mode = TEXT_MODE
             elif character in CONDITION_CHARACTERS and mode == TEXT_MODE:
                 if len(token) > 0:
                     tokens.append(token)
-                    token = ''
+                    token = ""
                 token = character
                 mode = CONDITION_MODE
             else:
@@ -628,7 +634,7 @@ class BaseParser(object):
         return collapsed_tokens
 
     @classmethod
-    def _ConvertTokensToPostFix(cls: 'BaseParser', tokens: list[str]) -> list[str]:
+    def _ConvertTokensToPostFix(cls: "BaseParser", tokens: list[str]) -> list[str]:
         # convert infix into post fix
         stack = ["("]
         tokens.append(")")  # add an extra parathesis
@@ -641,14 +647,14 @@ class BaseParser(object):
             # pop the stack and print the operators until you see a left parenthesis.
             # Discard the pair of parentheses.
             elif token == ")":
-                while len(stack) > 0 and stack[-1] != '(':
+                while len(stack) > 0 and stack[-1] != "(":
                     expression.append(stack.pop())
                 stack.pop()  # pop the last (
             # If this isn't a operator ignore it
             elif not cls._IsOperator(token):
                 expression.append(token)
             # If the stack is empty or contains a left parenthesis on top, push the incoming operator onto the stack.
-            elif len(stack) == 0 or stack[-1] == '(':
+            elif len(stack) == 0 or stack[-1] == "(":
                 stack.append(token)
             # If the incoming symbol has higher precedence than the top of the stack, push it on the stack.
             elif len(stack) == 0 or cls._GetOperatorPrecedence(token) > cls._GetOperatorPrecedence(stack[-1]):
@@ -674,7 +680,7 @@ class BaseParser(object):
         return expression
 
     @classmethod
-    def _IsOperator(cls: 'BaseParser', token: str) -> bool:
+    def _IsOperator(cls: "BaseParser", token: str) -> bool:
         if not isinstance(token, str):
             return False
         if token.startswith("!+"):
@@ -684,7 +690,7 @@ class BaseParser(object):
         return token in cls.operators
 
     @classmethod
-    def _GetOperatorPrecedence(cls: 'BaseParser', token: str) -> int:
+    def _GetOperatorPrecedence(cls: "BaseParser", token: str) -> int:
         if not cls._IsOperator(token):
             return -1
         if token == "(" or token == ")":
@@ -702,7 +708,7 @@ class BaseParser(object):
             (bool): result of the state of the conditional you are in.
         """
         ret = True
-        for (a, _) in self.ConditionalStack:
+        for a, _ in self.ConditionalStack:
             if not a:
                 ret = False
                 break
@@ -721,7 +727,7 @@ class BaseParser(object):
         NOTE: format = { 0xD3B36F2C, 0xD551, 0x11D4, { 0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D }}
         Will return true if the the line has
         """
-        if (line.count("{") == 2 and line.count("}") == 2 and line.count(",") == 10 and line.count("=") == 1):
+        if line.count("{") == 2 and line.count("}") == 2 and line.count(",") == 10 and line.count("=") == 1:
             return True
         return False
 
@@ -738,63 +744,64 @@ class BaseParser(object):
         Raises:
             (RuntimeError): if missing any of the 11 parts, or it isn't long enough.
         """
-        entries = line.lstrip(' {').rstrip(' }').split(',')
+        entries = line.lstrip(" {").rstrip(" }").split(",")
         if len(entries) != 11:
             raise RuntimeError(
-                f"Invalid GUID found {line}. We are missing some parts since we only found: {len(entries)}")
-        gu = entries[0].lstrip(' 0').lstrip('x').strip()
+                f"Invalid GUID found {line}. We are missing some parts since we only found: {len(entries)}"
+            )
+        gu = entries[0].lstrip(" 0").lstrip("x").strip()
         # pad front until 8 chars
-        while (len(gu) < 8):
+        while len(gu) < 8:
             gu = "0" + gu
 
-        gut = entries[1].lstrip(' 0').lstrip('x').strip()
-        while (len(gut) < 4):
+        gut = entries[1].lstrip(" 0").lstrip("x").strip()
+        while len(gut) < 4:
             gut = "0" + gut
         gu = gu + "-" + gut
 
-        gut = entries[2].lstrip(' 0').lstrip('x').strip()
-        while (len(gut) < 4):
+        gut = entries[2].lstrip(" 0").lstrip("x").strip()
+        while len(gut) < 4:
             gut = "0" + gut
         gu = gu + "-" + gut
 
         # strip off extra {
-        gut = entries[3].lstrip(' { 0').lstrip('x').strip()
-        while (len(gut) < 2):
+        gut = entries[3].lstrip(" { 0").lstrip("x").strip()
+        while len(gut) < 2:
             gut = "0" + gut
         gu = gu + "-" + gut
 
-        gut = entries[4].lstrip(' 0').lstrip('x').strip()
-        while (len(gut) < 2):
+        gut = entries[4].lstrip(" 0").lstrip("x").strip()
+        while len(gut) < 2:
             gut = "0" + gut
         gu = gu + gut
 
-        gut = entries[5].lstrip(' 0').lstrip('x').strip()
-        while (len(gut) < 2):
+        gut = entries[5].lstrip(" 0").lstrip("x").strip()
+        while len(gut) < 2:
             gut = "0" + gut
         gu = gu + "-" + gut
 
-        gut = entries[6].lstrip(' 0').lstrip('x').strip()
-        while (len(gut) < 2):
+        gut = entries[6].lstrip(" 0").lstrip("x").strip()
+        while len(gut) < 2:
             gut = "0" + gut
         gu = gu + gut
 
-        gut = entries[7].lstrip(' 0').lstrip('x').strip()
-        while (len(gut) < 2):
+        gut = entries[7].lstrip(" 0").lstrip("x").strip()
+        while len(gut) < 2:
             gut = "0" + gut
         gu = gu + gut
 
-        gut = entries[8].lstrip(' 0').lstrip('x').strip()
-        while (len(gut) < 2):
+        gut = entries[8].lstrip(" 0").lstrip("x").strip()
+        while len(gut) < 2:
             gut = "0" + gut
         gu = gu + gut
 
-        gut = entries[9].lstrip(' 0').lstrip('x').strip()
-        while (len(gut) < 2):
+        gut = entries[9].lstrip(" 0").lstrip("x").strip()
+        while len(gut) < 2:
             gut = "0" + gut
         gu = gu + gut
 
-        gut = entries[10].split()[0].lstrip(' 0').lstrip('x').rstrip(' } ').strip()
-        while (len(gut) < 2):
+        gut = entries[10].split()[0].lstrip(" 0").lstrip("x").rstrip(" } ").strip()
+        while len(gut) < 2:
             gut = "0" + gut
         gu = gu + gut
 
@@ -809,15 +816,15 @@ class BaseParser(object):
     def ResetParserState(self) -> None:
         """Resets the state of the parser."""
         self.ConditionalStack = []
-        self.CurrentSection = ''
-        self.CurrentFullSection = ''
+        self.CurrentSection = ""
+        self.CurrentFullSection = ""
         self.Parsed = False
 
 
 class HashFileParser(BaseParser):
     """Base class for Edk2 build files that use # for comments."""
 
-    def __init__(self, log: str) -> 'HashFileParser':
+    def __init__(self, log: str) -> "HashFileParser":
         """Inits an empty Parser for files that use # for comments.."""
         BaseParser.__init__(self, log)
 
@@ -843,16 +850,16 @@ class HashFileParser(BaseParser):
                 elif char == quote_char:
                     inside_quotes = False
                     quote_char = None
-            elif char == '#' and not inside_quotes:
+            elif char == "#" and not inside_quotes:
                 break
-            elif char == '\\' and not escaped:
+            elif char == "\\" and not escaped:
                 escaped = True
             else:
                 escaped = False
 
             result.append(char)
 
-        return ''.join(result).rstrip()
+        return "".join(result).rstrip()
 
     def ParseNewSection(self, line: str) -> tuple[bool, str]:
         """Parses a new section line.
@@ -860,7 +867,7 @@ class HashFileParser(BaseParser):
         Args:
           line (str): line representing a new section.
         """
-        if (line.count("[") == 1 and line.count("]") == 1):  # new section
+        if line.count("[") == 1 and line.count("]") == 1:  # new section
             section = line.strip().lstrip("[").split(".")[0].split(",")[0].rstrip("]").strip()
             self.CurrentFullSection = line.strip().lstrip("[").split(",")[0].rstrip("]").strip()
             return (True, section)

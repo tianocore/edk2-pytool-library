@@ -11,6 +11,7 @@ This module converts all windows style paths to Posix file paths internally, but
 the OS specific path with the exception of of any function that returns an Edk2 style path,
 which will always return Posix form.
 """
+
 import errno
 import logging
 import os
@@ -36,8 +37,9 @@ class Edk2Path(object):
         passed to any consumers.
     """
 
-    def __init__(self, ws: os.PathLike, package_path_list: Iterable[os.PathLike],
-                 error_on_invalid_pp: bool = True) -> 'Edk2Path':
+    def __init__(
+        self, ws: os.PathLike, package_path_list: Iterable[os.PathLike], error_on_invalid_pp: bool = True
+    ) -> "Edk2Path":
         """Constructor.
 
         Args:
@@ -61,10 +63,7 @@ class Edk2Path(object):
             workspace_candidate_path = Path.cwd() / ws
 
         if not workspace_candidate_path.is_dir():
-            raise NotADirectoryError(
-                errno.ENOENT,
-                os.strerror(errno.ENOENT),
-                workspace_candidate_path.resolve())
+            raise NotADirectoryError(errno.ENOENT, os.strerror(errno.ENOENT), workspace_candidate_path.resolve())
 
         self._workspace_path = workspace_candidate_path
 
@@ -83,9 +82,10 @@ class Edk2Path(object):
         invalid_pp = []
         for a in candidate_package_path_list[:]:
             if not a.is_dir():
-                self.logger.log(logging.ERROR if error_on_invalid_pp else
-                                logging.WARNING,
-                                f"Invalid package path entry {a.resolve()}")
+                self.logger.log(
+                    logging.ERROR if error_on_invalid_pp else logging.WARNING,
+                    f"Invalid package path entry {a.resolve()}",
+                )
                 candidate_package_path_list.remove(a)
                 invalid_pp.append(str(a.resolve()))
 
@@ -106,39 +106,41 @@ class Edk2Path(object):
         # 3. Raise an Exception if two packages are found to be nested.
         #
         if "PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES" in os.environ:
-            warning = "PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES is no longer used by edk2-pytool-library, but is "\
-                      "detected in your environment. Please remove this environment variable."
+            warning = (
+                "PYTOOL_TEMPORARILY_IGNORE_NESTED_EDK_PACKAGES is no longer used by edk2-pytool-library, but is "
+                "detected in your environment. Please remove this environment variable."
+            )
             self.logger.log(logging.WARNING, warning)
         if "PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES" == os.environ:
-            warning = "PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES is no longer used by edk2-pytool-library, but is " \
-                      "detected in your environment. Please remove this environment variable."
+            warning = (
+                "PYTOOL_IGNORE_KNOWN_BAD_NESTED_PACKAGES is no longer used by edk2-pytool-library, but is "
+                "detected in your environment. Please remove this environment variable."
+            )
             self.logger.log(logging.WARNING, warning)
 
         package_path_packages = {}
         for package_path in self._package_path_list:
-            package_path_packages[package_path] = \
-                [p.parent for p in package_path.glob('**/*.dec')]
+            package_path_packages[package_path] = [p.parent for p in package_path.glob("**/*.dec")]
 
         for package_path, packages in package_path_packages.items():
             for i, package in enumerate(packages):
                 for j in range(i + 1, len(packages)):
                     comp_package = packages[j]
-                    if (package.is_relative_to(comp_package)
-                            or comp_package.is_relative_to(package)):
+                    if package.is_relative_to(comp_package) or comp_package.is_relative_to(package):
                         self.logger.log(
                             logging.DEBUG,
                             f"[{str(package)}] and [{str(comp_package)}] are nested. Nested packages are not allowed "
                             "and may result in incorrect conversions from absolute path to edk2 package path relative "
-                            "paths."
+                            "paths.",
                         )
 
     @property
-    def WorkspacePath(self: 'Edk2Path') -> str:
+    def WorkspacePath(self: "Edk2Path") -> str:
         """Workspace Path as a string."""
         return str(self._workspace_path)
 
     @property
-    def PackagePathList(self: 'Edk2Path') -> list[str]:
+    def PackagePathList(self: "Edk2Path") -> list[str]:
         """List of package paths as strings."""
         return [str(p) for p in self._package_path_list]
 
@@ -175,7 +177,6 @@ class Edk2Path(object):
         # path are in the same directory. See the following path_utilities_test for a detailed explanation of the
         # scenario: test_get_relative_path_when_folder_is_next_to_package
         for packagepath in sorted(self._package_path_list, reverse=True):
-
             # If a match is found, use the original string to avoid change in case
             if abspath.is_relative_to(packagepath):
                 self.logger.debug("Successfully converted AbsPath to Edk2Relative Path using PackagePath")
@@ -191,16 +192,16 @@ class Edk2Path(object):
 
         if found:
             relpath = relpath.as_posix()
-            self.logger.debug(f'[{abspath}] -> [{relpath}]')
+            self.logger.debug(f"[{abspath}] -> [{relpath}]")
             return relpath
 
         # Absolute path was not in reference to a package path or the workspace root.
         self.logger.error("Failed to convert AbsPath to Edk2Relative Path")
-        self.logger.error(f'AbsolutePath: {abspath}')
+        self.logger.error(f"AbsolutePath: {abspath}")
         return None
 
     def GetAbsolutePathOnThisSystemFromEdk2RelativePath(
-        self, *relpath: Tuple[str, ...], log_errors: Optional[bool]=True
+        self, *relpath: Tuple[str, ...], log_errors: Optional[bool] = True
     ) -> str:
         """Given a relative path return an absolute path to the file in this workspace.
 
@@ -278,7 +279,7 @@ class Edk2Path(object):
         while path_root != dirpath:
             if dirpath.exists():
                 for f in dirpath.iterdir():
-                    if f.suffix.lower() =='.dec':
+                    if f.suffix.lower() == ".dec":
                         return dirpath.name
 
             dirpath = dirpath.parent
@@ -337,7 +338,7 @@ class Edk2Path(object):
             return []
 
         modules = []
-        if input_path.suffix.lower() == '.inf':
+        if input_path.suffix.lower() == ".inf":
             # Return the file path given since it is a module .inf file
             modules = [str(input_path)]
 
@@ -365,9 +366,9 @@ class Edk2Path(object):
             current_dir = input_path.parent
             while current_dir not in maximum_root_paths:
                 if current_dir.is_dir():
-                    current_dir_inf_files = \
-                        [str(f) for f in current_dir.iterdir() if
-                         f.is_file() and f.suffix.lower() == '.inf']
+                    current_dir_inf_files = [
+                        str(f) for f in current_dir.iterdir() if f.is_file() and f.suffix.lower() == ".inf"
+                    ]
                     if current_dir_inf_files:
                         # A .inf file(s) exist in this directory.
                         #

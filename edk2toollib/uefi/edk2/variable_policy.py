@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Module containing helper classes and functions to work with Variable Policy structures and substructures."""
+
 import struct
 import uuid
 from typing import IO
@@ -24,12 +25,13 @@ class VariableLockOnVarStatePolicy(object):
         // CHAR16   Name[];           // Variable Length Field
     } VARIABLE_LOCK_ON_VAR_STATE_POLICY;
     """
+
     _HdrStructFormat = "<16sBB"
     _HdrStructSize = struct.calcsize(_HdrStructFormat)
 
-    def __init__(self) -> 'VariableLockOnVarStatePolicy':
+    def __init__(self) -> "VariableLockOnVarStatePolicy":
         """Initializes the Variable Lock On Var State Policy."""
-        self.Namespace = uuid.UUID(bytes=b'\x00' * 16)
+        self.Namespace = uuid.UUID(bytes=b"\x00" * 16)
         self.Value = 0
         self.Name = None
 
@@ -43,13 +45,12 @@ class VariableLockOnVarStatePolicy(object):
         Returns:
             (obj): any remaining buffer
         """
-        (_namespace, self.Value, _) = struct.unpack(
-            self._HdrStructFormat, buffer[:self._HdrStructSize])
+        (_namespace, self.Value, _) = struct.unpack(self._HdrStructFormat, buffer[: self._HdrStructSize])
 
         self.Namespace = uuid.UUID(bytes_le=_namespace)
 
         # Scan the rest of the buffer for a \x00\x00 to terminate the string.
-        buffer = buffer[self._HdrStructSize:]
+        buffer = buffer[self._HdrStructSize :]
         if len(buffer) < 4:
             raise ValueError("Buffer too short!")
 
@@ -62,7 +63,7 @@ class VariableLockOnVarStatePolicy(object):
         if string_end is None:
             raise ValueError("String end not detected!")
 
-        self.Name = buffer[:string_end].decode('utf-16').strip('\x00')
+        self.Name = buffer[:string_end].decode("utf-16").strip("\x00")
 
         return buffer[string_end:]
 
@@ -86,7 +87,8 @@ class VariablePolicyEntry(object):
             // CHAR16   Name[]            // Variable Length Field
         } VARIABLE_POLICY_ENTRY;
     """
-    _HdrStructFormat = "<IHH16sIIIIB3s"             # spell-checker:disable-line
+
+    _HdrStructFormat = "<IHH16sIIIIB3s"  # spell-checker:disable-line
     _HdrStructSize = struct.calcsize(_HdrStructFormat)
 
     ENTRY_REVISION = 0x0001_0000
@@ -108,12 +110,12 @@ class VariablePolicyEntry(object):
         TYPE_LOCK_ON_VAR_STATE: "ON_VAR_STATE",
     }
 
-    def __init__(self) -> 'VariablePolicyEntry':
+    def __init__(self) -> "VariablePolicyEntry":
         """Initializes the Variable Policy Entry."""
         self.Version = VariablePolicyEntry.ENTRY_REVISION
         self.Size = VariablePolicyEntry._HdrStructSize
         self.OffsetToName = self.Size
-        self.Namespace = uuid.UUID(bytes=b'\x00' * 16)
+        self.Namespace = uuid.UUID(bytes=b"\x00" * 16)
         self.MinSize = VariablePolicyEntry.NO_MIN_SIZE
         self.MaxSize = VariablePolicyEntry.NO_MAX_SIZE
         self.AttributesMustHave = VariablePolicyEntry.NO_MUST_ATTR
@@ -126,23 +128,39 @@ class VariablePolicyEntry(object):
         """String representation of the object."""
         result = "VARIABLE_POLICY_ENTRY(%s, %s)\n" % (self.Namespace, self.Name)
 
-        if self.LockPolicyType in (VariablePolicyEntry.TYPE_NO_LOCK,
-                                   VariablePolicyEntry.TYPE_LOCK_NOW,
-                                   VariablePolicyEntry.TYPE_LOCK_ON_CREATE):
+        if self.LockPolicyType in (
+            VariablePolicyEntry.TYPE_NO_LOCK,
+            VariablePolicyEntry.TYPE_LOCK_NOW,
+            VariablePolicyEntry.TYPE_LOCK_ON_CREATE,
+        ):
             result += "\tLock        = %s\n" % VariablePolicyEntry.LOCK_POLICY_STRING_MAP[self.LockPolicyType]
         elif self.LockPolicyType is VariablePolicyEntry.TYPE_LOCK_ON_VAR_STATE:
             result += "\tLock        = %s\n" % self.LockPolicy
 
         result += "\tMin = 0x%08X, Max = 0x%08X, Must = 0x%08X, Cant = 0x%08X\n" % (
-            self.MinSize, self.MaxSize, self.AttributesMustHave, self.AttributesCantHave)
+            self.MinSize,
+            self.MaxSize,
+            self.AttributesMustHave,
+            self.AttributesCantHave,
+        )
 
         return result
 
     @staticmethod
     def csv_header() -> list:
         """Returns a list containing the names of the ordered columns that are produced by csv_row()."""
-        return ['Namespace', 'Name', 'LockPolicyType', 'VarStateNamespace', 'VarStateName',
-                'VarStateValue', 'MinSize', 'MaxSize', 'AttributesMustHave', 'AttributesCantHave']
+        return [
+            "Namespace",
+            "Name",
+            "LockPolicyType",
+            "VarStateNamespace",
+            "VarStateName",
+            "VarStateValue",
+            "MinSize",
+            "MaxSize",
+            "AttributesMustHave",
+            "AttributesCantHave",
+        ]
 
     def csv_row(self, guid_xref: dict = None) -> list:
         """Returns a list containing the elements of this structure.
@@ -155,21 +173,31 @@ class VariablePolicyEntry(object):
         if guid_xref is None:
             guid_xref = {}
 
-        result = [guid_xref.get(self.Namespace, self.Namespace),
-                  self.Name, VariablePolicyEntry.LOCK_POLICY_STRING_MAP[self.LockPolicyType]]
+        result = [
+            guid_xref.get(self.Namespace, self.Namespace),
+            self.Name,
+            VariablePolicyEntry.LOCK_POLICY_STRING_MAP[self.LockPolicyType],
+        ]
 
-        if self.LockPolicyType in (VariablePolicyEntry.TYPE_NO_LOCK,
-                                   VariablePolicyEntry.TYPE_LOCK_NOW,
-                                   VariablePolicyEntry.TYPE_LOCK_ON_CREATE):
-            result += ['N/A', 'N/A', 'N/A']
+        if self.LockPolicyType in (
+            VariablePolicyEntry.TYPE_NO_LOCK,
+            VariablePolicyEntry.TYPE_LOCK_NOW,
+            VariablePolicyEntry.TYPE_LOCK_ON_CREATE,
+        ):
+            result += ["N/A", "N/A", "N/A"]
         elif self.LockPolicyType is VariablePolicyEntry.TYPE_LOCK_ON_VAR_STATE:
-            result += [guid_xref.get(self.LockPolicy.Namespace, self.LockPolicy.Namespace),
-                       self.LockPolicy.Name, self.LockPolicy.Value]
+            result += [
+                guid_xref.get(self.LockPolicy.Namespace, self.LockPolicy.Namespace),
+                self.LockPolicy.Name,
+                self.LockPolicy.Value,
+            ]
 
-        result += ["0x%08X" % self.MinSize,
-                   "0x%08X" % self.MaxSize,
-                   str(EfiVariableAttributes(self.AttributesMustHave)),
-                   str(EfiVariableAttributes(self.AttributesCantHave))]
+        result += [
+            "0x%08X" % self.MinSize,
+            "0x%08X" % self.MaxSize,
+            str(EfiVariableAttributes(self.AttributesMustHave)),
+            str(EfiVariableAttributes(self.AttributesCantHave)),
+        ]
 
         return result
 
@@ -179,10 +207,18 @@ class VariablePolicyEntry(object):
         Returns:
             (bytes): Any remaining buffer
         """
-        (self.Version, self.Size, self.OffsetToName, _namespace,
-            self.MinSize, self.MaxSize, self.AttributesMustHave,
-            self.AttributesCantHave, self.LockPolicyType, _) = struct.unpack(
-                self._HdrStructFormat, buffer[:self._HdrStructSize])
+        (
+            self.Version,
+            self.Size,
+            self.OffsetToName,
+            _namespace,
+            self.MinSize,
+            self.MaxSize,
+            self.AttributesMustHave,
+            self.AttributesCantHave,
+            self.LockPolicyType,
+            _,
+        ) = struct.unpack(self._HdrStructFormat, buffer[: self._HdrStructSize])
 
         if self.Version != VariablePolicyEntry.ENTRY_REVISION:
             raise ValueError("Unknown structure version!")
@@ -192,10 +228,10 @@ class VariablePolicyEntry(object):
         self.Namespace = uuid.UUID(bytes_le=_namespace)
 
         if self.OffsetToName != self.Size:
-            self.Name = buffer[self.OffsetToName:self.Size].decode('utf-16').strip('\x00')
+            self.Name = buffer[self.OffsetToName : self.Size].decode("utf-16").strip("\x00")
 
         if self.LockPolicyType == VariablePolicyEntry.TYPE_LOCK_ON_VAR_STATE:
             self.LockPolicy = VariableLockOnVarStatePolicy()
-            self.LockPolicy.decode(buffer[self._HdrStructSize:self.OffsetToName])
+            self.LockPolicy.decode(buffer[self._HdrStructSize : self.OffsetToName])
 
-        return buffer[self.Size:]
+        return buffer[self.Size :]

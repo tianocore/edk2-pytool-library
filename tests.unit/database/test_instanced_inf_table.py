@@ -7,6 +7,7 @@
 ##
 # ruff: noqa: F811
 """unittests for the InfTable generator."""
+
 import logging
 from pathlib import Path
 
@@ -26,6 +27,7 @@ WHERE
     AND ii.arch = ?
 """
 
+
 def test_valid_dsc(empty_tree: Tree):
     """Tests that a typical dsc can be correctly parsed."""
     edk2path = Edk2Path(str(empty_tree.ws), [])
@@ -35,8 +37,8 @@ def test_valid_dsc(empty_tree: Tree):
     comp1 = empty_tree.create_component("TestComponent1", "DXE_DRIVER")
     lib1 = empty_tree.create_library("TestLib1", "TestCls")
     dsc = empty_tree.create_dsc(
-        libraryclasses = [lib1],
-        components = [str(empty_tree.ws / comp1), lib1]  # absolute comp path
+        libraryclasses=[lib1],
+        components=[str(empty_tree.ws / comp1), lib1],  # absolute comp path
     )
 
     env = {
@@ -51,6 +53,7 @@ def test_valid_dsc(empty_tree: Tree):
         assert len(rows) == 1
         assert rows[0].component == Path(comp1).as_posix()
 
+
 def test_no_active_platform(empty_tree: Tree, caplog):
     """Tests that the dsc table returns immediately when no ACTIVE_PLATFORM is defined."""
     caplog.set_level(logging.DEBUG)
@@ -59,21 +62,22 @@ def test_no_active_platform(empty_tree: Tree, caplog):
     db.register(InstancedInfTable())
 
     # Test 1: raise error for missing ACTIVE_PLATFORM
-    with pytest.raises(KeyError, match = "ACTIVE_PLATFORM"):
+    with pytest.raises(KeyError, match="ACTIVE_PLATFORM"):
         db.parse({})
 
     # Test 2: raise error for missing TARGET_ARCH
-    with pytest.raises(KeyError, match = "TARGET_ARCH"):
-        db.parse({
-            "ACTIVE_PLATFORM": "Test.dsc"
-        })
+    with pytest.raises(KeyError, match="TARGET_ARCH"):
+        db.parse({"ACTIVE_PLATFORM": "Test.dsc"})
 
     # Test 3: raise error for missing TARGET
-    with pytest.raises(KeyError, match = "TARGET"):
-        db.parse({
-            "ACTIVE_PLATFORM": "Test.dsc",
-            "TARGET_ARCH": "IA32",
-        })
+    with pytest.raises(KeyError, match="TARGET"):
+        db.parse(
+            {
+                "ACTIVE_PLATFORM": "Test.dsc",
+                "TARGET_ARCH": "IA32",
+            }
+        )
+
 
 def test_dsc_with_conditional(empty_tree: Tree):
     """Tests that conditionals inside a DSC works as expected."""
@@ -82,14 +86,9 @@ def test_dsc_with_conditional(empty_tree: Tree):
     db.register(InstancedInfTable())
 
     empty_tree.create_library("TestLib", "SortLib")
-    comp1 = empty_tree.create_component('TestComponent1', 'DXE_DRIVER')
+    comp1 = empty_tree.create_component("TestComponent1", "DXE_DRIVER")
 
-    dsc = empty_tree.create_dsc(
-        components = [
-            "!if $(TARGET) == \"RELEASE\"",
-            f"{comp1}",
-            "!endif"
-    ])
+    dsc = empty_tree.create_dsc(components=['!if $(TARGET) == "RELEASE"', f"{comp1}", "!endif"])
 
     env = {
         "ACTIVE_PLATFORM": dsc,
@@ -102,6 +101,7 @@ def test_dsc_with_conditional(empty_tree: Tree):
         rows = session.query(InstancedInf).all()
         assert len(rows) == 0
 
+
 def test_library_override(empty_tree: Tree):
     """Tests that overrides and null library overrides can be parsed as expected."""
     edk2path = Edk2Path(str(empty_tree.ws), [])
@@ -112,24 +112,21 @@ def test_library_override(empty_tree: Tree):
     lib2 = empty_tree.create_library("TestLib2", "TestCls")
     lib3 = empty_tree.create_library("TestLib3", "TestNullCls")
 
-    comp1 = empty_tree.create_component(
-        "TestDriver1", "DXE_DRIVER",
-        libraryclasses = ["TestCls"]
-    )
+    comp1 = empty_tree.create_component("TestDriver1", "DXE_DRIVER", libraryclasses=["TestCls"])
 
     dsc = empty_tree.create_dsc(
-        libraryclasses = [
-            f'TestCls|{lib1}',
+        libraryclasses=[
+            f"TestCls|{lib1}",
         ],
-        components = [
-            f'{comp1} {{',
-            '<LibraryClasses>',
+        components=[
+            f"{comp1} {{",
+            "<LibraryClasses>",
             '!if $(TARGET) == "DEBUG"',
-            f'TestCls|{lib2}',
-            f'NULL|{lib3}',
-            '!endif',
-            '}',
-        ]
+            f"TestCls|{lib2}",
+            f"NULL|{lib3}",
+            "!endif",
+            "}",
+        ],
     )
 
     env = {
@@ -139,10 +136,11 @@ def test_library_override(empty_tree: Tree):
     }
     db.parse(env)
     with db.session() as session:
-        for entry in session.query(InstancedInf).filter_by(path = Path(comp1).as_posix()).all():
+        for entry in session.query(InstancedInf).filter_by(path=Path(comp1).as_posix()).all():
             assert len(entry.libraries) == 2
             for library in entry.libraries:
                 assert library.name in ["TestLib2", "TestLib3"]
+
 
 def test_scoped_libraries1(empty_tree: Tree):
     """Ensure that the correct libraries in regards to scoping.
@@ -156,21 +154,21 @@ def test_scoped_libraries1(empty_tree: Tree):
     db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
     db.register(InstancedInfTable())
 
-    lib1 = empty_tree.create_library("TestLib1", "TestCls", sources = ["File1.c"])
-    lib2 = empty_tree.create_library("TestLib2", "TestCls", sources = ["File2.c"])
-    lib3 = empty_tree.create_library("TestLib3", "TestCls", sources = ["File3.c"])
+    lib1 = empty_tree.create_library("TestLib1", "TestCls", sources=["File1.c"])
+    lib2 = empty_tree.create_library("TestLib2", "TestCls", sources=["File2.c"])
+    lib3 = empty_tree.create_library("TestLib3", "TestCls", sources=["File3.c"])
 
-    comp1 = empty_tree.create_component("TestDriver1", "PEIM", libraryclasses = ["TestCls"])
-    comp2 = empty_tree.create_component("TestDriver2", "SEC", libraryclasses = ["TestCls"])
-    comp3 = empty_tree.create_component("TestDriver3", "PEIM", libraryclasses = ["TestCls"])
+    comp1 = empty_tree.create_component("TestDriver1", "PEIM", libraryclasses=["TestCls"])
+    comp2 = empty_tree.create_component("TestDriver2", "SEC", libraryclasses=["TestCls"])
+    comp3 = empty_tree.create_component("TestDriver3", "PEIM", libraryclasses=["TestCls"])
 
     dsc = empty_tree.create_dsc(
-        libraryclasses = [f'TestCls|{lib1}'],
-        libraryclasses_ia32 = [f'TestCls|{lib2}'],
-        libraryclasses_ia32_peim = [f'TestCls|{lib3}'],
-        components = [],
-        components_x64 = [comp1],
-        components_ia32 = [comp2, comp3]
+        libraryclasses=[f"TestCls|{lib1}"],
+        libraryclasses_ia32=[f"TestCls|{lib2}"],
+        libraryclasses_ia32_peim=[f"TestCls|{lib3}"],
+        components=[],
+        components_x64=[comp1],
+        components_ia32=[comp2, comp3],
     )
 
     env = {
@@ -181,7 +179,7 @@ def test_scoped_libraries1(empty_tree: Tree):
     db.parse(env)
 
     with db.session() as session:
-        for component in session.query(InstancedInf).filter_by(cls = None).all():
+        for component in session.query(InstancedInf).filter_by(cls=None).all():
             assert len(component.libraries) == 1
             component_path = Path(component.path)
             library_path = Path(component.libraries[0].path)
@@ -191,6 +189,7 @@ def test_scoped_libraries1(empty_tree: Tree):
         assert len(source_list) == 3
         for source in source_list:
             assert Path(source.path).name in ["File1.c", "File2.c", "File3.c"]
+
 
 def test_scoped_libraries2(empty_tree: Tree):
     """Ensure that the correct libraries in regards to scoping.
@@ -207,14 +206,14 @@ def test_scoped_libraries2(empty_tree: Tree):
     lib1 = empty_tree.create_library("TestLib1", "TestCls")
     lib2 = empty_tree.create_library("TestLib2", "TestCls")
 
-    comp1 = empty_tree.create_component("TestDriver1", "PEIM", libraryclasses = ["TestCls"])
-    comp2 = empty_tree.create_component("TestDriver2", "SEC", libraryclasses = ["TestCls"])
+    comp1 = empty_tree.create_component("TestDriver1", "PEIM", libraryclasses=["TestCls"])
+    comp2 = empty_tree.create_component("TestDriver2", "SEC", libraryclasses=["TestCls"])
 
     dsc = empty_tree.create_dsc(
-        libraryclasses_common_peim = [f'TestCls|{lib1}'],
-        libraryclasses = [f'TestCls|{lib2}'],
-        components = [],
-        components_x64 = [comp1, comp2],
+        libraryclasses_common_peim=[f"TestCls|{lib1}"],
+        libraryclasses=[f"TestCls|{lib2}"],
+        components=[],
+        components_x64=[comp1, comp2],
     )
 
     env = {
@@ -225,11 +224,12 @@ def test_scoped_libraries2(empty_tree: Tree):
     db.parse(env)
 
     with db.session() as session:
-        for component in session.query(InstancedInf).filter_by(cls = None).all():
+        for component in session.query(InstancedInf).filter_by(cls=None).all():
             assert len(component.libraries) == 1
             component_path = Path(component.path)
             library_path = Path(component.libraries[0].path)
             assert library_path.name == component_path.name.replace("Driver", "Lib")
+
 
 def test_missing_library(empty_tree: Tree):
     """Test when a library is missing."""
@@ -237,12 +237,12 @@ def test_missing_library(empty_tree: Tree):
     db = Edk2DB(empty_tree.ws / "db.db", pathobj=edk2path)
     db.register(InstancedInfTable())
 
-    comp1 = empty_tree.create_component("TestDriver1", "PEIM", libraryclasses = ["TestCls"])
+    comp1 = empty_tree.create_component("TestDriver1", "PEIM", libraryclasses=["TestCls"])
 
     dsc = empty_tree.create_dsc(
-        libraryclasses = [],
-        components = [],
-        components_x64 = [comp1],
+        libraryclasses=[],
+        components=[],
+        components_x64=[comp1],
     )
 
     env = {
@@ -257,28 +257,30 @@ def test_missing_library(empty_tree: Tree):
     # key2 = db.connection.execute("SELECT instanced_inf2 FROM instanced_inf_junction").fetchone()[0]
     # assert key2 is None  # This library class does not have an instance available, so key2 should be None
 
+
 def test_multiple_library_class(empty_tree: Tree):
     """Test that a library INF that has multiple library class definitions is handled correctly."""
     edk2path = Edk2Path(str(empty_tree.ws), [])
     db = Edk2DB(":memory:", pathobj=edk2path)
     db.register(InstancedInfTable())
 
-    lib1 = empty_tree.create_library("TestLib", "TestCls", default = {
-        "MODULE_TYPE": "BASE",
-        "BASE_NAME": "TestLib1",
-        "LIBRARY_CLASS 1": "TestCls1",
-        "LIBRARY_CLASS 2": "TestCls2",
-    })
+    lib1 = empty_tree.create_library(
+        "TestLib",
+        "TestCls",
+        default={
+            "MODULE_TYPE": "BASE",
+            "BASE_NAME": "TestLib1",
+            "LIBRARY_CLASS 1": "TestCls1",
+            "LIBRARY_CLASS 2": "TestCls2",
+        },
+    )
 
-    comp1 = empty_tree.create_component("TestDriver1", "DXE_RUNTIME_DRIVER", libraryclasses = ["TestCls1"])
-    comp2 = empty_tree.create_component("TestDriver2", "DXE_DRIVER", libraryclasses = ["TestCls2"])
+    comp1 = empty_tree.create_component("TestDriver1", "DXE_RUNTIME_DRIVER", libraryclasses=["TestCls1"])
+    comp2 = empty_tree.create_component("TestDriver2", "DXE_DRIVER", libraryclasses=["TestCls2"])
 
     dsc = empty_tree.create_dsc(
-        libraryclasses = [
-            f'TestCls1|{lib1}',
-            f'TestCls2|{lib1}'
-        ],
-        components = [comp1, comp2],
+        libraryclasses=[f"TestCls1|{lib1}", f"TestCls2|{lib1}"],
+        components=[comp1, comp2],
     )
 
     env = {
@@ -290,15 +292,15 @@ def test_multiple_library_class(empty_tree: Tree):
     db.parse(env)
 
     with db.session() as session:
-        infs = session.query(InstancedInf).filter_by(cls = None ).all()
+        infs = session.query(InstancedInf).filter_by(cls=None).all()
         assert len(infs) == 2
 
-        assert infs[0].path == Path(comp1).as_posix() # If this fails, The order of returned objects may have changed
+        assert infs[0].path == Path(comp1).as_posix()  # If this fails, The order of returned objects may have changed
         assert len(infs[0].libraries) == 1
         assert infs[0].libraries[0].path == Path(lib1).as_posix()
         assert infs[0].libraries[0].cls == "TestCls1"
 
-        assert infs[1].path == Path(comp2).as_posix() # If this fails, The order of returned objects may have changed
+        assert infs[1].path == Path(comp2).as_posix()  # If this fails, The order of returned objects may have changed
         assert len(infs[1].libraries) == 1
         assert infs[1].libraries[0].path == Path(lib1).as_posix()
         assert infs[1].libraries[0].cls == "TestCls2"
@@ -313,10 +315,10 @@ def test_absolute_paths_in_dsc(empty_tree: Tree):
     comp1 = empty_tree.create_component("TestDriver", "DXE_DRIVER", libraryclasses=["TestCls"])
 
     dsc = empty_tree.create_dsc(
-        libraryclasses = [
-            f'TestCls| {str(empty_tree.ws / lib1)}',
+        libraryclasses=[
+            f"TestCls| {str(empty_tree.ws / lib1)}",
         ],
-        components = [
+        components=[
             str(empty_tree.ws / comp1),
         ],
     )
@@ -334,6 +336,7 @@ def test_absolute_paths_in_dsc(empty_tree: Tree):
         assert len(rows) == 2
         assert rows[0].path == Path(lib1).as_posix()
         assert rows[1].path == Path(comp1).as_posix()
+
 
 def test_closest_packagepath(empty_tree: Tree):
     common_folder = empty_tree.ws / "Common"
@@ -353,11 +356,11 @@ def test_closest_packagepath(empty_tree: Tree):
 
     # Specify the file paths to be relative to the farther away package path
     dsc = empty_tree.create_dsc(
-        libraryclasses = [
-            'TestCls|SubFolder/Library/TestLib.inf',
+        libraryclasses=[
+            "TestCls|SubFolder/Library/TestLib.inf",
         ],
-        components = [
-            'SubFolder/Drivers/TestDriver.inf',
+        components=[
+            "SubFolder/Drivers/TestDriver.inf",
         ],
     )
 
@@ -378,6 +381,7 @@ def test_closest_packagepath(empty_tree: Tree):
         for row in rows:
             assert row.path.startswith(("Library", "Drivers"))
 
+
 def test_dsc_with_component_section_moduletype_definition(empty_tree: Tree, caplog):
     """Component sections with a moduletype definition is not necessary and should be ignored.
 
@@ -393,11 +397,11 @@ def test_dsc_with_component_section_moduletype_definition(empty_tree: Tree, capl
     comp1 = empty_tree.create_component("TestDriver", "PEIM", libraryclasses=["TestCls"])
 
     dsc = empty_tree.create_dsc(
-        libraryclasses = [
-            f'TestCls| {Path(lib1).as_posix()}',
+        libraryclasses=[
+            f"TestCls| {Path(lib1).as_posix()}",
         ],
-        components = [],
-        components_ia32_PEIM = [
+        components=[],
+        components_ia32_PEIM=[
             Path(comp1).as_posix(),
         ],
     )
@@ -410,6 +414,7 @@ def test_dsc_with_component_section_moduletype_definition(empty_tree: Tree, capl
 
     # Should not error
     db.parse(env)
+
 
 def test_dsc_with_null_lib_in_libraryclasses_section(empty_tree: Tree):
     edk2path = Edk2Path(str(empty_tree.ws), [])
@@ -424,23 +429,23 @@ def test_dsc_with_null_lib_in_libraryclasses_section(empty_tree: Tree):
     comp1 = empty_tree.create_component("TestDriver", "PEIM", libraryclasses=["TestCls"])
 
     dsc = empty_tree.create_dsc(
-        libraryclasses = [
-            f'TestCls| {Path(lib1).as_posix()}',
-            f'NULL| {Path(nulllib1).as_posix()}',
+        libraryclasses=[
+            f"TestCls| {Path(lib1).as_posix()}",
+            f"NULL| {Path(nulllib1).as_posix()}",
         ],
-        libraryclasses_x64 = [
-            f'NULL| {Path(nulllib2).as_posix()}',
+        libraryclasses_x64=[
+            f"NULL| {Path(nulllib2).as_posix()}",
         ],
-        libraryclasses_x64_DXE_DRIVER = [
-            f'NULL| {Path(nulllib3).as_posix()}',
+        libraryclasses_x64_DXE_DRIVER=[
+            f"NULL| {Path(nulllib3).as_posix()}",
         ],
-        components = [],
-        components_ia32_PEIM = [
+        components=[],
+        components_ia32_PEIM=[
             Path(comp1).as_posix(),
         ],
-        components_x64 = [
+        components_x64=[
             Path(comp1).as_posix(),
-        ]
+        ],
     )
 
     env = {
@@ -452,7 +457,7 @@ def test_dsc_with_null_lib_in_libraryclasses_section(empty_tree: Tree):
     db.parse(env)
 
     with db.session() as session:
-        component = session.query(InstancedInf).filter_by(cls = None).one()
+        component = session.query(InstancedInf).filter_by(cls=None).one()
         assert len(component.libraries) == 2
 
     db = Edk2DB(":memory:", pathobj=edk2path)
@@ -466,5 +471,5 @@ def test_dsc_with_null_lib_in_libraryclasses_section(empty_tree: Tree):
     db.parse(env)
 
     with db.session() as session:
-        component = session.query(InstancedInf).filter_by(cls = None).one()
+        component = session.query(InstancedInf).filter_by(cls=None).one()
         assert len(component.libraries) == 3

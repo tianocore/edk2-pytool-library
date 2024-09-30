@@ -19,16 +19,15 @@ from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 
 class PathUtilitiesTest(unittest.TestCase):
-
     def _make_file_helper(self, parentpath: str, filename: str) -> None:
-        '''Simple internal helper to make a file and write basic content.'''
+        """Simple internal helper to make a file and write basic content."""
         with open(os.path.join(parentpath, filename), "w") as f:
             f.write("Unit test content")
 
     def _make_edk2_module_helper(self, parentpath: str, modname: str, extension_case_lower: bool = True) -> str:
-        '''Simple internal helper to make a folder and inf like edk2
+        """Simple internal helper to make a folder and inf like edk2
         return the path to the module folder.
-        '''
+        """
         modfolder = os.path.join(parentpath, modname)
         os.makedirs(modfolder, exist_ok=True)
         fn = modname + (".inf" if extension_case_lower else ".INF")
@@ -36,7 +35,7 @@ class PathUtilitiesTest(unittest.TestCase):
         return modfolder
 
     def _make_edk2_package_helper(self, path: str, packagename: str, extension_case_lower: bool = True) -> str:
-        '''Simple internal helper to make an ed2 package as follows:
+        """Simple internal helper to make an ed2 package as follows:
 
         path/
           packagename/
@@ -49,7 +48,7 @@ class PathUtilitiesTest(unittest.TestCase):
                 TestFile.c
 
         return the path to the new package
-        '''
+        """
         pkgfolder = os.path.join(path, packagename)
         os.makedirs(pkgfolder, exist_ok=True)
         pn = packagename + (".dec" if extension_case_lower else ".DEC")
@@ -62,17 +61,17 @@ class PathUtilitiesTest(unittest.TestCase):
         return pkgfolder
 
     def setUp(self):
-        '''Unittest fixture run before each test.
+        """Unittest fixture run before each test.
         Create a tmpdir and set the current working dir there.
-        '''
+        """
         self.tmp = tempfile.mkdtemp()
         self.precwd = os.getcwd()
         os.chdir(self.tmp)  # move to tempfile root
 
     def tearDown(self):
-        '''Unittest fixture run after each test.
+        """Unittest fixture run after each test.
         Delete the tempdir and set the current working dir back.
-        '''
+        """
         os.chdir(self.precwd)
         if os.path.isdir(self.tmp):
             shutil.rmtree(self.tmp)
@@ -80,12 +79,12 @@ class PathUtilitiesTest(unittest.TestCase):
     # TESTS
 
     def test_basic_init_ws_abs(self):
-        '''Test edk2path with valid absolute path to workspace.'''
+        """Test edk2path with valid absolute path to workspace."""
         pathobj = Edk2Path(self.tmp, [])
         self.assertEqual(pathobj.WorkspacePath, self.tmp)
 
     def test_basic_init_ws_cwd(self):
-        '''Test edk2path with a relative path to workspace.'''
+        """Test edk2path with a relative path to workspace."""
         relpath = "testrootfolder"
         fullpath = os.path.join(self.tmp, relpath)
         os.mkdir(fullpath)
@@ -93,13 +92,13 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(pathobj.WorkspacePath, fullpath)
 
     def test_nonexistant_ws(self):
-        '''Test edk2path with invalid workspace.'''
+        """Test edk2path with invalid workspace."""
         invalid_ws = os.path.join(self.tmp, "invalidpath")
         with self.assertRaises(Exception):
             Edk2Path(invalid_ws, [])
 
     def test_nonexistant_abs(self):
-        '''Test edk2path with valid ws but invalid pp.'''
+        """Test edk2path with valid ws but invalid pp."""
         pp = "doesnot_exist"
         pp_full_1 = os.path.join(self.tmp, pp)
         # absolute path
@@ -113,13 +112,13 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(len(pathobj.PackagePathList), 0)
 
     def test_pp_inside_workspace(self):
-        '''Test with packagespath pointing to folder nested inside workspace
+        """Test with packagespath pointing to folder nested inside workspace
         root/                   <-- current working directory
             folder_ws/           <-- workspace root
                 folder_pp/       <-- packages path
                     pp packages here
                 ws packages here.
-        '''
+        """
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
@@ -143,14 +142,14 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(pathobj.PackagePathList[0], folder_pp1_abs)
 
     def test_pp_outside_workspace(self):
-        '''Test with packagespath pointing to folder outside of workspace
+        """Test with packagespath pointing to folder outside of workspace
         root/                   <-- current working directory
             folder_ws/           <-- workspace root
                 ws packages here
             folder_pp/       <-- packages path
                 pp packages here.
 
-        '''
+        """
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
@@ -176,9 +175,9 @@ class PathUtilitiesTest(unittest.TestCase):
 
         with self.assertRaises(NotADirectoryError) as context:
             Edk2Path(str(ws), ["bad_pp_path", "bad_pp_path2", "good_path"], error_on_invalid_pp=True)
-        self.assertTrue('bad_pp_path' in str(context.exception))
-        self.assertTrue('bad_pp_path2' in str(context.exception))
-        self.assertTrue('good_path' not in str(context.exception))
+        self.assertTrue("bad_pp_path" in str(context.exception))
+        self.assertTrue("bad_pp_path2" in str(context.exception))
+        self.assertTrue("good_path" not in str(context.exception))
 
         # Make sure we don't throw an exception unless we mean to
         Edk2Path(str(ws), ["bad_pp_path", "bad_pp_path2", "good_path"], error_on_invalid_pp=False)
@@ -193,7 +192,7 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertNotEqual(pathobj.WorkspacePath, self.tmp)
 
     def test_get_containing_package_inside_workspace(self):
-        '''Test basic usage of GetContainingPackage with packages path nested
+        """Test basic usage of GetContainingPackage with packages path nested
         inside the workspace.
 
         File layout:
@@ -217,7 +216,7 @@ class PathUtilitiesTest(unittest.TestCase):
                         module2.inf
                         X64/
                             TestFile.c
-        '''
+        """
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
@@ -266,7 +265,7 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertIsNone(pathobj.GetContainingPackage(p))
 
     def test_get_containing_package_outside_workspace(self):
-        '''Test basic usage of GetContainingPackage with packages path
+        """Test basic usage of GetContainingPackage with packages path
         outside the workspace.
 
         File layout:
@@ -290,7 +289,7 @@ class PathUtilitiesTest(unittest.TestCase):
                         module2.INF
                         X64/
                             TestFile.c
-        '''
+        """
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
@@ -333,7 +332,7 @@ class PathUtilitiesTest(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_get_containing_package_ws_abs_different_case(self):
-        '''Test basic usage of GetContainingPackage when the workspace path has different case for
+        """Test basic usage of GetContainingPackage when the workspace path has different case for
         the drive letter then the incoming paths. This can happen on Windows
         if os.path.realpath is used.
 
@@ -358,7 +357,7 @@ class PathUtilitiesTest(unittest.TestCase):
                         module2.inf
                         X64/
                             TestFile.c
-        '''
+        """
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         wsi_abs = os.path.join(self.tmp, ws_rel.capitalize())  # invert the case of the first char of the ws folder name
@@ -405,7 +404,7 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertIsNone(pathobj.GetContainingPackage(p), folder_pp_rel)
 
     def test_get_containing_package_with_nonexistent_path(self):
-        '''Test basic usage of GetContainingPackage when the file path does not exist.
+        """Test basic usage of GetContainingPackage when the file path does not exist.
 
         File layout:
 
@@ -428,7 +427,7 @@ class PathUtilitiesTest(unittest.TestCase):
                         module2.inf
                         X64/
                             TestFile.c
-        '''
+        """
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         wsi_abs = os.path.join(self.tmp, ws_rel)
@@ -513,7 +512,7 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertRaises(Exception, pathobj.GetContainingModules, p)
 
     def test_get_containing_module_with_infs_in_other_temp_dirs(self):
-        '''Test that GetContainingModule does not look outside the workspace
+        """Test that GetContainingModule does not look outside the workspace
         root for modules. To do so, a temporary .inf file is placed in the
         user's temporary directory. Such a file could already exist and
         similarly impact test results. To ensure consistent test results, this
@@ -533,7 +532,7 @@ class PathUtilitiesTest(unittest.TestCase):
                            module2.inf
                            X64
                                TestFile.c
-        '''
+        """
         # Make the workspace directory: <self.tmp>/folder_ws/
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
@@ -545,7 +544,7 @@ class PathUtilitiesTest(unittest.TestCase):
         # Place a .inf file in the temporary directory
         # <Temporary Directory>/SomeModule.inf
         other_inf = os.path.join(os.path.dirname(self.tmp), "SomeModule.inf")
-        with open(other_inf, 'w'):
+        with open(other_inf, "w"):
             pass
 
         try:
@@ -624,7 +623,7 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(expected_module_inf, actual_module_inf_list[0])
 
     def test_get_containing_module(self):
-        '''Test basic usage of GetContainingModule with packages path nested
+        """Test basic usage of GetContainingModule with packages path nested
         inside the workspace.
 
         File layout:
@@ -648,7 +647,7 @@ class PathUtilitiesTest(unittest.TestCase):
                         module2.inf
                         X64/
                             TestFile.c
-        '''
+        """
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
@@ -670,9 +669,7 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_pkg_abs, "module1", "testfile.c")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 1)
-        self.assertEqual(
-            Path(os.path.join(ws_pkg_abs, "module1", "module1.inf")),
-            Path(relist[0]))
+        self.assertEqual(Path(os.path.join(ws_pkg_abs, "module1", "module1.inf")), Path(relist[0]))
 
         # file in workspace root - no package- should return ws root
         p = os.path.join(ws_abs, "testfile.c")
@@ -688,17 +685,13 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_pkg_abs, "module2", "X64", "testfile.c")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 1)
-        self.assertEqual(
-            Path(os.path.join(ws_pkg_abs, "module2", "module2.inf")),
-            Path(relist[0]))
+        self.assertEqual(Path(os.path.join(ws_pkg_abs, "module2", "module2.inf")), Path(relist[0]))
 
         # inf file in module2 x64
         p = os.path.join(ws_pkg_abs, "module2", "module2.inf")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 1)
-        self.assertEqual(
-            Path(os.path.join(ws_pkg_abs, "module2", "module2.inf")),
-            Path(relist[0]))
+        self.assertEqual(Path(os.path.join(ws_pkg_abs, "module2", "module2.inf")), Path(relist[0]))
 
         # file in PPTestPkg root
         p = os.path.join(pp_pkg_abs, "testfile.c")
@@ -709,17 +702,13 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(pp_pkg_abs, "module1", "testfile.c")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 1)
-        self.assertEqual(
-            Path(os.path.join(pp_pkg_abs, "module1", "module1.INF")),
-            Path(relist[0]))
+        self.assertEqual(Path(os.path.join(pp_pkg_abs, "module1", "module1.INF")), Path(relist[0]))
 
         # inf file in module in PPTestPkg
         p = os.path.join(pp_pkg_abs, "module1", "module1.INF")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 1)
-        self.assertEqual(
-            Path(os.path.join(pp_pkg_abs, "module1", "module1.INF")),
-            Path(relist[0]))
+        self.assertEqual(Path(os.path.join(pp_pkg_abs, "module1", "module1.INF")), Path(relist[0]))
 
         # file in packages path root - no module
         p = os.path.join(folder_pp1_abs, "testfile.c")
@@ -741,9 +730,7 @@ class PathUtilitiesTest(unittest.TestCase):
         p = os.path.join(ws_pkg_abs, "module1", "ThisParentDirDoesNotExist", "testfile.c")
         relist = pathobj.GetContainingModules(p)
         self.assertEqual(len(relist), 1)
-        self.assertEqual(
-            Path(os.path.join(ws_pkg_abs, "module1", "module1.inf")),
-            Path(relist[0]))
+        self.assertEqual(Path(os.path.join(ws_pkg_abs, "module1", "module1.inf")), Path(relist[0]))
 
     def test_get_edk2_relative_path_from_absolute_path_posix(self):
         """Test that relative path returned is a POSIX path.
@@ -806,11 +793,13 @@ class PathUtilitiesTest(unittest.TestCase):
         actual_rel_from_abs_path = pathobj.GetEdk2RelativePathFromAbsolutePath(p)
         self.assertEqual(expected_rel_from_abs_path, actual_rel_from_abs_path)
 
-        actual_rel_from_abs_path = pathobj.GetEdk2RelativePathFromAbsolutePath(ws_pkg_abs, "module_2", "X64", "TestFile.inf")
+        actual_rel_from_abs_path = pathobj.GetEdk2RelativePathFromAbsolutePath(
+            ws_pkg_abs, "module_2", "X64", "TestFile.inf"
+        )
         self.assertEqual(expected_rel_from_abs_path, actual_rel_from_abs_path)
 
     def test_get_edk2_relative_path_from_absolute_path(self):
-        '''Test basic usage of GetEdk2RelativePathFromAbsolutePath with packages path nested
+        """Test basic usage of GetEdk2RelativePathFromAbsolutePath with packages path nested
         inside the workspace.
 
         File layout:
@@ -834,7 +823,7 @@ class PathUtilitiesTest(unittest.TestCase):
                         module2.inf
                         X64/
                             TestFile.c
-        '''
+        """
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
@@ -854,17 +843,24 @@ class PathUtilitiesTest(unittest.TestCase):
         # file in workspace
         p = os.path.join(ws_pkg_abs, "module2", "X64", "TestFile.c")
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{ws_p_name}/module2/X64/TestFile.c")
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(ws_pkg_abs, "module2", "X64", "TestFile.c"), f"{ws_p_name}/module2/X64/TestFile.c")
+        self.assertEqual(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(ws_pkg_abs, "module2", "X64", "TestFile.c"),
+            f"{ws_p_name}/module2/X64/TestFile.c",
+        )
 
         # Folder in packages path
         p = os.path.join(pp_pkg_abs, "module2", "X64")
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{pp_p_name}/module2/X64")
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(pp_pkg_abs, "module2", "X64"), f"{pp_p_name}/module2/X64")
+        self.assertEqual(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(pp_pkg_abs, "module2", "X64"), f"{pp_p_name}/module2/X64"
+        )
 
         # Folder in workspace
         p = os.path.join(ws_pkg_abs, "module2", "X64")
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{ws_p_name}/module2/X64")
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(ws_pkg_abs, "module2", "X64"), f"{ws_p_name}/module2/X64")
+        self.assertEqual(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(ws_pkg_abs, "module2", "X64"), f"{ws_p_name}/module2/X64"
+        )
 
         # file not in workspace
         p = os.path.join(self.tmp, "module2", "X64", "TestFile.c")
@@ -882,15 +878,20 @@ class PathUtilitiesTest(unittest.TestCase):
         # file is cwd relative but not absolute path
         p = os.path.join(ws_rel, ws_p_name, "module2", "X64", "TestFile.c")
         self.assertIsNone(pathobj.GetEdk2RelativePathFromAbsolutePath(p))
-        self.assertIsNone(pathobj.GetEdk2RelativePathFromAbsolutePath(ws_rel, ws_p_name, "module2", "X64", "TestFile.c"))
+        self.assertIsNone(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(ws_rel, ws_p_name, "module2", "X64", "TestFile.c")
+        )
 
         # ensure converted path keeps original capitalization
         p = os.path.join(ws_pkg_abs, "Module2", "x64", "TESTFILE.C")
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{ws_p_name}/Module2/x64/TESTFILE.C")
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(ws_pkg_abs, "Module2", "x64", "TESTFILE.C"), f"{ws_p_name}/Module2/x64/TESTFILE.C")
+        self.assertEqual(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(ws_pkg_abs, "Module2", "x64", "TESTFILE.C"),
+            f"{ws_p_name}/Module2/x64/TESTFILE.C",
+        )
 
     def test_get_relative_path_when_packages_path_list_contains_substrings(self):
-        '''Test usage of GetEdk2RelativePathFromAbsolutePath when members of PackagePathList contain
+        """Test usage of GetEdk2RelativePathFromAbsolutePath when members of PackagePathList contain
         substrings of themselves, for example "MU" and "MU_TIANO"
         File layout:
          root/                    <-- current working directory (self.tmp)
@@ -909,7 +910,7 @@ class PathUtilitiesTest(unittest.TestCase):
                             module2.INF
                             X64/
                                 TestFile2.c.
-        '''
+        """
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
@@ -926,10 +927,13 @@ class PathUtilitiesTest(unittest.TestCase):
         # file in workspace
         p = os.path.join(ws_pkg_abs, "module2", "X64", "TestFile2.c")
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{ws_p_name}/module2/X64/TestFile2.c")
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(ws_pkg_abs, "module2", "X64", "TestFile2.c"), f"{ws_p_name}/module2/X64/TestFile2.c")
+        self.assertEqual(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(ws_pkg_abs, "module2", "X64", "TestFile2.c"),
+            f"{ws_p_name}/module2/X64/TestFile2.c",
+        )
 
     def test_get_relative_path_when_package_path_inside_package(self):
-        '''Test a package_path directory inside the subfolders of a package.
+        """Test a package_path directory inside the subfolders of a package.
             Should not raise an exception.
 
         File layout:
@@ -945,7 +949,7 @@ class PathUtilitiesTest(unittest.TestCase):
                             module2.inf
                             X64/
                                 TestFile.c
-        '''
+        """
         folder_ws_rel = "folder_ws"
         folder_ws_abs = os.path.join(self.tmp, folder_ws_rel)
         os.mkdir(folder_ws_abs)
@@ -964,10 +968,13 @@ class PathUtilitiesTest(unittest.TestCase):
         pathobj = Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
         p = os.path.join(pp1_abs, "module2", "X64", "TestFile.c")
         self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{pp1_name}/module2/X64/TestFile.c")
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(pp1_abs, "module2", "X64", "TestFile.c"), f"{pp1_name}/module2/X64/TestFile.c")
+        self.assertEqual(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(pp1_abs, "module2", "X64", "TestFile.c"),
+            f"{pp1_name}/module2/X64/TestFile.c",
+        )
 
     def test_get_relative_path_with_nested_packages(self):
-        '''Test a two package paths that contain nested packages.
+        """Test a two package paths that contain nested packages.
             Should raise an exception due to nested packages.
 
         File layout:
@@ -991,7 +998,7 @@ class PathUtilitiesTest(unittest.TestCase):
                             module2.inf
                             X64/
                                 TestFile.c
-        '''
+        """
         folder_ws_rel = "folder_ws"
         folder_ws_abs = os.path.join(self.tmp, folder_ws_rel)
         os.mkdir(folder_ws_abs)
@@ -1016,9 +1023,8 @@ class PathUtilitiesTest(unittest.TestCase):
             Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
             self.assertEqual(len(logs.records), 2)
 
-
     def test_get_relative_path_when_folder_is_next_to_package(self):
-        '''Test usage of GetEdk2RelativePathFromAbsolutePath when a folder containing a package is in the same
+        """Test usage of GetEdk2RelativePathFromAbsolutePath when a folder containing a package is in the same
         directory as a different package. This test ensures the correct value is returned regardless the order of
         the package paths.
         file layout:
@@ -1028,7 +1034,7 @@ class PathUtilitiesTest(unittest.TestCase):
                     PPTestPkg1     <-- A Package
                     folder_pp2/    <-- A Package Path
                         PPTestPkg2 <-- A Package.
-        '''
+        """
         folder_ws_rel = "folder_ws"
         folder_ws_abs = os.path.join(self.tmp, folder_ws_rel)
         os.mkdir(folder_ws_abs)
@@ -1050,23 +1056,31 @@ class PathUtilitiesTest(unittest.TestCase):
         p2 = os.path.join(pp2_abs, "module2", "X64", "TestFile2.c")
 
         pathobj = Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p1), f'{pp1_name}/module2/X64/TestFile2.c')
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p2), f'{pp2_name}/module2/X64/TestFile2.c')
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(pp1_abs, "module2", "X64", "TestFile2.c"),
-                         f'{pp1_name}/module2/X64/TestFile2.c')
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(pp2_abs, "module2", "X64", "TestFile2.c"),
-                         f'{pp2_name}/module2/X64/TestFile2.c')
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p1), f"{pp1_name}/module2/X64/TestFile2.c")
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p2), f"{pp2_name}/module2/X64/TestFile2.c")
+        self.assertEqual(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(pp1_abs, "module2", "X64", "TestFile2.c"),
+            f"{pp1_name}/module2/X64/TestFile2.c",
+        )
+        self.assertEqual(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(pp2_abs, "module2", "X64", "TestFile2.c"),
+            f"{pp2_name}/module2/X64/TestFile2.c",
+        )
 
         pathobj = Edk2Path(folder_ws_abs, [folder_pp2_abs, folder_pp1_abs])
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p1), f'{pp1_name}/module2/X64/TestFile2.c')
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p2), f'{pp2_name}/module2/X64/TestFile2.c')
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(pp1_abs, "module2", "X64", "TestFile2.c"),
-                         f'{pp1_name}/module2/X64/TestFile2.c')
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(pp2_abs, "module2", "X64", "TestFile2.c"),
-                         f'{pp2_name}/module2/X64/TestFile2.c')
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p1), f"{pp1_name}/module2/X64/TestFile2.c")
+        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p2), f"{pp2_name}/module2/X64/TestFile2.c")
+        self.assertEqual(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(pp1_abs, "module2", "X64", "TestFile2.c"),
+            f"{pp1_name}/module2/X64/TestFile2.c",
+        )
+        self.assertEqual(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(pp2_abs, "module2", "X64", "TestFile2.c"),
+            f"{pp2_name}/module2/X64/TestFile2.c",
+        )
 
     def test_get_relative_path_when_path_does_not_exist(self):
-        '''Test basic usage of GetEdk2RelativePathFromAbsolutePath with packages path nested
+        """Test basic usage of GetEdk2RelativePathFromAbsolutePath with packages path nested
         inside the workspace, but the absolute path is not a real path.
 
         File layout:
@@ -1090,7 +1104,7 @@ class PathUtilitiesTest(unittest.TestCase):
                         module2.inf
                         X64/
                             TestFile.c
-        '''
+        """
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
@@ -1140,7 +1154,7 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertIsNone(pathobj.GetEdk2RelativePathFromAbsolutePath(*p))
 
     def test_get_relative_path_when_package_is_not_directly_inside_packages_path(self):
-        '''Test basic usage of GetEdk2RelativePathFromAbsolutePath when the
+        """Test basic usage of GetEdk2RelativePathFromAbsolutePath when the
         package is not a direct subfolder of a packagespath, but atleast one
         folder away.
 
@@ -1152,7 +1166,7 @@ class PathUtilitiesTest(unittest.TestCase):
                     folder_extra/
                         PPTestPkg/   <-- A edk2 package
                             PPTestPkg.DEC
-        '''
+        """
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
@@ -1170,14 +1184,16 @@ class PathUtilitiesTest(unittest.TestCase):
         pathobj = Edk2Path(ws_abs, [folder_pp_abs])
 
         p = os.path.join(ws_pkg_abs, "PPTestPkg.dec")
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p),
-                         f"{folder_extra_rel}/{ws_p_name}/{ws_p_name}.dec")
+        self.assertEqual(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{folder_extra_rel}/{ws_p_name}/{ws_p_name}.dec"
+        )
         p = (ws_pkg_abs, "PPTestPkg.dec")
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(*p),
-                         f"{folder_extra_rel}/{ws_p_name}/{ws_p_name}.dec")
+        self.assertEqual(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(*p), f"{folder_extra_rel}/{ws_p_name}/{ws_p_name}.dec"
+        )
 
     def test_get_edk2_relative_path_with_windows_path_on_linux(self):
-        '''Test basic usage of GetEdk2RelativePathFromAbsolutePath when the
+        """Test basic usage of GetEdk2RelativePathFromAbsolutePath when the
         provided path is a Windows path, but the code is running on linux.
 
         File layout:
@@ -1188,7 +1204,7 @@ class PathUtilitiesTest(unittest.TestCase):
                     folder_extra/
                         PPTestPkg/   <-- A edk2 package
                             PPTestPkg.DEC
-        '''
+        """
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
@@ -1206,14 +1222,16 @@ class PathUtilitiesTest(unittest.TestCase):
         pathobj = Edk2Path(ws_abs, [folder_pp_abs])
 
         p = f"{ws_pkg_abs}\\module2\\X64\\TestFile.c"
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(p),
-                         f"{folder_extra_rel}/PPTestPkg/module2/X64/TestFile.c")
+        self.assertEqual(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(p), f"{folder_extra_rel}/PPTestPkg/module2/X64/TestFile.c"
+        )
         p = (ws_pkg_abs, "module2", "X64", "TestFile.c")
-        self.assertEqual(pathobj.GetEdk2RelativePathFromAbsolutePath(*p),
-                         f"{folder_extra_rel}/PPTestPkg/module2/X64/TestFile.c")
+        self.assertEqual(
+            pathobj.GetEdk2RelativePathFromAbsolutePath(*p), f"{folder_extra_rel}/PPTestPkg/module2/X64/TestFile.c"
+        )
 
     def test_get_absolute_path_on_this_system_from_edk2_relative_path(self):
-        '''Test basic usage of GetAbsolutePathOnThisSystemFromEdk2RelativePath with packages path nested
+        """Test basic usage of GetAbsolutePathOnThisSystemFromEdk2RelativePath with packages path nested
         inside the workspace.
 
         File layout:
@@ -1237,7 +1255,7 @@ class PathUtilitiesTest(unittest.TestCase):
                         module2.inf
                         X64/
                             TestFile.c
-        '''
+        """
         ws_rel = "folder_ws"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
@@ -1252,13 +1270,17 @@ class PathUtilitiesTest(unittest.TestCase):
 
         # file in packages path
         ep = os.path.join(pp_pkg_abs, "module1", "module1.INF")
-        self.assertEqual(pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(pp_p_name, "module1", "module1.INF"), ep)
+        self.assertEqual(
+            pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(pp_p_name, "module1", "module1.INF"), ep
+        )
         rp = f"{pp_p_name}/module1/module1.INF"
         self.assertEqual(pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(rp), ep)
 
         # file in workspace
         ep = os.path.join(ws_pkg_abs, "module2", "X64", "TestFile.c")
-        self.assertEqual(pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(ws_p_name, "module2", "X64", "TestFile.c"), ep)
+        self.assertEqual(
+            pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(ws_p_name, "module2", "X64", "TestFile.c"), ep
+        )
         rp = f"{ws_p_name}/module2/X64/TestFile.c"
         self.assertEqual(pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(rp), ep)
 
@@ -1270,7 +1292,7 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertIsNone(pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(None))
 
     def test_get_absolute_path_then_relative_path_when_path_contains_repeated_packagepath_name(self):
-        '''Test the back and forth between GetAbsolutePath and GetRelativeFromAbsolute when the
+        """Test the back and forth between GetAbsolutePath and GetRelativeFromAbsolute when the
         path structure has multiple instances of a package path
         File layout:
          root/                  <-- current working directory (self.tmp)
@@ -1284,7 +1306,7 @@ class PathUtilitiesTest(unittest.TestCase):
                             module2.INF
                             x64/
                                TestFile.c.
-        '''
+        """
         ws_rel = "PlatformClientPkg"
         ws_abs = os.path.join(self.tmp, ws_rel)
         os.mkdir(ws_abs)
@@ -1299,12 +1321,12 @@ class PathUtilitiesTest(unittest.TestCase):
         pathobj = Edk2Path(ws_abs, [folder_pp1_abs])
 
         # Check getting absolute path from relative path
-        abspath = pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(
-            ws_pkg_name, ws_pkg_name + ".dec")
+        abspath = pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(ws_pkg_name, ws_pkg_name + ".dec")
         self.assertEqual(abspath, os.path.join(ws_pkg_abs, "ClientPkg.dec"))
 
         abspath = pathobj.GetAbsolutePathOnThisSystemFromEdk2RelativePath(
-            os.path.join(ws_pkg_name, ws_pkg_name + ".dec"))
+            os.path.join(ws_pkg_name, ws_pkg_name + ".dec")
+        )
         self.assertEqual(abspath, os.path.join(ws_pkg_abs, "ClientPkg.dec"))
 
         # check get relative path from abs path

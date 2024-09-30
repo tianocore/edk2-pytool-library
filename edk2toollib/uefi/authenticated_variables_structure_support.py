@@ -10,6 +10,7 @@
 Each object can be created and or populated from a file stream.
 Each object can be written to a filesteam as binary and printed to the console in text.
 """
+
 import datetime
 import hashlib
 import io
@@ -37,14 +38,14 @@ from edk2toollib.utility_functions import hexdump
 # spell-checker: ignore decodefs, createfs, deduplicated, deduplication
 
 # UEFI global Variable Namespace
-EfiGlobalVarNamespaceUuid = uuid.UUID('8BE4DF61-93CA-11d2-AA0D-00E098032B8C')
+EfiGlobalVarNamespaceUuid = uuid.UUID("8BE4DF61-93CA-11d2-AA0D-00E098032B8C")
 Sha256Oid = [0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01]
 
 
 class CommonUefiStructure(ABC):
     """This structure contains the methods common across all UEFI Structures."""
 
-    def __init__(self) -> 'CommonUefiStructure':
+    def __init__(self) -> "CommonUefiStructure":
         """Inits the object."""
 
     @abstractmethod
@@ -73,21 +74,24 @@ class CommonUefiStructure(ABC):
         """
 
     @abstractmethod
-    def print(self, outfs: IO=sys.stdout) -> None:
+    def print(self, outfs: IO = sys.stdout) -> None:
         """Prints the object to the console."""
 
 
 class EfiSignatureDataEfiCertX509(CommonUefiStructure):
     """An object representing a EFI_SIGNATURE_DATA Structure for X509 Certs."""
+
     STATIC_STRUCT_SIZE = 16
     FIXED_SIZE = False
 
-    def __init__(self,
-                 decodefs: BinaryIO = None,
-                 decodesize: int=0,
-                 createfs: BinaryIO = None,
-                 cert: bytes = None,
-                 sigowner: uuid.UUID = None) -> 'EfiSignatureDataEfiCertX509':
+    def __init__(
+        self,
+        decodefs: BinaryIO = None,
+        decodesize: int = 0,
+        createfs: BinaryIO = None,
+        cert: bytes = None,
+        sigowner: uuid.UUID = None,
+    ) -> "EfiSignatureDataEfiCertX509":
         """Inits the object.
 
         Args:
@@ -101,9 +105,9 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
             (ValueError): Invalid FileStream size
             (ValueError): Invalid Parameters
         """
-        if (decodefs is not None):
+        if decodefs is not None:
             self.decode(decodefs, decodesize)
-        elif (createfs is not None):
+        elif createfs is not None:
             # create a new one
             self.signature_owner = sigowner
             # should be 0 but maybe this filestream has other things at the head
@@ -112,10 +116,10 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
             end = createfs.tell()
             createfs.seek(start)
             self.signature_data_size = end - start
-            if (self.signature_data_size < 0):
+            if self.signature_data_size < 0:
                 raise ValueError("Create File Stream has invalid size")
-            self.signature_data = (createfs.read(self.signature_data_size))
-        elif (cert is not None):
+            self.signature_data = createfs.read(self.signature_data_size)
+        elif cert is not None:
             self.signature_owner = sigowner
             self.signature_data_size = len(cert)
             self.signature_data = cert
@@ -147,7 +151,7 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
         warn("SignatureData is deprecated. Use signature_data instead.", DeprecationWarning, 2)
         self.signature_data = value
 
-    def __lt__(self, other: 'EfiSignatureDataEfiCertX509') -> bool:
+    def __lt__(self, other: "EfiSignatureDataEfiCertX509") -> bool:
         """Less-than comparison for sorting. Looks at signature_data only, not signature_owner."""
         return self.signature_data < other.signature_data
 
@@ -197,38 +201,36 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
         self.signature_owner = uuid.UUID(bytes_le=fs.read(16))
 
         # read remaining decode size for x509 data
-        self.signature_data_size = decodesize - \
-            EfiSignatureDataEfiCertX509.STATIC_STRUCT_SIZE
+        self.signature_data_size = decodesize - EfiSignatureDataEfiCertX509.STATIC_STRUCT_SIZE
         self.signature_data = fs.read(self.signature_data_size)
 
-    def Print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
+    def Print(self, compact: bool = False, outfs: IO = sys.stdout) -> None:
         """Prints to the console."""
         warn("Print() is deprecated. Use print() instead.", DeprecationWarning, 2)
         self.print(compact=compact, outfs=outfs)
 
-    def print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
+    def print(self, compact: bool = False, outfs: IO = sys.stdout) -> None:
         """Prints to the console."""
         if not compact:
             outfs.write("EfiSignatureData - EfiSignatureDataEfiCertX509\n")
             outfs.write(f"  Signature Owner:      {str(self.signature_owner)}\n")
             outfs.write("  Signature Data: \n")
-            if (self.signature_data is None):
+            if self.signature_data is None:
                 outfs.write("    NONE\n")
             else:
                 sdl = self.signature_data
                 if self.signature_data_size != len(sdl):
-                    raise ValueError(
-                        "Invalid Signature Data Size vs Length of data")
+                    raise ValueError("Invalid Signature Data Size vs Length of data")
                 hexdump(sdl, outfs=outfs)
         else:
             s = "ESD:EFI_CERT_X509,"
             s += f"{str(self.signature_owner)},"
-            if (self.signature_data is None):
-                s += 'NONE'
+            if self.signature_data is None:
+                s += "NONE"
             else:
                 sdl = self.signature_data
                 for index in range(len(sdl)):
-                    s += f'{sdl[index]:02X}'
+                    s += f"{sdl[index]:02X}"
             outfs.write(s)
             outfs.write("\n")
 
@@ -283,14 +285,13 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
 
 class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
     """An object representing a EFI_SIGNATURE_DATA Structure for Sha256 Certs."""
+
     STATIC_STRUCT_SIZE = 16 + hashlib.sha256().digest_size  # has guid and array
     FIXED_SIZE = True
 
-    def __init__(self,
-                 decodefs: BinaryIO = None,
-                 createfs: BinaryIO = None,
-                 digest: bytes = None,
-                 sigowner: uuid = None) -> 'EfiSignatureDataEfiCertSha256':
+    def __init__(
+        self, decodefs: BinaryIO = None, createfs: BinaryIO = None, digest: bytes = None, sigowner: uuid = None
+    ) -> "EfiSignatureDataEfiCertSha256":
         """Inits the object.
 
         Args:
@@ -305,15 +306,16 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
         """
         if decodefs is not None:
             self.decode(decodefs)
-        elif (createfs is not None):
+        elif createfs is not None:
             # create a new one
             self.signature_owner = sigowner
-            self.signature_data = (hashlib.sha256(createfs.read()).digest())
+            self.signature_data = hashlib.sha256(createfs.read()).digest()
         elif digest is not None:
             digest_length = len(digest)
             if digest_length != hashlib.sha256().digest_size:
-                raise Exception("Invalid digest length (found / expected): (%d / %d)",
-                                digest_length, hashlib.sha256().digest_size)
+                raise Exception(
+                    "Invalid digest length (found / expected): (%d / %d)", digest_length, hashlib.sha256().digest_size
+                )
             self.signature_owner = sigowner
             self.signature_data = digest
         else:
@@ -381,13 +383,13 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
         warn("PopulateFromFileStream() is deprecated. Use decode() instead.", DeprecationWarning, 2)
         self.decode(fs)
 
-    def print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
+    def print(self, compact: bool = False, outfs: IO = sys.stdout) -> None:
         """Prints to the console."""
         if not compact:
             outfs.write("EfiSignatureData - EfiSignatureDataEfiCertSha256\n")
             outfs.write(f"  Signature Owner:      {str(self.signature_owner)}\n")
             outfs.write("  Signature Data: ")
-            if (self.signature_data is None):
+            if self.signature_data is None:
                 outfs.write(" NONE\n")
             else:
                 sdl = self.signature_data
@@ -395,10 +397,10 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
                     outfs.write(f"{sdl[index]:02X}")
                 outfs.write("\n")
         else:
-            s = 'ESD:EFI_CERT_SHA256,'
+            s = "ESD:EFI_CERT_SHA256,"
             s += f"{str(self.signature_owner)},"
-            if (self.signature_data is None):
-                s += 'NONE'
+            if self.signature_data is None:
+                s += "NONE"
             else:
                 sdl = self.signature_data
                 for index in range(len(sdl)):
@@ -406,7 +408,7 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
             outfs.write(s)
             outfs.write("\n")
 
-    def Print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
+    def Print(self, compact: bool = False, outfs: IO = sys.stdout) -> None:
         """Prints to the console."""
         warn("Print() is deprecated. Use print() instead.", DeprecationWarning, 2)
         self.print(compact, outfs)
@@ -470,7 +472,8 @@ class EfiSignatureHeader(object):  # noqa
 
 class EfiSignatureDataFactory(object):
     """Factory class for generating an EFI Signature struct."""
-    EFI_CERT_SHA256_GUID = uuid.UUID('c1c41626-504c-4092-aca9-41f936934328')
+
+    EFI_CERT_SHA256_GUID = uuid.UUID("c1c41626-504c-4092-aca9-41f936934328")
     # EFI_CERT_RSA2048_GUID = uuid.UUID("0x3c5766e8, 0x269c, 0x4e34, 0xaa, 0x14, 0xed, 0x77, 0x6e, 0x85, 0xb3, 0xb6")
     # EFI_CERT_RSA2048_SHA256_GUID = uuid.UUID("0xe2b36190, 0x879b, 0x4a3d, 0xad, 0x8d, 0xf2, 0xe7, 0xbb, 0xa3, 0x27, 0x84")  # noqa: E501
     # EFI_CERT_SHA1_GUID = uuid.UUID("0x826ca512, 0xcf10, 0x4ac9, 0xb1, 0x87, 0xbe, 0x1, 0x49, 0x66, 0x31, 0xbd")
@@ -479,18 +482,15 @@ class EfiSignatureDataFactory(object):
     # EFI_CERT_SHA224_GUID = uuid.UUID("0xb6e5233, 0xa65c, 0x44c9, 0x94, 0x7, 0xd9, 0xab, 0x83, 0xbf, 0xc8, 0xbd")
     # EFI_CERT_SHA384_GUID = uuid.UUID("0xff3e5307, 0x9fd0, 0x48c9, 0x85, 0xf1, 0x8a, 0xd5, 0x6c, 0x70, 0x1e, 0x1")
     # EFI_CERT_SHA512_GUID = uuid.UUID("0x93e0fae, 0xa6c4, 0x4f50, 0x9f, 0x1b, 0xd4, 0x1e, 0x2b, 0x89, 0xc1, 0x9a")
-    EFI_CERT_X509_SHA256_GUID = uuid.UUID(
-        "3bd2a492-96c0-4079-b420-fcf98ef103ed")
+    EFI_CERT_X509_SHA256_GUID = uuid.UUID("3bd2a492-96c0-4079-b420-fcf98ef103ed")
     # EFI_CERT_X509_SHA384_GUID = uuid.UUID("0x7076876e, 0x80c2, 0x4ee6, 0xaa, 0xd2, 0x28, 0xb3, 0x49, 0xa6, 0x86, 0x5b")     # noqa: E501
     # EFI_CERT_X509_SHA512_GUID = uuid.UUID("0x446dbf63, 0x2502, 0x4cda, 0xbc, 0xfa, 0x24, 0x65, 0xd2, 0xb0, 0xfe, 0x9d")     # noqa: E501
     # EFI_CERT_TYPE_PKCS7_GUID = uuid.UUID("0x4aafd29d, 0x68df, 0x49ee, 0x8a, 0xa9, 0x34, 0x7d, 0x37, 0x56, 0x65, 0xa7")
 
     @staticmethod
     def factory(
-        fs: BinaryIO,
-        type: uuid.UUID,
-        size: int
-    )-> Union[EfiSignatureDataEfiCertSha256, EfiSignatureDataEfiCertX509]:
+        fs: BinaryIO, type: uuid.UUID, size: int
+    ) -> Union[EfiSignatureDataEfiCertSha256, EfiSignatureDataEfiCertX509]:
         """This method is a factory for creating the correct Efi Signature Data object from the filestream.
 
         Uses a Filestream of an existing auth payload.
@@ -500,15 +500,15 @@ class EfiSignatureDataFactory(object):
             type: Guid of the type
             size: decodesize for x509, struct size for Sha256
         """
-        if (fs is None):
+        if fs is None:
             raise Exception("Invalid File stream")
 
-        if (type == EfiSignatureDataFactory.EFI_CERT_SHA256_GUID):
-            if (size != EfiSignatureDataEfiCertSha256.STATIC_STRUCT_SIZE):
+        if type == EfiSignatureDataFactory.EFI_CERT_SHA256_GUID:
+            if size != EfiSignatureDataEfiCertSha256.STATIC_STRUCT_SIZE:
                 raise Exception("Invalid Size 0x%x" % size)
             return EfiSignatureDataEfiCertSha256(decodefs=fs)
 
-        elif (type == EfiSignatureDataFactory.EFI_CERT_X509_GUID):
+        elif type == EfiSignatureDataFactory.EFI_CERT_X509_GUID:
             return EfiSignatureDataEfiCertX509(decodefs=fs, decodesize=size)
 
         else:
@@ -517,9 +517,7 @@ class EfiSignatureDataFactory(object):
 
     @staticmethod
     def Factory(
-        fs: BinaryIO,
-        type: uuid.UUID,
-        size: int
+        fs: BinaryIO, type: uuid.UUID, size: int
     ) -> Union[EfiSignatureDataEfiCertSha256, EfiSignatureDataEfiCertX509]:
         """This method is a factory for creating the correct Efi Signature Data object from the filestream.
 
@@ -535,9 +533,7 @@ class EfiSignatureDataFactory(object):
 
     @staticmethod
     def Create(
-        type: uuid.UUID,
-        ContentFileStream: BinaryIO,
-        sigowner: uuid.UUID
+        type: uuid.UUID, ContentFileStream: BinaryIO, sigowner: uuid.UUID
     ) -> Union[EfiSignatureDataEfiCertSha256, EfiSignatureDataEfiCertX509]:
         """Create a new EFI Sginature Data Object.
 
@@ -551,9 +547,7 @@ class EfiSignatureDataFactory(object):
 
     @staticmethod
     def create(
-        type: uuid.UUID,
-        ContentFileStream: BinaryIO,
-        sigowner: uuid.UUID
+        type: uuid.UUID, ContentFileStream: BinaryIO, sigowner: uuid.UUID
     ) -> Union[EfiSignatureDataEfiCertSha256, EfiSignatureDataEfiCertX509]:
         """Create a new EFI Sginature Data Object.
 
@@ -562,12 +556,12 @@ class EfiSignatureDataFactory(object):
             ContentFileStream: filestream to read
             sigowner: the uuid object of the signature owner guid
         """
-        if (ContentFileStream is None):
+        if ContentFileStream is None:
             raise Exception("Invalid Content File Stream")
 
-        if (type == EfiSignatureDataFactory.EFI_CERT_SHA256_GUID):
+        if type == EfiSignatureDataFactory.EFI_CERT_SHA256_GUID:
             return EfiSignatureDataEfiCertSha256(createfs=ContentFileStream, sigowner=sigowner)
-        elif (type == EfiSignatureDataFactory.EFI_CERT_X509_GUID):
+        elif type == EfiSignatureDataFactory.EFI_CERT_X509_GUID:
             return EfiSignatureDataEfiCertX509(createfs=ContentFileStream, sigowner=sigowner)
         else:
             raise Exception("Not Supported")
@@ -575,17 +569,17 @@ class EfiSignatureDataFactory(object):
 
 class EfiSignatureList(CommonUefiStructure):
     """An object representing a EFI_SIGNATURE_LIST."""
+
     STATIC_STRUCT_SIZE = 16 + 4 + 4 + 4
 
-    def __init__(self, filestream: BinaryIO = None, typeguid: uuid.UUID = None) -> 'EfiSignatureList':
+    def __init__(self, filestream: BinaryIO = None, typeguid: uuid.UUID = None) -> "EfiSignatureList":
         """Inits the object.
 
         Args:
             filestream (:obj:`BinaryIO`, optional): a filestream object of binary content that is the structure encoded
             typeguid (:obj:`uuid.UUID`, optional): type guid
         """
-        if (filestream is None):
-
+        if filestream is None:
             # Type of the signature. GUID signature types are defined in below.
             self.signature_type = typeguid
 
@@ -649,35 +643,31 @@ class EfiSignatureList(CommonUefiStructure):
         self.signature_size = struct.unpack("<I", fs.read(4))[0]
 
         # check the total size of this is within the File
-        if ((end - start) < self.signature_list_size):
+        if (end - start) < self.signature_list_size:
             logging.debug(f"signature_list_size {self.signature_list_size:0x}")
             logging.debug(f"End - Start is {(end - start):0x}")
-            raise Exception(
-                "Invalid File Stream.  Not enough file content to cover the Sig List Size")
+            raise Exception("Invalid File Stream.  Not enough file content to cover the Sig List Size")
 
         # check that structure is built correctly and there is room within the structure total size to read the header
-        if ((self.signature_list_size - (fs.tell() - start)) < self.signature_header_size):
-            raise Exception("Invalid Sig List.  Sizes not correct.  "
-                            "signature_header_size extends beyond end of structure")
+        if (self.signature_list_size - (fs.tell() - start)) < self.signature_header_size:
+            raise Exception(
+                "Invalid Sig List.  Sizes not correct.  " "signature_header_size extends beyond end of structure"
+            )
 
         # Signature Header is allowed to be nothing (size 0)
         self.signature_header = None
-        if (self.signature_header_size > 0):
-            self.signature_header = EfiSignatureHeader(
-                fs, self.signature_header_size)
+        if self.signature_header_size > 0:
+            self.signature_header = EfiSignatureHeader(fs, self.signature_header_size)
 
-        if (((self.signature_list_size - (fs.tell() - start)) % self.signature_size) != 0):
-            raise Exception(
-                "Invalid Sig List.  Signature Data Array is not a valid size")
+        if ((self.signature_list_size - (fs.tell() - start)) % self.signature_size) != 0:
+            raise Exception("Invalid Sig List.  Signature Data Array is not a valid size")
 
         self.signature_data_list = []
         while (start + self.signature_list_size) > fs.tell():
             # double check that everything is adding up correctly.
             if (start + self.signature_list_size - fs.tell() - self.signature_size) < 0:
-                raise Exception(
-                    "Invalid Signature List Processing.  Signature Data not correctly parsed!!")
-            a = EfiSignatureDataFactory.factory(
-                fs, self.signature_type, self.signature_size)
+                raise Exception("Invalid Signature List Processing.  Signature Data not correctly parsed!!")
+            a = EfiSignatureDataFactory.factory(fs, self.signature_type, self.signature_size)
             self.signature_data_list.append(a)
 
     def PopulateFromFileStream(self, fs: BinaryIO) -> None:
@@ -695,12 +685,12 @@ class EfiSignatureList(CommonUefiStructure):
         warn("PopulateFromFileStream() is deprecated, use decode() instead.", DeprecationWarning, 2)
         self.decode(fs)
 
-    def Print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
+    def Print(self, compact: bool = False, outfs: IO = sys.stdout) -> None:
         """Prints to the console."""
         warn("Print() is deprecated, use print() instead().", DeprecationWarning, 2)
         self.print(compact=compact, outfs=outfs)
 
-    def print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
+    def print(self, compact: bool = False, outfs: IO = sys.stdout) -> None:
         """Prints to the console."""
         if not compact:
             outfs.write("EfiSignatureList\n")
@@ -708,7 +698,7 @@ class EfiSignatureList(CommonUefiStructure):
             outfs.write(f"  Signature List Size:   {self.signature_list_size:0x}\n")
             outfs.write(f"  Signature Header Size: {self.signature_header_size:0x}\n")
             outfs.write(f"  Signature Size:       {self.signature_size:0x}\n")
-            if (self.signature_header is not None):
+            if self.signature_header is not None:
                 self.signature_header.print(compact=compact, outfs=outfs)
             else:
                 outfs.write("  Signature Header:      NONE\n")
@@ -718,14 +708,14 @@ class EfiSignatureList(CommonUefiStructure):
             csv += f",{self.signature_list_size:0x}"
             csv += f",{self.signature_header_size:0x}"
             csv += f",{self.signature_size:0x}"
-            if (self.signature_header is not None):
+            if self.signature_header is not None:
                 csv += self.signature_header.print(compact=compact, outfs=outfs)
             else:
                 csv += ",NONE"
             outfs.write(csv)
-            outfs.write('\n')
+            outfs.write("\n")
 
-        if (self.signature_data_list is not None):
+        if self.signature_data_list is not None:
             for a in self.signature_data_list:
                 a.print(compact=compact, outfs=outfs)
 
@@ -746,19 +736,19 @@ class EfiSignatureList(CommonUefiStructure):
             (Exception): Invalid filestream
             (Exception): Uninitialized Sig header
         """
-        if (fs is None):
+        if fs is None:
             raise Exception("Invalid File Output Stream")
-        if ((self.signature_header is None) and (self.signature_header_size == -1)):
+        if (self.signature_header is None) and (self.signature_header_size == -1):
             raise Exception("Invalid object.  Uninitialized Sig Header")
 
         fs.write(self.signature_type.bytes_le)
         fs.write(struct.pack("<I", self.signature_list_size))
         fs.write(struct.pack("<I", self.signature_header_size))
         fs.write(struct.pack("<I", self.signature_size))
-        if (self.signature_header is not None):
+        if self.signature_header is not None:
             self.signature_header.write(fs)
 
-        if (self.signature_data_list is not None):
+        if self.signature_data_list is not None:
             for a in self.signature_data_list:
                 a.write(fs)
 
@@ -773,26 +763,26 @@ class EfiSignatureList(CommonUefiStructure):
             self.write(fs)
             return fs.getvalue()
 
-    def AddSignatureHeader(self, SigHeader: bytes, SigSize: int=0) -> None:
+    def AddSignatureHeader(self, SigHeader: bytes, SigSize: int = 0) -> None:
         """Adds the Signature Header.
 
         Raises:
             (Exception): Signature header already set
         """
-        if (self.signature_header is not None):
+        if self.signature_header is not None:
             raise Exception("Signature Header already set")
 
-        if (self.signature_header_size != -1):
+        if self.signature_header_size != -1:
             raise Exception("Signature Header already set (size)")
 
-        if (self.signature_size != 0):
+        if self.signature_size != 0:
             raise Exception("Signature Size already set")
 
-        if (self.signature_data_list is not None):
+        if self.signature_data_list is not None:
             raise Exception("Signature Data List is already initialized")
 
         self.signature_header = SigHeader
-        if (SigHeader is None):
+        if SigHeader is None:
             self.signature_header_size = 0
             self.signature_size = SigSize
         else:
@@ -801,62 +791,56 @@ class EfiSignatureList(CommonUefiStructure):
             self.signature_list_size += self.signature_header_size
 
     def AddSignatureData(
-        self,
-        SigDataObject: Tuple['EfiSignatureDataEfiCertX509', 'EfiSignatureDataEfiCertSha256']
+        self, SigDataObject: Tuple["EfiSignatureDataEfiCertX509", "EfiSignatureDataEfiCertSha256"]
     ) -> None:
         """Adds the Signature Data.
 
         Raises:
             (Exception): Signature size does not match Sig Data Object size
         """
-        if (self.signature_size == 0):
-            raise Exception(
-                "Before adding Signature Data you must have set the Signature Size")
+        if self.signature_size == 0:
+            raise Exception("Before adding Signature Data you must have set the Signature Size")
 
-        if (self.signature_size != SigDataObject.get_total_size()):
+        if self.signature_size != SigDataObject.get_total_size():
             raise Exception("Can't add Signature Data of different size")
 
-        if (self.signature_data_list is None):
+        if self.signature_data_list is None:
             self.signature_data_list = []
 
         self.signature_data_list.append(SigDataObject)
         self.signature_list_size += self.signature_size
 
-    def MergeSignatureList(self, esl: 'EfiSignatureList') -> None:
+    def MergeSignatureList(self, esl: "EfiSignatureList") -> None:
         """Add the EfiSignatureData entries within the supplied EfiSignatureList to the current object.
 
         No sorting or deduplication is performed, the EfiSignatureData elements are simply appended
         """
         if not isinstance(esl, EfiSignatureList):
-            raise Exception(
-                "Parameter 1 'esl' must be of type EfiSignatureList")
+            raise Exception("Parameter 1 'esl' must be of type EfiSignatureList")
 
-        if (self.signature_type != esl.signature_type):
+        if self.signature_type != esl.signature_type:
             raise Exception("Signature Types must match")
 
-        if (self.signature_header_size > 0
-           or esl.signature_header_size > 0):
+        if self.signature_header_size > 0 or esl.signature_header_size > 0:
             raise Exception("Merge does not support Signature Headers")
         self.signature_header_size = 0
 
-        if (esl.signature_list_size == EfiSignatureList.STATIC_STRUCT_SIZE):
+        if esl.signature_list_size == EfiSignatureList.STATIC_STRUCT_SIZE:
             # supplied EfiSignatureList is empty, return
             return
 
         FixedSizeData = esl.signature_data_list[0].FIXED_SIZE
         if not FixedSizeData:
-            raise Exception(
-                "Can only merge EfiSignatureLists with fixed-size data elements")
+            raise Exception("Can only merge EfiSignatureLists with fixed-size data elements")
 
-        if (self.signature_data_list is None):
+        if self.signature_data_list is None:
             self.signature_data_list = []
             self.signature_size = esl.signature_size
 
         self.signature_data_list += esl.signature_data_list
-        self.signature_list_size += esl.signature_list_size - \
-            EfiSignatureList.STATIC_STRUCT_SIZE
+        self.signature_list_size += esl.signature_list_size - EfiSignatureList.STATIC_STRUCT_SIZE
 
-    def SortBySignatureDataValue(self, deduplicate: bool = True) -> 'EfiSignatureList':
+    def SortBySignatureDataValue(self, deduplicate: bool = True) -> "EfiSignatureList":
         """Sort self's signature_data_list by signature_data values (ignores SigOwner) & optionally deduplicate.
 
         When deduplicate is true, remove duplicate signature_data values from self and return them in an
@@ -873,21 +857,19 @@ class EfiSignatureList(CommonUefiStructure):
         dupes.signature_data_list = []
 
         # if nothing to sort, return the empty dupe list
-        if (self.signature_data_list is None
-           or len(self.signature_data_list) == 1):
+        if self.signature_data_list is None or len(self.signature_data_list) == 1:
             return dupes
 
-        self.signature_data_list.sort(key=attrgetter('signature_data'))
+        self.signature_data_list.sort(key=attrgetter("signature_data"))
 
-        if (deduplicate is False):
+        if deduplicate is False:
             return dupes  # return empty dupe list without performing deduplicate
 
         # perform deduplicate on self
         last = len(self.signature_data_list) - 1  # index of the last item
         for i in range(last - 1, -1, -1):
             if self.signature_data_list[last].signature_data == self.signature_data_list[i].signature_data:
-                dupes.signature_data_list.insert(
-                    0, self.signature_data_list[last])
+                dupes.signature_data_list.insert(0, self.signature_data_list[last])
                 dupes.signature_list_size += self.signature_size
                 del self.signature_data_list[last]
                 self.signature_list_size -= self.signature_size
@@ -896,7 +878,7 @@ class EfiSignatureList(CommonUefiStructure):
                 last = i
 
         # only initialize dupes.signature_size if duplicate elements are present
-        if (len(dupes.signature_data_list) > 0):
+        if len(dupes.signature_data_list) > 0:
             dupes.signature_size = self.signature_size
 
         return dupes
@@ -908,7 +890,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
     Useful for parsing and building the contents of the Secure Boot variables
     """
 
-    def __init__(self, filestream: BinaryIO = None, esl_list: List[EfiSignatureList] = None) -> 'EfiSignatureDatabase':
+    def __init__(self, filestream: BinaryIO = None, esl_list: List[EfiSignatureList] = None) -> "EfiSignatureDatabase":
         """Inits an Efi Signature Database object.
 
         Args:
@@ -944,14 +926,14 @@ class EfiSignatureDatabase(CommonUefiStructure):
             (Exception): Invalid filestream
             (Exception): Invalid filestream size
         """
-        if (fs is None):
+        if fs is None:
             raise Exception("Invalid File Stream")
         self.esl_list = []
         begin = fs.tell()
         fs.seek(0, io.SEEK_END)
         end = fs.tell()  # end is offset after last byte
         fs.seek(begin)
-        while (fs.tell() != end):
+        while fs.tell() != end:
             Esl = EfiSignatureList(fs)
             self.esl_list.append(Esl)
 
@@ -967,12 +949,12 @@ class EfiSignatureDatabase(CommonUefiStructure):
         """
         return self.decode(fs)
 
-    def print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
+    def print(self, compact: bool = False, outfs: IO = sys.stdout) -> None:
         """Prints to the console."""
         for Esl in self.esl_list:
             Esl.print(compact=compact, outfs=outfs)
 
-    def Print(self, compact: bool = False, outfs: IO=sys.stdout) -> None:
+    def Print(self, compact: bool = False, outfs: IO = sys.stdout) -> None:
         """Prints to the console."""
         warn("Print() is deprecated, use print() instead.", DeprecationWarning, 2)
         self.print(compact=compact, outfs=outfs)
@@ -992,7 +974,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
         Raises:
             (Exception): Invalid filestream
         """
-        if (fs is None):
+        if fs is None:
             raise Exception("Invalid File Output Stream")
         for Esl in self.esl_list:
             Esl.write(fs)
@@ -1008,7 +990,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
             self.write(fs)
             return fs.getvalue()
 
-    def get_canonical_and_dupes(self) -> tuple['EfiSignatureDatabase', 'EfiSignatureDatabase']:
+    def get_canonical_and_dupes(self) -> tuple["EfiSignatureDatabase", "EfiSignatureDatabase"]:
         """Compute and return a tuple containing both a canonicalized database & a database of duplicates.
 
         Returns:
@@ -1027,21 +1009,20 @@ class EfiSignatureDatabase(CommonUefiStructure):
         x509eslList = None
 
         for Esl in self.esl_list:
-            if (Esl.signature_data_list is None):  # discard empty EfiSignatureLists
+            if Esl.signature_data_list is None:  # discard empty EfiSignatureLists
                 continue
-            if (Esl.signature_type == EfiSignatureDataFactory.EFI_CERT_SHA256_GUID):
-                if (sha256esl is None):
+            if Esl.signature_type == EfiSignatureDataFactory.EFI_CERT_SHA256_GUID:
+                if sha256esl is None:
                     sha256esl = Esl  # initialize it
                 else:
                     sha256esl.MergeSignatureList(Esl)
-            elif (Esl.signature_type == EfiSignatureDataFactory.EFI_CERT_X509_GUID):
-                if (x509eslList is None):
+            elif Esl.signature_type == EfiSignatureDataFactory.EFI_CERT_X509_GUID:
+                if x509eslList is None:
                     x509eslList = [Esl]  # initialize it
                 else:
                     x509eslList.append(Esl)
             else:
-                raise Exception("Unsupported signature type %s",
-                                Esl.signature_type)
+                raise Exception("Unsupported signature type %s", Esl.signature_type)
 
         # for each type, sort and de-duplicate, and then populate the respective databases
         # note the ordering of this section is the prescribed canonical order
@@ -1051,13 +1032,13 @@ class EfiSignatureDatabase(CommonUefiStructure):
         canonicalDb = EfiSignatureDatabase()
         duplicatesDb = EfiSignatureDatabase()
 
-        if (sha256esl is not None):
+        if sha256esl is not None:
             dupes = sha256esl.SortBySignatureDataValue(deduplicate=True)
             canonicalDb.esl_list.append(sha256esl)
             duplicatesDb.esl_list.append(dupes)
 
-        if (x509eslList is not None):
-            x509eslList.sort(key=attrgetter('signature_data_list'))
+        if x509eslList is not None:
+            x509eslList.sort(key=attrgetter("signature_data_list"))
             for esl in x509eslList:
                 if not canonicalDb.esl_list:
                     canonicalDb.esl_list.append(esl)
@@ -1068,7 +1049,7 @@ class EfiSignatureDatabase(CommonUefiStructure):
 
         return (canonicalDb, duplicatesDb)
 
-    def GetCanonicalAndDupes(self) -> tuple['EfiSignatureDatabase', 'EfiSignatureDatabase']:
+    def GetCanonicalAndDupes(self) -> tuple["EfiSignatureDatabase", "EfiSignatureDatabase"]:
         """Compute and return a tuple containing both a canonicalized database & a database of duplicates.
 
         Returns:
@@ -1084,22 +1065,22 @@ class EfiSignatureDatabase(CommonUefiStructure):
         warn("GetCanonicalAndDupes() is deprecated. Use get_canonical_and_dupes() instead.", DeprecationWarning, 2)
         return self.get_canonical_and_dupes()
 
-    def get_canonical(self) -> 'EfiSignatureDatabase':
+    def get_canonical(self) -> "EfiSignatureDatabase":
         """Return a canonicalized EfiSignatureDatabase, see GetCanonicalAndDupes() for more details."""
         canonical, _ = self.get_canonical_and_dupes()
         return canonical
 
-    def GetCanonical(self) -> 'EfiSignatureDatabase':
+    def GetCanonical(self) -> "EfiSignatureDatabase":
         """Return a canonicalized EfiSignatureDatabase, see GetCanonicalAndDupes() for more details."""
         warn("GetCanonical() is deprecated. Use get_canonical() instead.", DeprecationWarning, 2)
         return self.get_canonical()
 
-    def get_duplicates(self) -> 'EfiSignatureDatabase':
+    def get_duplicates(self) -> "EfiSignatureDatabase":
         """Return an EfiSignatureDatabase of duplicates, see GetCanonicalAndDupes() for more details."""
         _, dupes = self.get_canonical_and_dupes()
         return dupes
 
-    def GetDuplicates(self) -> 'EfiSignatureDatabase':
+    def GetDuplicates(self) -> "EfiSignatureDatabase":
         """Return an EfiSignatureDatabase of duplicates, see GetCanonicalAndDupes() for more details."""
         warn("GetDuplicates() is deprecated. Use get_duplicates() instead.", DeprecationWarning, 2)
         return self.get_duplicates()
@@ -1107,10 +1088,11 @@ class EfiSignatureDatabase(CommonUefiStructure):
 
 class EfiTime(CommonUefiStructure):
     """Object representing an EFI_TIME."""
-    _StructFormat = '<H6BLh2B'
+
+    _StructFormat = "<H6BLh2B"
     _StructSize = struct.calcsize(_StructFormat)
 
-    def __init__(self, time: datetime.datetime=datetime.datetime.now(), decodefs: BinaryIO=None) -> 'EfiTime':
+    def __init__(self, time: datetime.datetime = datetime.datetime.now(), decodefs: BinaryIO = None) -> "EfiTime":
         """Inits an EFI_TIME object.
 
         Args:
@@ -1154,11 +1136,10 @@ class EfiTime(CommonUefiStructure):
             nano_second,
             time_zone,
             day_light,
-            _   # Pad2
+            _,  # Pad2
         ) = struct.unpack(EfiTime._StructFormat, fs.read(EfiTime._StructSize))
 
-        self.time = datetime.datetime(
-            year, month, day, hour, minute, second, nano_second // 1000)
+        self.time = datetime.datetime(year, month, day, hour, minute, second, nano_second // 1000)
         logging.debug("Timezone value is: 0x%x" % time_zone)
         logging.debug("Daylight value is: 0x%X" % day_light)
 
@@ -1177,15 +1158,14 @@ class EfiTime(CommonUefiStructure):
         warn("PopulateFromFileStream() is deprecated, use decode() instead", DeprecationWarning, 2)
         return self.decode(fs)
 
-    def Print(self, outfs: IO=sys.stdout) -> None:
+    def Print(self, outfs: IO = sys.stdout) -> None:
         """Prints to the console."""
         warn("Print() is deprecated, use print() instead", DeprecationWarning, 2)
         return self.print(outfs)
 
-    def print(self, outfs: IO=sys.stdout) -> None:
+    def print(self, outfs: IO = sys.stdout) -> None:
         """Prints to the console."""
-        outfs.write("\nEfiTime: %s\n" % datetime.datetime.strftime(
-            self.time, "%A, %B %d, %Y %I:%M%p"))
+        outfs.write("\nEfiTime: %s\n" % datetime.datetime.strftime(self.time, "%A, %B %d, %Y %I:%M%p"))
 
     def Encode(self) -> bytes:
         """Return's time as a packed EfiTime Structure."""
@@ -1206,7 +1186,7 @@ class EfiTime(CommonUefiStructure):
             0,  # Nano Seconds
             0,  # Daylight
             0,  # TimeZone
-            0   # Pad2
+            0,  # Pad2
         )
 
     def write(self, fs: IO) -> None:
@@ -1238,10 +1218,8 @@ class EfiVariableAuthentication2(CommonUefiStructure):
     """An object representing a EFI_VARIABLE_AUTHENTICATION_2."""
 
     def __init__(
-        self,
-        time: datetime.datetime=datetime.datetime.now(),
-        decodefs: BinaryIO=None
-    ) -> 'EfiVariableAuthentication2':
+        self, time: datetime.datetime = datetime.datetime.now(), decodefs: BinaryIO = None
+    ) -> "EfiVariableAuthentication2":
         """Inits an EFI_VARIABLE_AUTHENTICATION_2 object.
 
         Args:
@@ -1273,7 +1251,7 @@ class EfiVariableAuthentication2(CommonUefiStructure):
 
         return buffer
 
-    def Encode(self, outfs: BinaryIO=None) -> bytes:
+    def Encode(self, outfs: BinaryIO = None) -> bytes:
         """Encodes a new variable into a binary representation.
 
         Args:
@@ -1299,7 +1277,7 @@ class EfiVariableAuthentication2(CommonUefiStructure):
         Raises:
             (Exception): Invalid filestream
         """
-        if (fs is None):
+        if fs is None:
             raise Exception("Invalid File Steam")
         self.time = EfiTime(decodefs=fs)
         self.auth_info = WinCert.factory(fs)
@@ -1320,7 +1298,7 @@ class EfiVariableAuthentication2(CommonUefiStructure):
         warn("PopulateFromFileStream() is deprecated, use decode() instead.", DeprecationWarning, 2)
         self.decode(fs)
 
-    def print(self, outfs: IO=sys.stdout) -> None:
+    def print(self, outfs: IO = sys.stdout) -> None:
         """Prints to the console."""
         outfs.write("EfiVariableAuthentication2\n")
         self.time.print(outfs)
@@ -1333,11 +1311,11 @@ class EfiVariableAuthentication2(CommonUefiStructure):
         elif self.payload is not None:
             outfs.write("Raw Data: \n")
             sdl = self.payload.tolist()
-            if (self.payload_size != len(sdl)):
+            if self.payload_size != len(sdl):
                 raise Exception("Invalid Payload Data Size vs Length of data")
             hexdump(sdl, outfs=outfs)
 
-    def Print(self, outfs: IO=sys.stdout) -> None:
+    def Print(self, outfs: IO = sys.stdout) -> None:
         """Prints to the console."""
         warn("Print() is deprecated, use print() instead.", DeprecationWarning, 2)
         self.print(outfs=outfs)
@@ -1401,8 +1379,7 @@ class EfiVariableAuthentication2(CommonUefiStructure):
         fs.seek(start)
         self.payload_size = end - start
         if self.payload_size == 0:
-            logging.debug(
-                "No Payload for this EfiVariableAuthenticated2 Object")
+            logging.debug("No Payload for this EfiVariableAuthenticated2 Object")
             return
 
         # Variables with the GUID EFI_IMAGE_SECURITY_DATABASE_GUID are formatted
@@ -1426,9 +1403,9 @@ class EfiVariableAuthentication2Builder(object):
         name: str,
         guid: str,
         attributes: Union[int, str],
-        payload: Optional[Union[io.BytesIO, bytes]]=None,
-        efi_time: datetime.datetime=datetime.datetime.now()
-    ) -> 'EfiVariableAuthentication2Builder':
+        payload: Optional[Union[io.BytesIO, bytes]] = None,
+        efi_time: datetime.datetime = datetime.datetime.now(),
+    ) -> "EfiVariableAuthentication2Builder":
         """Builds a EfiVariableAuthentication2 structure.
 
         Args:
@@ -1459,8 +1436,12 @@ class EfiVariableAuthentication2Builder(object):
             raise ValueError(f"guid is not the correct type: {type(guid)}")
 
         # This is the digest being signed that all signer's must sign
-        self.digest_without_payload = name.encode('utf_16_le') + \
-            guid.bytes_le + efi_attributes.encode() + self.authenticated_variable.time.encode()
+        self.digest_without_payload = (
+            name.encode("utf_16_le")
+            + guid.bytes_le
+            + efi_attributes.encode()
+            + self.authenticated_variable.time.encode()
+        )
 
         # Allow a caller to swap out the payload
         self.digest = self.digest_without_payload
@@ -1490,7 +1471,7 @@ class EfiVariableAuthentication2Builder(object):
             return
 
         # convert the payload to a file stream for SetPayload
-        if not hasattr(payload, 'seek'):
+        if not hasattr(payload, "seek"):
             payload = io.BytesIO(payload)
 
         # Get the starting position and the length
@@ -1504,10 +1485,11 @@ class EfiVariableAuthentication2Builder(object):
         self.authenticated_variable.set_payload(payload)
 
     def sign(
-        self, signing_certificate: Certificate,
+        self,
+        signing_certificate: Certificate,
         signing_private_key: RSAPrivateKey,
         additional_certificates: List = [],
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """Signs an authenticated variable.
 
@@ -1538,7 +1520,8 @@ class EfiVariableAuthentication2Builder(object):
         logging.info("%sSubject: %s", indent, signing_certificate.subject)
 
         self.signature_builder = self.signature_builder.add_signer(
-            signing_certificate, signing_private_key, hash_algorithm)
+            signing_certificate, signing_private_key, hash_algorithm
+        )
 
         for i, cert in enumerate(additional_certificates):
             indents = indent * i
@@ -1550,7 +1533,7 @@ class EfiVariableAuthentication2Builder(object):
             # Add the certificate for verification
             self.signature_builder = self.signature_builder.add_certificate(cert.certificate)
 
-    def finalize(self, omit_content_info: bool=True) -> EfiVariableAuthentication2:
+    def finalize(self, omit_content_info: bool = True) -> EfiVariableAuthentication2:
         """Finalizes the signature and returns a EfiVariableAuthentication2.
 
         Args:
@@ -1565,8 +1548,7 @@ class EfiVariableAuthentication2Builder(object):
         #   - The signature is detached
         #   - Do not convert LF to CRLF in the file (windows format)
         #   - Remove the attributes section from the pkcs7 structure
-        options = [pkcs7.PKCS7Options.DetachedSignature,
-                   pkcs7.PKCS7Options.Binary, pkcs7.PKCS7Options.NoAttributes]
+        options = [pkcs7.PKCS7Options.DetachedSignature, pkcs7.PKCS7Options.Binary, pkcs7.PKCS7Options.NoAttributes]
 
         # The signature is enclosed in a asn1 content info structure
         self.signature = self.signature_builder.sign(Encoding.DER, options)
@@ -1574,16 +1556,14 @@ class EfiVariableAuthentication2Builder(object):
         # Up until recently including the content info section (on tianocore edk2 based implementations)
         # will cause UEFI to return `SECURITY_VIOLATION``
         if omit_content_info:
-            content_info, _ = der_decode(
-                self.signature, asn1Spec=rfc2315.ContentInfo())
+            content_info, _ = der_decode(self.signature, asn1Spec=rfc2315.ContentInfo())
 
-            content_type = content_info.getComponentByName('contentType')
+            content_type = content_info.getComponentByName("contentType")
             if content_type != rfc2315.signedData:
                 raise ValueError("This wasn't a signed data structure?")
 
             # Remove the contentInfo section and just return the sign data
-            signed_data, _ = der_decode(content_info.getComponentByName(
-                'content'), asn1Spec=rfc2315.SignedData())
+            signed_data, _ = der_decode(content_info.getComponentByName("content"), asn1Spec=rfc2315.SignedData())
 
             self.signature = der_encode(signed_data)
 
@@ -1594,18 +1574,20 @@ class EfiVariableAuthentication2Builder(object):
 
 class EFiVariableAuthentication2(EfiVariableAuthentication2):
     """An object representing a EFI_VARIABLE_AUTHENTICATION_2. DEPRECATED."""
+
     def __init__(
-        self,
-        time: datetime.datetime=datetime.datetime.now(),
-        decodefs:
-        BinaryIO=None
-    ) -> 'EFiVariableAuthentication2':
+        self, time: datetime.datetime = datetime.datetime.now(), decodefs: BinaryIO = None
+    ) -> "EFiVariableAuthentication2":
         """DEPRECATED. Use EfiVariableAuthentication2() instead. Initializes a EFiVariableAuthentication2."""
-        warn("EFiVariableAuthentication2() is deprecated, use EfiVariableAuthentication2() instead.", DeprecationWarning, 2)  # noqa: E501
+        warn(
+            "EFiVariableAuthentication2() is deprecated, use EfiVariableAuthentication2() instead.",
+            DeprecationWarning,
+            2,
+        )  # noqa: E501
         super().__init__(time, decodefs=decodefs)
 
 
-'''
+"""
 THESE ARE NOT SUPPORTED IN THE TOOL
 
 ```
@@ -1646,4 +1628,4 @@ typedef struct {
   EFI_TIME            TimeOfRevocation;
 } EFI_CERT_X509_SHA512;
 ```
-'''
+"""

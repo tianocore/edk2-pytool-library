@@ -17,24 +17,64 @@ except ImportError:
 
 
 class AnsiHandlerTest(unittest.TestCase):
-
     # we are mainly looking for exception to be thrown
 
-    record = logging.makeLogRecord({"name": "", "level": logging.CRITICAL, "levelno": logging.CRITICAL,
-                                    "levelname": "CRITICAL", "path": "test_path", "lineno": 0,
-                                    "msg": "Test message"})
-    record2 = logging.makeLogRecord({"name": "", "level": logging.INFO, "levelno": logging.INFO,
-                                     "levelname": "INFO", "path": "test_path", "lineno": 0,
-                                     "msg": "Test message"})
-    record3 = logging.makeLogRecord({"name": "", "level": logging.ERROR, "levelno": logging.ERROR,
-                                     "levelname": "ERROR", "path": "test_path", "lineno": 0,
-                                     "msg": ['Logging', 'A', 'List']})
-    record4 = logging.makeLogRecord({"name": "", "level": logging.ERROR, "levelno": logging.ERROR,
-                                     "levelname": "ERROR", "path": "test_path", "lineno": 0,
-                                     "msg": ('Logging', 'A', 'Tuple')})
-    record5 = logging.makeLogRecord({"name": "", "level": logging.ERROR, "levelno": logging.ERROR,
-                                     "levelname": "ERROR", "path": "test_path", "lineno": 0,
-                                     "msg": "Testing This Works: %s", "args": ("Test",)})
+    record = logging.makeLogRecord(
+        {
+            "name": "",
+            "level": logging.CRITICAL,
+            "levelno": logging.CRITICAL,
+            "levelname": "CRITICAL",
+            "path": "test_path",
+            "lineno": 0,
+            "msg": "Test message",
+        }
+    )
+    record2 = logging.makeLogRecord(
+        {
+            "name": "",
+            "level": logging.INFO,
+            "levelno": logging.INFO,
+            "levelname": "INFO",
+            "path": "test_path",
+            "lineno": 0,
+            "msg": "Test message",
+        }
+    )
+    record3 = logging.makeLogRecord(
+        {
+            "name": "",
+            "level": logging.ERROR,
+            "levelno": logging.ERROR,
+            "levelname": "ERROR",
+            "path": "test_path",
+            "lineno": 0,
+            "msg": ["Logging", "A", "List"],
+        }
+    )
+    record4 = logging.makeLogRecord(
+        {
+            "name": "",
+            "level": logging.ERROR,
+            "levelno": logging.ERROR,
+            "levelname": "ERROR",
+            "path": "test_path",
+            "lineno": 0,
+            "msg": ("Logging", "A", "Tuple"),
+        }
+    )
+    record5 = logging.makeLogRecord(
+        {
+            "name": "",
+            "level": logging.ERROR,
+            "levelno": logging.ERROR,
+            "levelname": "ERROR",
+            "path": "test_path",
+            "lineno": 0,
+            "msg": "Testing This Works: %s",
+            "args": ("Test",),
+        }
+    )
 
     def test_colored_formatter_init(self):
         formatter = ColoredFormatter("%(levelname)s - %(message)s")
@@ -46,7 +86,7 @@ class AnsiHandlerTest(unittest.TestCase):
 
         output = formatter.format(AnsiHandlerTest.record)
         self.assertNotEqual(output, None)
-        CSI = '\033['
+        CSI = "\033["
         self.assertGreater(len(output), 0, "We should have some output")
         self.assertFalse((CSI not in output), "There was supposed to be a ANSI control code in that %s" % output)
 
@@ -61,7 +101,7 @@ class AnsiHandlerTest(unittest.TestCase):
         handler.emit(AnsiHandlerTest.record)
         handler.flush()
 
-        CSI = '\033['
+        CSI = "\033["
 
         # check for ANSI escape code in stream
         stream.seek(0)
@@ -81,7 +121,7 @@ class AnsiHandlerTest(unittest.TestCase):
         handler.emit(AnsiHandlerTest.record2)
         handler.flush()
 
-        CSI = '\033['
+        CSI = "\033["
 
         found_csi = False
         stream.seek(0)
@@ -107,7 +147,7 @@ class AnsiHandlerTest(unittest.TestCase):
 
         stream.seek(0)
         lines = stream.readlines()
-        CSI = '\033[31m' # Red
-        CSI2 = '\033[39m' # Reset
+        CSI = "\033[31m"  # Red
+        CSI2 = "\033[39m"  # Reset
         for line in lines:
             assert CSI in line and CSI2 in line

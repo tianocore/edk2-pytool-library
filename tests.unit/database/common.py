@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Common functionality to test the tables."""
+
 import uuid
 from pathlib import Path
 
@@ -18,7 +19,8 @@ def write_file(file, contents):
     file.write_text(contents)
     assert file.read_text() == contents
 
-def make_edk2_cfg_file(*args, **kwargs)->str:
+
+def make_edk2_cfg_file(*args, **kwargs) -> str:
     """Returns a string representing the INF generated.
 
     Examples:
@@ -45,9 +47,10 @@ def make_edk2_cfg_file(*args, **kwargs)->str:
         out += f"[{key.capitalize()}]\n"
         for value in values:
             # value = value.replace("-", " ")
-            out += f'  {value}\n'
+            out += f"  {value}\n"
 
     return out
+
 
 def create_fdf_file(file_path, **kwargs):
     """Makes a FDF with default values that can be overwritten via kwargs."""
@@ -76,6 +79,7 @@ def create_fdf_file(file_path, **kwargs):
     write_file(file_path, out)
     return k
 
+
 def create_dsc_file(file_path, **kwargs):
     """Makes a DSC with default values that can be overwritten via kwargs."""
     # Make default values.
@@ -90,13 +94,14 @@ def create_dsc_file(file_path, **kwargs):
         "components": kwargs.pop("components", comps),
     }
 
-    for key,value in kwargs.items():
+    for key, value in kwargs.items():
         k[key] = value
 
     # Write to the specified file and return the dict of set values For comparing
     out = make_edk2_cfg_file(**k)
     write_file(file_path, out)
     return k
+
 
 def create_inf_file(file_path, **kwargs):
     """Makes an INF with default values that can be overwritten via kwargs."""
@@ -121,8 +126,10 @@ def create_inf_file(file_path, **kwargs):
     write_file(file_path, out)
     return k
 
+
 class Tree:
     """An empty EDK2 Workspace containing a simple package."""
+
     def __init__(self, ws: Path):
         """Initializes the empty tree with a package, driver, and library folder."""
         self.ws = ws
@@ -145,7 +152,7 @@ class Tree:
 
     def create_library(self, name: str, lib_cls: str, **kwargs):
         """Creates a Library INF in the empty tree."""
-        path = self.library_folder / f'{name}.inf'
+        path = self.library_folder / f"{name}.inf"
         default = {
             "FILE_GUID": str(uuid.uuid4()),
             "MODULE_TYPE": "BASE",
@@ -159,7 +166,7 @@ class Tree:
 
     def create_component(self, name: str, module_type: str, **kwargs):
         """Creates a Component INF in the empty tree."""
-        path = self.component_folder / f'{name}.inf'
+        path = self.component_folder / f"{name}.inf"
         kwargs["defines"] = {
             "FILE_GUID": str(uuid.uuid4()),
             "MODULE_TYPE": module_type,
@@ -171,18 +178,15 @@ class Tree:
 
     def create_dsc(self, **kwargs):
         """Creates a dsc in the empty tree."""
-        path = self.package / 'TestPkg.dsc'
+        path = self.package / "TestPkg.dsc"
         create_dsc_file(path, **kwargs)
         return str(path.relative_to(self.ws))
 
     def create_fdf(self, **kwargs):
         """Creates an FDF in the Empty Tree."""
-        path = self.package / 'TestPkg.fdf'
+        path = self.package / "TestPkg.fdf"
         create_fdf_file(path, **kwargs)
         return str(path.relative_to(self.ws))
-
-
-
 
 
 @pytest.fixture

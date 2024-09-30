@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Code to help parse DEC files."""
+
 import os
 import re
 from typing import IO
@@ -14,14 +15,15 @@ from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
 from edk2toollib.uefi.edk2.parsers.guid_parser import GuidParser
 
 
-class LibraryClassDeclarationEntry():
+class LibraryClassDeclarationEntry:
     """Object representing a Library Class Declaration Entry."""
-    def __init__(self, packagename: str, rawtext: str = None) -> 'LibraryClassDeclarationEntry':
+
+    def __init__(self, packagename: str, rawtext: str = None) -> "LibraryClassDeclarationEntry":
         """Init a library Class Declaration Entry."""
         self.path = ""
         self.name = ""
         self.package_name = packagename
-        if (rawtext is not None):
+        if rawtext is not None:
             self._parse(rawtext)
 
     def _parse(self, rawtext: str) -> None:
@@ -39,7 +41,7 @@ class LibraryClassDeclarationEntry():
         self.path = t[2].strip()
 
 
-class GuidedDeclarationEntry():
+class GuidedDeclarationEntry:
     """A baseclass for declaration types that have a name and guid.
 
     Attributes:
@@ -48,17 +50,18 @@ class GuidedDeclarationEntry():
         guid (uuid.UUID): guid
         package_name (str): packagename
     """
+
     PROTOCOL = 1
     PPI = 2
     GUID = 3
 
-    def __init__(self, packagename: str, rawtext: str = None) -> 'GuidedDeclarationEntry':
+    def __init__(self, packagename: str, rawtext: str = None) -> "GuidedDeclarationEntry":
         """Init a protocol/Ppi/or Guid declaration entry."""
         self.name = ""
         self.guidstring = ""
         self.guid = None
         self.package_name = packagename
-        if (rawtext is not None):
+        if rawtext is not None:
             self._parse(rawtext)
 
     def _parse(self, rawtext: str) -> None:
@@ -71,13 +74,14 @@ class GuidedDeclarationEntry():
         self.name = t[0].strip()
         self.guidstring = t[2].strip()
         self.guid = GuidParser.uuid_from_guidstring(self.guidstring)
-        if (self.guid is None):
+        if self.guid is None:
             raise ValueError("Could not parse guid")
 
 
 class ProtocolDeclarationEntry(GuidedDeclarationEntry):
     """Object representing a Protocol Declaration Entry."""
-    def __init__(self, packagename: str, rawtext: str = None) -> 'ProtocolDeclarationEntry':
+
+    def __init__(self, packagename: str, rawtext: str = None) -> "ProtocolDeclarationEntry":
         """Init a protocol declaration entry."""
         super().__init__(packagename, rawtext)
         self.type = GuidedDeclarationEntry.PROTOCOL
@@ -85,7 +89,8 @@ class ProtocolDeclarationEntry(GuidedDeclarationEntry):
 
 class PpiDeclarationEntry(GuidedDeclarationEntry):
     """Object representing a Ppi Declaration Entry."""
-    def __init__(self, packagename: str, rawtext: str = None) -> 'GuidedDeclarationEntry':
+
+    def __init__(self, packagename: str, rawtext: str = None) -> "GuidedDeclarationEntry":
         """Init a Ppi declaration entry."""
         super().__init__(packagename, rawtext)
         self.type = GuidedDeclarationEntry.PPI
@@ -93,13 +98,14 @@ class PpiDeclarationEntry(GuidedDeclarationEntry):
 
 class GuidDeclarationEntry(GuidedDeclarationEntry):
     """Object representing a Guid Declaration Entry."""
-    def __init__(self, packagename: str, rawtext: str = None) -> 'GuidDeclarationEntry':
+
+    def __init__(self, packagename: str, rawtext: str = None) -> "GuidDeclarationEntry":
         """Init a Ppi declaration entry."""
         super().__init__(packagename, rawtext)
         self.type = GuidedDeclarationEntry.GUID
 
 
-class PcdDeclarationEntry():
+class PcdDeclarationEntry:
     """Object representing a Pcd Delcaration Entry.
 
     Attributes:
@@ -110,7 +116,8 @@ class PcdDeclarationEntry():
         id (str): id
         package_name: package name
     """
-    def __init__(self, packagename: str, rawtext: str = None) -> 'PcdDeclarationEntry':
+
+    def __init__(self, packagename: str, rawtext: str = None) -> "PcdDeclarationEntry":
         """Creates a PCD Declaration Entry for one PCD."""
         self.token_space_name = ""
         self.name = ""
@@ -118,7 +125,7 @@ class PcdDeclarationEntry():
         self.type = ""
         self.id = ""
         self.package_name = packagename
-        if (rawtext is not None):
+        if rawtext is not None:
             self._parse(rawtext)
 
     def _parse(self, rawtext: str) -> None:
@@ -131,15 +138,15 @@ class PcdDeclarationEntry():
         op = re.split(pattern, sp[2])
 
         # if it's 2 long, we need to check that it's a structured PCD
-        if (len(op) == 2 and op[0].count(".") > 0):
+        if len(op) == 2 and op[0].count(".") > 0:
             pass
         # otherwise it needs at least 4 parts
-        elif (len(op) < 4):
+        elif len(op) < 4:
             raise Exception(f"Too few parts: {op}")
         # but also less than 5
-        elif (len(op) > 5):
+        elif len(op) > 5:
             raise Exception(f"Too many parts: {rawtext}")
-        elif (len(op) == 5 and op[4].strip() != '{'):
+        elif len(op) == 5 and op[4].strip() != "{":
             raise Exception(f"Too many parts: {rawtext}")
 
         self.name = op[0].strip()
@@ -166,9 +173,9 @@ class DecParser(HashFileParser):
         Path (str): path to the DEC file
     """
 
-    def __init__(self) -> 'DecParser':
+    def __init__(self) -> "DecParser":
         """Init an empty Dec Parser."""
-        HashFileParser.__init__(self, 'DecParser')
+        HashFileParser.__init__(self, "DecParser")
         self.Lines = []
         self.Parsed = False
         self.Dict = {}
@@ -195,22 +202,22 @@ class DecParser(HashFileParser):
         for line in self.Lines:
             sline = self.StripComment(line)
 
-            if (sline is None or len(sline) < 1):
+            if sline is None or len(sline) < 1:
                 continue
 
             if InDefinesSection:
-                if sline.strip()[0] == '[':
+                if sline.strip()[0] == "[":
                     InDefinesSection = False
                 else:
                     if sline.count("=") == 1:
-                        tokens = sline.split('=', 1)
+                        tokens = sline.split("=", 1)
                         self.Dict[tokens[0].strip()] = tokens[1].strip()
-                        if (self.PackageName is None and tokens[0].strip() == "PACKAGE_NAME"):
+                        if self.PackageName is None and tokens[0].strip() == "PACKAGE_NAME":
                             self.PackageName = self.Dict["PACKAGE_NAME"]
                         continue
 
             elif InLibraryClassSection:
-                if sline.strip()[0] == '[':
+                if sline.strip()[0] == "[":
                     InLibraryClassSection = False
                 else:
                     t = LibraryClassDeclarationEntry(self.PackageName, sline)
@@ -218,7 +225,7 @@ class DecParser(HashFileParser):
                     continue
 
             elif InProtocolsSection:
-                if sline.strip()[0] == '[':
+                if sline.strip()[0] == "[":
                     InProtocolsSection = False
                 else:
                     t = ProtocolDeclarationEntry(self.PackageName, sline)
@@ -226,7 +233,7 @@ class DecParser(HashFileParser):
                     continue
 
             elif InGuidsSection:
-                if sline.strip()[0] == '[':
+                if sline.strip()[0] == "[":
                     InGuidsSection = False
                 else:
                     t = GuidDeclarationEntry(self.PackageName, sline)
@@ -234,28 +241,28 @@ class DecParser(HashFileParser):
                     continue
 
             elif InPcdSection:
-                if sline.strip()[0] == '[':
+                if sline.strip()[0] == "[":
                     InPcdSection = False
-                elif sline.strip()[0] == '}':
+                elif sline.strip()[0] == "}":
                     InStructuredPcdDeclaration = False
                 else:
                     if InStructuredPcdDeclaration:
                         continue
                     t = PcdDeclarationEntry(self.PackageName, sline)
                     self.Pcds.append(t)
-                    if sline.rstrip()[-1] == '{':
+                    if sline.rstrip()[-1] == "{":
                         InStructuredPcdDeclaration = True
                     continue
 
             elif InIncludesSection:
-                if sline.strip()[0] == '[':
+                if sline.strip()[0] == "[":
                     InIncludesSection = False
                 else:
                     self.IncludePaths.append(sline.strip())
                     continue
 
             elif InPPISection:
-                if (sline.strip()[0] == '['):
+                if sline.strip()[0] == "[":
                     InPPISection = False
                 else:
                     t = PpiDeclarationEntry(self.PackageName, sline)
@@ -263,25 +270,25 @@ class DecParser(HashFileParser):
                     continue
 
             # check for different sections
-            if sline.strip().lower().startswith('[defines'):
+            if sline.strip().lower().startswith("[defines"):
                 InDefinesSection = True
 
-            elif sline.strip().lower().startswith('[libraryclasses'):
+            elif sline.strip().lower().startswith("[libraryclasses"):
                 InLibraryClassSection = True
 
-            elif sline.strip().lower().startswith('[protocols'):
+            elif sline.strip().lower().startswith("[protocols"):
                 InProtocolsSection = True
 
-            elif sline.strip().lower().startswith('[guids'):
+            elif sline.strip().lower().startswith("[guids"):
                 InGuidsSection = True
 
-            elif sline.strip().lower().startswith('[ppis'):
+            elif sline.strip().lower().startswith("[ppis"):
                 InPPISection = True
 
-            elif sline.strip().lower().startswith('[pcd'):
+            elif sline.strip().lower().startswith("[pcd"):
                 InPcdSection = True
 
-            elif sline.strip().lower().startswith('[includes'):
+            elif sline.strip().lower().startswith("[includes"):
                 InIncludesSection = True
 
         self.Parsed = True
@@ -304,7 +311,7 @@ class DecParser(HashFileParser):
             relative to your CWD
         """
         self.Logger.debug("Parsing file: %s" % filepath)
-        if (not os.path.isabs(filepath)):
+        if not os.path.isabs(filepath):
             fp = self.FindPath(filepath)
         else:
             fp = filepath

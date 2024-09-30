@@ -49,6 +49,7 @@ INF_EXAMPLE1 = """
   $(MY_PATH)/File6.c
 """
 
+
 def test_inf_parser_scoped_libraryclasses(tmp_path: Path):
     """Test that we accurately detect scoped library classes."""
     inf_path = tmp_path / "test.inf"
@@ -63,6 +64,7 @@ def test_inf_parser_scoped_libraryclasses(tmp_path: Path):
     assert sorted(infp.get_libraries(["IA32"])) == sorted(["Library1", "Library2", "Library3", "Library4"])
     assert sorted(infp.get_libraries(["X64"])) == sorted(["Library1", "Library2", "Library4"])
 
+
 def test_inf_parser_scoped_sources(tmp_path: Path):
     """Test that we accurately detect scoped sources."""
     inf_path = tmp_path / "test.inf"
@@ -76,6 +78,7 @@ def test_inf_parser_scoped_sources(tmp_path: Path):
     assert sorted(infp.get_sources(["Common"])) == sorted(["File1.c", "File2.c"])
     assert sorted(infp.get_sources(["IA32"])) == sorted(["File1.c", "File2.c", "File3.c", "File4.c"])
     assert sorted(infp.get_sources(["X64"])) == sorted(["File1.c", "File2.c", "File4.c"])
+
 
 def test_inf_parser_with_defines(tmp_path: Path):
     """Tests that we accurately resolve variables if defined in the INF."""

@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Core classes and methods used to interact with the database module inside edk2-pytool-library."""
+
 import datetime
 from typing import List, Optional
 
@@ -17,36 +18,43 @@ from .edk2_db import Edk2DB  # noqa: F401
 
 # Association tables. Should not be used directly. Only for relationships
 _source_association = Table(
-    'source_association', Edk2DB.Base.metadata,
-    Column('left_id', Integer, ForeignKey('inf.id')),
-    Column('right_id', Integer, ForeignKey('source.id')),
+    "source_association",
+    Edk2DB.Base.metadata,
+    Column("left_id", Integer, ForeignKey("inf.id")),
+    Column("right_id", Integer, ForeignKey("source.id")),
 )
 
 _instance_source_association = Table(
-    'instance_source_association', Edk2DB.Base.metadata,
-    Column('left_id', Integer, ForeignKey('instancedinf.id')),
-    Column('right_id', Integer, ForeignKey('source.id')),
+    "instance_source_association",
+    Edk2DB.Base.metadata,
+    Column("left_id", Integer, ForeignKey("instancedinf.id")),
+    Column("right_id", Integer, ForeignKey("source.id")),
 )
 
 _fv_association = Table(
-    'fv_association', Edk2DB.Base.metadata,
-    Column('left_id', Integer, ForeignKey('fv.id')),
-    Column('right_id', Integer, ForeignKey('instancedinf.id')),
+    "fv_association",
+    Edk2DB.Base.metadata,
+    Column("left_id", Integer, ForeignKey("fv.id")),
+    Column("right_id", Integer, ForeignKey("instancedinf.id")),
 )
 _library_association = Table(
-    'library_association', Edk2DB.Base.metadata,
-    Column('left_id', Integer, ForeignKey('inf.id')),
-    Column('right_id', Integer, ForeignKey('library.id')),
+    "library_association",
+    Edk2DB.Base.metadata,
+    Column("left_id", Integer, ForeignKey("inf.id")),
+    Column("right_id", Integer, ForeignKey("library.id")),
 )
 
 _inf_association = Table(
-    'inf_association', Edk2DB.Base.metadata,
-    Column('left_id', Integer, ForeignKey('instancedinf.id')),
-    Column('right_id', Integer, ForeignKey('instancedinf.id')),
+    "inf_association",
+    Edk2DB.Base.metadata,
+    Column("left_id", Integer, ForeignKey("instancedinf.id")),
+    Column("right_id", Integer, ForeignKey("instancedinf.id")),
 )
+
 
 class Environment(Edk2DB.Base):
     """A class to represent an environment in the database."""
+
     __tablename__ = "environment"
 
     id: Mapped[str] = mapped_column(primary_key=True)
@@ -54,8 +62,10 @@ class Environment(Edk2DB.Base):
     version: Mapped[str] = mapped_column(String(40))
     values: Mapped[List["Value"]] = relationship(back_populates="env", cascade="all, delete-orphan")
 
+
 class Value(Edk2DB.Base):
     """A class to represent a key-value pair in the database."""
+
     __tablename__ = "value"
 
     env_id: Mapped[str] = mapped_column(ForeignKey("environment.id"), primary_key=True, index=True)
@@ -63,8 +73,10 @@ class Value(Edk2DB.Base):
     value: Mapped[str]
     env: Mapped["Environment"] = relationship(back_populates="values")
 
+
 class Inf(Edk2DB.Base):
     """A class to represent an INF file in the database."""
+
     __tablename__ = "inf"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -74,10 +86,12 @@ class Inf(Edk2DB.Base):
     package_name: Mapped[Optional[str]] = mapped_column(ForeignKey("package.name"))
     module_type: Mapped[Optional[str]]
     sources: Mapped[List["Source"]] = relationship(secondary=_source_association)
-    libraries:  Mapped[List["Library"]] = relationship(secondary=_library_association)
+    libraries: Mapped[List["Library"]] = relationship(secondary=_library_association)
+
 
 class InstancedInf(Edk2DB.Base):
     """A class to represent an instanced INF file in the database."""
+
     __tablename__ = "instancedinf"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -101,8 +115,10 @@ class InstancedInf(Edk2DB.Base):
         secondary=_instance_source_association,
     )
 
+
 class Source(Edk2DB.Base):
     """A class to represent a source file in the database."""
+
     __tablename__ = "source"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -113,15 +129,19 @@ class Source(Edk2DB.Base):
     comment_lines: Mapped[Optional[int]]
     blank_lines: Mapped[Optional[int]]
 
+
 class Library(Edk2DB.Base):
     """A class to represent a library in the database."""
+
     __tablename__ = "library"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(unique=True)
 
+
 class Repository(Edk2DB.Base):
     """A class to represent a repository in the database."""
+
     __tablename__ = "repository"
     __table_args__ = (UniqueConstraint("name", "path"),)
 
@@ -133,6 +153,7 @@ class Repository(Edk2DB.Base):
 
 class Package(Edk2DB.Base):
     """A class to represent a package in the database."""
+
     __tablename__ = "package"
     __table_args__ = (UniqueConstraint("name", "path"),)
 
@@ -142,8 +163,10 @@ class Package(Edk2DB.Base):
     repository: Mapped["Repository"] = relationship("Repository", back_populates="packages")
     repository_id: Mapped[int] = mapped_column(ForeignKey("repository.id"))
 
+
 class Fv(Edk2DB.Base):
     """A class to represent an FV in the database."""
+
     __tablename__ = "fv"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)

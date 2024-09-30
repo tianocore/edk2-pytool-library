@@ -46,7 +46,8 @@ class EfiFirmwareVolumeHeader(object):
     } EFI_FIRMWARE_VOLUME_HEADER;
     ```
     """
-    def __init__(self) -> 'EfiFirmwareVolumeHeader':
+
+    def __init__(self) -> "EfiFirmwareVolumeHeader":
         """Inits an empty object."""
         self.StructString = "=16s16sQ4sLHHHBBQQ"  # spell-checker: disable-line
         self.ZeroVector = None
@@ -61,7 +62,7 @@ class EfiFirmwareVolumeHeader(object):
         self.Blockmap0 = None
         self.Blockmap1 = None
 
-    def load_from_file(self, file: IO) -> 'EfiFirmwareVolumeHeader':
+    def load_from_file(self, file: IO) -> "EfiFirmwareVolumeHeader":
         """Loads data into the object from a filestream.
 
         Args:
@@ -80,16 +81,27 @@ class EfiFirmwareVolumeHeader(object):
         file.seek(orig_seek)
 
         # Load this object with the contents of the data.
-        (self.ZeroVector, file_system_guid_bin, self.FvLength, self.Signature, self.Attributes,
-            self.HeaderLength, self.Checksum, self.ExtHeaderOffset, self.Reserved, self.Revision,
-            self.Blockmap0, self.Blockmap1) = struct.unpack(self.StructString, struct_bytes)
+        (
+            self.ZeroVector,
+            file_system_guid_bin,
+            self.FvLength,
+            self.Signature,
+            self.Attributes,
+            self.HeaderLength,
+            self.Checksum,
+            self.ExtHeaderOffset,
+            self.Reserved,
+            self.Revision,
+            self.Blockmap0,
+            self.Blockmap1,
+        ) = struct.unpack(self.StructString, struct_bytes)
 
         # Make sure that this structure is what we think it is.
         if self.Signature != EFI_FVH_SIGNATURE:
             raise Exception("File does not appear to point to a valid EfiFirmwareVolumeHeader!")
 
         # Update the GUID to be a UUID object.
-        if sys.byteorder == 'big':
+        if sys.byteorder == "big":
             self.FileSystemGuid = uuid.UUID(bytes=file_system_guid_bin)
         else:
             self.FileSystemGuid = uuid.UUID(bytes_le=file_system_guid_bin)
@@ -102,10 +114,22 @@ class EfiFirmwareVolumeHeader(object):
         Returns:
             (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
         """
-        file_system_guid_bin = self.FileSystemGuid.bytes if sys.byteorder == 'big' else self.FileSystemGuid.bytes_le
-        return struct.pack(self.StructString, self.ZeroVector, file_system_guid_bin, self.FvLength, self.Signature,
-                           self.Attributes, self.HeaderLength, self.Checksum, self.ExtHeaderOffset, self.Reserved,
-                           self.Revision, self.Blockmap0, self.Blockmap1)
+        file_system_guid_bin = self.FileSystemGuid.bytes if sys.byteorder == "big" else self.FileSystemGuid.bytes_le
+        return struct.pack(
+            self.StructString,
+            self.ZeroVector,
+            file_system_guid_bin,
+            self.FvLength,
+            self.Signature,
+            self.Attributes,
+            self.HeaderLength,
+            self.Checksum,
+            self.ExtHeaderOffset,
+            self.Reserved,
+            self.Revision,
+            self.Blockmap0,
+            self.Blockmap1,
+        )
 
 
 class EfiFirmwareVolumeExtHeader(object):
@@ -120,13 +144,14 @@ class EfiFirmwareVolumeExtHeader(object):
     } EFI_FIRMWARE_VOLUME_EXT_HEADER;
     ```
     """
-    def __init__(self) -> 'EfiFirmwareVolumeExtHeader':
+
+    def __init__(self) -> "EfiFirmwareVolumeExtHeader":
         """Inits an empty object."""
         self.StructString = "=16sL"
         self.FileSystemGuid = None
         self.ExtHeaderSize = None
 
-    def load_from_file(self, file: IO) -> 'EfiFirmwareVolumeExtHeader':
+    def load_from_file(self, file: IO) -> "EfiFirmwareVolumeExtHeader":
         """Loads data into the object from a filestream.
 
         Args:

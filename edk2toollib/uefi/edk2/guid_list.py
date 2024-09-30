@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Simple list of GuidListEntry objects parsed from edk2 specific files."""
+
 import logging
 import os
 from typing import IO
@@ -16,7 +17,7 @@ from edk2toollib.uefi.edk2.parsers.dec_parser import DecParser
 from edk2toollib.uefi.edk2.parsers.inf_parser import InfParser
 
 
-class GuidListEntry():
+class GuidListEntry:
     """A object representing a Guid.
 
     Attributes:
@@ -24,7 +25,8 @@ class GuidListEntry():
         guid (str): registry format guid in string format
         filepath (str): absolute path to file where this guid was found
     """
-    def __init__(self, name: str, guid: str, filepath: str) -> 'GuidListEntry':
+
+    def __init__(self, name: str, guid: str, filepath: str) -> "GuidListEntry":
         """Create GuidListEntry for later review and compare.
 
         Args:
@@ -41,8 +43,9 @@ class GuidListEntry():
         return f"GUID: {self.guid} NAME: {self.name} FILE: {self.absfilepath}"
 
 
-class GuidList():
+class GuidList:
     """Static class for returning Guids."""
+
     @staticmethod
     def guidlist_from_filesystem(folder: str, ignore_lines: list = list()) -> list:
         """Create a list of GuidListEntry from files found in the file system.
@@ -59,13 +62,13 @@ class GuidList():
         for root, dirs, files in os.walk(folder):
             for d in dirs[:]:
                 fullpath = os.path.join(root, d)
-                if (ignore(fullpath)):
+                if ignore(fullpath):
                     logging.debug(f"Ignore folder: {fullpath}")
                     dirs.remove(d)
 
             for name in files:
                 fullpath = os.path.join(root, name)
-                if (ignore(fullpath)):
+                if ignore(fullpath):
                     logging.debug(f"Ignore file: {fullpath}")
                     continue
 
@@ -83,10 +86,10 @@ class GuidList():
         Returns:
             (list[GuidListEntry]): guids
         """
-        if (filename.lower().endswith(".dec")):
+        if filename.lower().endswith(".dec"):
             with open(filename, "r") as f:
                 return GuidList.parse_guids_from_dec(f, filename)
-        elif (filename.lower().endswith(".inf")):
+        elif filename.lower().endswith(".inf"):
             return GuidList.parse_guids_from_inf(filename)
         else:
             return []

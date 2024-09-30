@@ -12,11 +12,12 @@
 
 Some functionality copied from Tianocore/edk2 basetools.
 """
+
 import re
 import uuid
 
 
-class GuidParser():
+class GuidParser:
     """Provide support functions for converting between different guid formats.
 
     Also support str uuid and uuid to string.
@@ -25,22 +26,25 @@ class GuidParser():
       C-Format:   {0xD3B36F2C, 0xD551, 0x11D4, {0x9A, 0x46, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D}}
       Reg-Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     """
+
     _HexChar = r"[0-9a-fA-F]"
     # Regular expression for GUID c structure format
-    _GuidCFormatPattern = r"{{\s*0[xX]{Hex}{{1,8}}\s*,\s*0[xX]{Hex}{{1,4}}\s*,\s*0[xX]{Hex}{{1,4}}" \
-                          r"\s*,\s*{{\s*0[xX]{Hex}{{1,2}}\s*,\s*0[xX]{Hex}{{1,2}}" \
-                          r"\s*,\s*0[xX]{Hex}{{1,2}}\s*,\s*0[xX]{Hex}{{1,2}}" \
-                          r"\s*,\s*0[xX]{Hex}{{1,2}}\s*,\s*0[xX]{Hex}{{1,2}}" \
-                          r"\s*,\s*0[xX]{Hex}{{1,2}}\s*,\s*0[xX]{Hex}{{1,2}}\s*}}\s*}}".format(Hex=_HexChar)
+    _GuidCFormatPattern = (
+        r"{{\s*0[xX]{Hex}{{1,8}}\s*,\s*0[xX]{Hex}{{1,4}}\s*,\s*0[xX]{Hex}{{1,4}}"
+        r"\s*,\s*{{\s*0[xX]{Hex}{{1,2}}\s*,\s*0[xX]{Hex}{{1,2}}"
+        r"\s*,\s*0[xX]{Hex}{{1,2}}\s*,\s*0[xX]{Hex}{{1,2}}"
+        r"\s*,\s*0[xX]{Hex}{{1,2}}\s*,\s*0[xX]{Hex}{{1,2}}"
+        r"\s*,\s*0[xX]{Hex}{{1,2}}\s*,\s*0[xX]{Hex}{{1,2}}\s*}}\s*}}".format(Hex=_HexChar)
+    )
     GuidCFormatRegEx = re.compile(r"{}".format(_GuidCFormatPattern))
 
     _GuidPattern = r"{Hex}{{8}}-{Hex}{{4}}-{Hex}{{4}}-{Hex}{{4}}-{Hex}{{12}}".format(Hex=_HexChar)
 
     # Regular expressions for GUID matching
-    GuidRegFormatRegEx = re.compile(r'{}'.format(_GuidPattern))
+    GuidRegFormatRegEx = re.compile(r"{}".format(_GuidPattern))
 
     @classmethod
-    def is_guid_in_c_format(cls: 'GuidParser', guidstring: str) -> bool:
+    def is_guid_in_c_format(cls: "GuidParser", guidstring: str) -> bool:
         """Determine if guidstring is in c format.
 
         Args:
@@ -54,7 +58,7 @@ class GuidParser():
         return cls.GuidCFormatRegEx.match(guidstring)
 
     @classmethod
-    def is_guid_in_reg_format(cls: 'GuidParser', guidstring: str) -> bool:
+    def is_guid_in_reg_format(cls: "GuidParser", guidstring: str) -> bool:
         """Determine if guidstring is in registry format.
 
         Args:
@@ -63,11 +67,11 @@ class GuidParser():
         Returns:
           (bool): True if in Registry format. Otherwise False
         """
-        guidstring = guidstring.strip().strip('} {')
+        guidstring = guidstring.strip().strip("} {")
         return cls.GuidRegFormatRegEx.match(guidstring)
 
     @classmethod
-    def reg_guid_from_c_format(cls: 'GuidParser', guidstring: str) -> str:
+    def reg_guid_from_c_format(cls: "GuidParser", guidstring: str) -> str:
         """Convert a c formatted guidstring to a registry formatted guidstring.
 
         Args:
@@ -79,12 +83,12 @@ class GuidParser():
         """
         guidstring = guidstring.strip()
         if not cls.is_guid_in_c_format(guidstring):
-            return ''
+            return ""
 
         guidValueString = guidstring.lower().replace("{", "").replace("}", "").replace(" ", "").replace(";", "")
         guidValueList = guidValueString.split(",")
         if len(guidValueList) != 11:
-            return ''
+            return ""
         try:
             return "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x" % (
                 int(guidValueList[0], 16),
@@ -97,13 +101,13 @@ class GuidParser():
                 int(guidValueList[7], 16),
                 int(guidValueList[8], 16),
                 int(guidValueList[9], 16),
-                int(guidValueList[10], 16)
+                int(guidValueList[10], 16),
             )
         except Exception:
-            return ''
+            return ""
 
     @classmethod
-    def c_guid_from_reg_format(cls: 'GuidParser', guidstring: str) -> str:
+    def c_guid_from_reg_format(cls: "GuidParser", guidstring: str) -> str:
         """Convert registry format guidstring to c format guidstring.
 
         Args:
@@ -113,33 +117,33 @@ class GuidParser():
           (Success): guidstring in c format
           (Failure): empty string ''
         """
-        guidstring = guidstring.strip().strip('} {')
-        if (not cls.is_guid_in_reg_format(guidstring)):
-            return ''
+        guidstring = guidstring.strip().strip("} {")
+        if not cls.is_guid_in_reg_format(guidstring):
+            return ""
 
-        GuidList = guidstring.split('-')
-        Result = '{'
+        GuidList = guidstring.split("-")
+        Result = "{"
         for Index in range(0, 3, 1):
-            Result = Result + '0x' + GuidList[Index] + ', '
-        Result = Result + '{0x' + GuidList[3][0:2] + ', 0x' + GuidList[3][2:4]
+            Result = Result + "0x" + GuidList[Index] + ", "
+        Result = Result + "{0x" + GuidList[3][0:2] + ", 0x" + GuidList[3][2:4]
         for Index in range(0, 12, 2):
-            Result = Result + ', 0x' + GuidList[4][Index:Index + 2]
-        Result += '}}'
+            Result = Result + ", 0x" + GuidList[4][Index : Index + 2]
+        Result += "}}"
         return Result
 
     @classmethod
-    def uuid_from_guidstring(cls: 'GuidParser', guidstring: str) -> uuid.UUID:
+    def uuid_from_guidstring(cls: "GuidParser", guidstring: str) -> uuid.UUID:
         """Create a uuid object from the supplied guidstring."""
-        if (cls.is_guid_in_c_format(guidstring)):
+        if cls.is_guid_in_c_format(guidstring):
             return uuid.UUID(cls.reg_guid_from_c_format(guidstring))
-        elif (cls.is_guid_in_reg_format(guidstring)):
-            guidstring = guidstring.strip().strip('} {')
+        elif cls.is_guid_in_reg_format(guidstring):
+            guidstring = guidstring.strip().strip("} {")
             return uuid.UUID(guidstring)
         else:
             return None
 
     @classmethod
-    def c_guid_str_from_uuid(cls: 'GuidParser', guid: uuid.UUID) -> str:
+    def c_guid_str_from_uuid(cls: "GuidParser", guid: uuid.UUID) -> str:
         """Get a C string formatted guidstring from a uuid object.
 
         Args:
@@ -153,7 +157,7 @@ class GuidParser():
         return cls.c_guid_from_reg_format(reg)
 
     @classmethod
-    def reg_guid_str_from_uuid(cls: 'GuidParser', guid: uuid.UUID) -> str:
+    def reg_guid_str_from_uuid(cls: "GuidParser", guid: uuid.UUID) -> str:
         """Get a registry string formatted guidstring from a uuid object.
 
         Args:

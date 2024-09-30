@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """A module to run the InstancedInf table generator against a dsc, adding instanced inf information to the database."""
+
 import logging
 import re
 from pathlib import Path
@@ -21,12 +22,13 @@ from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 class InstancedInfTable(TableGenerator):
     """A Table Generator that parses a single DSC file and generates a table."""
+
     SECTION_LIBRARY = "LibraryClasses"
     SECTION_COMPONENT = "Components"
     SECTION_REGEX = re.compile(r"\[(.*)\]")
     OVERRIDE_REGEX = re.compile(r"\<(.*)\>")
 
-    def __init__(self, *args: Any, **kwargs: Any) -> 'InstancedInfTable':
+    def __init__(self, *args: Any, **kwargs: Any) -> "InstancedInfTable":
         """Initialize the query with the specific settings."""
         self._parsed_infs = {}
 
@@ -83,7 +85,7 @@ class InstancedInfTable(TableGenerator):
         all_repos = {
             (repo.name, repo.path): repo for repo in session.query(Repository).filter(Repository.path is not None).all()
         }
-        local_repo = session.query(Repository).filter_by(path = None).first()
+        local_repo = session.query(Repository).filter_by(path=None).first()
         for e in inf_entries:
             # Could parse a Windows INF file, which is not a EDKII INF file
             # and won't have a guid. GUIDS are required for INFs so we can
@@ -102,39 +104,37 @@ class InstancedInfTable(TableGenerator):
             if package is not None:
                 repo = package.repository
             else:
+
                 def filter_search(repo: Repository) -> bool:
                     """Return the Repository that contains the INF file."""
                     if repo.path is None:
                         return False
                     return Path(self.pathobj.WorkspacePath, repo.path).as_posix() in Path(e["FULL_PATH"]).as_posix()
+
                 repo = next(
                     filter(filter_search, all_repos.values()),
-                    local_repo # Default
+                    local_repo,  # Default
                 )
             rows.append(
                 InstancedInf(
-                    env = env_id,
-                    path = e["PATH"],
-                    cls = e.get("LIBRARY_CLASS"),
-                    name = e["NAME"],
-                    arch = e["ARCH"],
-                    dsc = e["DSC"],
-                    component = e["COMPONENT"],
-                    sources = sources,
-                    package = package,
-                    repository = repo,
+                    env=env_id,
+                    path=e["PATH"],
+                    cls=e.get("LIBRARY_CLASS"),
+                    name=e["NAME"],
+                    arch=e["ARCH"],
+                    dsc=e["DSC"],
+                    component=e["COMPONENT"],
+                    sources=sources,
+                    package=package,
+                    repository=repo,
                 )
             )
         session.add_all(rows)
         session.commit()
 
         all_libraries = {
-            (
-                library.path,
-                library.arch,
-                library.cls,
-                library.component
-            ): library for library in session.query(InstancedInf).filter_by(env=env_id).all()
+            (library.path, library.arch, library.cls, library.component): library
+            for library in session.query(InstancedInf).filter_by(env=env_id).all()
         }
         # Link all instanced INF rows to their used libraries
         for row, inf in zip(rows, inf_entries):
@@ -150,7 +150,7 @@ class InstancedInfTable(TableGenerator):
         This is where we merge DSC parser information with INF parser information.
         """
         inf_entries = []
-        for (inf, scope, overrides) in dscp.Components:
+        for inf, scope, overrides in dscp.Components:
             # components section scope should only contain the arch.
             # module_type is only needed for libraryclasses section.
             if "." in scope:
@@ -191,7 +191,7 @@ class InstancedInfTable(TableGenerator):
         library_dict: dict,
         override_dict: dict,
         scope: str,
-        visited: list[str]
+        visited: list[str],
     ) -> str:
         """Recurses down all libraries starting from a single INF.
 
@@ -241,13 +241,15 @@ class InstancedInfTable(TableGenerator):
             if instance is None or instance in visited:
                 continue
             to_return += self._parse_inf_recursively(
-                            instance, cls, component, library_dict, override_dict, scope, visited
-                        )
+                instance, cls, component, library_dict, override_dict, scope, visited
+            )
+
         # Transform path to edk2 relative form (POSIX)
         def to_posix(path: str) -> str:
             if path is None:
                 return None
             return Path(path).as_posix()
+
         library_instance_list = list(map(to_posix, library_instance_list))
 
         source_list = []
@@ -259,33 +261,29 @@ class InstancedInfTable(TableGenerator):
             source_list.append(source)
 
         # Return Paths as posix paths, which is Edk2 standard.
-        to_return.append({
-            "DSC": Path(self.dsc).name,
-            "PATH": Path(inf).as_posix(),
-            "FULL_PATH": full_inf,
-            "GUID": infp.Dict.get("FILE_GUID", ""),
-            "NAME": infp.Dict["BASE_NAME"],
-            "LIBRARY_CLASS": library_class,
-            "COMPONENT": Path(component).as_posix(),
-            "MODULE_TYPE": infp.Dict["MODULE_TYPE"],
-            "ARCH": arch,
-            "PACKAGE": pkg,
-            "SOURCES_USED": source_list,
-            "LIBRARIES_USED": list(zip(library_class_list, library_instance_list)),
-            "PROTOCOLS_USED": [],  # TODO
-            "GUIDS_USED": [],  # TODO
-            "PPIS_USED": [],  # TODO
-            "PCDS_USED": infp.PcdsUsed,
-        })
+        to_return.append(
+            {
+                "DSC": Path(self.dsc).name,
+                "PATH": Path(inf).as_posix(),
+                "FULL_PATH": full_inf,
+                "GUID": infp.Dict.get("FILE_GUID", ""),
+                "NAME": infp.Dict["BASE_NAME"],
+                "LIBRARY_CLASS": library_class,
+                "COMPONENT": Path(component).as_posix(),
+                "MODULE_TYPE": infp.Dict["MODULE_TYPE"],
+                "ARCH": arch,
+                "PACKAGE": pkg,
+                "SOURCES_USED": source_list,
+                "LIBRARIES_USED": list(zip(library_class_list, library_instance_list)),
+                "PROTOCOLS_USED": [],  # TODO
+                "GUIDS_USED": [],  # TODO
+                "PPIS_USED": [],  # TODO
+                "PCDS_USED": infp.PcdsUsed,
+            }
+        )
         return to_return
 
-    def _lib_to_instance(
-        self,
-        library_class_name: str,
-        scope: str,
-        library_dict: dict,
-        override_dict: dict
-    ) -> str:
+    def _lib_to_instance(self, library_class_name: str, scope: str, library_dict: dict, override_dict: dict) -> str:
         """Converts a library name to the actual instance of the library.
 
         This conversion is based off the library section definitions in the DSC.
@@ -305,7 +303,7 @@ class InstancedInfTable(TableGenerator):
 
         # 2/3. If the Library Class instance (INF) is defined in the [LibraryClasses.$(ARCH).$(MODULE_TYPE)] section,
         #      and the library supports the module, then it will be used.
-        lookup = f'{arch}.{module}.{library_class_name}'
+        lookup = f"{arch}.{module}.{library_class_name}"
         if lookup in library_dict:
             library_instance = self._reduce_lib_instances(module, library_dict[lookup])
             if library_instance is not None:
@@ -313,7 +311,7 @@ class InstancedInfTable(TableGenerator):
 
         # 4. If the Library Class instance (INF) is defined in the [LibraryClasses.common.$(MODULE_TYPE)] section,
         #    and the library supports the module, then it will be used.
-        lookup = f'common.{module}.{library_class_name}'
+        lookup = f"common.{module}.{library_class_name}"
         if lookup in library_dict:
             library_instance = self._reduce_lib_instances(module, library_dict[lookup])
             if library_instance is not None:
@@ -321,7 +319,7 @@ class InstancedInfTable(TableGenerator):
 
         # 5. If the Library Class instance (INF) is defined in the [LibraryClasses.$(ARCH)] section,
         #    and the library supports the module, then it will be used.
-        lookup = f'{arch}.{library_class_name}'
+        lookup = f"{arch}.{library_class_name}"
         if lookup in library_dict:
             library_instance = self._reduce_lib_instances(module, library_dict[lookup])
             if library_instance is not None:
@@ -329,15 +327,15 @@ class InstancedInfTable(TableGenerator):
 
         # 6. If the Library Class Instance (INF) is defined in the [LibraryClasses] section,
         #    and the library supports the module, then it will be used.
-        lookup = f'common.{library_class_name}'
+        lookup = f"common.{library_class_name}"
         if lookup in library_dict:
             library_instance = self._reduce_lib_instances(module, library_dict[lookup])
             if library_instance is not None:
                 return library_instance
 
-        logging.debug(f'scoped library contents: {library_dict}')
-        logging.debug(f'override dictionary: {override_dict}')
-        e = f'Cannot find library class [{library_class_name}] for scope [{scope}] when evaluating {self.dsc}'
+        logging.debug(f"scoped library contents: {library_dict}")
+        logging.debug(f"override dictionary: {override_dict}")
+        e = f"Cannot find library class [{library_class_name}] for scope [{scope}] when evaluating {self.dsc}"
         logging.warning(e)
         return None
 
@@ -378,16 +376,16 @@ class InstancedInfTable(TableGenerator):
         arch, module = tuple(scope.split("."))
         null_libs = []
 
-        lookup = f'{arch}.{module}.null'
+        lookup = f"{arch}.{module}.null"
         null_libs.extend(library_dict.get(lookup, []))
 
-        lookup = f'common.{module}.null'
+        lookup = f"common.{module}.null"
         null_libs.extend(library_dict.get(lookup, []))
 
-        lookup = f'{arch}.null'
+        lookup = f"{arch}.null"
         null_libs.extend(library_dict.get(lookup, []))
 
-        lookup = 'common.null'
+        lookup = "common.null"
         null_libs.extend(library_dict.get(lookup, []))
 
         return null_libs

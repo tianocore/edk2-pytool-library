@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """Code to help parse EDK2 Fdf files."""
+
 import os
 
 from edk2toollib.uefi.edk2.parsers.base_parser import HashFileParser
@@ -25,9 +26,10 @@ class FdfParser(HashFileParser):
 
     Note: Dict Key Value pairs come from lines that contain a single =.
     """
-    def __init__(self) -> 'HashFileParser':
+
+    def __init__(self) -> "HashFileParser":
         """Inits an empty FDF parser."""
-        HashFileParser.__init__(self, 'ModuleFdfParser')
+        HashFileParser.__init__(self, "ModuleFdfParser")
         self.Lines = []
         self.Parsed = False
         self.Dict = {}  # defines dictionary
@@ -49,7 +51,7 @@ class FdfParser(HashFileParser):
         self.CurrentLine += 1
         sline = self.StripComment(line)
 
-        if (sline is None or len(sline) < 1):
+        if sline is None or len(sline) < 1:
             return self.GetNextLine()
 
         sline = self.ReplaceVariables(sline)
@@ -66,7 +68,7 @@ class FdfParser(HashFileParser):
 
     def InsertLinesFromFile(self, file_path: str) -> None:
         """Adds additional lines to the Lines Attribute from the provided file."""
-        with open(file_path, 'r') as lines_file:
+        with open(file_path, "r") as lines_file:
             self.Lines += reversed(lines_file.readlines())
             # Back off the line count to ignore the include line itself.
             self.CurrentLine -= 1
@@ -74,7 +76,7 @@ class FdfParser(HashFileParser):
     def ParseFile(self, filepath: str) -> None:
         """Parses the provided FDF file."""
         self.Logger.debug("Parsing file: %s" % filepath)
-        if (not os.path.isabs(filepath)):
+        if not os.path.isabs(filepath):
             fp = self.FindPath(filepath)
         else:
             fp = filepath
@@ -100,7 +102,7 @@ class FdfParser(HashFileParser):
             if sline is None:
                 break
 
-            if sline.lower().startswith('!include'):
+            if sline.lower().startswith("!include"):
                 tokens = sline.split()
                 include_file = tokens[1]
                 sp = self.FindPath(include_file)
@@ -114,7 +116,8 @@ class FdfParser(HashFileParser):
                 # this basically gets what's after the . or if it doesn't have a period
                 # the whole thing for every comma separated item in sline
                 self.CurrentSection = [
-                    x.split(".", 1)[1] if "." in x else x for x in sline.strip("[] ").strip().split(",")]
+                    x.split(".", 1)[1] if "." in x else x for x in sline.strip("[] ").strip().split(",")
+                ]
                 InDefinesSection = False
                 InFdSection = False
                 InFvSection = False
@@ -126,14 +129,14 @@ class FdfParser(HashFileParser):
 
             if InDefinesSection:
                 if sline.count("=") == 1:
-                    tokens = sline.replace("DEFINE", "").split('=', 1)
+                    tokens = sline.replace("DEFINE", "").split("=", 1)
                     self.Dict[tokens[0].strip()] = tokens[1].strip()
                     self.Logger.info("Key,values found:  %s = %s" % (tokens[0].strip(), tokens[1].strip()))
                     continue
 
             # defining a local variable that is removed when entering a new section
             elif sline.strip().startswith("DEFINE"):
-                tokens = sline.strip().replace("DEFINE", "").split('=', 1)
+                tokens = sline.strip().replace("DEFINE", "").split("=", 1)
                 self.LocalVars[tokens[0].strip()] = tokens[1].strip()
                 self.Logger.info(f"Key,values found for local vars: {tokens[0].strip()}, {tokens[1].strip()}")
                 continue
@@ -203,22 +206,22 @@ class FdfParser(HashFileParser):
                 continue
 
             # check for different sections
-            if sline.strip().lower().startswith('[defines'):
+            if sline.strip().lower().startswith("[defines"):
                 InDefinesSection = True
 
-            elif sline.strip().lower().startswith('[fd.'):
+            elif sline.strip().lower().startswith("[fd."):
                 InFdSection = True
 
-            elif sline.strip().lower().startswith('[fv.'):
+            elif sline.strip().lower().startswith("[fv."):
                 InFvSection = True
 
-            elif sline.strip().lower().startswith('[capsule.'):
+            elif sline.strip().lower().startswith("[capsule."):
                 InCapsuleSection = True
 
-            elif sline.strip().lower().startswith('[fmpPayload.'):
+            elif sline.strip().lower().startswith("[fmpPayload."):
                 InFmpPayloadSection = True
 
-            elif sline.strip().lower().startswith('[rule.'):
+            elif sline.strip().lower().startswith("[rule."):
                 InRuleSection = True
 
         self.Parsed = True

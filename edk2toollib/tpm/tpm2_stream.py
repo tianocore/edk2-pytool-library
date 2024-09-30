@@ -12,7 +12,8 @@ import struct
 
 class Tpm2StreamElement(object):
     """Tpm2 Stream Element."""
-    def __init__(self) -> 'Tpm2StreamElement':
+
+    def __init__(self) -> "Tpm2StreamElement":
         """Init an empty Tpm2StreamElement."""
         self.pack_string = ""
 
@@ -28,7 +29,8 @@ class Tpm2StreamPrimitive(Tpm2StreamElement):
         size: size of the primitive. 1, 2, 4, or 8 bytes
         value: Value of primitive
     """
-    def __init__(self, size: int, value: str) -> 'Tpm2StreamPrimitive':
+
+    def __init__(self, size: int, value: str) -> "Tpm2StreamPrimitive":
         """Init a primitive value.
 
         Args:
@@ -40,12 +42,7 @@ class Tpm2StreamPrimitive(Tpm2StreamElement):
         if size not in (1, 2, 4, 8):
             raise ValueError("Size must be 1, 2, 4, or 8 bytes!")
 
-        self.pack_string = {
-            1: ">B",
-            2: ">H",
-            4: ">L",
-            8: ">Q"
-        }[size]
+        self.pack_string = {1: ">B", 2: ">H", 4: ">L", 8: ">Q"}[size]
         self.value = value
 
     def marshal(self) -> bytes:
@@ -65,7 +62,8 @@ class TPM2_COMMAND_HEADER(Tpm2StreamElement):
         code: The Code
         size: The size of the code
     """
-    def __init__(self, tag: str, size: str, code: str) -> 'TPM2_COMMAND_HEADER':
+
+    def __init__(self, tag: str, size: str, code: str) -> "TPM2_COMMAND_HEADER":
         """Init a Tpm2 command."""
         super(TPM2_COMMAND_HEADER, self).__init__()
         self.tag = tag
@@ -88,7 +86,8 @@ class TPM2_COMMAND_HEADER(Tpm2StreamElement):
 
 class TPM2B(Tpm2StreamElement):
     """Tpm2 B."""
-    def __init__(self, data: str) -> 'TPM2B':
+
+    def __init__(self, data: str) -> "TPM2B":
         """Inits the object."""
         super(TPM2B, self).__init__()
         self.data = data
@@ -112,7 +111,8 @@ class TPM2B(Tpm2StreamElement):
 
 class Tpm2CommandStream(object):
     """Tpm2 Command Stream."""
-    def __init__(self, tag: str, size: int, code: str) -> 'Tpm2CommandStream':
+
+    def __init__(self, tag: str, size: int, code: str) -> "Tpm2CommandStream":
         """Inits a Tpm2 Command stream object."""
         super(Tpm2CommandStream, self).__init__()
         self.header = TPM2_COMMAND_HEADER(tag, size, code)
@@ -124,7 +124,7 @@ class Tpm2CommandStream(object):
         """Returns the stream size."""
         return self.stream_size
 
-    def add_element(self, element: 'Tpm2StreamElement') -> None:
+    def add_element(self, element: "Tpm2StreamElement") -> None:
         """Adds an element to the stream list."""
         self.stream_elements.append(element)
         self.stream_size += element.get_size()
@@ -136,4 +136,4 @@ class Tpm2CommandStream(object):
         Returns:
             (str): string representing packed data as bytes (i.e. b'\x01\x00\x03')
         """
-        return self.header.marshal() + b''.join(element.marshal() for element in self.stream_elements)
+        return self.header.marshal() + b"".join(element.marshal() for element in self.stream_elements)

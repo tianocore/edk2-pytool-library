@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """A class for interacting with a database implemented using json."""
+
 import logging
 import time
 import uuid
@@ -23,6 +24,7 @@ class Base(DeclarativeBase):
 
     This class should be the subclass for any table model that will be used with Edk2DB.
     """
+
 
 class Edk2DB:
     """A SQLite3 database manager for a EDKII workspace.
@@ -53,8 +55,10 @@ class Edk2DB:
             db.connection.execute("SELECT * FROM ?", table)
         ```
     """
+
     Base = Base
-    def __init__(self: 'Edk2DB', db_path: str, pathobj: Edk2Path = None, **kwargs: dict[str,Any]) -> 'Edk2DB':
+
+    def __init__(self: "Edk2DB", db_path: str, pathobj: Edk2Path = None, **kwargs: dict[str, Any]) -> "Edk2DB":
         """Initializes the database.
 
         Args:
@@ -83,7 +87,7 @@ class Edk2DB:
         finally:
             session.close()
 
-    def register(self, *parsers: 'TableGenerator') -> None:
+    def register(self, *parsers: "TableGenerator") -> None:
         """Registers a one or more table generators.
 
         Args:
@@ -113,6 +117,7 @@ class Edk2DB:
                 table.parse(session, self.pathobj, id, env)
             logging.debug(f"Finished in {round(time.time() - t, 2)}")
 
+
 class TableGenerator:
     """An interface for a parser that generates a sqlite3 table maintained by Edk2DB.
 
@@ -122,7 +127,8 @@ class TableGenerator:
     the parser has finished executing and has returned. Review sqlite3 documentation for more information on
     how to interact with the database.
     """
-    def __init__(self, *args: Any, **kwargs: Any) -> 'TableGenerator':
+
+    def __init__(self, *args: Any, **kwargs: Any) -> "TableGenerator":
         """Initialize the query with the specific settings."""
 
     def parse(self, session: Session, pathobj: Edk2Path, id: str, env: dict) -> None:

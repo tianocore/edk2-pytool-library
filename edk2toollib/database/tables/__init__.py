@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """A collection of table generators that run against the workspace."""
+
 from edk2toollib.database.edk2_db import TableGenerator  # noqa: F401
 from edk2toollib.database.tables.environment_table import EnvironmentTable  # noqa: F401
 from edk2toollib.database.tables.inf_table import InfTable  # noqa: F401

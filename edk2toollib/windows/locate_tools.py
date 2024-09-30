@@ -20,6 +20,7 @@
 
 NOTE: Has the capability to download VSwhere.
 """
+
 import glob
 import importlib.resources as resources
 import logging
@@ -67,7 +68,7 @@ def _DownloadVsWhere(unpack_folder: os.PathLike = None) -> None:
     if not os.path.isfile(out_file_name):
         try:
             # Download the file and save it locally under `temp_file_name`
-            with urllib.request.urlopen(__URL) as response, open(out_file_name, 'wb') as out_file:
+            with urllib.request.urlopen(__URL) as response, open(out_file_name, "wb") as out_file:
                 out_file.write(response.read())
         except urllib.error.HTTPError as e:
             logging.error("We ran into an issue when getting VsWhere")
@@ -76,6 +77,7 @@ def _DownloadVsWhere(unpack_folder: os.PathLike = None) -> None:
     # do the hash to make sure the file is good
     with open(out_file_name, "rb") as file:
         import hashlib
+
         temp_file_sha256 = hashlib.sha256(file.read()).hexdigest()
     if temp_file_sha256 != __SHA256:
         # delete the file since it's not what we're expecting
@@ -143,6 +145,7 @@ def FindWithVsWhere(products: str = "*", vs_version: Optional[str] = None) -> Op
     results = FindAllWithVsWhere(products, vs_version)
     return results[0] if results else None
 
+
 def FindAllWithVsWhere(products: str = "*", vs_version: Optional[str] = None) -> Optional[List[str]]:
     """Finds a product with VS Where. Returns all matches, sorted by newest version.
 
@@ -163,9 +166,9 @@ def FindAllWithVsWhere(products: str = "*", vs_version: Optional[str] = None) ->
     if vs_where_path is None:
         raise EnvironmentError("Unable to locate the VsWhere Executable.")
 
-    if (products is not None):
+    if products is not None:
         cmd += " -products " + products
-    if (vs_version is not None):
+    if vs_version is not None:
         vs_version = vs_version.lower()
         if vs_version in supported_vs_versions.keys():
             cmd += " -version " + supported_vs_versions[vs_version]
@@ -173,12 +176,12 @@ def FindAllWithVsWhere(products: str = "*", vs_version: Optional[str] = None) ->
             raise ValueError(f"{vs_version} unsupported. Supported Versions: {' '.join(supported_vs_versions)}")
     a = StringIO()
     ret = RunCmd(vs_where_path, cmd, outstream=a)
-    if (ret != 0):
+    if ret != 0:
         a.close()
         raise RuntimeError(f"Unkown Error while executing VsWhere: errcode {ret}.")
     p1 = a.getvalue().strip()
     a.close()
-    if (len(p1.strip()) > 0):
+    if len(p1.strip()) > 0:
         return [line.strip() for line in p1.splitlines()]
     return None
 
@@ -220,10 +223,12 @@ def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_versi
         logging.error(err_msg)
         raise ValueError(err_msg)
 
-    if len(os.environ['PATH']) > 8191:
-        w = "Win32 Command prompt ignores any environment variables longer then 8191 characters, but your path is "\
-            f"{len(os.environ['PATH'])} characters. Due to this, PATH will not be used when searching for "\
+    if len(os.environ["PATH"]) > 8191:
+        w = (
+            "Win32 Command prompt ignores any environment variables longer then 8191 characters, but your path is "
+            f"{len(os.environ['PATH'])} characters. Due to this, PATH will not be used when searching for "
             f"[{interesting}]. This could result in missing keys."
+        )
         logging.warning(w)
 
     # Attempt to find vcvarsall.bat from any of the found VS installations
@@ -248,17 +253,19 @@ def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_versi
         if popen.wait() != 0:
             stderr = stderr.decode("mbcs")
             if stderr.startswith("The input line is too long"):
-                stderr = ".bat cmd can not handle args greater than 8191 chars; your total ENV var len exceeds 8191. "\
-                         "Reduce the total length of your ENV variables to resolve this (Typically your PATH is "\
-                         "too long)."
+                stderr = (
+                    ".bat cmd can not handle args greater than 8191 chars; your total ENV var len exceeds 8191. "
+                    "Reduce the total length of your ENV variables to resolve this (Typically your PATH is "
+                    "too long)."
+                )
             logging.error(stderr)
             raise RuntimeError(stderr)
         stdout = stdout.decode("mbcs")
         for line in stdout.split("\n"):
-            if '=' not in line:
+            if "=" not in line:
                 continue
             line = line.strip()
-            key, value = line.split('=', 1)
+            key, value = line.split("=", 1)
             if key.upper() in interesting:
                 if value.endswith(os.pathsep):
                     value = value[:-1]
@@ -374,7 +381,7 @@ def FindToolInWinSdk(tool: str, product: str = None, arch: str = None) -> str:
 
     match_offset = len(sdk_dir)
     # look for something like 10.0.12323.0123
-    windows_ver_regex = re.compile(r'\d+\.\d+\.\d+\.\d+')
+    windows_ver_regex = re.compile(r"\d+\.\d+\.\d+\.\d+")
     top_version_so_far = -1
     top_match = None
     # Look at in match in the tree

@@ -48,7 +48,7 @@ def test_environment_with_vars(tmp_path):
         rows = session.query(Environment).all()
         assert len(rows) == 1
         entry = rows[0]
-        assert entry.version == 'UNKNOWN'
+        assert entry.version == "UNKNOWN"
         assert entry.date.date() == date.today()
         assert len(entry.values) == 4
 

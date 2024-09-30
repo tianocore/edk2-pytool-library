@@ -16,7 +16,6 @@ from edk2toollib.log import junit_report_format
 
 
 class TestJunitTestReport(unittest.TestCase):
-
     def __init__(self, *args, **kwargs):
         self.test_dir = None
         super().__init__(*args, **kwargs)
@@ -84,7 +83,7 @@ class TestJunitTestReport(unittest.TestCase):
     def test_xml_escape_in_testcase_name_classname_output(self):
         jr = junit_report_format.JunitTestReport()
         jts = jr.create_new_testsuite("testname", "testpackage")
-        jtc = jts.create_new_testcase("test_failed\"<", ">&'testcase.test.failed")
+        jtc = jts.create_new_testcase('test_failed"<', ">&'testcase.test.failed")
         jtc.SetSuccess()
         f = os.path.join(self.test_dir, "testoutput.xml")
         jr.Output(f)
@@ -94,7 +93,7 @@ class TestJunitTestReport(unittest.TestCase):
 
     def test_xml_escape_in_testsuit_name_package_output(self):
         jr = junit_report_format.JunitTestReport()
-        jts = jr.create_new_testsuite("testname\"<", ">&'testpackage")
+        jts = jr.create_new_testsuite('testname"<', ">&'testpackage")
         jtc = jts.create_new_testcase("test_failed", "testcase.test.failed")
         jtc.SetSuccess()
         f = os.path.join(self.test_dir, "testoutput.xml")
@@ -153,7 +152,7 @@ class TestJunitTestReport(unittest.TestCase):
         jr = junit_report_format.JunitTestReport()
         jts = jr.create_new_testsuite("testname", "testpackage")
         jtc = jts.create_new_testcase("test_error", "testcase.test.error")
-        jtc.SetError("Message in Error\" case with < & char", "Error")
+        jtc.SetError('Message in Error" case with < & char', "Error")
         f = os.path.join(self.test_dir, "testoutput.xml")
         jr.Output(f)
         self.assertTrue(os.path.isfile(f))
@@ -164,7 +163,7 @@ class TestJunitTestReport(unittest.TestCase):
         jr = junit_report_format.JunitTestReport()
         jts = jr.create_new_testsuite("testname", "testpackage")
         jtc = jts.create_new_testcase("test_error", "testcase.test.error")
-        jtc.SetError("Message in Error case", 'Error&')
+        jtc.SetError("Message in Error case", "Error&")
         f = os.path.join(self.test_dir, "testoutput.xml")
         jr.Output(f)
         self.assertTrue(os.path.isfile(f))

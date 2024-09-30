@@ -33,7 +33,7 @@ class EfiVariableAttributes(object):
         EFI_VARIABLE_HARDWARE_ERROR_RECORD: "HW",
         EFI_VARIABLE_RUNTIME_ACCESS: "RT",
         EFI_VARIABLE_BOOTSERVICE_ACCESS: "BS",
-        EFI_VARIABLE_NON_VOLATILE: "NV"
+        EFI_VARIABLE_NON_VOLATILE: "NV",
     }
     INVERSE_SHORT_STRING_MAP = {v: k for k, v in SHORT_STRING_MAP.items()}
 
@@ -48,7 +48,7 @@ class EfiVariableAttributes(object):
     }
     INVERSE_STRING_MAP = {v: k for k, v in STRING_MAP.items()}
 
-    def __init__(self, attributes: Union[int, str]=0x0000_0000, decodefs: IO=None) -> 'EfiVariableAttributes':
+    def __init__(self, attributes: Union[int, str] = 0x0000_0000, decodefs: IO = None) -> "EfiVariableAttributes":
         """Creates a EfiVariableAttributes object.
 
         Args:
@@ -80,8 +80,7 @@ class EfiVariableAttributes(object):
         elif isinstance(attributes, str):
             self.attributes = EfiVariableAttributes.parse_attributes_str(attributes)
         else:
-            raise TypeError(
-                f"Invalid type: {type(attributes)}")
+            raise TypeError(f"Invalid type: {type(attributes)}")
 
     @staticmethod
     def parse_attributes_str(attributes_str: str) -> int:
@@ -110,12 +109,14 @@ class EfiVariableAttributes(object):
         attributes_str = attributes_str.replace(" ", "")
 
         # Loop over all the attributes
-        for attr in attributes_str.split(','):
+        for attr in attributes_str.split(","):
             attr = attr.upper()  # convert to upper for consistency
 
-            if attr not in EfiVariableAttributes.INVERSE_STRING_MAP \
-                    and attr not in EfiVariableAttributes.INVERSE_SHORT_STRING_MAP:
-                raise ValueError(f"Attribute string \"{attr}\" not supported")
+            if (
+                attr not in EfiVariableAttributes.INVERSE_STRING_MAP
+                and attr not in EfiVariableAttributes.INVERSE_SHORT_STRING_MAP
+            ):
+                raise ValueError(f'Attribute string "{attr}" not supported')
 
             # attempt to get the value from the INVERSE_STRING_MAP if it fails,
             # try to grab it from the INVERSE_SHORT_MAP
@@ -123,8 +124,8 @@ class EfiVariableAttributes(object):
                 attr,
                 EfiVariableAttributes.INVERSE_SHORT_STRING_MAP.get(
                     attr,
-                    0  # We should never get here since it would fail the above if condition
-                )
+                    0,  # We should never get here since it would fail the above if condition
+                ),
             )
 
             attributes |= attr_value
@@ -155,7 +156,9 @@ class EfiVariableAttributes(object):
 
         return attributes
 
-    def encode(self,) -> bytes:
+    def encode(
+        self,
+    ) -> bytes:
         """Returns the attributes as a packed structure.
 
         !!! Examples
@@ -172,7 +175,9 @@ class EfiVariableAttributes(object):
         """
         return struct.pack(EfiVariableAttributes._struct_format, self.attributes)
 
-    def get_short_string(self,) -> str:
+    def get_short_string(
+        self,
+    ) -> str:
         """Short form string representation of the attributes.
 
         !!! Examples
@@ -191,7 +196,9 @@ class EfiVariableAttributes(object):
                 result.append(EfiVariableAttributes.SHORT_STRING_MAP[key])
         return ",".join(result)
 
-    def __str__(self,) -> str:
+    def __str__(
+        self,
+    ) -> str:
         """String representation of the attributes.
 
         Returns:
@@ -203,6 +210,8 @@ class EfiVariableAttributes(object):
                 result.append(EfiVariableAttributes.STRING_MAP[key])
         return ",".join(result)
 
-    def __int__(self,) -> int:
+    def __int__(
+        self,
+    ) -> int:
         """Returns attributes as an int."""
         return self.attributes

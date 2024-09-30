@@ -24,7 +24,7 @@ def test_load_existing_db(empty_tree: Tree):
     assert db_path.exists() is False
 
     db = Edk2DB(db_path, pathobj=edk2path)
-    db.register(InfTable(n_jobs = 1))
+    db.register(InfTable(n_jobs=1))
     db.parse({})
     with db.session() as session:
         rows = session.query(Inf).all()
@@ -37,6 +37,7 @@ def test_load_existing_db(empty_tree: Tree):
     with db.session() as session:
         rows = session.query(Inf).all()
         assert len(rows) == 1
+
 
 def test_catch_bad_parser_and_query(empty_tree: Tree):
     """Test that a bad parser will be caught and logged."""
@@ -55,6 +56,7 @@ def test_catch_bad_parser_and_query(empty_tree: Tree):
     with pytest.raises(NotImplementedError):
         parser.parse(db.session(), db.pathobj, 0, {})
 
+
 def test_clear_parsers(empty_tree: Tree):
     """Test that we can clear all parsers. EnvironmentTable should always persist."""
     edk2path = Edk2Path(str(empty_tree.ws), [])
@@ -64,6 +66,7 @@ def test_clear_parsers(empty_tree: Tree):
 
     db.clear_parsers()
     assert len(db._parsers) == 0
+
 
 def test_multiple_databases_do_not_interfere(empty_tree: Tree):
     empty_tree.create_library("TestLib1", "TestCls")
@@ -81,7 +84,7 @@ def test_multiple_databases_do_not_interfere(empty_tree: Tree):
     assert db_path1.exists()
     assert db_path2.exists()
 
-    db1.register(InfTable(n_jobs = 1))
+    db1.register(InfTable(n_jobs=1))
     db1.parse({})
 
     with db1.session() as session:

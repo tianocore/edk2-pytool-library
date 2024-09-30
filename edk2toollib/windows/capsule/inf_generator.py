@@ -10,6 +10,7 @@
 
 Uses supplied information such as Name, Version, ESRT Guid, Rollback, etc.
 """
+
 import datetime
 import logging
 import os
@@ -17,11 +18,13 @@ import re
 import uuid
 from typing import Optional
 
-OS_BUILD_VERSION_DIRID13_SUPPORT = '10.0...17134'
+OS_BUILD_VERSION_DIRID13_SUPPORT = "10.0...17134"
+
 
 class InfSection(object):
     """Object representing an INF Section."""
-    def __init__(self, name: str) -> 'InfSection':
+
+    def __init__(self, name: str) -> "InfSection":
         """Inits the object."""
         self.Name = name
         self.Items = []
@@ -37,6 +40,7 @@ class InfSection(object):
 
 class InfGenerator(object):
     """An object that generates an INF file from data it is initialized with."""
+
     ### INF Template ###
     TEMPLATE = r""";
 ; {Name}.inf
@@ -98,12 +102,7 @@ REG_DWORD     = 0x00010001
 HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%REG_DWORD%,1
 """
 
-    SUPPORTED_ARCH = {'amd64': 'amd64',
-                      'x64': 'amd64',
-                      'arm': 'arm',
-                      'arm64': 'ARM64',
-                      'aarch64': 'ARM64'
-                      }
+    SUPPORTED_ARCH = {"amd64": "amd64", "x64": "amd64", "arm": "arm", "arm64": "ARM64", "aarch64": "ARM64"}
 
     def __init__(
         self,
@@ -113,7 +112,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         arch: str,
         description_string: str,
         version_string: str,
-        version_hex: str
+        version_hex: str,
     ) -> None:
         """Inits the object with data necessary to generate an INF file.
 
@@ -150,7 +149,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
             (ValueError): Invalid Characters in name
         """
         # test here for invalid chars
-        if not (re.compile(r'[\w-]*$')).match(value):
+        if not (re.compile(r"[\w-]*$")).match(value):
             logging.critical("Name invalid: '%s'", value)
             raise ValueError("Name has invalid chars.")
         self._name = value
@@ -171,7 +170,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
 
         NOTE: Returns Provider attribute if Manufacturer attribute is not set.
         """
-        if (self._manufacturer is None):
+        if self._manufacturer is None:
             return self.Provider
 
         return self._manufacturer
@@ -238,7 +237,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
             (ValueError): hex does not fit in a 32but uint
         """
         a = int(value, 0)
-        if (a > 0xFFFFFFFF):
+        if a > 0xFFFFFFFF:
             logging.critical("VersionHex invalid: '%s'", value)
             raise ValueError("VersionHex must fit within 32bit value range for unsigned integer")
         self._versionhex = a
@@ -256,7 +255,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
             (ValueError): Unsupported Arch
         """
         key = value.lower()
-        if (key not in InfGenerator.SUPPORTED_ARCH.keys()):
+        if key not in InfGenerator.SUPPORTED_ARCH.keys():
             logging.critical("Arch invalid: '%s'", value)
             raise ValueError("Unsupported Architecture")
         self._arch = InfGenerator.SUPPORTED_ARCH[key]
@@ -276,7 +275,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         Raises:
             (ValueError): not a datetime.date object
         """
-        if (not isinstance(value, datetime.date)):
+        if not isinstance(value, datetime.date):
             raise ValueError("Date must be a datetime.date object")
         self._date = value
 
@@ -293,7 +292,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         """Setter for the IntegrityFile name."""
         self._integrityfile = value
 
-    def MakeInf(self, OutputInfFilePath: os.PathLike, FirmwareBinFileName: str, Rollback: bool=False) -> int:
+    def MakeInf(self, OutputInfFilePath: os.PathLike, FirmwareBinFileName: str, Rollback: bool = False) -> int:
         """Generates the INF with provided information.
 
         Args:
@@ -302,26 +301,27 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
             Rollback (:obj:`bool`, optional): Generate with Rollback template
         """
         RollbackString = ""
-        if (Rollback):
+        if Rollback:
             RollbackString = InfGenerator.ROLLBACKTEMPLATE.format(EsrtGuid=self.EsrtGuid)
 
         binfilename = os.path.basename(FirmwareBinFileName)
 
-        copy_files = InfSection('Firmware_CopyFiles')
+        copy_files = InfSection("Firmware_CopyFiles")
         copy_files.Items.append(binfilename)
 
-        add_reg = InfSection('Firmware_AddReg')
+        add_reg = InfSection("Firmware_AddReg")
         add_reg.Items.append("HKR,,FirmwareId,,{{{guid}}}".format(guid=self.EsrtGuid))
-        add_reg.Items.append("HKR,,FirmwareVersion,%REG_DWORD%,{version}".format(
-            version=self.VersionHex))
+        add_reg.Items.append("HKR,,FirmwareVersion,%REG_DWORD%,{version}".format(version=self.VersionHex))
         add_reg.Items.append("HKR,,FirmwareFilename,,%13%\\{file_name}".format(file_name=binfilename))
 
-        disks_files = InfSection('SourceDisksFiles')
+        disks_files = InfSection("SourceDisksFiles")
         disks_files.Items.append("{file_name} = 1".format(file_name=binfilename))
 
         if self.IntegrityFilename != "":
             copy_files.Items.append(self.IntegrityFilename)
-            add_reg.Items.append("HKR,,FirmwareIntegrityFilename,,%13%\\{file_name}".format(file_name=self.IntegrityFilename))
+            add_reg.Items.append(
+                "HKR,,FirmwareIntegrityFilename,,%13%\\{file_name}".format(file_name=self.IntegrityFilename)
+            )
             disks_files.Items.append("{file_name} = 1".format(file_name=self.IntegrityFilename))
 
         Content = InfGenerator.TEMPLATE.format(
@@ -337,7 +337,8 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
             Rollback=RollbackString,
             FirmwareCopyFilesSection=copy_files,
             FirmwareAddRegSection=add_reg,
-            SourceDisksFilesSection=disks_files)
+            SourceDisksFilesSection=disks_files,
+        )
 
         with open(OutputInfFilePath, "w") as f:
             f.write(Content)

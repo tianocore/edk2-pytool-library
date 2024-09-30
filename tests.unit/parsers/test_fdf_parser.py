@@ -18,63 +18,62 @@ TEST_PATH = os.path.realpath(os.path.dirname(__file__))
 
 
 class TestBasicFdfParser(unittest.TestCase):
-
     def test_primary_defines(self):
-        test_fdf = os.path.join(TEST_PATH, 'SimpleDefines.fdf')
+        test_fdf = os.path.join(TEST_PATH, "SimpleDefines.fdf")
         parser = FdfParser().SetEdk2Path(Edk2Path(TEST_PATH, []))
         parser.ParseFile(test_fdf)
 
         # Make sure that we can read local variables out of the file.
-        self.assertEqual(parser.Dict['FD_BASE'], '0x00800000')
-        self.assertEqual(parser.Dict['NUM_BLOCKS'], '0x410')
+        self.assertEqual(parser.Dict["FD_BASE"], "0x00800000")
+        self.assertEqual(parser.Dict["NUM_BLOCKS"], "0x410")
         self.assertFalse("EXTRA_DEF" in parser.Dict)
 
     def test_primary_conditional_defines(self):
-        test_fdf = os.path.join(TEST_PATH, 'SimpleDefines.fdf')
+        test_fdf = os.path.join(TEST_PATH, "SimpleDefines.fdf")
         parser = FdfParser().SetEdk2Path(Edk2Path(TEST_PATH, [])).SetInputVars({"TARGET": "TEST2"})
         parser.ParseFile(test_fdf)
 
         # Make sure that we can read local variables out of the file.
-        self.assertEqual(parser.Dict['FD_BASE'], '0x00800000')
-        self.assertEqual(parser.Dict['NUM_BLOCKS'], '0x850')
+        self.assertEqual(parser.Dict["FD_BASE"], "0x00800000")
+        self.assertEqual(parser.Dict["NUM_BLOCKS"], "0x850")
         self.assertTrue("EXTRA_DEF" in parser.Dict)
 
     def test_included_defines(self):
-        test_fdf = os.path.join(TEST_PATH, 'IncludedDefinesParent.fdf')
+        test_fdf = os.path.join(TEST_PATH, "IncludedDefinesParent.fdf")
         parser = FdfParser().SetEdk2Path(Edk2Path(TEST_PATH, []))
         parser.ParseFile(test_fdf)
 
         # Make sure that we can read local variables out of the file.
-        self.assertEqual(parser.Dict['FD_BASE'], '0x00800000')
-        self.assertEqual(parser.Dict['EXTRA_BLOCK_SIZE'], '0x00001000')
+        self.assertEqual(parser.Dict["FD_BASE"], "0x00800000")
+        self.assertEqual(parser.Dict["EXTRA_BLOCK_SIZE"], "0x00001000")
         self.assertFalse("AM_I_YOU" in parser.Dict)
 
     def test_included_conditional_defines(self):
-        test_fdf = os.path.join(TEST_PATH, 'IncludedDefinesParent.fdf')
+        test_fdf = os.path.join(TEST_PATH, "IncludedDefinesParent.fdf")
         pathobj = Edk2Path(TEST_PATH, [])
         parser = FdfParser().SetEdk2Path(pathobj)
         parser = FdfParser().SetEdk2Path(pathobj).SetInputVars({"TARGET": "TEST4"})
         parser.ParseFile(test_fdf)
 
         # Make sure that we can read local variables out of the file.
-        self.assertEqual(parser.Dict['FD_BASE'], '0x00800000')
-        self.assertEqual(parser.Dict['EXTRA_BLOCK_SIZE'], '0x00001000')
-        self.assertEqual(parser.Dict['NUM_BLOCKS'], '0x410')
+        self.assertEqual(parser.Dict["FD_BASE"], "0x00800000")
+        self.assertEqual(parser.Dict["EXTRA_BLOCK_SIZE"], "0x00001000")
+        self.assertEqual(parser.Dict["NUM_BLOCKS"], "0x410")
         self.assertTrue("AM_I_YOU" in parser.Dict)
         self.assertFalse("CONDITIONAL_VALUE" in parser.Dict)
 
     def test_conditionally_included_defines(self):
-        test_fdf = os.path.join(TEST_PATH, 'IncludedDefinesParent.fdf')
+        test_fdf = os.path.join(TEST_PATH, "IncludedDefinesParent.fdf")
         pathobj = Edk2Path(TEST_PATH, [])
         parser = FdfParser().SetEdk2Path(pathobj)
         parser = FdfParser().SetEdk2Path(pathobj).SetInputVars({"TARGET": "TEST5"})
         parser.ParseFile(test_fdf)
 
         # Make sure that we can read local variables out of the file.
-        self.assertEqual(parser.Dict['FD_BASE'], '0x00800000')
-        self.assertEqual(parser.Dict['INTERNAL_VALUE'], '104')
-        self.assertEqual(parser.Dict['NUM_BLOCKS'], '0x410')
-        self.assertEqual(parser.Dict['CONDITIONAL_VALUE'], '121')
+        self.assertEqual(parser.Dict["FD_BASE"], "0x00800000")
+        self.assertEqual(parser.Dict["INTERNAL_VALUE"], "104")
+        self.assertEqual(parser.Dict["NUM_BLOCKS"], "0x410")
+        self.assertEqual(parser.Dict["CONDITIONAL_VALUE"], "121")
 
 
 def test_section_guided():
@@ -88,7 +87,7 @@ def test_section_guided():
         }
     """)
     try:
-        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False) as f:
             f.write(SAMPLE_FDF_FILE)
             fdf_path = f.name
 
@@ -99,5 +98,6 @@ def test_section_guided():
         os.remove(fdf_path)
 
     # Then
-    assert "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" in \
-        parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
+    assert (
+        "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" in parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
+    )

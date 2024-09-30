@@ -12,7 +12,6 @@ import edk2toollib.uefi.edk2.variable_format as VF
 
 
 class TestVariableHeader(unittest.TestCase):
-
     def test_set_name(self):
         var = VF.VariableHeader()
 
@@ -27,5 +26,5 @@ class TestVariableHeader(unittest.TestCase):
         test_name = "MyNewName"
         var.set_name(test_name)
 
-        test_name_packed = bytes.fromhex('4D0079004E00650077004E0061006D0065000000')
+        test_name_packed = bytes.fromhex("4D0079004E00650077004E0061006D0065000000")
         self.assertEqual(var.get_packed_name(), test_name_packed)

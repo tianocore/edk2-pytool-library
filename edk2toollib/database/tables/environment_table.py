@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 """A module to run a table generator that creates or appends to a table with environment information."""
+
 import datetime
 from typing import Any
 
@@ -18,7 +19,8 @@ from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
 class EnvironmentTable(TableGenerator):
     """A Workspace parser that records import environment information for a given parsing execution."""  # noqa: E501
-    def __init__(self, *args: Any, **kwargs: Any) -> 'EnvironmentTable':
+
+    def __init__(self, *args: Any, **kwargs: Any) -> "EnvironmentTable":
         """Initialize the query with the specific settings."""
 
     def parse(self, session: Session, pathobj: Edk2Path, id: str, env: dict) -> None:
@@ -33,6 +35,8 @@ class EnvironmentTable(TableGenerator):
         entry = Environment(
             id=id,
             date=dtime,
-            version=version,values = [Value(env_id = env, key=key, value=value) for key, value in env.items()])
+            version=version,
+            values=[Value(env_id=env, key=key, value=value) for key, value in env.items()],
+        )
 
         session.add(entry)

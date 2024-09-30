@@ -12,7 +12,6 @@ from edk2toollib.windows.capsule.cat_generator import CatGenerator
 
 
 class CatGeneratorTest(unittest.TestCase):
-
     def test_win10_OS(self):
         o = CatGenerator("x64", "win10")
         self.assertEqual(o.OperatingSystem, "10")

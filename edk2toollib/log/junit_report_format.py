@@ -14,6 +14,7 @@
 Used to support CI/CD and exporting test results for other tools.
 This does test report generation without being a test runner.
 """
+
 import time
 from typing import IO
 from xml.sax.saxutils import escape
@@ -21,7 +22,8 @@ from xml.sax.saxutils import escape
 
 class JunitReportError(object):
     """Object representing a Test Error."""
-    def __init__(self, type: str, msg: str) -> 'JunitReportError':
+
+    def __init__(self, type: str, msg: str) -> "JunitReportError":
         """Init the type of error."""
         self.Message = escape(msg.strip(), {'"': "&quot;"})
         self.Type = escape(type.strip(), {'"': "&quot;"})
@@ -29,7 +31,8 @@ class JunitReportError(object):
 
 class JunitReportFailure(object):
     """Object representing a Test Failure."""
-    def __init__(self, type: str, msg: str) -> 'JunitReportFailure':
+
+    def __init__(self, type: str, msg: str) -> "JunitReportFailure":
         """Init the type of Failure."""
         self.Message = escape(msg.strip(), {'"': "&quot;"})
         self.Type = escape(type.strip(), {'"': "&quot;"})
@@ -37,13 +40,14 @@ class JunitReportFailure(object):
 
 class JunitReportTestCase(object):
     """Object representing a single test case."""
+
     NEW = 1
     SKIPPED = 2
     FAILED = 3
     ERROR = 4
     SUCCESS = 5
 
-    def __init__(self, Name: str, ClassName: str) -> 'JunitReportTestCase':
+    def __init__(self, Name: str, ClassName: str) -> "JunitReportTestCase":
         """Init a Test case with it's name and class name."""
         self.Name = escape(Name.strip(), {'"': "&quot;"})
         self.ClassName = escape(ClassName.strip(), {'"': "&quot;"})
@@ -59,7 +63,7 @@ class JunitReportTestCase(object):
 
     def SetFailed(self, Msg: str, Type: str) -> None:
         """Sets internal state if the test failed."""
-        if (self.Status != JunitReportTestCase.NEW):
+        if self.Status != JunitReportTestCase.NEW:
             raise Exception("Can't Set to failed.  State must be in NEW")
         self.Time = time.time() - self._StartTime
         self.Status = JunitReportTestCase.FAILED
@@ -67,7 +71,7 @@ class JunitReportTestCase(object):
 
     def SetError(self, Msg: str, Type: str) -> None:
         """Set internal state if the test had an error."""
-        if (self.Status != JunitReportTestCase.NEW):
+        if self.Status != JunitReportTestCase.NEW:
             raise Exception("Can't Set to error.  State must be in NEW")
         self.Time = time.time() - self._StartTime
         self.Status = JunitReportTestCase.ERROR
@@ -75,14 +79,14 @@ class JunitReportTestCase(object):
 
     def SetSuccess(self) -> None:
         """Set internal state if the test passed."""
-        if (self.Status != JunitReportTestCase.NEW):
+        if self.Status != JunitReportTestCase.NEW:
             raise Exception("Can't Set to success.  State must be in NEW")
         self.Status = JunitReportTestCase.SUCCESS
         self.Time = time.time() - self._StartTime
 
     def SetSkipped(self) -> None:
         """Set internal state if the test was skipped."""
-        if (self.Status != JunitReportTestCase.NEW):
+        if self.Status != JunitReportTestCase.NEW:
             raise Exception("Can't Set to skipped.  State must be in NEW")
         self.Status = JunitReportTestCase.SKIPPED
         self.Time = time.time() - self._StartTime
@@ -101,19 +105,21 @@ class JunitReportTestCase(object):
         if self.Status == JunitReportTestCase.SKIPPED:
             outstream.write('<skipped type="skipped">')
             outstream.write(self.StdOut)
-            outstream.write('</skipped>')
+            outstream.write("</skipped>")
         elif self.Status == JunitReportTestCase.FAILED:
-            outstream.write('<failure message="{0}" type="{1}" />'.format(self.FailureMsg.Message,
-                                                                          self.FailureMsg.Type))
+            outstream.write(
+                '<failure message="{0}" type="{1}" />'.format(self.FailureMsg.Message, self.FailureMsg.Type)
+            )
         elif self.Status == JunitReportTestCase.ERROR:
             outstream.write('<error message="{0}" type="{1}" />'.format(self.ErrorMsg.Message, self.ErrorMsg.Type))
         elif self.Status != JunitReportTestCase.SUCCESS:
-            raise Exception("Can't output a testcase {0}.{1} in invalid state {2}".format(self.ClassName,
-                                                                                          self.Name, self.Status))
+            raise Exception(
+                "Can't output a testcase {0}.{1} in invalid state {2}".format(self.ClassName, self.Name, self.Status)
+            )
 
-        outstream.write('<system-out>' + self.StdOut + '</system-out>')
-        outstream.write('<system-err>' + self.StdErr + '</system-err>')
-        outstream.write('</testcase>')
+        outstream.write("<system-out>" + self.StdOut + "</system-out>")
+        outstream.write("<system-err>" + self.StdErr + "</system-err>")
+        outstream.write("</testcase>")
 
 
 class JunitReportTestSuite(object):
@@ -121,7 +127,8 @@ class JunitReportTestSuite(object):
 
     Create new suites by using the JunitTestReport Object
     """
-    def __init__(self, Name: str, Package: str, Id: id) -> 'JunitReportTestSuite':
+
+    def __init__(self, Name: str, Package: str, Id: id) -> "JunitReportTestSuite":
         """Initialize a new test suite."""
         self.Name = escape(Name.strip(), {'"': "&quot;"})
         self.Package = escape(Package.strip(), {'"': "&quot;"})
@@ -147,21 +154,24 @@ class JunitReportTestSuite(object):
         Tests = len(self.TestCases)
 
         for a in self.TestCases:
-            if (a.Status == JunitReportTestCase.FAILED):
+            if a.Status == JunitReportTestCase.FAILED:
                 Failures += 1
-            elif (a.Status == JunitReportTestCase.ERROR):
+            elif a.Status == JunitReportTestCase.ERROR:
                 Errors += 1
-            elif (a.Status == JunitReportTestCase.SKIPPED):
+            elif a.Status == JunitReportTestCase.SKIPPED:
                 Skipped += 1
 
-        outstream.write('<testsuite id="{0}" name="{1}" package="{2}" errors="{3}" tests="{4}" '
-                        'failures="{5}" skipped="{6}">'.format(self.TestId, self.Name, self.Package,
-                                                               Errors, Tests, Failures, Skipped))
+        outstream.write(
+            '<testsuite id="{0}" name="{1}" package="{2}" errors="{3}" tests="{4}" '
+            'failures="{5}" skipped="{6}">'.format(
+                self.TestId, self.Name, self.Package, Errors, Tests, Failures, Skipped
+            )
+        )
 
         for a in self.TestCases:
             a.Output(outstream)
 
-        outstream.write('</testsuite>')
+        outstream.write("</testsuite>")
 
 
 class JunitTestReport(object):
@@ -169,7 +179,8 @@ class JunitTestReport(object):
 
     Top level object test reporting.
     """
-    def __init__(self) -> 'JunitTestReport':
+
+    def __init__(self) -> "JunitTestReport":
         """Init an empty test report."""
         self.TestSuites = []
 
@@ -187,10 +198,10 @@ class JunitTestReport(object):
     def Output(self, filepath: str) -> None:
         """Write report to file."""
         f = open(filepath, "w")
-        f.write('')
+        f.write("")
         f.write('<?xml version="1.0" encoding="UTF-8"?>')
-        f.write('<testsuites>')
+        f.write("<testsuites>")
         for a in self.TestSuites:
             a.Output(f)
-        f.write('</testsuites>')
+        f.write("</testsuites>")
         f.close()
