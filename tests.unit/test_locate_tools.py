@@ -13,6 +13,7 @@ import logging
 import sys
 import os
 import edk2toollib.windows.locate_tools as locate_tools
+from unittest.mock import patch
 
 
 class LocateToolsTest(unittest.TestCase):
@@ -70,10 +71,16 @@ class LocateToolsTest(unittest.TestCase):
         self.assertIsNotNone(results["WindowsSDKVersion"])
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
-    def test_FindInf2CatToolInWinSdk(self):
+    @patch("edk2toollib.windows.locate_tools.QueryVcVariables")
+    @patch("glob.iglob")
+    def test_FindInf2CatToolInWinSdk(self, mock_iglob, mock_QueryVcVariables):
+        # Mock dependencies to otherwise exercise the `FindToolInWinSdk`
+        # function
+        mock_QueryVcVariables.return_value = {"WindowsSdkDir": "C:/mock/sdk/dir", "WindowsSDKVersion": "10.0.12345.0"}
+        mock_iglob.return_value = ["C:/mock/sdk/dir/10.0.12345.0/bin/x64/inf2cat.exe"]
+
         results = locate_tools.FindToolInWinSdk("inf2cat.exe")
         self.assertIsNotNone(results)
-        self.assertTrue(os.path.isfile(results))
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_FindToolInWinSdk(self):
