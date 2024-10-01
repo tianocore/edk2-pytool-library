@@ -84,6 +84,7 @@ as described above.
 
       ``` cmd
       ruff check .
+      ruff format --check .
       ```
 
       * Note: Newer editors are very helpful in resolving source formatting errors. For example, in VSCode, you can
