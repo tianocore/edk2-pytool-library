@@ -73,29 +73,33 @@
 
 ## Testing
 
-1. Run a Basic Syntax/Lint Check (using flake8) and resolve any issues
+PIP modules used in this section such as `ruff` and `pydocstyle` are installed when you run `pip install -e .[dev]`
+as described above.
 
-    ``` cmd
-    flake8 .
-    ```
+> See [`pyproject.toml`](../../pyproject.toml) for the full list of development dependencies.
 
-    INFO: Newer editors are very helpful in resolving source formatting errors
-    (whitespace, indentation, etc). In VSCode open the py file and use
-    ++alt+shift+f++ to auto format.
+1. Run a Basic Syntax/Lint Check (using ruff) and resolve any issues
 
-2. Run a Basic Python docstring Check (using pydocstring) and resolve any issues
+    * Run ruff
 
-    ``` cmd
-    pydocstyle edk2toollib
-    ```
+      ``` cmd
+      ruff check .
+      ```
 
-3. Run the `BasicDevTests.py` script to check file encoding, file naming, etc
+      * Note: Newer editors are very helpful in resolving source formatting errors. For example, in VSCode, you can
+              open the Python file and use `Alt+Shift+F` to auto format. See the [Ruff VSCode extension](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
+              for more information.
+
+      * Note: `ruff` is a wrapper around tools like `pydocstyle`. See [`pyproject.toml`](../../pyproject.toml) for
+        more details.
+
+2. Run the `BasicDevTests.py` script to check file encoding, file naming, etc
 
     ```cmd
     BasicDevTests.py
     ```
 
-4. Run Coverage with pytest test execution
+3. Run Coverage with pytest test execution
 
     ``` cmd
     coverage run -m pytest
@@ -106,19 +110,19 @@
 
     Coverage is uploaded to `codecov.io`.
 
-5. Generate and review the html report
+4. Generate and review the html report
 
     ```cmd
     coverage html
     ```
 
-6. Run the spell checker
+5. Run the spell checker
 
     ```cmd
     cspell -c .cspell.json "**/*.py" "**/*.md"
     ```
 
-7. Run the markdown linter
+6. Run the markdown linter
 
     ```cmd
     markdownlint "**/*.md"
