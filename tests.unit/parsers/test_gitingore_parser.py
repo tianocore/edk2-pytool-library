@@ -249,19 +249,18 @@ def test_incomplete_filename(tmp_path):
     assert rule_tester("/home/tmp/dir/o.pyc") is False
 
 
-
 def test_unrelated_path(tmp_path):
     """Tests that a path that is completely unrelated to another path works."""
     root = tmp_path.resolve()
     gitignore_path = root / ".gitignore"
 
-    with open(gitignore_path, 'w') as f:
-        f.write('*foo*\n')
+    with open(gitignore_path, "w") as f:
+        f.write("*foo*\n")
 
-    rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path, base_dir='/home/tmp')
+    rule_tester = gitignore_parser.parse_gitignore_file(gitignore_path, base_dir="/home/tmp")
 
-    assert rule_tester('/home/tmp/foo') is True
-    assert rule_tester('/some/other/dir') is False
+    assert rule_tester("/home/tmp/foo") is True
+    assert rule_tester("/some/other/dir") is False
 
 
 def test_double_asterisks(tmp_path):
