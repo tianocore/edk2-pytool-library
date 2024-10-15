@@ -546,12 +546,14 @@ class BaseParser(object):
         mode = 0
         tokens = []
         for character in text:
-            if character == '"' and len(token) == 0:
+            if character == '"' and len(token) == 0 and mode != QUOTE_MODE:
                 mode = QUOTE_MODE
             elif character == '"' and mode == QUOTE_MODE:
                 if len(token) > 0:
                     tokens.append(f'"{token}"')
                     token = ""
+                else:
+                    tokens.append('""')
                 mode = TEXT_MODE
             elif character == "$" and len(token) == 0:
                 token += character
