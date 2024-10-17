@@ -10,6 +10,7 @@
 import unittest
 import tempfile
 import os
+import textwrap
 from edk2toollib.uefi.edk2.parsers.dsc_parser import DscParser
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 
@@ -155,3 +156,37 @@ class TestDscParserIncludes(unittest.TestCase):
             self.assertEqual(parser.LocalVars["INCLUDED"], "TRUE")  # make sure we got the defines
         finally:
             os.chdir(cwd)
+
+    def test_dsc_define_statements(self):
+        """This test some dsc define statements"""
+        SAMPLE_DSC_FILE1 = textwrap.dedent("""\
+        [Defines]
+            PLATFORM_NAME                  = SomePlatformPkg
+            PLATFORM_GUID                  = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+            PLATFORM_VERSION               = 0.1
+            DSC_SPECIFICATION              = 0x00010005
+            OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)    
+            
+            DEFINE  FLAG1 = 
+            
+            !if FLAG1 != ""
+                FLAG2 = "hi"
+            !endif
+            
+            !if $(FLAG2) == "hi"
+              [Components.IA32]
+                FakePath/FakePath2/FakeInf.inf
+            !endif
+            """)
+        workspace = tempfile.mkdtemp()
+
+        file1_name = "file1.dsc"
+        file1_path = os.path.join(workspace, file1_name)
+        TestDscParserIncludes.write_to_file(file1_path, SAMPLE_DSC_FILE1)
+        try:
+            parser = DscParser()
+            parser.SetEdk2Path(Edk2Path(workspace, []))
+            parser.ParseFile(file1_path)
+        finally:
+            os.remove(file1_path)
+        assert any("FakePath/FakePath2/FakeInf.inf" in value for value in parser.Components)
