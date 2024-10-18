@@ -137,7 +137,15 @@ class UefiVariable(object):
                 efi_var = fd.read()
                 length = len(efi_var)
 
-            return (err, efi_var[:length])
+            # Unpack a uint32 from the start of efi_var, which is the attributes
+            # we always expect the attributes to be 7, since we are reading from runtime,
+            # report an error so the user knows it may fail to load if not 7
+            (attrs,) = struct.unpack("=I", efi_var[:4])
+            if attrs != 7:
+                logging.error(f"Unexpected attributes value: {attrs} for {name}-{guid}")
+            efi_var = efi_var[4:length]
+
+            return (err, efi_var)
 
     def GetUefiAllVarNames(self) -> tuple[int, bytes]:
         """Get all Uefi Variables in the system, and return a byte packed byte string.
