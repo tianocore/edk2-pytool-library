@@ -180,7 +180,9 @@ class FdfParser(HashFileParser):
                                     self.FVs[section]["Files"][currentName][sectionType] = {}
                                 # TODO support guided sections
                             # ex: SECTION UI = "GenericGopDriver"
-                            elif sline.upper().startswith("SECTION"):  # get the section
+                            elif (
+                                sline.upper().startswith("SECTION") and sline.upper().count("=") > 0
+                            ):  # get the section
                                 section_def = sline[7:].strip().split("=", 1)
                                 sectionType = section_def[0].strip()  # UI in this example
                                 sectionValue = section_def[1].strip()

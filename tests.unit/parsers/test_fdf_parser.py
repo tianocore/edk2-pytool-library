@@ -101,3 +101,81 @@ def test_section_guided():
     assert (
         "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" in parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
     )
+
+
+def test_file_raw_section_statements():
+    """Check common file type statements from an FDF file"""
+
+    SAMPLE_FDF_FILE1 = textwrap.dedent("""\
+        [FV.MAINFV]
+        FILEFILE RAW = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa {
+            SECTION COMPRESS {
+                SECTION RAW = $(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/FV/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.bin
+            }
+        }
+    """)
+    SAMPLE_FDF_FILE2 = textwrap.dedent("""\
+        [FV.MAINFV]
+        FILEFILE RAW = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa {
+            SECTION RAW = $(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/FV/something.bin
+            SECTION PE32 = $(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG>/FV/Exec.efi
+        }
+    """)
+    SAMPLE_FDF_FILE3 = textwrap.dedent("""\
+        [FV.MAINFV]
+        FILEFILE RAW = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa {
+            SECTION COMPRESS {
+                SECTION RAW = binary.bin
+                SECTION UI = a_ui.bin
+                SECTION PE32 = some_efi_file.efi
+                SECTION TE = some_te.te
+            }
+        }
+    """)
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False) as f:
+            f.write(SAMPLE_FDF_FILE1)
+            fdf_path = f.name
+
+        parser = FdfParser()
+        parser.ParseFile(fdf_path)
+    finally:
+        os.remove(fdf_path)
+
+    assert (
+        "$(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/FV/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.bin"
+        in parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]["RAW"]
+    )
+
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False) as f:
+            f.write(SAMPLE_FDF_FILE2)
+            fdf_path = f.name
+
+        parser = FdfParser()
+        parser.ParseFile(fdf_path)
+    finally:
+        os.remove(fdf_path)
+    assert (
+        "$(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/FV/something.bin"
+        in parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]["RAW"]
+    )
+    assert (
+        "$(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG>/FV/Exec.efi"
+        in parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]["PE32"]
+    )
+
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False) as f:
+            f.write(SAMPLE_FDF_FILE3)
+            fdf_path = f.name
+
+        parser = FdfParser()
+        parser.ParseFile(fdf_path)
+    finally:
+        os.remove(fdf_path)
+
+    assert "binary.bin" in parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]["RAW"]
+    assert "a_ui.bin" in parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]["UI"]
+    assert "some_efi_file.efi" in parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]["PE32"]
+    assert "some_te.te" in parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]["TE"]
