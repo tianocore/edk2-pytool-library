@@ -983,6 +983,23 @@ class EfiTimeTest(unittest.TestCase):
 
             self.assertEqual(efi_time.encode(), efi_time2.encode())
 
+    def test_EfiTime_from_binary(self):
+        test_data = [
+            ([1970, 1, 1, 0, 0, 0], b"\xb2\x07\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"),
+            ([2022, 12, 5, 12, 33, 5], b"\xe6\x07\x0c\x05\x0c\x21\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00"),
+        ]
+
+        for time_array, expected_bytes in test_data:
+            year, month, day, hour, minute, second = time_array
+            epoch_time = datetime.datetime(year, month, day, hour, minute, second)
+
+            efi_time = EfiTime(time=epoch_time)
+            self.assertEqual(efi_time.encode(), expected_bytes)
+
+            efi_time2 = EfiTime.from_binary(expected_bytes)
+
+            self.assertEqual(efi_time.encode(), efi_time2.encode())
+
 
 # if __name__ == "__main__":
 #    unittest.main()
