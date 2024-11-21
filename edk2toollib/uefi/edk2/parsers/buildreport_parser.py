@@ -40,6 +40,7 @@ class ModuleSummary(object):
         self.Type = ""
         self.PCDs = {}
         self.Libraries = {}
+        self.NullLibraryCount = 0
         self.Depex = ""
         self.WorkspacePath = ws
         self.PackagePathList = packagepatahlist
@@ -117,6 +118,10 @@ class ModuleSummary(object):
 
                         lib_class = templine.partition("{")[2].partition("}")[0].partition(":")[0].strip()
                         lib_instance = templine.partition("{")[0].strip()
+
+                        if lib_class.strip().lower() == "null":
+                            lib_class += str(self.NullLibraryCount)
+                            self.NullLibraryCount += 1
 
                         # Take absolute path and convert to EDK build path
                         RelativePath = self.pathConverter.GetEdk2RelativePathFromAbsolutePath(lib_instance)
