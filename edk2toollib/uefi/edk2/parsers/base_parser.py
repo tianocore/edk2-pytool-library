@@ -638,8 +638,7 @@ class BaseParser(object):
     @classmethod
     def _ConvertTokensToPostFix(cls: "BaseParser", tokens: list[str]) -> list[str]:
         # convert infix into post fix
-        stack = ["("]
-        tokens.append(")")  # add an extra parathesis
+        stack = []
         expression = []
         for token in tokens:
             # If the incoming symbol is a left parenthesis, push it on the stack.
@@ -699,7 +698,7 @@ class BaseParser(object):
             return 100
         if token == "NOT":  # not is the lowest
             return -2
-        if token == "IN":
+        if token == "IN" or token == "==" or token == "!=":
             return 1
         return 0
 
