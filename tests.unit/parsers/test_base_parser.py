@@ -645,7 +645,7 @@ class TestBaseParserConditionals(unittest.TestCase):
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!endif"))
 
-        # Check if extra spaces anywhere beaks anything
+        # Check if extra spaces anywhere breaks anything
         line = parser.ReplaceVariables("!ifdef  MY_VAR")
         self.assertTrue(parser.ProcessConditional(line))
         self.assertTrue(parser.InActiveCode())
