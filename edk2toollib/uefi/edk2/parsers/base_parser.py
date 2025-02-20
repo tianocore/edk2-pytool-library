@@ -47,6 +47,7 @@ class BaseParser(object):
         self.TargetFilePath = None  # the abs path of the target file
         self.CurrentLine = -1
         self._MacroNotDefinedValue = "0"  # value to used for undefined macro
+        self._MacroDefinedValue = "1"  # value used for a defined macro
 
     #
     # For include files set the base root path
@@ -360,13 +361,26 @@ class BaseParser(object):
         # both syntax options can not be supported.
         result = line
         tokens = result.split()
-        replace = len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef", "!if", "!elseif"]
-        if len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef"]:
-            if not tokens[1].startswith("$("):
-                v = self._FindReplacementForToken(tokens[1], replace)
-                if v is not None:
-                    result = result.replace(tokens[1], v, 1)
 
+        # Special handling for !ifdef and !ifndef. We don't want to truly replace the value, we just want
+        # to know if it is defined or not. If we replace the value, that replacement could be an empty
+        # string, which leaves the line as `!ifdef` or `!ifndef`, causing an exception to be raised.
+        if len(tokens) > 1 and tokens[0].lower() in ["!ifdef", "!ifndef"]:
+            # Per EDK2 parser specification, the macro name should not be wrapped in $(), however also
+            # per EDK2 parser specification, this is handled for backwards compatibility.
+            # We could change our minds and raise an exception instead of handling this
+            if tokens[1].startswith("$("):
+                start = line.find("$(")
+                end = line.find(")", start)
+                tokens[1] = line[start + 2 : end]
+
+            if self._FindReplacementForToken(tokens[1], False) is None:
+                tokens[1] = self._MacroNotDefinedValue
+            else:
+                tokens[1] = self._MacroDefinedValue
+            return " ".join(tokens)
+
+        replace = len(tokens) > 1 and tokens[0].lower() in ["!if", "!elseif"]
         # use line to avoid change by handling above
         rep = line.count("$")
         index = 0

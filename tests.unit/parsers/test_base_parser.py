@@ -53,49 +53,49 @@ class TestBaseParserConditionals(unittest.TestCase):
         parser = BaseParser("")
         parser.SetInputVars({"name": "sean"})
         line = "!ifdef $(name)"
-        self.assertEqual(parser.ReplaceVariables(line), "!ifdef sean")
+        self.assertEqual(parser.ReplaceVariables(line), "!ifdef 1")
 
         line = "!ifdef $(Invalid_Token)"
         self.assertEqual(parser.ReplaceVariables(line), "!ifdef 0")
 
         line = "!IFDEF $(name)"
-        self.assertEqual(parser.ReplaceVariables(line), "!IFDEF sean")
+        self.assertEqual(parser.ReplaceVariables(line), "!IFDEF 1")
 
     def test_replace_macro_ifndef_dollarsign(self):
         parser = BaseParser("")
         parser.SetInputVars({"name": "sean"})
         line = "!IfNDef $(name)"
-        self.assertEqual(parser.ReplaceVariables(line), "!IfNDef sean")
+        self.assertEqual(parser.ReplaceVariables(line), "!IfNDef 1")
 
         line = "!ifndef $(Invalid_Token)"
         self.assertEqual(parser.ReplaceVariables(line), "!ifndef 0")
 
         line = "!IFnDEF $(name)"
-        self.assertEqual(parser.ReplaceVariables(line), "!IFnDEF sean")
+        self.assertEqual(parser.ReplaceVariables(line), "!IFnDEF 1")
 
     def test_replace_macro_ifdef(self):
         parser = BaseParser("")
         parser.SetInputVars({"name": "sean"})
         line = "!ifdef name"
-        self.assertEqual(parser.ReplaceVariables(line), "!ifdef sean")
+        self.assertEqual(parser.ReplaceVariables(line), "!ifdef 1")
 
         line = "!ifdef Invalid_Token"
         self.assertEqual(parser.ReplaceVariables(line), "!ifdef 0")
 
         line = "!IFDEF name"
-        self.assertEqual(parser.ReplaceVariables(line), "!IFDEF sean")
+        self.assertEqual(parser.ReplaceVariables(line), "!IFDEF 1")
 
     def test_replace_macro_ifndef(self):
         parser = BaseParser("")
         parser.SetInputVars({"name": "sean"})
         line = "!IfNDef name"
-        self.assertEqual(parser.ReplaceVariables(line), "!IfNDef sean")
+        self.assertEqual(parser.ReplaceVariables(line), "!IfNDef 1")
 
         line = "!ifndef Invalid_Token"
         self.assertEqual(parser.ReplaceVariables(line), "!ifndef 0")
 
         line = "!IFnDEF name"
-        self.assertEqual(parser.ReplaceVariables(line), "!IFnDEF sean")
+        self.assertEqual(parser.ReplaceVariables(line), "!IFnDEF 1")
 
     def test_replace_macro_elseif(self):
         parser = BaseParser("")
@@ -601,6 +601,60 @@ class TestBaseParserConditionals(unittest.TestCase):
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!endif"))
 
+    def test_def_conditional_with_empty_define(self):
+        parser = BaseParser("")
+        parser.LocalVars = {"MY_VAR": ""}
+
+        line = parser.ReplaceVariables("!ifdef $(MY_VAR)")
+        self.assertTrue(parser.ProcessConditional(line))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
+
+        line = parser.ReplaceVariables("!ifndef $(MY_VAR)")
+        self.assertTrue(parser.ProcessConditional(line))
+        self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
+
+        line = parser.ReplaceVariables("!ifdef $(MY_VAR2)")
+        self.assertTrue(parser.ProcessConditional(line))
+        self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
+
+        line = parser.ReplaceVariables("!ifndef $(MY_VAR2)")
+        self.assertTrue(parser.ProcessConditional(line))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
+
+        line = parser.ReplaceVariables("!ifdef MY_VAR")
+        self.assertTrue(parser.ProcessConditional(line))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
+
+        line = parser.ReplaceVariables("!ifndef MY_VAR")
+        self.assertTrue(parser.ProcessConditional(line))
+        self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
+
+        line = parser.ReplaceVariables("!ifdef MY_VAR2")
+        self.assertTrue(parser.ProcessConditional(line))
+        self.assertFalse(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
+
+        line = parser.ReplaceVariables("!ifndef MY_VAR2")
+        self.assertTrue(parser.ProcessConditional(line))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
+
+        # Check if extra spaces anywhere beaks anything
+        line = parser.ReplaceVariables("!ifdef  MY_VAR")
+        self.assertTrue(parser.ProcessConditional(line))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
+
+        line = parser.ReplaceVariables("!ifdef  $(MY_VAR)")
+        self.assertTrue(parser.ProcessConditional(line))
+        self.assertTrue(parser.InActiveCode())
+        self.assertTrue(parser.ProcessConditional("!endif"))
 
 class TestBaseParserGuids(unittest.TestCase):
     def test_is_guid(self):
