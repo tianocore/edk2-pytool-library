@@ -656,6 +656,7 @@ class TestBaseParserConditionals(unittest.TestCase):
         self.assertTrue(parser.InActiveCode())
         self.assertTrue(parser.ProcessConditional("!endif"))
 
+
 class TestBaseParserGuids(unittest.TestCase):
     def test_is_guid(self):
         guid1 = "= { 0xD3B36F2C, 0xD551, 0x11D4, {0x9A, 0x46, 0x0, 0x90, 0x27, 0x3F, 0xC1,0xD }}"
