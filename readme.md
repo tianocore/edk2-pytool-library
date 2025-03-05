@@ -40,8 +40,8 @@ Minimum Supported Version
 
 |  Host Type         |  Toolchain    |  Status
 |  :---------------  |  :----------  |  :--------------------
-|  [Windows-Latest]  |  Python 3.10  |  [![msv]][_msv]
-|  [Ubuntu-Latest]   |  Python 3.10  |  [![msv]][_msv]
+|  [Windows-Latest]  |  Python 3.10  |  [![ci]][_ci]
+|  [Ubuntu-Latest]   |  Python 3.10  |  [![ci]][_ci]
 |  [MacOS-Latest]    |  Python 3.10  |  [![coming_soon]][_ci]
 
 ### Current Release
@@ -167,8 +167,6 @@ Contributor documentation is located at [docs/contributor/](https://github.com/t
 [_pypi]: https://pypi.org/project/edk2-pytool-library/
 [ci]: https://github.com/tianocore/edk2-pytool-library/actions/workflows/run-ci.yml/badge.svg?branch=master
 [_ci]: https://github.com/tianocore/edk2-pytool-library/actions/workflows/run-ci.yml
-[msv]: https://github.com/tianocore/edk2-pytool-library/actions/workflows/run-msv.yml/badge.svg?branch=master
-[_msv]: https://github.com/tianocore/edk2-pytool-library/actions/workflows/run-msv.yml
 [Windows-Latest]: https://github.com/actions/runner-images
 [Ubuntu-Latest]: https://github.com/actions/runner-images
 [MacOS-Latest]: https://github.com/actions/runner-images

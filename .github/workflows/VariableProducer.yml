@@ -14,7 +14,7 @@ on:
         value: ${{ jobs.produce.outputs.node-versions }}
 
 env:
-  python-msv: "3.10"
+  python-msv: "['3.10']"
   pythonversions: "['3.13', '3.12', '3.11']" # Keep Python Versions in descending order
   nodeversions: "['19']"
 
