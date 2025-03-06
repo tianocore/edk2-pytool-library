@@ -22,7 +22,7 @@ The code coverage and CI badges represent unit test status and the code coverage
 of those unit tests. We require 100% unit test success (Hence the pass / fail)
 and that code coverage percentage does not lower.
 
-Supported Versions
+Maintained Versions
 
 |  Host Type         |  Toolchain    |  Status
 |  :---------------  |  :----------  |  :--------------------
@@ -35,6 +35,14 @@ Supported Versions
 |  [MacOS-Latest]    |  Python 3.11  |  [![coming_soon]][_ci]
 |  [MacOS-Latest]    |  Python 3.12  |  [![coming_soon]][_ci]
 |  [MacOS-Latest]    |  Python 3.13  |  [![coming_soon]][_ci]
+
+Minimum Supported Version
+
+|  Host Type         |  Toolchain    |  Status
+|  :---------------  |  :----------  |  :--------------------
+|  [Windows-Latest]  |  Python 3.10  |  [![ci]][_ci]
+|  [Ubuntu-Latest]   |  Python 3.10  |  [![ci]][_ci]
+|  [MacOS-Latest]    |  Python 3.10  |  [![coming_soon]][_ci]
 
 ### Current Release
 
