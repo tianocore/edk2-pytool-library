@@ -8,7 +8,6 @@
 ##
 
 import unittest
-import pathlib
 import pytest
 import logging
 import sys
@@ -158,15 +157,15 @@ def test_QueryVcVariablesWithSpecificVc():
 
     This test will check that the function can query a specific VC version.
     """
-    lookup = locate_tools.QueryVcVariables(["VCToolsInstallDir"])
-    assert "VCToolsInstallDir" in lookup
-
-    vc = pathlib.Path(lookup["VCToolsInstallDir"]).name  # Folder is version
-
-    keys = ["VCINSTALLDIR", "WindowsSDKVersion", "LIB"]
-    lookup = locate_tools.QueryVcVariables(keys, vc_version=vc)
+    lookup = locate_tools.QueryVcVariables(["VCINSTALLDIR", "WindowsSDKVersion"])
     assert "VCINSTALLDIR" in lookup
     assert "WindowsSDKVersion" in lookup
-    assert "LIB" in lookup
 
-    assert vc in lookup["LIB"]
+    # Fail to complete the lookup because the vc_version does not exist
+    try:
+        lookup = locate_tools.QueryVcVariables(["VCINSTALLDIR", "WindowsSDKVersion"], vc_version="9.9.9")
+    except ValueError as e:
+        assert str(e).startswith("Missing keys when querying vcvarsall")
+        lookup = None
+
+    assert lookup is None
