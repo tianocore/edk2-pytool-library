@@ -105,6 +105,7 @@
         "toollib",
         "unittest",
         "urlunsplit",
+        "vcvars",
         "vcvarsall",
         "vsvars",
         "vswhere",
