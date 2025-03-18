@@ -8,6 +8,7 @@
 ##
 
 import unittest
+import pathlib
 import pytest
 import logging
 import sys
@@ -108,6 +109,30 @@ class LocateToolsTest(unittest.TestCase):
         results = locate_tools.FindToolInWinSdk("WontFind.exe", product="YouWontFindThis")
         self.assertIsNone(results)
 
+    @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
+    def test_QueryVcVariablesWithSpecificVc(self):
+        """Tests QueryVcVariables with a specific VC version.
+
+        This test will check that the function can query a specific VC version.
+        """
+        lookup = locate_tools.QueryVcVariables(["VCToolsInstallDir"])
+        vc = pathlib.Path(lookup["VCToolsInstallDir"]).name  # Folder is version
+
+        keys = ["VCINSTALLDIR", "WindowsSDKVersion", "LIB"]
+        lookup = locate_tools.QueryVcVariables(keys, vc_version=vc)
+        self.assertTrue("VCINSTALLDIR" in lookup)
+        self.assertTrue("WindowsSDKVersion" in lookup)
+        self.assertTrue("LIB" in lookup)
+
+        self.assertTrue(vc in lookup["LIB"])
+
+        try:
+            lookup = locate_tools.QueryVcVariables(keys, vc_version="9.9.9")
+        except ValueError as e:
+            self.assertTrue("Missing keys when querying vcvarsall" in str(e))
+            lookup = None
+        assert lookup is None
+
 
 @pytest.mark.skipif(not sys.platform.startswith("win"), reason="requires Windows")
 def test_QueryVcVariablesWithLargePathEnv(caplog):
@@ -149,23 +174,3 @@ def test_QueryVcVariablesWithLargEnv(caplog):
         locate_tools.QueryVcVariables(keys)
 
     os.environ = old_env
-
-
-@pytest.mark.skipif(not sys.platform.startswith("win"), reason="requires Windows")
-def test_QueryVcVariablesWithSpecificVc():
-    """Tests QueryVcVariables with a specific VC version.
-
-    This test will check that the function can query a specific VC version.
-    """
-    lookup = locate_tools.QueryVcVariables(["VCINSTALLDIR", "WindowsSDKVersion"])
-    assert "VCINSTALLDIR" in lookup
-    assert "WindowsSDKVersion" in lookup
-
-    # Fail to complete the lookup because the vc_version does not exist
-    try:
-        lookup = locate_tools.QueryVcVariables(["VCINSTALLDIR", "WindowsSDKVersion"], vc_version="9.9.9")
-    except ValueError as e:
-        assert str(e).startswith("Missing keys when querying vcvarsall")
-        lookup = None
-
-    assert lookup is None
