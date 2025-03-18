@@ -198,7 +198,7 @@ def QueryVcVariables(
         arch (:obj:`str`, optional): arch to run
         product (:obj:`str`, optional): values defined by vswhere.exe
         vs_version (:obj:`str`, optional): helper to find version of supported VS version (example vs2019)
-        vc_version (:obj:`str`, optional): The exact compiler version to consider for searching for keys
+        vc_version (:obj:`str`, optional): Exact compiler version to consider for variables (example 14.42.34433)
 
     Returns:
         (dict): the appropriate environment variables
