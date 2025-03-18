@@ -186,7 +186,9 @@ def FindAllWithVsWhere(products: str = "*", vs_version: Optional[str] = None) ->
     return None
 
 
-def QueryVcVariables(keys: list, arch: str = None, product: str = None, vs_version: str = None, vc_version=None) -> str:
+def QueryVcVariables(
+    keys: list, arch: str = None, product: str = None, vs_version: str = None, vc_version: str = None
+) -> str:
     """Launch vcvarsall.bat and read the settings from its environment.
 
     This is a windows only function and Windows is case insensitive for the keys
