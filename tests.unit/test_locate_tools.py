@@ -8,6 +8,7 @@
 ##
 
 import unittest
+import pathlib
 import pytest
 import logging
 import sys
@@ -149,3 +150,22 @@ def test_QueryVcVariablesWithLargEnv(caplog):
         locate_tools.QueryVcVariables(keys)
 
     os.environ = old_env
+
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="requires Windows")
+def test_QueryVcVariablesWithSpecificVc():
+    """Tests QueryVcVariables with a specific VC version.
+
+    This test will check that the function can query a specific VC version.
+    """
+    lookup = locate_tools.QueryVcVariables(["VCToolsInstallDir"])
+    assert "VCToolsInstallDir" in lookup
+
+    vc = pathlib.Path(lookup["VCToolsInstallDir"]).name # Folder is version
+
+    keys = ["VCINSTALLDIR", "WindowsSDKVersion", "LIB"]
+    lookup = locate_tools.QueryVcVariables(keys, vc_version=vc)
+    assert "VCINSTALLDIR" in lookup
+    assert "WindowsSDKVersion" in lookup
+    assert "LIB" in lookup
+
+    assert vc in lookup["LIB"]
