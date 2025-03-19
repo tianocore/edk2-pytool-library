@@ -1021,7 +1021,7 @@ class PathUtilitiesTest(unittest.TestCase):
         with self.assertLogs(logger="Edk2Path", level=logging.DEBUG) as logs:
             Edk2Path(folder_ws_abs, [folder_pp1_abs])
             Edk2Path(folder_ws_abs, [folder_pp1_abs, folder_pp2_abs])
-            self.assertEqual(len(logs.records), 2)
+            self.assertTrue(any("Nested packages are not allowed" in message for message in logs.output))
 
     def test_get_relative_path_when_folder_is_next_to_package(self):
         """Test usage of GetEdk2RelativePathFromAbsolutePath when a folder containing a package is in the same
