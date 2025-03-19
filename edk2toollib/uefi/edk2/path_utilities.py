@@ -12,9 +12,11 @@ the OS specific path with the exception of of any function that returns an Edk2 
 which will always return Posix form.
 """
 
+import concurrent.futures
 import errno
 import logging
 import os
+import timeit
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -68,6 +70,7 @@ class Edk2Path(object):
         self._workspace_path = workspace_candidate_path
 
         candidate_package_path_list = []
+        start_time = timeit.default_timer()
         for a in [Path(path.replace("\\", "/")) for path in package_path_list]:
             if a.is_absolute():
                 candidate_package_path_list.append(a)
@@ -78,7 +81,10 @@ class Edk2Path(object):
                 else:
                     # assume current working dir relative.  Will catch invalid dir when checking whole list
                     candidate_package_path_list.append(Path.cwd() / a)
+        end_time = timeit.default_timer()
+        self.logger.log(logging.DEBUG, f"Time to build candidate_package_path_list: {end_time - start_time}")
 
+        start_time = timeit.default_timer()
         invalid_pp = []
         for a in candidate_package_path_list[:]:
             if not a.is_dir():
@@ -88,8 +94,10 @@ class Edk2Path(object):
                 )
                 candidate_package_path_list.remove(a)
                 invalid_pp.append(str(a.resolve()))
+        end_time = timeit.default_timer()
+        self.logger.log(logging.DEBUG, f"Time to check package paths: {end_time - start_time}")
 
-        self._package_path_list = candidate_package_path_list
+        self._package_path_list = sorted(candidate_package_path_list)
 
         if invalid_pp and error_on_invalid_pp:
             raise NotADirectoryError(errno.ENOENT, os.strerror(errno.ENOENT), invalid_pp)
@@ -119,9 +127,27 @@ class Edk2Path(object):
             self.logger.log(logging.WARNING, warning)
 
         package_path_packages = {}
-        for package_path in self._package_path_list:
-            package_path_packages[package_path] = [p.parent for p in package_path.glob("**/*.dec")]
 
+        start_time = timeit.default_timer()
+
+        def get_paths(package_path):
+            paths = []
+            for root, _, files in os.walk(package_path):
+                for file in files:
+                    if file.endswith(".dec"):
+                        paths.append(Path(root))
+            return package_path, paths
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = executor.map(get_paths, self._package_path_list)
+
+        for package_path, paths in results:
+            package_path_packages[package_path] = paths
+
+        end_time = timeit.default_timer()
+        self.logger.log(logging.DEBUG, f"Time to build package_path_packages: {end_time - start_time}")
+
+        start_time = timeit.default_timer()
         for package_path, packages in package_path_packages.items():
             for i, package in enumerate(packages):
                 for j in range(i + 1, len(packages)):
@@ -133,6 +159,8 @@ class Edk2Path(object):
                             "and may result in incorrect conversions from absolute path to edk2 package path relative "
                             "paths.",
                         )
+        end_time = timeit.default_timer()
+        self.logger.log(logging.DEBUG, f"Time to check nested packages: {end_time - start_time}")
 
     @property
     def WorkspacePath(self: "Edk2Path") -> str:
