@@ -97,7 +97,7 @@ class Edk2Path(object):
         end_time = timeit.default_timer()
         self.logger.log(logging.DEBUG, f"Time to check package paths: {end_time - start_time}")
 
-        self._package_path_list = sorted(candidate_package_path_list)
+        self._package_path_list = candidate_package_path_list
 
         if invalid_pp and error_on_invalid_pp:
             raise NotADirectoryError(errno.ENOENT, os.strerror(errno.ENOENT), invalid_pp)
