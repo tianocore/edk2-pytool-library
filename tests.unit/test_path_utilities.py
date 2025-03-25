@@ -197,7 +197,6 @@ class PathUtilitiesTest(unittest.TestCase):
         self.assertEqual(pathobj.PackagePathList, [str(pp3), str(pp1), str(pp2)])
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
-
     def test_basic_init_ws_abs_different_case(self):
         inputPath = self.tmp.capitalize()
         if self.tmp[0].isupper():
