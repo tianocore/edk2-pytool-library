@@ -183,6 +183,20 @@ class PathUtilitiesTest(unittest.TestCase):
         Edk2Path(str(ws), ["bad_pp_path", "bad_pp_path2", "good_path"], error_on_invalid_pp=False)
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
+    def test_package_path_list_order(self):
+        """Test that the package path list is ordered correctly."""
+        ws = Path(self.tmp, "folder_ws")
+        ws.mkdir()
+        pp1 = ws / "pp1"
+        pp1.mkdir()
+        pp2 = ws / "pp2"
+        pp2.mkdir()
+        pp3 = ws / "pp3"
+        pp3.mkdir()
+
+        pathobj = Edk2Path(str(ws), [str(pp3), str(pp1), str(pp2)])
+        self.assertEqual(pathobj.PackagePathList, [str(pp3), str(pp1), str(pp2)])
+
     def test_basic_init_ws_abs_different_case(self):
         inputPath = self.tmp.capitalize()
         if self.tmp[0].isupper():
