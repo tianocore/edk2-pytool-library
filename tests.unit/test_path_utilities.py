@@ -182,7 +182,6 @@ class PathUtilitiesTest(unittest.TestCase):
         # Make sure we don't throw an exception unless we mean to
         Edk2Path(str(ws), ["bad_pp_path", "bad_pp_path2", "good_path"], error_on_invalid_pp=False)
 
-    @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_package_path_list_order(self):
         """Test that the package path list is not changed by the constructor."""
         ws = Path(self.tmp, "folder_ws")
@@ -196,6 +195,8 @@ class PathUtilitiesTest(unittest.TestCase):
 
         pathobj = Edk2Path(str(ws), [str(pp3), str(pp1), str(pp2)])
         self.assertEqual(pathobj.PackagePathList, [str(pp3), str(pp1), str(pp2)])
+
+    @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
 
     def test_basic_init_ws_abs_different_case(self):
         inputPath = self.tmp.capitalize()
