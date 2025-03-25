@@ -184,7 +184,7 @@ class PathUtilitiesTest(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_package_path_list_order(self):
-        """Test that the package path list is ordered correctly."""
+        """Test that the package path list is not changed by the constructor."""
         ws = Path(self.tmp, "folder_ws")
         ws.mkdir()
         pp1 = ws / "pp1"
