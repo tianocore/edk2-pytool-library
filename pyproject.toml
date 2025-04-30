@@ -8,7 +8,7 @@ maintainers = [{name = "EDK2 Pytool Maintainers", email = "edk2-pytools@microsof
 dynamic = ["version"]
 description = "Python library supporting UEFI EDK2 firmware development"
 readme = {file = "readme.md", content-type = "text/markdown"}
-license = {file = "LICENSE"}
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 dependencies = [
     "pyasn1 >= 0.4.8",
@@ -22,7 +22,6 @@ dependencies = [
 ]
 classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
@@ -60,6 +59,9 @@ docs = [
     "mkdocs-exclude==1.0.2",
     "mkdocs-awesome-pages-plugin==2.9.3",
 ]
+
+[tool.setuptools]
+packages = ["edk2toollib"]
 
 [tool.setuptools_scm]
 
