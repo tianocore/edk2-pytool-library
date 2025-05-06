@@ -113,6 +113,10 @@
         "ntdll",
         "NTSTATUS",
         "efivarfs",
-        "chattr"
+        "chattr",
+        "bootmgfw",
+        "ISCSI",
+        "SASEX",
+        "CDROM"
     ]
 }
