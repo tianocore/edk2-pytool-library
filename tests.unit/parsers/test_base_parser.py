@@ -106,6 +106,18 @@ class TestBaseParserConditionals(unittest.TestCase):
         line = "!ELSEIF $(Invalid_Token)"
         self.assertEqual(parser.ReplaceVariables(line), "!ELSEIF 0")
 
+    def test_replace_macro_circular_var_not_defined(self):
+        parser = BaseParser("")
+        parser.SetInputVars({"name": "$(name)"})
+        line = "name = $(name)"
+        self.assertEqual(parser.ReplaceVariables(line), "name = ")
+
+    def test_replace_macro_circular_var_defined(self):
+        parser = BaseParser("")
+        parser.SetInputVars({"name": "matt"})
+        line = "name = $(name) sean"
+        self.assertEqual(parser.ReplaceVariables(line), "name = matt sean")
+
     def test_conditional_ifdef(self):
         parser = BaseParser("")
 

@@ -393,6 +393,9 @@ class BaseParser(object):
             self.Logger.debug("Token is %s" % token)
             v = self._FindReplacementForToken(token, replace)
             if v is not None:
+                # prevent circular variable replacement
+                if f"$({token})" in v:
+                    v = ""
                 result = result.replace(replacement_token, v, 1)
 
             index = end + 1
