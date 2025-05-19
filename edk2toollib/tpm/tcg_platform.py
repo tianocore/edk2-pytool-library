@@ -7,21 +7,13 @@
 ##
 
 from __future__ import annotations
-from .device_path import DevicePathFactory
+from edk2toollib.uefi.device_path import DevicePathFactory
 
 import struct
 import hashlib
 import json
-import base64
-from collections import defaultdict
 
-from .uefi_types import EFI_PHYSICAL_ADDRESS, UINTN
-
-from .uefi_spec_defined_variables import (
-    decode_variable_driver_config,
-    decode_variable_authority,
-    decode_is_enabled
-)
+from edk2toollib.uefi.uefi_types import EFI_PHYSICAL_ADDRESS, UINTN
 
 from edk2toollib.tpm.tpm2_defs import (
     TPM_ALG_SHA1,
@@ -172,37 +164,7 @@ def _get_hasher_for_alg(alg: int) -> object:
     return valid_algs[alg]
 
 
-def _decode_value_dispatch(event_type, name, data) -> Dict:
-
-    dispatch_map = defaultdict(lambda: lambda data: {}, {
-        ("SecureBoot", EV_EFI_VARIABLE_DRIVER_CONFIG): decode_is_enabled,
-        ("PK", EV_EFI_VARIABLE_DRIVER_CONFIG): decode_variable_driver_config,
-        ("KEK", EV_EFI_VARIABLE_DRIVER_CONFIG): decode_variable_driver_config,
-        ("db", EV_EFI_VARIABLE_DRIVER_CONFIG): decode_variable_driver_config,
-        ("dbx", EV_EFI_VARIABLE_DRIVER_CONFIG): decode_variable_driver_config,
-        ("PK", EV_EFI_VARIABLE_AUTHORITY): decode_variable_authority,
-        ("KEK", EV_EFI_VARIABLE_AUTHORITY): decode_variable_authority,
-        ("db", EV_EFI_VARIABLE_AUTHORITY): decode_variable_authority
-    })
-    func = dispatch_map[(name, event_type)]
-
-    return func(data)
-
-
 class TpmtHa(object):
-    """
-    TPMT_HA structure
-
-    To handle hash agility, this structure uses the hashAlg parameter to indicate the
-    algorithm used to compute the digest and, by implication, the size of the digest.
-
-    typedef struct {
-        TPM_ALG_ID  HashAlg;
-        BYTE        Digest[HASH_DIGEST_SIZE];
-    } TPMT_HA;
-
-    https://trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-2-Structures-01.38.pdf
-    """
     _hdr_struct_format = "<H"
     _hdr_struct_size = struct.calcsize(_hdr_struct_format)
 
@@ -230,16 +192,6 @@ class TpmtHa(object):
         debug_str += "\t\t\tHashAlg  = 0x%04X\n" % self.hash_alg
         debug_str += "\t\t\tDigest   = %s\n" % self.hash_digest.hex().upper()
         return debug_str
-
-    def __dict__(self) -> dict:
-        """Returns a dictionary representation of this object.
-
-        Returns:
-            dict: The dictionary representation of this object.
-        """
-        return {
-            ALG_FROM_VALUE[self.hash_alg]: self.hash_digest.hex()
-        }
 
     @classmethod
     def from_binary(cls, binary_data: bytes) -> TpmtHa:
@@ -356,41 +308,12 @@ class TpmtHa(object):
         """
         self.extend_digest(self.hash_data(data))
 
+
 class TpmlDigestValues(object):
-    """
-    A class to represent TPML_DIGEST_VALUES structure
-
-    typedef struct {
-        UINT32  count;
-        TPMT_HA digests[HASH_COUNT];
-    } TPML_DIGEST_VALUES;
-
-    Attributes:
-        digests (Dict[int, TpmtHa]): A dictionary of algorithm IDs associated with a TpmtHa object.
-    Methods:
-        __init__(algs: Iterable = None, digests: Dict[int, TpmtHa] = {}):
-            Initializes the TpmlDigestValues instance.
-        __str__() -> str:
-            Returns a string representation of the object.
-        __dict__() -> dict:
-            Returns a dictionary representation of the object.
-        from_binary(binary_data: bytes) -> TpmlDigestValues:
-            Creates an instance from a binary representation.
-        get_size() -> int:
-            Returns the size of the object in bytes.
-        encode() -> bytes:
-            Encodes the object into a byte representation.
-        add_algorithm(alg: int) -> None:
-            Adds a new algorithm to the digests.
-        reset() -> TpmlDigestValues:
-            Resets the digest values with locality 0.
-        reset_with_locality(locality: int) -> TpmlDigestValues:
-            Resets the digest values with the given locality.
-        set_hash_data(data):
-            Sets the hash data for all digests.
-        extend_data(data):
-            Extends the hash data for all digests.
-    """
+    # typedef struct {
+    #     UINT32  count;
+    #     TPMT_HA digests[HASH_COUNT];
+    # } TPML_DIGEST_VALUES;
     _hdr_struct_format = "<I"
     _hdr_struct_size = struct.calcsize(_hdr_struct_format)
 
@@ -418,18 +341,6 @@ class TpmlDigestValues(object):
         for digest in self.digests.values():
             debug_str += str(digest)
         return debug_str
-
-    def __dict__(self) -> dict:
-        """Returns a dictionary representation of this object.
-
-        Returns:
-            dict: The dictionary representation of this object.
-        """
-
-        return {
-            "digest_count": len(self.digests),
-            "digests": {ALG_FROM_VALUE[alg]: digest.__dict__() for alg, digest in self.digests.items()},
-        }
 
     @classmethod
     def from_binary(cls, binary_data: bytes) -> TpmlDigestValues:
@@ -520,36 +431,15 @@ class TpmlDigestValues(object):
 
 
 class TcgUefiVariableData(object):
-    """
-    A class to represent UEFI variable data in the TCG (Trusted Computing Group) log.
-
+    """TCG UEFI Variable data structure.
+    S
     typedef struct tdUEFI_VARIABLE_DATA {
-      EFI_GUID    VariableName; //
+      EFI_GUID    VariableName;
       UINT64      UnicodeNameLength;
       UINT64      VariableDataLength;
       CHAR16      UnicodeName[1];
       INT8        VariableData[1];
     } UEFI_VARIABLE_DATA;
-
-    https://github.com/tianocore/edk2/blob/83a86f465ccb1a792f5c55e721e39bb97377fd2d/MdePkg/Include/IndustryStandard/UefiTcgPlatform.h#L263
-
-    Attributes:
-        variable_name (Tuple[int]): The GUID of the variable.
-        unicode_name_length (int): The length of the Unicode name.
-        variable_data_length (int): The length of the variable data.
-        unicode_name (str): The Unicode name of the variable.
-        variable_data (bytes): The data of the variable.
-    Methods:
-        guid() -> str:
-            Returns the GUID of the variable as a formatted string.
-        __str__() -> str:
-            Returns a string representation of the object.
-        get_size() -> int:
-            Returns the size of the object in bytes.
-        encode() -> bytes:
-            Encodes the object into a byte representation.
-        from_binary(cls, binary_data: bytes) -> TcgUefiVariableData:
-            Creates a new instance from a byte representation of the object.
     """
     _var_guid_format = "<IHH8B"
     _var_len_format = "<QQ"
@@ -626,21 +516,6 @@ class TcgUefiVariableData(object):
             + self.variable_data_length
         )
 
-    def __dict__(self) -> dict:
-        """Returns a dictionary representation of this object.
-
-        Returns:
-            dict: The dictionary representation of this object.
-        """
-
-        return {
-            "variable_name": self.guid,
-            "unicode_name_length": self.unicode_name_length,
-            "variable_data_length": self.variable_data_length,
-            "unicode_name": self.unicode_name,
-            "variable_data": self.variable_data.hex()
-        }
-
     def encode(self) -> bytes:
         """Encodes the object.
 
@@ -689,31 +564,12 @@ class TcgUefiVariableData(object):
 
 
 class TcgEfiSpecIdAlgorithmSize(object):
-    """
-    A class to represent the TCG EFI Spec ID Algorithm Size.
+    """TCG EFI Specification ID Algorithm Size structure."""
 
-    typedef struct {
-      UINT16    algorithmId;  // TCG defined hashing algorithm ID.
-      UINT16    digestSize;
-    } TCG_EfiSpecIdEventAlgorithmSize;
-
-    Attributes:
-        digest_size (int): Algorithm digest size in bytes.
-    Methods:
-        __init__(algorithm_id: int, digest_size: int):
-            Initializes the TcgEfiSpecIdAlgorithmSize object with the given algorithm ID and digest size.
-        __str__() -> str:
-            Returns a string representation of the TcgEfiSpecIdAlgorithmSize object.
-        __dict__() -> dict:
-            Returns a dictionary representation of the TcgEfiSpecIdAlgorithmSize object.
-        get_size() -> int:
-            Returns the size of the TcgEfiSpecIdAlgorithmSize object in bytes.
-        encode() -> bytes:
-            Encodes the TcgEfiSpecIdAlgorithmSize object into bytes.
-        from_binary(cls, binary_data: bytes) -> TcgEfiSpecIdAlgorithmSize:
-            Class method that returns a new instance of TcgEfiSpecIdAlgorithmSize from a byte representation.
-    """
-
+    # typedef struct {
+    #   UINT16    algorithmId;  // TCG defined hashing algorithm ID.
+    #   UINT16    digestSize;
+    # } TCG_EfiSpecIdEventAlgorithmSize;
     _hdr_struct_format = "<HH"
     _hdr_struct_size = struct.calcsize(_hdr_struct_format)
 
@@ -737,17 +593,6 @@ class TcgEfiSpecIdAlgorithmSize(object):
         debug_str += "\t\tAlgorithm ID    = 0x%02x\n" % self.algorithm_id
         debug_str += "\t\tDigest Size     = 0x%02X\n" % self.digest_size
         return debug_str
-
-    def __dict__(self):
-        """Returns a dictionary representation of this object.
-
-        Returns:
-            dict: The dictionary representation of this object.
-        """
-        return {
-            "algorithm_id": ALG_FROM_VALUE[self.algorithm_id],
-            "digest_size": self.digest_size,
-        }
 
     def get_size(self) -> int:
         """Returns the object size.
@@ -829,24 +674,30 @@ class TcgEfiSpecIdEvent(object):
         self.vendor_info_size = vendor_info_size
         self.vendor_info = vendor_info
 
-    def __dict__(self):
-        """Returns a dictionary representation of this object.
+    def __str__(self) -> str:
+        """Returns a string of this object.
 
         Returns:
-            dict: The dictionary representation of this object.
+            str: The string representation of this object.
         """
-        return {
-            "signature": self.signature.decode("utf-8"),
-            "platform_class": self.platform_class,
-            "spec_version_minor": self.spec_version_minor,
-            "spec_version_major": self.spec_version_major,
-            "spec_errata": self.spec_errata,
-            "uintn_size": self.uintn_size,
-            "number_of_algorithms": self.number_of_algorithms,
-            "digest_sizes": [digest.__dict__() for digest in self.digest_sizes],
-            "vendor_info_size": self.vendor_info_size,
-            "vendor_info": self.vendor_info.hex(),
-        }
+        debug_str = "\n\tTCG_EFI_SPEC_ID_EVENT\n"
+        debug_str += "\t\tSignature    = %s\n" % self.signature
+        debug_str += "\t\tPlatform Class   = 0x%04X\n" % self.platform_class
+        debug_str += (
+            "\t\tSpec Version   = %02d.%02d\n" % self.spec_version_major,
+            self.spec_version_minor,
+        )
+        debug_str += "\t\tSpec Errata   = %02d\n" % self.spec_errata
+        debug_str += "\t\tUINTN Size   = 0x%04x\n" % self.uintn_size
+        debug_str += "\t\tAlgorithm Count   = 0x%04x\n" % self.number_of_algorithms
+        for digest_size in self.digest_sizes:
+            debug_str += str(digest_size)
+        debug_str += "\tTCG_EFI_SPEC_ID_EVENT (cont.)\n"
+        debug_str += "\t\tVendor Info Size   = 0x%02x\n" % len(
+            self.vendor_info_size)
+        debug_str += "\t\tVendor Info:\n"
+        debug_str += "\t\t0x%x\n" % self.vendor_info
+        return debug_str
 
     def _get_size_total_digest_sizes(self) -> int:
         """Returns the total size of all digest size structures.
@@ -952,15 +803,16 @@ class TcgEfiSpecIdEvent(object):
 
 
 class TcgPcrEvent(object):
-    """TCG PCR Event structure."""
+    """TCG PCR Event structure.
 
-    # typedef struct tdTCG_PCR_EVENT {
-    #   TCG_PCRINDEX     PCRIndex;
-    #   TCG_EVENTTYPE    EventType;
-    #   TCG_DIGEST       Digest;        // SHA1 Length = 160-bit (20 bytes)
-    #   UINT32           EventSize;
-    #   UINT8            Event[1];
-    # } TCG_PCR_EVENT;
+     typedef struct tdTCG_PCR_EVENT {
+       TCG_PCRINDEX     PCRIndex;
+       TCG_EVENTTYPE    EventType;
+       TCG_DIGEST       Digest;        // SHA1 Length = 160-bit (20 bytes)
+       UINT32           EventSize;
+       UINT8            Event[1];
+     } TCG_PCR_EVENT;"""
+    
     _hdr_struct_format = "<II20sI"
     _hdr_struct_size = struct.calcsize(_hdr_struct_format)
 
@@ -993,24 +845,11 @@ class TcgPcrEvent(object):
         debug_str = "\n\tTCG_PCR_EVENT\n"
         debug_str += "\t\tPCR Index    = 0x%04X\n" % self.pcr_index
         debug_str += "\t\tEvent Type   = 0x%04X\n" % self.event_type
-        debug_str += "\t\nDigest: 0x%s\n" % self.digest.decode("utf-8")
-        debug_str += "\t\tEvent Size   = 0x%08X\n" % self.event.get_size()
+        debug_str += "\t\nDigest: 0x%x\n" % self.digest.decode("utf-8")
+        debug_str += "\t\tEvent Size   = 0x%08X\n" % len(self.event)
         debug_str += "\t\tEvent        =\n"
         debug_str += "\t\t%s\n" % str(self.event)
         return debug_str
-
-    def __dict__(self):
-        """Returns a dictionary representation of this object.
-
-        Returns:
-            dict: The dictionary representation of this object.
-        """
-        return {
-            "pcr_index": self.pcr_index,
-            "event_type": EVENT_FROM_VALUE[self.event_type],
-            "digest": self.digest.hex(),
-            "event": self.event.__dict__(),
-        }
 
     def get_size(self) -> int:
         """Returns the object size.
@@ -1057,13 +896,19 @@ class TcgPcrEvent(object):
 
 
 class TcgPcrEvent2(object):
-    # typedef struct tdTCG_PCR_EVENT2_HDR{
-    #     TCG_PCRINDEX        PCRIndex
-    #     TCG_EVENTTYPE       EventType
-    #     TPML_DIGEST_VALUES  Digests
-    #     UINT32              EventSize
-    #     // Event Data immediately follows
-    # } TCG_PCR_EVENT2_HDR
+    """TcgPcrEvent2 represents a structure for handling TPM PCR Event 2 logs.
+    This class provides methods to initialize, encode, decode, and represent
+    the TCG_PCR_EVENT2 structure, which includes PCR index, event type, digest
+    values, and event data.
+
+     typedef struct tdTCG_PCR_EVENT2_HDR{
+         TCG_PCRINDEX        PCRIndex
+         TCG_EVENTTYPE       EventType
+         TPML_DIGEST_VALUES  Digests
+         UINT32              EventSize
+         // Event Data immediately follows
+     } TCG_PCR_EVENT2_HDR
+     """
     _hdr_struct_format = "<II"
     _hdr_struct_size = struct.calcsize(_hdr_struct_format)
 
@@ -1106,56 +951,6 @@ class TcgPcrEvent2(object):
         debug_str += "\t\tEvent        =\n"
         debug_str += "\t\t%s\n" % self.event
         return debug_str
-
-    def __dict__(self):
-        """Returns a dictionary representation of this object.
-
-        Returns:
-            dict: The dictionary representation of this object.
-        """
-
-        class DefaultData:
-            def __init__(self, binary_data):
-                self.binary_data = binary_data
-
-            @classmethod
-            def from_binary(cls, binary_data: bytes) -> DefaultData:
-                return cls(binary_data=binary_data)
-
-            def __dict__(self):
-
-                for decode in ("utf-16le", "utf-8"):
-                    try:
-                        decoded_str = self.binary_data.decode(decode)
-                        if decode == "utf-16":
-                            if not all(32 <= ord(char) <= 126 for char in decoded_str):
-                                raise UnicodeDecodeError("utf-16", self.binary_data, 0, len(self.binary_data), "Invalid characters")
-
-                        return {f"{decode.replace('-', '')}_string": decoded_str}
-                    except UnicodeDecodeError:
-                        pass
-
-                return {}
-
-        event_dispatch = {
-            EV_EFI_VARIABLE_DRIVER_CONFIG: TcgUefiVariableData,
-            EV_EFI_VARIABLE_BOOT: TcgUefiVariableData,
-            EV_EFI_VARIABLE_BOOT2: TcgUefiVariableData,
-            EV_EFI_VARIABLE_AUTHORITY: TcgUefiVariableData,
-        }
-
-        event = event_dispatch.get(self.event_type, DefaultData)
-        decoded_event = event.from_binary(self.event)
-
-        return {
-            "pcr_index": self.pcr_index,
-            "event_type": EVENT_FROM_VALUE[self.event_type],
-            "digest_values": self.digest_values.__dict__(),
-            "event_data": {
-                "decoded": decoded_event.__dict__(),
-                "base64": base64.b64encode(self.event).decode("utf-8")
-            }
-        }
 
     def get_size(self) -> int:
         """Returns the object size.
@@ -1205,12 +1000,9 @@ class TcgPcrEvent2(object):
 
 class TcgEfiImageLoadEvent(object):
     """
-    ///
-    /// EFI_IMAGE_LOAD_EVENT
-    ///
-    /// This structure is used in EV_EFI_BOOT_SERVICES_APPLICATION,
-    /// EV_EFI_BOOT_SERVICES_DRIVER and EV_EFI_RUNTIME_SERVICES_DRIVER
-    ///
+     This structure is used in EV_EFI_BOOT_SERVICES_APPLICATION,
+     EV_EFI_BOOT_SERVICES_DRIVER and EV_EFI_RUNTIME_SERVICES_DRIVER
+    
     typedef struct tdEFI_IMAGE_LOAD_EVENT {
     EFI_PHYSICAL_ADDRESS        ImageLocationInMemory;
     UINTN                       ImageLengthInMemory;
