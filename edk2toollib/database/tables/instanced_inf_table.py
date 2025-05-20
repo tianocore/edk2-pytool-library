@@ -78,7 +78,6 @@ class InstancedInfTable(TableGenerator):
         Inserts all inf's into the instanced_inf table and links source files and used libraries via the junction
         table.
         """
-
         all_sources = {source.path: source for source in session.query(Source).all()}
         all_packages = {package.name: package for package in session.query(Package).all()}
         all_repos = {
