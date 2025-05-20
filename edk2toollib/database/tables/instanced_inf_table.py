@@ -118,7 +118,7 @@ class InstancedInfTable(TableGenerator):
                     filter(filter_search, all_repos.values()),
                     local_repo,  # Default
                 )
-            
+
             filtered_inf_entries.append(e)
             rows.append(
                 InstancedInf(
@@ -142,7 +142,7 @@ class InstancedInfTable(TableGenerator):
             for library in session.query(InstancedInf).filter_by(env=env_id).all()
         }
         # Link all instanced INF rows to their used libraries
-        for row, inf in zip(rows, inf_entries):
+        for row, inf in zip(rows, filtered_inf_entries):
             libraries = [all_libraries.get((path, row.arch, lib, row.component)) for lib, path in inf["LIBRARIES_USED"]]
             row.libraries.extend([lib for lib in libraries if lib is not None])
 
