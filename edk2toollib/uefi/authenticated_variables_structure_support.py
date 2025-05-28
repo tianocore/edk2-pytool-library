@@ -651,7 +651,7 @@ class EfiSignatureList(CommonUefiStructure):
         # check that structure is built correctly and there is room within the structure total size to read the header
         if (self.signature_list_size - (fs.tell() - start)) < self.signature_header_size:
             raise Exception(
-                "Invalid Sig List.  Sizes not correct.  " "signature_header_size extends beyond end of structure"
+                "Invalid Sig List.  Sizes not correct.  signature_header_size extends beyond end of structure"
             )
 
         # Signature Header is allowed to be nothing (size 0)
@@ -1089,8 +1089,8 @@ class EfiSignatureDatabase(CommonUefiStructure):
 class EfiTime(CommonUefiStructure):
     """Object representing an EFI_TIME."""
 
-    _StructFormat = "<H6BLh2B"
-    _StructSize = struct.calcsize(_StructFormat)
+    _struct_format = "<H6BLh2B"
+    _struct_size = struct.calcsize(_struct_format)
 
     def __init__(self, time: datetime.datetime = datetime.datetime.now(), decodefs: BinaryIO = None) -> "EfiTime":
         """Inits an EFI_TIME object.
@@ -1123,7 +1123,7 @@ class EfiTime(CommonUefiStructure):
         end = fs.tell()
         fs.seek(start)
 
-        if (end - start) < EfiTime._StructSize:  # size of the static structure data
+        if (end - start) < EfiTime._struct_size:  # size of the static structure data
             raise ValueError("Invalid file stream size")
         (
             year,
@@ -1137,12 +1137,11 @@ class EfiTime(CommonUefiStructure):
             time_zone,
             day_light,
             _,  # Pad2
-        ) = struct.unpack(EfiTime._StructFormat, fs.read(EfiTime._StructSize))
+        ) = struct.unpack(EfiTime._struct_format, fs.read(EfiTime._struct_size))
 
         self.time = datetime.datetime(year, month, day, hour, minute, second, nano_second // 1000)
-        logging.debug("Timezone value is: 0x%x" % time_zone)
-        logging.debug("Daylight value is: 0x%X" % day_light)
-
+        logging.debug(f"Timezone value is: 0x{time_zone:X}")
+        logging.debug(f"Daylight value is: 0x{day_light:X}")
         return self.time
 
     def PopulateFromFileStream(self, fs: BinaryIO) -> datetime.datetime:
@@ -1175,7 +1174,7 @@ class EfiTime(CommonUefiStructure):
     def encode(self) -> bytes:
         """Get's time as packed EfiTime structure."""
         return struct.pack(
-            EfiTime._StructFormat,
+            EfiTime._struct_format,
             self.time.year,
             self.time.month,
             self.time.day,
@@ -1208,6 +1207,31 @@ class EfiTime(CommonUefiStructure):
         """
         warn("Write is deprecated(), use write() instead", DeprecationWarning, 2)
         self.write(fs)
+
+    @classmethod
+    def from_binary(cls, binary_data: bytes) -> "EfiTime":
+        """Returns a new instance from a object byte representation.
+
+        Args:
+            binary_data (bytes): Byte representation of the object.
+
+        Returns:
+            EfiTime: A EfiTime instance.
+        """
+        if len(binary_data) < cls._struct_size:
+            raise ValueError("BinaryData didn't contain enough data!")
+
+        timestamp = struct.unpack(EfiTime._struct_format, binary_data)
+        timestamp = datetime.datetime(*(timestamp[:6] + tuple([timestamp[7] // 1000])))
+        return cls(time=timestamp)
+
+    def get_datetime(self) -> datetime:
+        """Returns the datetime for the current instance.
+
+        Returns:
+            datetime: The datetime instance.
+        """
+        return self.time
 
     def __str__(self) -> str:
         """String representation of EFI_TIME."""
