@@ -78,14 +78,17 @@ class InstancedInfTable(TableGenerator):
         Inserts all inf's into the instanced_inf table and links source files and used libraries via the junction
         table.
         """
-        # Insert all instanced INF rows
-        rows = []
         all_sources = {source.path: source for source in session.query(Source).all()}
         all_packages = {package.name: package for package in session.query(Package).all()}
         all_repos = {
             (repo.name, repo.path): repo for repo in session.query(Repository).filter(Repository.path is not None).all()
         }
         local_repo = session.query(Repository).filter_by(path=None).first()
+
+        # These two variables are zipped together to build the library sub-dependencies
+        # Due to this, we need to make sure we only ever add to both, or they become mis-aligned
+        filtered_inf_entries = []
+        rows = []
         for e in inf_entries:
             # Could parse a Windows INF file, which is not a EDKII INF file
             # and won't have a guid. GUIDS are required for INFs so we can
@@ -115,6 +118,8 @@ class InstancedInfTable(TableGenerator):
                     filter(filter_search, all_repos.values()),
                     local_repo,  # Default
                 )
+
+            filtered_inf_entries.append(e)
             rows.append(
                 InstancedInf(
                     env=env_id,
@@ -137,7 +142,7 @@ class InstancedInfTable(TableGenerator):
             for library in session.query(InstancedInf).filter_by(env=env_id).all()
         }
         # Link all instanced INF rows to their used libraries
-        for row, inf in zip(rows, inf_entries):
+        for row, inf in zip(rows, filtered_inf_entries):
             libraries = [all_libraries.get((path, row.arch, lib, row.component)) for lib, path in inf["LIBRARIES_USED"]]
             row.libraries.extend([lib for lib in libraries if lib is not None])
 
