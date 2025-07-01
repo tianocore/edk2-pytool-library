@@ -39,7 +39,7 @@ class TestBaseParser(unittest.TestCase):
         parser.SetInputVars({"name": "sean"})
         parser.LocalVars["name"] = "fred"
         line = "Hello $(name)!"
-        self.assertEqual(parser.ReplaceVariables(line), "Hello fred!")
+        self.assertEqual(parser.ReplaceVariables(line), "Hello sean!")
 
 
 class TestBaseParserConditionals(unittest.TestCase):
@@ -763,6 +763,48 @@ class TestBaseParserVariables(unittest.TestCase):
             result = parser.ReplaceVariables(line)
             val = "var " + str(variables[variable_key])
             self.assertEqual(result, val)
+
+    def test_replace_input_and_local_variables(self):
+        parser = BaseParser("")
+        variables = {
+            "FIFTY": 50,
+            "TEST": "TEST",
+            "LOWER NUMBER": 40,
+            "HEX": "0x20",
+            "BOOLEAN": "TRUE",
+            "BOOLEAN FALSE": "FALSE",
+        }
+
+        # an input variable should take precedence over a local variable
+        input_vars = {
+            "FIFTY": 100,  # this should override the local variable
+            "TEST": "INPUT_TEST",  # this should override the local variable
+            "NEW": "Does not have a local variable counterpart",
+        }
+
+        parser.LocalVars = variables
+
+        # local variables should match if that's all that is set
+        self.assertEqual(parser.LocalVars["FIFTY"], 50)
+
+        parser.SetInputVars(input_vars)
+        self.assertEqual(parser.ReplaceVariables("$(FIFTY)"), "100")
+
+        # input variables should override local variables
+        variable_str = "var $(%s)"
+        for variable_key in input_vars:
+            line = variable_str % variable_key
+            result = parser.ReplaceVariables(line)
+            val = "var " + str(input_vars[variable_key])
+            self.assertEqual(result, val)
+
+        # local variables not in input variables should still be found
+        for variable_key in variables:
+            if variable_key not in input_vars:
+                line = variable_str % variable_key
+                result = parser.ReplaceVariables(line)
+                val = "var " + str(variables[variable_key])
+                self.assertEqual(result, val)
 
 
 class TestBaseParserPathAndFile(unittest.TestCase):

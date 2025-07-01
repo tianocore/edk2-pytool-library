@@ -328,10 +328,10 @@ class BaseParser(object):
             return self.ConditionalStack.pop()  # this should cause a crash but will give trace.
 
     def _FindReplacementForToken(self, token: str, replace_if_not_found: bool = False) -> str:
-        v = self.LocalVars.get(token)
+        v = self.InputVars.get(token)
 
         if v is None:
-            v = self.InputVars.get(token)
+            v = self.LocalVars.get(token)
 
         if v is None and replace_if_not_found:
             v = self._MacroNotDefinedValue
