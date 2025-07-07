@@ -1330,7 +1330,7 @@ class EfiVariableAuthentication2(CommonUefiStructure):
 
         outfs.write("\n-------------------- VARIABLE PAYLOAD --------------------\n")
         if self.sig_list_payload is not None:
-            self.sig_list_payload.Print()
+            self.sig_list_payload.print(outfs=outfs)
 
         elif self.payload is not None:
             outfs.write("Raw Data: \n")
