@@ -36,6 +36,26 @@ class CatGeneratorTest(unittest.TestCase):
         o = CatGenerator("x64", "10_RS4")
         self.assertEqual(o.OperatingSystem, "10_RS4")
 
+    def test_10_RS5_OS(self):
+        o = CatGenerator("x64", "10_RS5")
+        self.assertEqual(o.OperatingSystem, "10_RS5")
+
+    def test_10_19H1_OS(self):
+        o = CatGenerator("x64", "10_19H1")
+        self.assertEqual(o.OperatingSystem, "10_19H1")
+
+    def test_10_VB_OS(self):
+        o = CatGenerator("x64", "10_VB")
+        self.assertEqual(o.OperatingSystem, "10_VB")
+
+    def test_10_CO_OS(self):
+        o = CatGenerator("x64", "10_CO")
+        self.assertEqual(o.OperatingSystem, "10_CO")
+
+    def test_10_NI_OS(self):
+        o = CatGenerator("x64", "10_NI")
+        self.assertEqual(o.OperatingSystem, "10_NI")
+
     def test_win10Server_OS(self):
         o = CatGenerator("x64", "Server10")
         self.assertEqual(o.OperatingSystem, "Server10")
