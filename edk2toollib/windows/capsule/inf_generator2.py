@@ -19,7 +19,12 @@ from typing import Optional
 
 SUPPORTED_ARCH = {"amd64": "amd64", "x64": "amd64", "arm": "arm", "arm64": "ARM64", "aarch64": "ARM64"}
 
-OS_BUILD_VERSION_DIRID13_SUPPORT = "10.0...17134"
+# The deault TargetOSVersion floor is 17134 which supports DIRID 13. This allows `run from driver store`
+# installation: https://learn.microsoft.com/windows-hardware/drivers/develop/run-from-driver-store
+# This is a WHCP requirement that went into effect in the 26080 build.
+DEFAULT_TARGET_OSVERSION_DIRID13 = "10.0...17134"
+
+_TARGET_OSVERSION_RE = r"^\s*10\.0(\.\d+)?(\.\.\.\d+)?\s*$"  # minimal guard (Win10/11 are 10.0; allows optional fields)
 
 
 class InfHeader(object):
@@ -34,6 +39,7 @@ class InfHeader(object):
         Provider: str,
         Manufacturer: str,
         InfStrings: "InfStrings",
+        TargetOSVersion: str | None = None,
     ) -> "InfHeader":
         """Instantiate an INF header object.
 
@@ -45,6 +51,8 @@ class InfHeader(object):
             Provider (str): specifies the provider as a string (e.g. "Firmware Provider")
             Manufacturer (str): Specifies the manufacturer as a string (e.g. "Firmware Manufacturer")
             InfStrings (InfStrings): An InfStrings object representing the "Strings" section of this INF file.
+            TargetOSVersion (str, optional): Target OS version string (e.g., '10.0...17763' or '10.0...22000').
+                If None, uses default of '10.0...17134'.
         """
         self.Name = Name
         self.VersionStr = VersionStr
@@ -52,6 +60,12 @@ class InfHeader(object):
         self.Arch = Arch
         InfStrings.AddLocalizableString("Provider", Provider)
         InfStrings.AddLocalizableString("MfgName", Manufacturer)
+        if TargetOSVersion is None:
+            self.TargetOSVersion = DEFAULT_TARGET_OSVERSION_DIRID13
+        else:
+            if not re.match(_TARGET_OSVERSION_RE, TargetOSVersion):
+                raise ValueError(f"Invalid TargetOSVersion: {TargetOSVersion}")
+            self.TargetOSVersion = TargetOSVersion
 
     @property
     def Name(self) -> str:
@@ -128,7 +142,7 @@ class InfHeader(object):
             CatalogFile={self.Name}.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NT{self.Arch}.{OS_BUILD_VERSION_DIRID13_SUPPORT}
+            %MfgName% = Firmware,NT{self.Arch}.{self.TargetOSVersion}
 
             """)
 
@@ -266,16 +280,25 @@ class InfFirmware(object):
 class InfFirmwareSections(object):
     """A collection of firmware sections and associated common metadata."""
 
-    def __init__(self, Arch: str, InfStrings: "InfStrings") -> "InfFirmwareSections":
+    def __init__(
+        self, Arch: str, InfStrings: "InfStrings", TargetOSVersion: str | None = None
+    ) -> "InfFirmwareSections":
         """Instantiate an INF firmware sections object.
 
         Args:
             Arch (str): specifies the architecture as a string (e.g. "amd64")
             InfStrings (InfStrings): An InfStrings object representing the "Strings" section of this INF file.
+            TargetOSVersion (str, optional): Target OS version string. If None, uses default.
         """
         self.Arch = Arch
         self.Sections = {}
         self.InfStrings = InfStrings
+        if TargetOSVersion is None:
+            self.TargetOSVersion = DEFAULT_TARGET_OSVERSION_DIRID13
+        else:
+            if not re.match(_TARGET_OSVERSION_RE, TargetOSVersion):
+                raise ValueError(f"Invalid TargetOSVersion: {TargetOSVersion}")
+            self.TargetOSVersion = TargetOSVersion
 
     @property
     def Arch(self) -> str:
@@ -305,7 +328,7 @@ class InfFirmwareSections(object):
 
         This includes any InfFirmware objects in it.
         """
-        firmwareStr = f"[Firmware.NT{self.Arch}.{OS_BUILD_VERSION_DIRID13_SUPPORT}]\n"
+        firmwareStr = f"[Firmware.NT{self.Arch}.{self.TargetOSVersion}]\n"
         for InfFirmware in self.Sections.values():
             firmwareStr += f"%{InfFirmware.Tag}Desc% = {InfFirmware.Tag}_Install,UEFI\\RES_{{{InfFirmware.EsrtGuid}}}\n"
         firmwareStr += "\n"
@@ -436,6 +459,7 @@ class InfFile(object):
         ManufacturerName: str,
         Arch: Optional[str] = "amd64",
         DiskName: Optional[str] = "Firmware Update",
+        TargetOsVersion: Optional[str] = None,
     ) -> "InfFile":
         """Instantiate an INF file object.
 
@@ -452,11 +476,14 @@ class InfFile(object):
             Arch (:obj:`str`, optional): specifies the architecture as a string. Optional, defaults to "amd64".
             DiskName (:obj:`str`, optional): specifies the "Disk Name" for this update. Optional, defaults to "Firmware
                 Update".
+            TargetOsVersion (:obj:`str`, optional): Target OS version string (e.g., '10.0...17763' or '10.0...22000').
         """
         self.InfStrings = InfStrings()
         self.InfSourceFiles = InfSourceFiles(DiskName, self.InfStrings)
-        self.InfHeader = InfHeader(Name, VersionStr, CreationDate, Arch, Provider, ManufacturerName, self.InfStrings)
-        self.InfFirmwareSections = InfFirmwareSections(Arch, self.InfStrings)
+        self.InfHeader = InfHeader(
+            Name, VersionStr, CreationDate, Arch, Provider, ManufacturerName, self.InfStrings, TargetOsVersion
+        )
+        self.InfFirmwareSections = InfFirmwareSections(Arch, self.InfStrings, TargetOsVersion)
 
     def AddFirmware(
         self,

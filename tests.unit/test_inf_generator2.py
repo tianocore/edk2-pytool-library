@@ -16,7 +16,7 @@ from edk2toollib.windows.capsule.inf_generator2 import (
     InfHeader,
     InfSourceFiles,
     InfStrings,
-    OS_BUILD_VERSION_DIRID13_SUPPORT,
+    DEFAULT_TARGET_OSVERSION_DIRID13,
 )
 
 
@@ -41,7 +41,7 @@ class InfHeaderTest(unittest.TestCase):
             CatalogFile=InfTest.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}
+            %MfgName% = Firmware,NTamd64.{DEFAULT_TARGET_OSVERSION_DIRID13}
 
             """)
         self.assertEqual(ExpectedStr, str(Header))
@@ -271,7 +271,7 @@ class InfFirmwareSectionsTest(unittest.TestCase):
         Sections.AddSection(Firmware)
 
         ExpectedStr = textwrap.dedent(f"""\
-            [Firmware.NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}]
+            [Firmware.NTamd64.{DEFAULT_TARGET_OSVERSION_DIRID13}]
             %tagDesc% = tag_Install,UEFI\\RES_{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
 
             [tag_Install.NT]
@@ -319,7 +319,7 @@ class InfFirmwareSectionsTest(unittest.TestCase):
         Sections.AddSection(Firmware2)
 
         ExpectedStr = textwrap.dedent(f"""\
-            [Firmware.NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}]
+            [Firmware.NTamd64.{DEFAULT_TARGET_OSVERSION_DIRID13}]
             %tag1Desc% = tag1_Install,UEFI\\RES_{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
             %tag2Desc% = tag2_Install,UEFI\\RES_{{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}}
 
@@ -483,9 +483,9 @@ class InfFileTest(unittest.TestCase):
             CatalogFile=CapsuleName.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}
+            %MfgName% = Firmware,NTamd64.{DEFAULT_TARGET_OSVERSION_DIRID13}
 
-            [Firmware.NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}]
+            [Firmware.NTamd64.{DEFAULT_TARGET_OSVERSION_DIRID13}]
             %tag1Desc% = tag1_Install,UEFI\\RES_{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
             %tag2Desc% = tag2_Install,UEFI\\RES_{{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}}
 
@@ -575,9 +575,9 @@ class InfFileTest(unittest.TestCase):
             CatalogFile=CapsuleName.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}
+            %MfgName% = Firmware,NTamd64.{DEFAULT_TARGET_OSVERSION_DIRID13}
 
-            [Firmware.NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}]
+            [Firmware.NTamd64.{DEFAULT_TARGET_OSVERSION_DIRID13}]
             %tag1Desc% = tag1_Install,UEFI\\RES_{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
             %tag2Desc% = tag2_Install,UEFI\\RES_{{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}}
 
@@ -687,9 +687,9 @@ class InfFileTest(unittest.TestCase):
             CatalogFile=CapsuleName.cat
 
             [Manufacturer]
-            %MfgName% = Firmware,NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}
+            %MfgName% = Firmware,NTamd64.{DEFAULT_TARGET_OSVERSION_DIRID13}
 
-            [Firmware.NTamd64.{OS_BUILD_VERSION_DIRID13_SUPPORT}]
+            [Firmware.NTamd64.{DEFAULT_TARGET_OSVERSION_DIRID13}]
             %tag1Desc% = tag1_Install,UEFI\\RES_{{34e094e9-4079-44cd-9450-3f2cb7824c97}}
             %tag2Desc% = tag2_Install,UEFI\\RES_{{bec9124f-9934-4ec0-a6ed-b8bc1c91d276}}
 
@@ -765,3 +765,64 @@ class InfFileTest(unittest.TestCase):
             """)
 
         self.assertEqual(ExpectedStr, str(File))
+
+
+class TargetOSVersionTest(unittest.TestCase):
+    def setUp(self):
+        self.strings = InfStrings()
+
+    def test_default_target_os_version_infheader(self):
+        from edk2toollib.windows.capsule.inf_generator2 import DEFAULT_TARGET_OSVERSION_DIRID13
+
+        header = InfHeader(
+            Name="TestPkg",
+            VersionStr="1.0.0.0",
+            CreationDate="01/01/2024",
+            Arch="amd64",
+            Provider="Provider",
+            Manufacturer="Manufacturer",
+            InfStrings=self.strings,
+        )
+
+        self.assertEqual(header.TargetOSVersion, DEFAULT_TARGET_OSVERSION_DIRID13)
+
+    def test_custom_target_os_version_infheader(self):
+        header = InfHeader(
+            Name="TestPkg",
+            VersionStr="1.0.0.0",
+            CreationDate="01/01/2024",
+            Arch="amd64",
+            Provider="Provider",
+            Manufacturer="Manufacturer",
+            InfStrings=self.strings,
+            TargetOSVersion="10.0...22000",
+        )
+        self.assertEqual(header.TargetOSVersion, "10.0...22000")
+
+    def test_invalid_target_os_version_infheader(self):
+        with self.assertRaises(ValueError):
+            InfHeader(
+                Name="TestPkg",
+                VersionStr="1.0.0.0",
+                CreationDate="01/01/2024",
+                Arch="amd64",
+                Provider="Provider",
+                Manufacturer="Manufacturer",
+                InfStrings=self.strings,
+                TargetOSVersion="invalid_version",
+            )
+
+    def test_default_target_os_version_firmwaresections(self):
+        from edk2toollib.windows.capsule.inf_generator2 import DEFAULT_TARGET_OSVERSION_DIRID13
+
+        sections = InfFirmwareSections("amd64", self.strings)
+
+        self.assertEqual(sections.TargetOSVersion, DEFAULT_TARGET_OSVERSION_DIRID13)
+
+    def test_custom_target_os_version_firmwaresections(self):
+        sections = InfFirmwareSections("amd64", self.strings, TargetOSVersion="10.0...22000")
+        self.assertEqual(sections.TargetOSVersion, "10.0...22000")
+
+    def test_invalid_target_os_version_firmwaresections(self):
+        with self.assertRaises(ValueError):
+            InfFirmwareSections("amd64", self.strings, TargetOSVersion="bad_version")
