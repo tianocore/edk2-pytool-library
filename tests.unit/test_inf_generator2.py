@@ -402,8 +402,6 @@ class InfSourceFilesTest(unittest.TestCase):
         self.assertEqual(ExpectedStr, str(SourceFiles))
         self.assertIn("DiskName", Strings.LocalizableStrings)
         self.assertEqual("diskname", Strings.LocalizableStrings["DiskName"])
-        self.assertIn("DIRID_WINDOWS", Strings.NonLocalizableStrings)
-        self.assertEqual("10", Strings.NonLocalizableStrings["DIRID_WINDOWS"])
 
     def test_source_files_should_throw_on_bad_input(self):
         Strings = InfStrings()
@@ -542,8 +540,7 @@ class InfFileTest(unittest.TestCase):
             tag2Desc = "desc2"
 
             ; non-localizable
-            DIRID_WINDOWS = 10
-            REG_DWORD     = 0x00010001
+            REG_DWORD = 0x00010001
             """)
 
         self.assertEqual(ExpectedStr, str(File))
@@ -642,8 +639,7 @@ class InfFileTest(unittest.TestCase):
             tag2Desc = "desc2"
 
             ; non-localizable
-            DIRID_WINDOWS = 10
-            REG_DWORD     = 0x00010001
+            REG_DWORD = 0x00010001
             """)
 
         self.assertEqual(ExpectedStr, str(File))
@@ -760,8 +756,7 @@ class InfFileTest(unittest.TestCase):
             tag2Desc = "desc2"
 
             ; non-localizable
-            DIRID_WINDOWS = 10
-            REG_DWORD     = 0x00010001
+            REG_DWORD = 0x00010001
             """)
 
         self.assertEqual(ExpectedStr, str(File))

@@ -349,7 +349,6 @@ class InfSourceFiles(object):
         """
         self.Files = []
         InfStrings.AddLocalizableString("DiskName", DiskName)
-        InfStrings.AddNonLocalizableString("DIRID_WINDOWS", "10")
 
     def AddFile(self, Filename: str) -> None:
         """Adds a new file to this InfSourceFiles object.
