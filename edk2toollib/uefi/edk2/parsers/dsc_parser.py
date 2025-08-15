@@ -64,9 +64,9 @@ class DscParser(HashFileParser):
     def ReplacePcds(self, line: str) -> str:
         """Attempts to replace a token if it is a PCD token."""
         if line.startswith("!if"):
-            tokens = line.split()
-            if tokens[1] in self.PcdValueDict:
-                line = line.replace(tokens[1], self.PcdValueDict[tokens[1]])
+            for token in line.split():
+                if token in self.PcdValueDict:
+                    line = line.replace(token, self.PcdValueDict[token])
         return line
 
     def __ParseLine(self, Line: str, file_name: Optional[str] = None, lineno: int = None) -> tuple:
@@ -319,8 +319,6 @@ class DscParser(HashFileParser):
                 # otherwise, raise the exception and act normally
                 if not self._no_fail_mode:
                     raise
-        # Reset the PcdValueDict as this was just to find any Defines.
-        self.PcdValueDict = {}
 
     def _parse_libraries(self) -> None:
         """Builds a lookup table of all possible library instances depending on scope.
@@ -486,6 +484,7 @@ class DscParser(HashFileParser):
         # expand all the lines and include other files
         file_lines = f.readlines()
         self.__ProcessDefines(file_lines)
+        self.PcdValueDict = {}
         # reset the parser state before processing more
         self.ResetParserState()
         self._PushTargetFile(sp)
