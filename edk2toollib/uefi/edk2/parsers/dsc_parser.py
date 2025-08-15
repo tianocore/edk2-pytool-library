@@ -319,8 +319,6 @@ class DscParser(HashFileParser):
                 # otherwise, raise the exception and act normally
                 if not self._no_fail_mode:
                     raise
-        # Reset the PcdValueDict as this was just to find any Defines.
-        self.PcdValueDict = {}
 
     def _parse_libraries(self) -> None:
         """Builds a lookup table of all possible library instances depending on scope.
@@ -486,6 +484,8 @@ class DscParser(HashFileParser):
         # expand all the lines and include other files
         file_lines = f.readlines()
         self.__ProcessDefines(file_lines)
+        # Reset the PcdValueDict as this was just to find any Defines.
+        self.PcdValueDict = {}
         # reset the parser state before processing more
         self.ResetParserState()
         self._PushTargetFile(sp)
