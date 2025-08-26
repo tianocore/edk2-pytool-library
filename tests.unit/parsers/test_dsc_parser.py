@@ -190,3 +190,37 @@ class TestDscParserIncludes(unittest.TestCase):
         finally:
             os.remove(file1_path)
         assert any("FakePath/FakePath2/FakeInf.inf" in value for value in parser.Components)
+
+    def test_dsc_pcd_in_include_files(self):
+        """This tests whether pcd in and before !include directive works properly"""
+        workspace = tempfile.mkdtemp()
+
+        file1_name = "test1.dsc"
+        file2_name = "test2.dsc"
+        file1_path = os.path.join(workspace, file1_name)
+        file2_path = os.path.join(workspace, file2_name)
+
+        file1_data = textwrap.dedent(f"""\
+        [PcdsFixedAtBuild]
+            gFakePcdTokenSpaceGuid.PcdFake1|0xAB
+
+        !include {file2_name}
+
+        [Defines]
+        !if gFakePcdTokenSpaceGuid.PcdFake1 == 0xAB && gFakePcdTokenSpaceGuid.PcdFake2 == TRUE
+            INCLUDE=TRUE
+        !endif
+        """)
+
+        file2_data = textwrap.dedent("""\
+        [PcdsFixedAtBuild]
+            gFakePcdTokenSpaceGuid.PcdFake2|TRUE
+        """)
+
+        TestDscParserIncludes.write_to_file(file1_path, file1_data)
+        TestDscParserIncludes.write_to_file(file2_path, file2_data)
+
+        parser = DscParser().SetEdk2Path(Edk2Path(workspace, []))
+        parser.ParseFile(file1_path)
+
+        self.assertEqual(parser.LocalVars["INCLUDE"], "TRUE")
