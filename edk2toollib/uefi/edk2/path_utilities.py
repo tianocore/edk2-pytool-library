@@ -264,7 +264,7 @@ class Edk2Path(object):
 
         return None
 
-    def GetContainingPackage(self, InputPath: str) -> str:
+    def GetContainingPackage(self, InputPath: str) -> str | None:
         """Finds the package that contains the given path.
 
         This isn't perfect, but at least identifies the direcotry consistently.
@@ -277,7 +277,7 @@ class Edk2Path(object):
             (str): name of the package that the path is in.
         """
         self.logger.debug("GetContainingPackage: %s" % InputPath)
-        InputPath = Path(InputPath.replace("\\", "/"))
+        InputPath : Path = Path(InputPath.replace("\\", "/"))
         # Make a list that has the path case normalized for comparison.
         # Note: This only does anything on Windows
 
@@ -306,7 +306,8 @@ class Edk2Path(object):
             if dirpath.exists():
                 for f in dirpath.iterdir():
                     if f.suffix.lower() == ".dec":
-                        return dirpath.name
+                        better = self.GetEdk2RelativePathFromAbsolutePath(dirpath.as_posix())
+                        return better
 
             dirpath = dirpath.parent
 
