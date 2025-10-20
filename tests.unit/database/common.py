@@ -36,7 +36,7 @@ def make_edk2_cfg_file(*args, **kwargs) -> str:
     out += "[Defines]\n"
 
     for key, value in kwargs["defines"].items():  # Must exist
-        out += f'  {key.split(" ")[0]} = {value}\n'
+        out += f"  {key.split(' ')[0]} = {value}\n"
 
     for key, values in kwargs.items():
         if key == "defines":
