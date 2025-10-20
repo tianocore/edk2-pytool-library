@@ -106,9 +106,9 @@ class Rule(object):
             SubKeyName (str): the subkey name
             ValueName (str): Name of the rule value
             Value (PolicyValue): The value.
-            OffsetToSubKeyName (:obj:`int`, optional): Offset to read the subkey name
-            OffsetToValueName (:obj:`int`, optional): Offset to read the value name
-            OffsetToValue (:obj:`int`, optional): Offset to read the value
+            OffsetToSubKeyName (`int`, optional): Offset to read the subkey name
+            OffsetToValueName (`int`, optional): Offset to read the value name
+            OffsetToValue (`int`, optional): Offset to read the value
         """
         self.RootKey = RootKey
         self.OffsetToSubKeyName = OffsetToSubKeyName
@@ -195,7 +195,7 @@ class Rule(object):
         """Prints the contents of the Rule.
 
         Args:
-            prefix (:obj:`str`, optional): Prefix to put in front of print statement.
+            prefix (`str`, optional): Prefix to put in front of print statement.
         """
         print("%sRule" % (prefix,))
         print("%s  RootKey:  %x" % (prefix, self.RootKey))
@@ -283,7 +283,7 @@ class PolicyValueType:
 
         Args:
             fs (BinaryIO): filestream to read
-            fsOffset (:obj:`int`, optional): offset to start reading from
+            fsOffset (`int`, optional): offset to start reading from
         """
         if fsOffset:
             fs.seek(fsOffset)
@@ -296,7 +296,7 @@ class PolicyValueType:
 
         Args:
             b (bytes): bytes to read
-            bOffset (:obj:`int`, optional): Offset to start reading from.
+            bOffset (`int`, optional): Offset to start reading from.
         """
         valueType = struct.unpack_from(cls.StructFormat, b, bOffset)[0]
         return cls(valueType)
@@ -305,7 +305,7 @@ class PolicyValueType:
         """Prints the contents of the Policy String Type.
 
         Args:
-            prefix (:obj:`str`, optional): Prefix to put in front of print statement.
+            prefix (`str`, optional): Prefix to put in front of print statement.
         """
         print("%s%s%s" % (prefix, "ValueType: ", self.vt))
 
@@ -346,7 +346,7 @@ class PolicyString:
         """Inits PolicyStructure.
 
         Args:
-            String (:obj:`str`, optional): String to set
+            String (`str`, optional): String to set
         """
         if String:
             self.String = String
@@ -360,7 +360,7 @@ class PolicyString:
 
         Args:
             fs (BinaryIO): File stream to read
-            fsOffset (:obj:`int`, optional): Offset to start reading from.
+            fsOffset (`int`, optional): Offset to start reading from.
 
         Raises:
             (Exception): string length mismatch
@@ -379,7 +379,7 @@ class PolicyString:
 
         Args:
             b (bytes): bytes to read
-            bOffset (:obj:`int`, optional): Offset to start reading from.
+            bOffset (`int`, optional): Offset to start reading from.
 
         Raises:
             (Exception): string length mismatch
@@ -395,7 +395,7 @@ class PolicyString:
         """Prints the contents of the Policy String.
 
         Args:
-            prefix (:obj:`str`, optional): Prefix to put in front of print statement.
+            prefix (`str`, optional): Prefix to put in front of print statement.
         """
         print("%s%s%s" % (prefix, "String:  ", self.String))
 
@@ -440,7 +440,7 @@ class PolicyValue:
 
         Args:
             fs (BinaryIO): filestream to read
-            fsOffset (:obj:`int`, optional): offset to start reading from
+            fsOffset (`int`, optional): offset to start reading from
 
         Raises:
             (Exception): if STRICT is True, unsupported PolicyValueType
@@ -469,7 +469,7 @@ class PolicyValue:
 
         Args:
             b (bytes): bytes to parse
-            bOffset (:obj:`int`, optional): offset to start at.
+            bOffset (`int`, optional): offset to start at.
         """
         valueType = PolicyValueType.FromBytes(b, bOffset)
         bOffset += PolicyValueType.StructSize
@@ -495,7 +495,7 @@ class PolicyValue:
         """Prints the contents of the object.
 
         Args:
-            prefix (:obj:`str`, optional): Prefix to put in front of print statement.
+            prefix (`str`, optional): Prefix to put in front of print statement.
         """
         self.valueType.Print(prefix=prefix)
         if isinstance(self.value, int):
@@ -546,8 +546,8 @@ class Reserved2(object):
         """Initializes the Reserved2 structure.
 
         Args:
-            fs (:obj:`BinaryIO`, optional): initialize with a filestream
-            vtOffset (:obj:`int`, optional): used if populating from a filestream
+            fs (`BinaryIO`, optional): initialize with a filestream
+            vtOffset (`int`, optional): used if populating from a filestream
         """
         if fs is None:
             self.ObjectType = 0
@@ -653,7 +653,7 @@ class FirmwarePolicy(object):
         """Initializes a Firmware Policy object.
 
         Args:
-            fs (:obj:`BinaryIO`, optional): Initializes from a Filestream.
+            fs (`BinaryIO`, optional): Initializes from a Filestream.
         """
         if fs is None:
             self.FormatVersion = self.POLICY_FORMAT_VERSION
@@ -804,7 +804,7 @@ class FirmwarePolicy(object):
 
         Args:
             fs (BinaryIO): Filestream to read from
-            parseByBytes (:obj:`bool`, optional): whether to parse the value table by bytes or offset
+            parseByBytes (`bool`, optional): whether to parse the value table by bytes or offset
 
         Raises:
             (Exception): an invalid file stream was provided.
