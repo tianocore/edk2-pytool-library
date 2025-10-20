@@ -33,8 +33,7 @@ jobs:
     uses: ./.github/workflows/UnitTestRunner.yml
     with:
       python-versions: ${{ needs.variables.outputs.python-msv }}
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    secrets: inherit
 
   unit-test:
     needs: [variables,ci]
@@ -42,5 +41,4 @@ jobs:
     uses: ./.github/workflows/UnitTestRunner.yml
     with:
       python-versions: ${{ needs.variables.outputs.python-versions }}
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    secrets: inherit
