@@ -113,7 +113,7 @@ class BaseParser(object):
         """Sets the attribute PPs.
 
         Args:
-          pps (:obj:`list`, optional): list of pps
+          pps (`list`, optional): list of pps
 
         NOTE: This must be called after SetBaseAbsPath
 

@@ -102,7 +102,7 @@ class CatGenerator(object):
 
         Args:
             OutputCatFile (str): Where to place the output cat file.
-            PathToInf2CatTool (:obj:`str`, optional): path to Inf2CatTool if known.
+            PathToInf2CatTool (`str`, optional): path to Inf2CatTool if known.
 
         Raises:
             (Exception): Invalid Inf2CatTool path or unable to find it.

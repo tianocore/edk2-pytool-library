@@ -173,9 +173,9 @@ class InfFirmware(object):
             InfStrings (InfStrings): An InfStrings object representing the "Strings" section of this INF file.
             InfSourceFiles (InfSourceFiles): An InfSourceFiles object representing the "SourceDisks*" sections of
                 this INF file.
-            Rollback (:obj:`bool`, optional): Specifies whether this firmware should be enabled for rollback (optional,
+            Rollback (`bool`, optional): Specifies whether this firmware should be enabled for rollback (optional,
                 default: False)
-            IntegrityFile (:obj:`str`, optional): Filename (basename only) of the integrity file associated with this
+            IntegrityFile (`str`, optional): Filename (basename only) of the integrity file associated with this
                 firmware (e.g.
                 "integrity123.bin"). Optional - if not specified, no integrity file will be included.
         """
@@ -472,10 +472,10 @@ class InfFile(object):
             CreationDate (str): specifies the INF date as a string in MM/DD/YYYY format (e.g "01/01/2021")
             Provider (str): specifies the provider as a string (e.g. "Firmware Provider")
             ManufacturerName (str): )Specifies the manufacturer as a string (e.g. "Firmware Manufacturer")
-            Arch (:obj:`str`, optional): specifies the architecture as a string. Optional, defaults to "amd64".
-            DiskName (:obj:`str`, optional): specifies the "Disk Name" for this update. Optional, defaults to "Firmware
+            Arch (`str`, optional): specifies the architecture as a string. Optional, defaults to "amd64".
+            DiskName (`str`, optional): specifies the "Disk Name" for this update. Optional, defaults to "Firmware
                 Update".
-            TargetOsVersion (:obj:`str`, optional): Target OS version string (e.g., '10.0...17763' or '10.0...22000').
+            TargetOsVersion (`str`, optional): Target OS version string (e.g., '10.0...17763' or '10.0...22000').
         """
         self.InfStrings = InfStrings()
         self.InfSourceFiles = InfSourceFiles(DiskName, self.InfStrings)
@@ -502,9 +502,9 @@ class InfFile(object):
             EsrtGuid (str): ESRT GUID for this firmware in string format. (e.g. "34e094e9-4079-44cd-9450-3f2cb7824c97")
             VersionInt (str): Version as an integer in string format (e.g. "1234" or "0x04158000")
             FirmwareFile (str): Filename (basename only) of the firmware payload file (e.g. "Firmware1234.bin")
-            Rollback (:obj:`bool`, optional): Specifies whether this firmware should be enabled for rollback
+            Rollback (`bool`, optional): Specifies whether this firmware should be enabled for rollback
                 (optional, default: False)
-            IntegrityFile (:obj:`str`, optional): Filename (basename only) of the integrity file associated with this
+            IntegrityFile (`str`, optional): Filename (basename only) of the integrity file associated with this
                 firmware (e.g. "integrity123.bin"). Optional - if not specified, no integrity file will be included.
         """
         firmwareSection = InfFirmware(
