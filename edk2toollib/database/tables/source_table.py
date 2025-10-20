@@ -70,8 +70,7 @@ class SourceTable(TableGenerator):
         session.commit()
 
         logging.debug(
-            f"{self.__class__.__name__}: Parsed {len(src_entries)} files; "
-            f"took {round(time.time() - start, 2)} seconds."
+            f"{self.__class__.__name__}: Parsed {len(src_entries)} files; took {round(time.time() - start, 2)} seconds."
         )
 
     def _parse_file(self, filename: Path) -> dict:

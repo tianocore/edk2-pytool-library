@@ -642,7 +642,7 @@ def export_c_type_array(buffer_fs: BytesIO, variable_name: str, out_fs: StringIO
         # An ending space is required because the '\' character will cause a line cont.
         out_fs.write(f"   // {ascii_string} ")
 
-    out_fs.write(f"{newline}}};{newline*2}")
+    out_fs.write(f"{newline}}};{newline * 2}")
 
     if length_variable_name:
-        out_fs.write(f"{length_data_type} {length_variable_name} = sizeof {variable_name};{newline*2}")
+        out_fs.write(f"{length_data_type} {length_variable_name} = sizeof {variable_name};{newline * 2}")
