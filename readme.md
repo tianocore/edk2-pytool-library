@@ -26,15 +26,15 @@ Maintained Versions
 
 |  Host Type         |  Toolchain    |  Status
 |  :---------------  |  :----------  |  :--------------------
-|  [Windows-Latest]  |  Python 3.11  |  [![ci]][_ci]
 |  [Windows-Latest]  |  Python 3.12  |  [![ci]][_ci]
 |  [Windows-Latest]  |  Python 3.13  |  [![ci]][_ci]
-|  [Ubuntu-Latest]   |  Python 3.11  |  [![ci]][_ci]
+|  [Windows-Latest]  |  Python 3.14  |  [![ci]][_ci]
 |  [Ubuntu-Latest]   |  Python 3.12  |  [![ci]][_ci]
 |  [Ubuntu-Latest]   |  Python 3.13  |  [![ci]][_ci]
-|  [MacOS-Latest]    |  Python 3.11  |  [![coming_soon]][_ci]
+|  [Ubuntu-Latest]   |  Python 3.14  |  [![ci]][_ci]
 |  [MacOS-Latest]    |  Python 3.12  |  [![coming_soon]][_ci]
 |  [MacOS-Latest]    |  Python 3.13  |  [![coming_soon]][_ci]
+|  [MacOS-Latest]    |  Python 3.14  |  [![coming_soon]][_ci]
 
 Minimum Supported Version
 
