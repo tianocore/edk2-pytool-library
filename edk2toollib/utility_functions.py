@@ -109,6 +109,8 @@ def GetHostInfo() -> namedtuple:
         arch = "x86"
     elif ("ARM" in processor_info.upper()) or ("AARCH" in processor_info.upper()):
         arch = "ARM"
+    elif "LOONGARCH" in processor_info.upper():
+        arch = "LOONGARCH"
 
     if "32" in processor_info:
         bit = "32"

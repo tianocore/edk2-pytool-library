@@ -117,6 +117,8 @@
         "bootmgfw",
         "ISCSI",
         "SASEX",
-        "CDROM"
+        "CDROM",
+        "LoongArch",
+        "Loongson"
     ]
 }
