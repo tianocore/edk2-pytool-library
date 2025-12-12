@@ -576,8 +576,8 @@ class EfiSignatureList(CommonUefiStructure):
         """Inits the object.
 
         Args:
-            filestream (:obj:`BinaryIO`, optional): a filestream object of binary content that is the structure encoded
-            typeguid (:obj:`uuid.UUID`, optional): type guid
+            filestream (`BinaryIO`, optional): a filestream object of binary content that is the structure encoded
+            typeguid (`uuid.UUID`, optional): type guid
         """
         if filestream is None:
             # Type of the signature. GUID signature types are defined in below.
@@ -894,8 +894,8 @@ class EfiSignatureDatabase(CommonUefiStructure):
         """Inits an Efi Signature Database object.
 
         Args:
-            filestream (:obj:`BinaryIO`, optional): Inits the object with this stream
-            esl_list (:obj:`list[EfiSignatureList]`, optional): Inits the object with this list
+            filestream (`BinaryIO`, optional): Inits the object with this stream
+            esl_list (`list[EfiSignatureList]`, optional): Inits the object with this list
         """
         if filestream:
             self.esl_list = []

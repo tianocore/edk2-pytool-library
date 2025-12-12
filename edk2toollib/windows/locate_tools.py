@@ -94,7 +94,7 @@ def GetVsWherePath(fail_on_not_found: bool = True) -> Optional[str]:
     """Get the VsWhere tool path.
 
     Args:
-        fail_on_not_found (:obj:`bool`, optional): whether to log an error or not.
+        fail_on_not_found (`bool`, optional): whether to log an error or not.
 
     Returns:
         (str): "/PATH/TO/vswhere.exe" if found
@@ -131,8 +131,8 @@ def FindWithVsWhere(products: str = "*", vs_version: Optional[str] = None) -> Op
     """Finds a product with VS Where. Returns the newest match.
 
     Args:
-        products (:obj:`str`, optional): product defined by vswhere tool
-        vs_version (:obj:`str`, optional): helper to find version of supported VS version (example vs2019)
+        products (`str`, optional): product defined by vswhere tool
+        vs_version (`str`, optional): helper to find version of supported VS version (example vs2019)
 
     Returns:
         (str): VsWhere products
@@ -150,8 +150,8 @@ def FindAllWithVsWhere(products: str = "*", vs_version: Optional[str] = None) ->
     """Finds a product with VS Where. Returns all matches, sorted by newest version.
 
     Args:
-        products (:obj:`str`, optional): product defined by vswhere tool
-        vs_version (:obj:`str`, optional): helper to find version of supported VS version (example vs2019)
+        products (`str`, optional): product defined by vswhere tool
+        vs_version (`str`, optional): helper to find version of supported VS version (example vs2019)
 
     Returns:
         (list[str]): VsWhere products
@@ -195,10 +195,10 @@ def QueryVcVariables(
 
     Args:
         keys (list): names of env variables to collect after bat run
-        arch (:obj:`str`, optional): arch to run
-        product (:obj:`str`, optional): values defined by vswhere.exe
-        vs_version (:obj:`str`, optional): helper to find version of supported VS version (example vs2019)
-        vc_version (:obj:`str`, optional): Exact compiler version to consider for variables (example 14.42.34433)
+        arch (`str`, optional): arch to run
+        product (`str`, optional): values defined by vswhere.exe
+        vs_version (`str`, optional): helper to find version of supported VS version (example vs2019)
+        vc_version (`str`, optional): Exact compiler version to consider for variables (example 14.42.34433)
 
     Returns:
         (dict): the appropriate environment variables
@@ -373,8 +373,8 @@ def FindToolInWinSdk(tool: str, product: str = None, arch: str = None) -> str:
 
     Args:
         tool (str): Tool to search for
-        product (:obj:`str`, optional): product for searching with vswhere
-        arch (:obj:`str`, optional): arch for searching with vswhere
+        product (`str`, optional): product for searching with vswhere
+        arch (`str`, optional): arch for searching with vswhere
     """
     variables = ["WindowsSdkDir", "WindowsSDKVersion"]
     # get the value with QueryVcVariables

@@ -298,7 +298,7 @@ HKLM,SYSTEM\CurrentControlSet\Control\FirmwareResources\{{{EsrtGuid}}},Policy,%R
         Args:
             OutputInfFilePath (os.PathLike): Path to existing file
             FirmwareBinFileName (str): File Name
-            Rollback (:obj:`bool`, optional): Generate with Rollback template
+            Rollback (`bool`, optional): Generate with Rollback template
         """
         RollbackString = ""
         if Rollback:
