@@ -41,7 +41,7 @@ issues = "https://github.com/tianocore/edk2-pytool-library/issues/"
 dev = [
     "ruff == 0.14.1",
     "pytest == 8.4.2",
-    "coverage == 7.11.0",
+    "coverage == 7.13.3",
     "pre-commit == 4.0.1",
 ]
 publish = [
