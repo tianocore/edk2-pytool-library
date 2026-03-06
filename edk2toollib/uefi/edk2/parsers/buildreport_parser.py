@@ -318,6 +318,10 @@ class BuildReport(object):
 
     def FindComponentByInfPath(self, InfPath: str) -> Optional["ModuleSummary"]:
         """Attempts to find the Component the Inf is apart of.
+           Convert absolute search path to an edk2-relative path first.
+           Normalize separators and case for exact equality match.
+           If no exact match, allow a trailing-path-components (suffix) match, 
+           but only return it when it is unambiguous (single best match).
 
         Args:
             InfPath: Inf Path
@@ -326,14 +330,88 @@ class BuildReport(object):
             (ModuleSummary): Module if found
             (None): If not found
         """
-        for k, v in self.Modules.items():
-            if os.path.isabs(v.InfPath):
-                v.InfPath = self.PathConverter.GetEdk2RelativePathFromAbsolutePath(v.InfPath)
-            if v.InfPath.lower() == InfPath.lower():
-                logging.debug("Found Module by InfPath: %s" % InfPath)
+        if not InfPath:
+            return None
+
+        # Try to convert absolute search path to an edk2-relative path
+        search_path = InfPath
+        if os.path.isabs(search_path):
+            try:
+                rel = self.PathConverter.GetEdk2RelativePathFromAbsolutePath(search_path)
+                if rel is not None:
+                    search_path = rel
+            except Exception:
+                pass
+
+        # Normalize: collapse ., .., use forward slashes, lowercase
+        search_norm = os.path.normpath(search_path).replace("\\", "/").lower()
+        search_parts = [p for p in search_norm.split("/") if p != ""]
+
+        if not search_parts:
+            return None
+
+        # First pass: exact normalized equality
+        for v in self.Modules.values():
+            if not v.InfPath:
+                continue
+
+            module_inf = v.InfPath
+            if os.path.isabs(module_inf):
+                try:
+                    rel = self.PathConverter.GetEdk2RelativePathFromAbsolutePath(module_inf)
+                    if rel is not None:
+                        module_inf = rel
+                except Exception:
+                    pass
+
+            mod_norm = os.path.normpath(module_inf).replace("\\", "/").lower()
+            if mod_norm == search_norm:
+                logging.debug("Found Module by exact InfPath: %s == %s" % (InfPath, module_inf))
                 return v
 
-        logging.error("Failed to find Module by InfPath %s" % InfPath)
+        # Second pass: trailing path components (controlled suffix matching)
+        candidates = []
+        search_len = len(search_parts)
+        for v in self.Modules.values():
+            if not v.InfPath:
+                continue
+
+            module_inf = v.InfPath
+            if os.path.isabs(module_inf):
+                try:
+                    rel = self.PathConverter.GetEdk2RelativePathFromAbsolutePath(module_inf)
+                    if rel is not None:
+                        module_inf = rel
+                except Exception:
+                    pass
+
+            mod_norm = os.path.normpath(module_inf).replace("\\", "/").lower()
+            mod_parts = [p for p in mod_norm.split("/") if p != ""]
+            if len(mod_parts) < search_len:
+                continue
+            if mod_parts[-search_len:] == search_parts:
+                extra = len(mod_parts) - search_len  # smaller is better (closer match)
+                candidates.append((extra, v, mod_norm))
+
+        if not candidates:
+            logging.error("Failed to find Module by InfPath %s" % InfPath)
+            return None
+
+        # Choose best candidate(s) with minimal extra path components
+        candidates.sort(key=lambda t: t[0])
+        best_extra = candidates[0][0]
+        best_candidates = [c for c in candidates if c[0] == best_extra]
+
+        if len(best_candidates) == 1:
+            _, best_module, best_mod_norm = best_candidates[0]
+            logging.debug("Found Module by trailing InfPath match: %s in %s" % (InfPath, best_mod_norm))
+            return best_module
+
+        ambiguous_list = [c[2] for c in best_candidates]
+        logging.error(
+            "Ambiguous INF match for %s; candidates: %s. Not selecting to avoid false positive."
+            % (InfPath, ", ".join(ambiguous_list))
+        )
         return None
 
     def _ParseFdRegionForModules(self, rawcontents: str) -> None:
