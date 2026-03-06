@@ -320,7 +320,7 @@ class BuildReport(object):
         """Attempts to find the Component the Inf is apart of.
            Convert absolute search path to an edk2-relative path first.
            Normalize separators and case for exact equality match.
-           If no exact match, allow a trailing-path-components (suffix) match, 
+           If no exact match, allow a trailing-path-components (suffix) match,
            but only return it when it is unambiguous (single best match).
 
         Args:
