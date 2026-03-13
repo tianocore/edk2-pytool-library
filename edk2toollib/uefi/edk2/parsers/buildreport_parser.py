@@ -346,7 +346,7 @@ class BuildReport(object):
             a = rawcontents[index]
             tokens = a.split()
             if a.startswith("0x") and (len(tokens) == 3) and (a.count("(") == 1):
-                if ".inf" not in a.lower() or (a.count("(") != a.count(")")):
+                while ".inf" not in a.lower() or (a.count("(") != a.count(")")):
                     a = a + rawcontents[index + 1].strip()
                     index += 1
                     tokens = a.split()
