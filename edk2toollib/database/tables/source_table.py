@@ -51,7 +51,7 @@ class SourceTable(TableGenerator):
         files = []
         for src in self.source_extensions:
             files.extend(list(ws.rglob(src)))
-        files = [file for file in files if not file.is_relative_to(ws / "Build")]
+        files = [file for file in files if file.is_file() and not file.is_relative_to(ws / "Build")]
         src_entries = Parallel(n_jobs=self.n_jobs)(delayed(self._parse_file)(filename) for filename in files)
 
         existing_source = {source.path: source for source in session.query(Source).all()}
