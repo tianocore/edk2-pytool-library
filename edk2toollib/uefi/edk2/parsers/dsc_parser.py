@@ -64,7 +64,7 @@ class DscParser(HashFileParser):
     def ReplacePcds(self, line: str) -> str:
         """Attempts to replace a token if it is a PCD token."""
         if line.startswith("!if"):
-            for token in line.split():
+            for token in re.split(r"[^\w\.]", line):
                 if token in self.PcdValueDict:
                     line = line.replace(token, self.PcdValueDict[token])
         return line
