@@ -224,3 +224,28 @@ class TestDscParserIncludes(unittest.TestCase):
         parser.ParseFile(file1_path)
 
         self.assertEqual(parser.LocalVars["INCLUDE"], "TRUE")
+
+    def test_dsc_pcd_mix_with_symbols(self):
+        """This tests pcd can be parsed correctly when next to symbols"""
+        workspace = tempfile.mkdtemp()
+
+        file_name = "test.dsc"
+        file_path = os.path.join(workspace, file_name)
+
+        file_data = textwrap.dedent("""\
+        [PcdsFixedAtBuild]
+            gFakePcdTokenSpaceGuid.PcdFake1|0xAB
+            gFakePcdTokenSpaceGuid.PcdFake2|TRUE
+
+        [Defines]
+        !if (gFakePcdTokenSpaceGuid.PcdFake1>=0xA0)&&(gFakePcdTokenSpaceGuid.PcdFake2==TRUE)
+            INCLUDE=TRUE
+        !endif
+        """)
+
+        TestDscParserIncludes.write_to_file(file_path, file_data)
+
+        parser = DscParser().SetEdk2Path(Edk2Path(workspace, []))
+        parser.ParseFile(file_path)
+
+        self.assertEqual(parser.LocalVars["INCLUDE"], "TRUE")
