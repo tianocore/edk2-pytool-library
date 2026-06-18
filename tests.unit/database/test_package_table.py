@@ -37,7 +37,7 @@ def test_basic_parse(tmp_path):
 
         to_pass = {
             ("QemuPkg", "MU_TIANO_PLATFORMS"): False,
-            ("QemuSbsaPkg", "MU_TIANO_PLATFORMS"): False,
+            ("QemuArmVirtPkg", "MU_TIANO_PLATFORMS"): False,
             ("QemuQ35Pkg", "MU_TIANO_PLATFORMS"): False,
             ("SetupDataPkg", "Features/CONFIG"): False,
         }
