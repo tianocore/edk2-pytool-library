@@ -249,3 +249,53 @@ class TestDscParserIncludes(unittest.TestCase):
         parser.ParseFile(file_path)
 
         self.assertEqual(parser.LocalVars["INCLUDE"], "TRUE")
+
+    def test_get_mods_includes_other_mods(self):
+        """This test verifies that GetMods() returns modules from ThreeMods, SixMods, and OtherMods.
+
+        Test concept: when a driver is defined under [Components] (not architecture-specific),
+        it should be fetchable by GetMods() through OtherMods.
+        """
+        SAMPLE_DSC_FILE = textwrap.dedent("""\
+        [Defines]
+            PLATFORM_NAME                  = TestPlatform
+            PLATFORM_GUID                  = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+            PLATFORM_VERSION               = 0.1
+            DSC_SPECIFICATION              = 0x00010005
+            SUPPORTED_ARCHITECTURES        = IA32|X64
+
+        [Components.IA32]
+            TestPkg/Modules/Ia32Module.inf
+
+        [Components.X64]
+            TestPkg/Modules/X64Module.inf
+
+        [Components]
+            TestPkg/Modules/CommonModule.inf
+        """)
+        workspace = tempfile.mkdtemp()
+
+        file_name = "test.dsc"
+        file_path = os.path.join(workspace, file_name)
+        TestDscParserIncludes.write_to_file(file_path, SAMPLE_DSC_FILE)
+        try:
+            parser = DscParser()
+            parser.SetEdk2Path(Edk2Path(workspace, []))
+            parser.ParseFile(file_path)
+
+            # Verify individual lists are populated correctly
+            self.assertEqual(len(parser.ThreeMods), 1, "ThreeMods should contain 1 IA32 module")
+            self.assertEqual(len(parser.SixMods), 1, "SixMods should contain 1 X64 module")
+            self.assertEqual(len(parser.OtherMods), 1, "OtherMods should contain 1 common module")
+
+            # Verify GetMods() returns all three module lists combined
+            all_mods = parser.GetMods()
+            self.assertEqual(len(all_mods), 3, "GetMods() should return all 3 modules")
+
+            # Verify the modules are the expected ones
+            mods_str = str(all_mods)
+            self.assertIn("Ia32Module.inf", mods_str)
+            self.assertIn("X64Module.inf", mods_str)
+            self.assertIn("CommonModule.inf", mods_str)
+        finally:
+            os.remove(file_path)

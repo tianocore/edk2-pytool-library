@@ -501,7 +501,7 @@ class DscParser(HashFileParser):
 
     def GetMods(self) -> list:
         """Returns a list with all Mods."""
-        return self.ThreeMods + self.SixMods
+        return self.ThreeMods + self.SixMods + self.OtherMods
 
     def GetModsEnhanced(self) -> list:
         """Returns a list with all ModsEnhanced."""
