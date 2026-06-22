@@ -51,6 +51,11 @@ class LocateToolsTest(unittest.TestCase):
         # not checking the result as no need to depend on machine state
 
     @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
+    def test_FindwithVsWhereVs2026(self):
+        locate_tools.FindWithVsWhere(vs_version="vs2026")
+        # not checking the result as no need to depend on machine state
+
+    @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
     def test_FindWithVsWhereVs2015(self):
         with self.assertRaises(ValueError):
             locate_tools.FindWithVsWhere(vs_version="vs2015")
