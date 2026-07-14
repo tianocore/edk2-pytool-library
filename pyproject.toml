@@ -46,7 +46,7 @@ dev = [
 ]
 publish = [
     "setuptools == 82.0.1",
-    "build == 1.4.0",
+    "build == 1.5.1",
     "twine == 6.2.0",
 ]
 docs = [
