@@ -179,3 +179,43 @@ def test_file_raw_section_statements():
     assert "a_ui.bin" in parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]["UI"]
     assert "some_efi_file.efi" in parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]["PE32"]
     assert "some_te.te" in parser.FVs["MAINFV"]["Files"]["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]["TE"]
+
+
+def test_long_run_of_skipped_comment_and_blank_lines():
+    """Regression: a long run of skipped comment/blank lines must not raise RecursionError."""
+    lines = ["[Defines]", "DEFINE FD_BASE = 0x00800000"]
+    lines += ["# a skipped comment line"] * 5000
+    lines += [""] * 5000
+    lines += ["DEFINE NUM_BLOCKS = 0x410"]
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".fdf", delete=False) as f:
+            f.write("\n".join(lines) + "\n")
+            fdf_path = f.name
+        parser = FdfParser()
+        parser.ParseFile(fdf_path)
+    finally:
+        os.remove(fdf_path)
+
+    # The definition after the long skipped run is still parsed correctly.
+    assert parser.Dict["FD_BASE"] == "0x00800000"
+    assert parser.Dict["NUM_BLOCKS"] == "0x410"
+
+
+def test_long_inactive_conditional_block():
+    """Regression: a large inactive !if block must not raise RecursionError."""
+    lines = ["[Defines]", "DEFINE FD_BASE = 0x00800000", "!if 0"]
+    lines += ["DEFINE SKIPPED = 0x1"] * 5000
+    lines += ["!endif", "DEFINE NUM_BLOCKS = 0x410"]
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".fdf", delete=False) as f:
+            f.write("\n".join(lines) + "\n")
+            fdf_path = f.name
+        parser = FdfParser()
+        parser.ParseFile(fdf_path)
+    finally:
+        os.remove(fdf_path)
+
+    assert parser.Dict["FD_BASE"] == "0x00800000"
+    assert parser.Dict["NUM_BLOCKS"] == "0x410"
+    # Lines inside the inactive block are not parsed.
+    assert "SKIPPED" not in parser.Dict
