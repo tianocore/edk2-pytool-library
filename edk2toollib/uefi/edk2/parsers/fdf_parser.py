@@ -44,27 +44,29 @@ class FdfParser(HashFileParser):
         Performs manipulation on the line like replacing variables,
         processing conditionals, etc.
         """
-        if len(self.Lines) == 0:
-            return None
+        # Iterative (not recursive) to avoid hitting Python's recursion limit on long
+        # runs of skipped lines (comments/blanks or large inactive !if blocks).
+        while len(self.Lines) > 0:
+            line = self.Lines.pop()
+            self.CurrentLine += 1
+            sline = self.StripComment(line)
 
-        line = self.Lines.pop()
-        self.CurrentLine += 1
-        sline = self.StripComment(line)
+            if sline is None or len(sline) < 1:
+                continue
 
-        if sline is None or len(sline) < 1:
-            return self.GetNextLine()
+            sline = self.ReplaceVariables(sline)
+            if self.ProcessConditional(sline):
+                # was a conditional so skip
+                continue
+            if not self.InActiveCode():
+                continue
 
-        sline = self.ReplaceVariables(sline)
-        if self.ProcessConditional(sline):
-            # was a conditional so skip
-            return self.GetNextLine()
-        if not self.InActiveCode():
-            return self.GetNextLine()
+            self._BracketCount += sline.count("{")
+            self._BracketCount -= sline.count("}")
 
-        self._BracketCount += sline.count("{")
-        self._BracketCount -= sline.count("}")
+            return sline
 
-        return sline
+        return None
 
     def InsertLinesFromFile(self, file_path: str) -> None:
         """Adds additional lines to the Lines Attribute from the provided file."""
