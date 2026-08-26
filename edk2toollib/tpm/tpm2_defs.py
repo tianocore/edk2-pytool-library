@@ -15,9 +15,12 @@ from typing import Optional
 #
 # TPM2.0 Specification data structures
 #   (Trusted Platform Module Library Specification, Family "2.0", Level 00, Revision 00.96,
-#   @http://www.trustedcomputinggroup.org/resources/tpm_library_specification)
+#   @https://trustedcomputinggroup.org/resource/tpm-library-specification/)
 #
-#   Check http://trustedcomputinggroup.org for latest specification updates.
+#   (Trusted Computing Group Algorithm Registry, Version 2.0,
+#   @https://trustedcomputinggroup.org/resource/tcg-algorithm-registry/)
+#
+#   Check https://trustedcomputinggroup.org for latest specification updates.
 #
 # Copyright (c) 2013 - 2015, Intel Corporation. All rights reserved. <BR>
 ##
@@ -31,6 +34,7 @@ TPM_ALG_Pack = "H"
 TPM_ALG_ERROR = 0x0000
 TPM_ALG_FIRST = 0x0001
 TPM_ALG_RSA = 0x0001
+TPM_ALG_TDES = 0x0003
 TPM_ALG_SHA = 0x0004
 TPM_ALG_SHA1 = 0x0004
 TPM_ALG_HMAC = 0x0005
@@ -41,6 +45,7 @@ TPM_ALG_XOR = 0x000A
 TPM_ALG_SHA256 = 0x000B
 TPM_ALG_SHA384 = 0x000C
 TPM_ALG_SHA512 = 0x000D
+TPM_ALG_SHA256_192 = 0x000E
 TPM_ALG_NULL = 0x0010
 TPM_ALG_SM3_256 = 0x0012
 TPM_ALG_SM4 = 0x0013
@@ -54,17 +59,55 @@ TPM_ALG_ECDAA = 0x001A
 TPM_ALG_SM2 = 0x001B
 TPM_ALG_ECSCHNORR = 0x001C
 TPM_ALG_ECMQV = 0x001D
+TPM_ALG_HKDF = 0x001F
 TPM_ALG_KDF1_SP800_56a = 0x0020
 TPM_ALG_KDF2 = 0x0021
 TPM_ALG_KDF1_SP800_108 = 0x0022
 TPM_ALG_ECC = 0x0023
 TPM_ALG_SYMCIPHER = 0x0025
+TPM_ALG_CAMELLIA = 0x0026
+TPM_ALG_SHA3_256 = 0x0027
+TPM_ALG_SHA3_384 = 0x0028
+TPM_ALG_SHA3_512 = 0x0029
+TPM_ALG_SHAKE128 = 0x002A
+TPM_ALG_SHAKE256 = 0x002B
+TPM_ALG_SHAKE256_192 = 0x002C
+TPM_ALG_SHAKE256_256 = 0x002D
+TPM_ALG_SHAKE256_512 = 0x002E
+TPM_ALG_CMAC = 0x003F
 TPM_ALG_CTR = 0x0040
 TPM_ALG_OFB = 0x0041
 TPM_ALG_CBC = 0x0042
 TPM_ALG_CFB = 0x0043
 TPM_ALG_ECB = 0x0044
-TPM_ALG_LAST = 0x0044
+TPM_ALG_CCM = 0x0050
+TPM_ALG_GCM = 0x0051
+TPM_ALG_KW = 0x0052
+TPM_ALG_KWP = 0x0053
+TPM_ALG_EAX = 0x0054
+TPM_ALG_EDDSA = 0x0060
+TPM_ALG_HASH_EDDSA = 0x0061
+TPM_ALG_RSASVE_KEM = 0x0062
+TPM_ALG_ECDH_KEM = 0x0063
+TPM_ALG_LMS = 0x0070
+TPM_ALG_XMSS = 0x0071
+TPM_ALG_LMOTS = 0x0072
+TPM_ALG_WOTSP = 0x0073
+TPM_ALG_KEYEDXOF = 0x0080
+TPM_ALG_KMACXOF128 = 0x0081
+TPM_ALG_KMACXOF256 = 0x0082
+TPM_ALG_KMAC128 = 0x0090
+TPM_ALG_KMAC256 = 0x0091
+TPM_ALG_MLKEM = 0x00A0
+TPM_ALG_MLDSA = 0x00A1
+TPM_ALG_HASH_MLDSA = 0x00A2
+TPM_ALG_SLHDSA = 0x00A3
+TPM_ALG_HASH_SLHDSA = 0x00A4
+TPM_ALG_ASCON_AEAD = 0x00B0
+TPM_ALG_ASCON_HASH256 = 0x00B1
+TPM_ALG_ASCON_XOF128 = 0x00B2
+TPM_ALG_ASCON_CXOF128 = 0x00B3
+TPM_ALG_LAST = 0x00B3
 
 # Table 11 - TPM_CC Constants (Numeric Order)
 TPM_CC_Size = 4
