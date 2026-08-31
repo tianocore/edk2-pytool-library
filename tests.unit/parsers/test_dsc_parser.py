@@ -191,6 +191,90 @@ class TestDscParserIncludes(unittest.TestCase):
             os.remove(file1_path)
         assert any("FakePath/FakePath2/FakeInf.inf" in value for value in parser.Components)
 
+    def test_dsc_define_section_scope(self):
+        """DEFINE outside [Defines] is scoped to equivalent sections (DSC 2.2.6)."""
+        sample = textwrap.dedent("""\
+        [Defines]
+            PLATFORM_NAME                  = SomePlatformPkg
+            PLATFORM_GUID                  = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+            PLATFORM_VERSION               = 0.1
+            DSC_SPECIFICATION              = 0x00010005
+            OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
+
+        [LibraryClasses.common]
+          DEFINE MDE = MdePkg/Library
+          BaseLib|$(MDE)/BaseLib.inf
+
+        [LibraryClasses.X64, LibraryClasses.IA32]
+          DEFINE PERF = PerformancePkg/Library
+          TimerLib|$(PERF)/DxeTscTimerLib/DxeTscTimerLib.inf
+
+        [LibraryClasses.X64.PEIM]
+          DEFINE MDEMEM = $(MDE)/PeiMemoryAllocationLib
+          MemoryAllocationLib|$(MDEMEM)/PeiMemoryAllocationLib.inf
+
+        [LibraryClasses.IPF]
+          PalLib|$(MDE)/UefiPalLib/UefiPalLib.inf
+          TimerLib|$(MDE)/BaseTimerLibNullTemplate/BaseTimerLibNullTemplate.inf
+        """)
+        workspace = tempfile.mkdtemp()
+        file1_path = os.path.join(workspace, "file1.dsc")
+        TestDscParserIncludes.write_to_file(file1_path, sample)
+        try:
+            parser = DscParser()
+            parser.SetEdk2Path(Edk2Path(workspace, []))
+            parser.ParseFile(file1_path)
+        finally:
+            os.remove(file1_path)
+
+        libs = [str(x) for x in parser.Libs]
+        joined = " ".join(libs)
+        self.assertIsNone(parser.LocalVars.get("MDE"))
+        self.assertIsNone(parser.LocalVars.get("PERF"))
+        self.assertIsNone(parser.LocalVars.get("MDEMEM"))
+        self.assertIn("MdePkg/Library/BaseLib.inf", joined)
+        self.assertIn("PerformancePkg/Library/DxeTscTimerLib/DxeTscTimerLib.inf", joined)
+        self.assertIn("MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf", joined)
+        self.assertIn("MdePkg/Library/UefiPalLib/UefiPalLib.inf", joined)
+        self.assertIn("MdePkg/Library/BaseTimerLibNullTemplate/BaseTimerLibNullTemplate.inf", joined)
+        self.assertNotIn("PerformancePkg/Library/BaseTimerLibNullTemplate", joined)
+
+    def test_dsc_define_does_not_leak_to_sibling_module(self):
+        """A DEFINE in [LibraryClasses.common.PEI_CORE] is not visible in DXE_DRIVER."""
+        sample = textwrap.dedent("""\
+        [Defines]
+            PLATFORM_NAME                  = SomePlatformPkg
+            PLATFORM_GUID                  = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+            PLATFORM_VERSION               = 0.1
+            DSC_SPECIFICATION              = 0x00010005
+            OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
+
+        [LibraryClasses.common.PEI_CORE]
+          SomeLib|SomePkg/Library/SomeLib/SomeLib.inf
+          DEFINE SOME_VAR = TRUE
+
+        [LibraryClasses.common.PEIM]
+          AnotherLib|SomePkg/Library/AnotherLib/AnotherLib.inf
+
+        !ifdef SOME_VAR
+        [LibraryClasses.common.DXE_DRIVER]
+          ConditionalLib|SomePkg/Library/ConditionalLib/ConditionalLib.inf
+        !endif
+        """)
+        workspace = tempfile.mkdtemp()
+        file1_path = os.path.join(workspace, "file1.dsc")
+        TestDscParserIncludes.write_to_file(file1_path, sample)
+        try:
+            parser = DscParser()
+            parser.SetEdk2Path(Edk2Path(workspace, []))
+            parser.ParseFile(file1_path)
+        finally:
+            os.remove(file1_path)
+
+        self.assertIsNone(parser.LocalVars.get("SOME_VAR"))
+        libs = [str(x) for x in parser.Libs]
+        self.assertFalse(any("ConditionalLib.inf" in value for value in libs), libs)
+
     def test_dsc_pcd_in_include_files(self):
         """This tests whether pcd in and before !include directive works properly"""
         workspace = tempfile.mkdtemp()

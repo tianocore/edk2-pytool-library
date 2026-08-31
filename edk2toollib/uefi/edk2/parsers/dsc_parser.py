@@ -60,6 +60,10 @@ class DscParser(HashFileParser):
         self.PcdValueDict = {}
         self._no_fail_mode = False
         self._dsc_file_paths = set()  # This includes the full paths for every DSC that makes up the file
+        # DEFINE outside [Defines] is scoped to that section (DSC spec 2.2.6).
+        # Key: (section_type, arch, module)  e.g. ("LIBRARYCLASSES", "X64", "PEIM")
+        self.SectionMacros: dict[tuple[str, str, str], dict[str, str]] = {}
+        self.CurrentSectionScopes: list[tuple[str, str, str]] = []
 
     def ReplacePcds(self, line: str) -> str:
         """Attempts to replace a token if it is a PCD token."""
@@ -68,6 +72,68 @@ class DscParser(HashFileParser):
                 if token in self.PcdValueDict:
                     line = line.replace(token, self.PcdValueDict[token])
         return line
+
+    def _parse_section_scopes(self, header_line: str) -> list[tuple[str, str, str]]:
+        """Split a [Section.Arch.Module, ...] header into scope tuples."""
+        inner = header_line.strip()
+        if inner.startswith("["):
+            inner = inner[1:]
+        if inner.endswith("]"):
+            inner = inner[:-1]
+        scopes: list[tuple[str, str, str]] = []
+        for part in inner.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            bits = [b.strip() for b in part.split(".")]
+            stype = bits[0].upper()
+            arch = bits[1] if len(bits) > 1 else "common"
+            module = bits[2].upper() if len(bits) > 2 else ""
+            scopes.append((stype, arch, module))
+        return scopes
+
+    def _scope_applies(
+        self, defined: tuple[str, str, str], current: tuple[str, str, str]
+    ) -> bool:
+        """True if a DEFINE stored under *defined* is visible in *current*.
+
+        common arch matches every arch. An empty module matches every module
+        type. A more specific DEFINE does not leak into a sibling or parent.
+        """
+        dstype, darch, dmod = defined
+        cstype, carch, cmod = current
+        if dstype != cstype:
+            return False
+        if darch.lower() != "common" and darch.lower() != carch.lower():
+            return False
+        if dmod and dmod != cmod:
+            return False
+        return True
+
+    def _scope_specificity(self, scope: tuple[str, str, str]) -> tuple[int, int]:
+        stype, arch, module = scope
+        return (0 if arch.lower() == "common" else 1, 1 if module else 0)
+
+    def _section_macro_value(self, token: str) -> Optional[str]:
+        found: Optional[str] = None
+        best = (-1, -1)
+        for current in self.CurrentSectionScopes:
+            for defined, macros in self.SectionMacros.items():
+                if token not in macros or not self._scope_applies(defined, current):
+                    continue
+                spec = self._scope_specificity(defined)
+                if spec >= best:
+                    best = spec
+                    found = macros[token]
+        return found
+
+    def _FindReplacementForToken(self, token: str, replace_if_not_found: bool = False) -> str:
+        v = super()._FindReplacementForToken(token, False)
+        if v is None:
+            v = self._section_macro_value(token)
+        if v is None and replace_if_not_found:
+            v = self._MacroNotDefinedValue
+        return v
 
     def __ParseLine(self, Line: str, file_name: Optional[str] = None, lineno: int = None) -> tuple:
         line_stripped = self.StripComment(Line).strip()
@@ -105,6 +171,7 @@ class DscParser(HashFileParser):
         (IsNew, Section) = self.ParseNewSection(line_resolved)
         if IsNew:
             self.CurrentSection = Section.upper()
+            self.CurrentSectionScopes = self._parse_section_scopes(line_resolved)
             self.Logger.debug("New Section: %s" % self.CurrentSection)
             self.Logger.debug("FullSection: %s" % self.CurrentFullSection)
             return (line_resolved, [], None)
@@ -230,30 +297,44 @@ class DscParser(HashFileParser):
         (IsNew, Section) = self.ParseNewSection(line_resolved)
         if IsNew:
             self.CurrentSection = Section.upper()
+            self.CurrentSectionScopes = self._parse_section_scopes(line_resolved)
             self.Logger.debug("New Section: %s" % self.CurrentSection)
             self.Logger.debug("FullSection: %s" % self.CurrentFullSection)
             return (line_resolved, [])
 
-        # process line based on section we are in
-        if (self.CurrentSection == "DEFINES") or (self.CurrentSection == "BUILDOPTIONS"):
-            if line_resolved.count("=") >= 1:
-                tokens = line_resolved.split("=", 1)
-                leftside = tokens[0].split()
-                if len(leftside) == 2:
-                    left = leftside[1]
-                else:
-                    left = leftside[0]
-                right = tokens[1].strip()
-
-                self.LocalVars[left] = right
-                self.Logger.debug("Key,values found:  %s = %s" % (left, right))
-
-                # iterate through the existed LocalVars and try to resolve the symbols
-                for var in self.LocalVars:
-                    self.LocalVars[var] = self.ReplaceVariables(self.LocalVars[var])
-                return (line_resolved, [])
-        else:
+        if line_resolved.count("=") < 1:
             return (line_resolved, [])
+
+        tokens = line_resolved.split("=", 1)
+        leftside = tokens[0].split()
+        is_define_stmt = bool(leftside) and leftside[0].upper() == "DEFINE"
+        if not (
+            (self.CurrentSection == "DEFINES")
+            or (self.CurrentSection == "BUILDOPTIONS")
+            or is_define_stmt
+        ):
+            return (line_resolved, [])
+
+        if len(leftside) == 2:
+            left = leftside[1]
+        else:
+            left = leftside[0]
+        right = tokens[1].strip()
+
+        # [Defines] / [BuildOptions] stay global. Other sections are scoped
+        # (EDK II DSC spec 2.2.6).
+        if is_define_stmt and self.CurrentSection not in ("DEFINES", "BUILDOPTIONS"):
+            for scope in self.CurrentSectionScopes:
+                self.SectionMacros.setdefault(scope, {})[left] = right
+            self.Logger.debug("Section DEFINE %s = %s scopes=%s" % (left, right, self.CurrentSectionScopes))
+            return (line_resolved, [])
+
+        self.LocalVars[left] = right
+        self.Logger.debug("Key,values found:  %s = %s" % (left, right))
+
+        for var in self.LocalVars:
+            self.LocalVars[var] = self.ReplaceVariables(self.LocalVars[var])
+        return (line_resolved, [])
 
     def ParseInfPathLib(self, line: str) -> str:
         """Parses a line with an INF path Lib."""
@@ -343,6 +424,9 @@ class DscParser(HashFileParser):
                 continue
 
             if len(line.split("|")) != 2:
+                define_tokens = line.split()
+                if define_tokens and define_tokens[0].upper() == "DEFINE":
+                    continue
                 logging.debug("Unexpected Line in Library Section:")
                 logging.debug(f"  {line}")
                 continue
@@ -468,9 +552,7 @@ class DscParser(HashFileParser):
 
     def ResetParserState(self) -> None:
         """Resets the parser."""
-        #
-        # add more DSC parser based state reset here, if necessary
-        #
+        self.CurrentSectionScopes = []
         super(DscParser, self).ResetParserState()
 
     def ParseFile(self, filepath: str) -> None:
