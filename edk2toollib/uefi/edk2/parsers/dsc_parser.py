@@ -60,6 +60,7 @@ class DscParser(HashFileParser):
         self.PcdValueDict = {}
         self._no_fail_mode = False
         self._dsc_file_paths = set()  # This includes the full paths for every DSC that makes up the file
+        self._target_file_stack = []  # previous TargetFilePath values for nested !include
 
     def ReplacePcds(self, line: str) -> str:
         """Attempts to replace a token if it is a PCD token."""
@@ -289,6 +290,8 @@ class DscParser(HashFileParser):
                 if len(line) > 0:
                     self.Lines.append(line)
                 self.__ProcessMore(add, file_name=new_file)
+                if add:
+                    self._PopTargetFile()
             except Exception as e:
                 # check if we're in no fail mode or not
                 if not self._no_fail_mode:  # if we are, fail
@@ -314,6 +317,8 @@ class DscParser(HashFileParser):
             try:
                 (line, add) = self.__ParseDefineLine(raw_line)
                 self.__ProcessDefines(add)
+                if add:
+                    self._PopTargetFile()
             except Exception:
                 # Since we're going to do this in ProcessMore, don't warn people if there's an exception
                 # otherwise, raise the exception and act normally
@@ -472,6 +477,7 @@ class DscParser(HashFileParser):
         # add more DSC parser based state reset here, if necessary
         #
         super(DscParser, self).ResetParserState()
+        self._target_file_stack = []
 
     def ParseFile(self, filepath: str) -> None:
         """Parses the DSC file at the provided path."""
@@ -496,8 +502,14 @@ class DscParser(HashFileParser):
         self.Parsed = True
 
     def _PushTargetFile(self, targetFile: str) -> None:
+        if self.TargetFilePath:
+            self._target_file_stack.append(self.TargetFilePath)
         self.TargetFilePath = os.path.abspath(targetFile)
         self._dsc_file_paths.add(self.TargetFilePath)
+
+    def _PopTargetFile(self) -> None:
+        if self._target_file_stack:
+            self.TargetFilePath = self._target_file_stack.pop()
 
     def GetMods(self) -> list:
         """Returns a list with all Mods."""
