@@ -234,8 +234,11 @@ class DscParser(HashFileParser):
             self.Logger.debug("FullSection: %s" % self.CurrentFullSection)
             return (line_resolved, [])
 
-        # process line based on section we are in
-        if (self.CurrentSection == "DEFINES") or (self.CurrentSection == "BUILDOPTIONS"):
+        # process line based on section we are in.
+        # DEFINE statements are valid in any DSC section (EDK II DSC spec).
+        tokens_for_define = line_resolved.split()
+        is_define_stmt = bool(tokens_for_define) and tokens_for_define[0].upper() == "DEFINE"
+        if (self.CurrentSection == "DEFINES") or (self.CurrentSection == "BUILDOPTIONS") or is_define_stmt:
             if line_resolved.count("=") >= 1:
                 tokens = line_resolved.split("=", 1)
                 leftside = tokens[0].split()
@@ -343,6 +346,9 @@ class DscParser(HashFileParser):
                 continue
 
             if len(line.split("|")) != 2:
+                define_tokens = line.split()
+                if define_tokens and define_tokens[0].upper() == "DEFINE":
+                    continue
                 logging.debug("Unexpected Line in Library Section:")
                 logging.debug(f"  {line}")
                 continue

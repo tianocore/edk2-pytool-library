@@ -191,6 +191,45 @@ class TestDscParserIncludes(unittest.TestCase):
             os.remove(file1_path)
         assert any("FakePath/FakePath2/FakeInf.inf" in value for value in parser.Components)
 
+    def test_dsc_define_outside_defines_section(self):
+        """DEFINE in a non-[Defines] section must still be recorded (issue 788)."""
+        sample = textwrap.dedent("""\
+        [Defines]
+            PLATFORM_NAME                  = SomePlatformPkg
+            PLATFORM_GUID                  = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+            PLATFORM_VERSION               = 0.1
+            DSC_SPECIFICATION              = 0x00010005
+            OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
+
+        [LibraryClasses.common.PEI_CORE]
+          SomeLib|SomePkg/Library/SomeLib/SomeLib.inf
+
+        DEFINE SOME_VAR = TRUE
+
+        [LibraryClasses.common.PEIM]
+          AnotherLib|SomePkg/Library/AnotherLib/AnotherLib.inf
+
+        !ifdef SOME_VAR
+        [LibraryClasses.common.DXE_DRIVER]
+          ConditionalLib|SomePkg/Library/ConditionalLib/ConditionalLib.inf
+        !endif
+        """)
+        workspace = tempfile.mkdtemp()
+        file1_path = os.path.join(workspace, "file1.dsc")
+        TestDscParserIncludes.write_to_file(file1_path, sample)
+        try:
+            parser = DscParser()
+            parser.SetEdk2Path(Edk2Path(workspace, []))
+            parser.ParseFile(file1_path)
+        finally:
+            os.remove(file1_path)
+
+        self.assertEqual(parser.LocalVars.get("SOME_VAR"), "TRUE")
+        self.assertTrue(
+            any("ConditionalLib.inf" in str(value) for value in parser.Libs),
+            f"conditional library was dropped; Libs={parser.Libs}",
+        )
+
     def test_dsc_pcd_in_include_files(self):
         """This tests whether pcd in and before !include directive works properly"""
         workspace = tempfile.mkdtemp()
