@@ -157,6 +157,38 @@ class TestDscParserIncludes(unittest.TestCase):
         finally:
             os.chdir(cwd)
 
+    def test_dsc_two_sibling_relative_includes(self):
+        """Sibling !include paths are resolved from the parent, not the previous include (issue 394)."""
+        workspace = tempfile.mkdtemp()
+        pkg = os.path.join(workspace, "Platforms", "PlatformPkg")
+        includes = os.path.join(pkg, "includes")
+        os.makedirs(includes, exist_ok=True)
+
+        parent = os.path.join(pkg, "PlatformPkg.dsc")
+        inc1 = os.path.join(includes, "PCDs1.dsc.inc")
+        inc2 = os.path.join(includes, "PCDs2.dsc.inc")
+
+        TestDscParserIncludes.write_to_file(
+            parent,
+            textwrap.dedent(
+                """\
+                [Defines]
+                    PLATFORM_NAME = SomePlatformPkg
+                !include includes/PCDs1.dsc.inc
+                !include includes/PCDs2.dsc.inc
+                """
+            ),
+        )
+        TestDscParserIncludes.write_to_file(inc1, "    DEFINE FIRST_INC = TRUE\n")
+        TestDscParserIncludes.write_to_file(inc2, "    DEFINE SECOND_INC = TRUE\n")
+
+        parser = DscParser()
+        parser.SetEdk2Path(Edk2Path(workspace, []))
+        parser.ParseFile(parent)
+
+        self.assertEqual(parser.LocalVars.get("FIRST_INC"), "TRUE")
+        self.assertEqual(parser.LocalVars.get("SECOND_INC"), "TRUE")
+
     def test_dsc_define_statements(self):
         """This test some dsc define statements"""
         SAMPLE_DSC_FILE1 = textwrap.dedent("""\
