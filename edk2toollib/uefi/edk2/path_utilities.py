@@ -58,11 +58,11 @@ class Edk2Path(object):
         # Other code is dependent the following types, so keep it that way:
         #   - self.PackagePathList: List[str]
         #   - self.WorkspacePath: str
-        ws = ws.replace("\\", "/")
-        workspace_candidate_path = Path(ws)
+        normalized_workspace = ws.replace("\\", "/") if isinstance(ws, str) else ws
+        workspace_candidate_path = Path(normalized_workspace)
 
         if not workspace_candidate_path.is_absolute():
-            workspace_candidate_path = Path.cwd() / ws
+            workspace_candidate_path = Path.cwd() / normalized_workspace
 
         if not workspace_candidate_path.is_dir():
             raise NotADirectoryError(errno.ENOENT, os.strerror(errno.ENOENT), workspace_candidate_path.resolve())
@@ -71,7 +71,11 @@ class Edk2Path(object):
 
         candidate_package_path_list = []
         start_time = timeit.default_timer()
-        for a in [Path(path.replace("\\", "/")) for path in package_path_list]:
+        for path in package_path_list:
+            if isinstance(path, str):
+                path = path.replace("\\", "/")
+
+            a = Path(path)
             if a.is_absolute():
                 candidate_package_path_list.append(a)
             else:

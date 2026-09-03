@@ -83,6 +83,17 @@ class PathUtilitiesTest(unittest.TestCase):
         pathobj = Edk2Path(self.tmp, [])
         self.assertEqual(pathobj.WorkspacePath, self.tmp)
 
+    def test_basic_init_pathlike(self):
+        """Test edk2path with Path objects for the workspace and package path."""
+        workspace_path = Path(self.tmp)
+        package_path = workspace_path / "package_path"
+        package_path.mkdir()
+
+        pathobj = Edk2Path(workspace_path, [package_path])
+
+        self.assertEqual(pathobj.WorkspacePath, str(workspace_path))
+        self.assertEqual(pathobj.PackagePathList, [str(package_path)])
+
     def test_basic_init_ws_cwd(self):
         """Test edk2path with a relative path to workspace."""
         relpath = "testrootfolder"
