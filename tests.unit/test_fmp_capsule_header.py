@@ -7,8 +7,9 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 import unittest
+
 import pytest
-from edk2toollib.uefi.fmp_capsule_header import FmpCapsuleHeaderClass
+from edk2toollib.uefi.fmp_capsule_header import FmpCapsuleHeaderClass, FmpCapsuleImageHeaderClass
 
 
 class TestFmpCapsuleHeaderClass(unittest.TestCase):
@@ -38,3 +39,19 @@ class TestFmpCapsuleHeaderClass(unittest.TestCase):
         encode_1 = test_header.Encode()
         encode_2 = test_header.Encode()
         self.assertEqual(encode_1, encode_2)
+
+    def test_decoding_should_preserve_item_counts(self):
+        image_header = FmpCapsuleImageHeaderClass()
+        image_header.UpdateImageIndex = 1
+
+        encoded_header = FmpCapsuleHeaderClass()
+        encoded_header.AddEmbeddedDriver(b"dummydriver")
+        encoded_header.AddFmpCapsuleImageHeader(image_header)
+
+        decoded_header = FmpCapsuleHeaderClass()
+        decoded_header.Decode(encoded_header.Encode())
+
+        self.assertEqual(decoded_header.EmbeddedDriverCount, 1)
+        self.assertEqual(decoded_header.PayloadItemCount, 1)
+        self.assertEqual(decoded_header.GetEmbeddedDriver(0), b"dummydriver")
+        self.assertEqual(decoded_header.GetFmpCapsuleImageHeader(0).UpdateImageIndex, 1)
