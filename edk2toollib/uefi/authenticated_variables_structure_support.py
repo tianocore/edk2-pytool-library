@@ -283,20 +283,27 @@ class EfiSignatureDataEfiCertX509(CommonUefiStructure):
         return EfiSignatureDataEfiCertX509.STATIC_STRUCT_SIZE + self.signature_data_size
 
 
-class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
-    """An object representing a EFI_SIGNATURE_DATA Structure for Sha256 Certs."""
+class EfiSignatureDataEfiCertShaBase(CommonUefiStructure):
+    """Base class for EFI_SIGNATURE_DATA structures backed by a fixed-size hash digest.
 
-    STATIC_STRUCT_SIZE = 16 + hashlib.sha256().digest_size  # has guid and array
-    FIXED_SIZE = True
+    Subclasses must define:
+        _HASH (hashlib hash constructor): e.g. hashlib.sha256 or hashlib.sha384
+        STATIC_STRUCT_SIZE (int): 16 (owner GUID) + digest_size
+        FIXED_SIZE (bool): True
+        _LABEL (str): human-readable algorithm name used in print(), e.g. "EFI_CERT_SHA256"
+    """
+
+    _HASH = None   # must be overridden by subclass
+    _LABEL = None  # must be overridden by subclass
 
     def __init__(
         self, decodefs: BinaryIO = None, createfs: BinaryIO = None, digest: bytes = None, sigowner: uuid = None
-    ) -> "EfiSignatureDataEfiCertSha256":
+    ) -> "EfiSignatureDataEfiCertShaBase":
         """Inits the object.
 
         Args:
             decodefs (BinaryIO): a filestream object of binary content that is the structure encoded
-            createfs (BinaryIO): a filestream object that is the DER encoded x509 cert
+            createfs (BinaryIO): a filestream object whose contents will be hashed
             digest (bytes): a bytes object that contains the hash value for new signature data
             sigowner (uuid.UUID): the uuid object of the signature owner guid
 
@@ -307,14 +314,13 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
         if decodefs is not None:
             self.decode(decodefs)
         elif createfs is not None:
-            # create a new one
             self.signature_owner = sigowner
-            self.signature_data = hashlib.sha256(createfs.read()).digest()
+            self.signature_data = self._HASH(createfs.read()).digest()
         elif digest is not None:
-            digest_length = len(digest)
-            if digest_length != hashlib.sha256().digest_size:
+            expected = self._HASH().digest_size
+            if len(digest) != expected:
                 raise Exception(
-                    "Invalid digest length (found / expected): (%d / %d)", digest_length, hashlib.sha256().digest_size
+                    "Invalid digest length (found / expected): (%d / %d)", len(digest), expected
                 )
             self.signature_owner = sigowner
             self.signature_data = digest
@@ -358,18 +364,16 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
         if fs is None:
             raise Exception("Invalid File Steam")
 
-        # only populate from file stream those parts that are complete in the file stream
         offset = fs.tell()
         fs.seek(0, 2)
         end = fs.tell()
         fs.seek(offset)
 
-        if (end - offset) < EfiSignatureDataEfiCertSha256.STATIC_STRUCT_SIZE:  # size of the  data
+        if (end - offset) < self.STATIC_STRUCT_SIZE:
             raise Exception("Invalid file stream size")
 
         self.signature_owner = uuid.UUID(bytes_le=fs.read(16))
-
-        self.signature_data = fs.read(hashlib.sha256().digest_size)
+        self.signature_data = fs.read(self._HASH().digest_size)
 
     def PopulateFromFileStream(self, fs: BinaryIO) -> None:
         """Loads an object from a filestream.
@@ -386,25 +390,23 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
     def print(self, compact: bool = False, outfs: IO = sys.stdout) -> None:
         """Prints to the console."""
         if not compact:
-            outfs.write("EfiSignatureData - EfiSignatureDataEfiCertSha256\n")
+            outfs.write(f"EfiSignatureData - {self.__class__.__name__}\n")
             outfs.write(f"  Signature Owner:      {str(self.signature_owner)}\n")
             outfs.write("  Signature Data: ")
             if self.signature_data is None:
                 outfs.write(" NONE\n")
             else:
-                sdl = self.signature_data
-                for index in range(len(sdl)):
-                    outfs.write(f"{sdl[index]:02X}")
+                for b in self.signature_data:
+                    outfs.write(f"{b:02X}")
                 outfs.write("\n")
         else:
-            s = "ESD:EFI_CERT_SHA256,"
+            s = f"ESD:{self._LABEL},"
             s += f"{str(self.signature_owner)},"
             if self.signature_data is None:
                 s += "NONE"
             else:
-                sdl = self.signature_data
-                for index in range(len(sdl)):
-                    s += f"{sdl[index]:02X}"
+                for b in self.signature_data:
+                    s += f"{b:02X}"
             outfs.write(s)
             outfs.write("\n")
 
@@ -457,12 +459,30 @@ class EfiSignatureDataEfiCertSha256(CommonUefiStructure):
 
     def get_total_size(self) -> int:
         """Returns the total size of the object."""
-        return EfiSignatureDataEfiCertSha256.STATIC_STRUCT_SIZE
+        return self.STATIC_STRUCT_SIZE
 
     def GetTotalSize(self) -> int:
         """Returns the total size of the object."""
         warn("GetTotalSize() is deprecated. Use get_total_size() instead.", DeprecationWarning, 2)
         return self.get_total_size()
+
+
+class EfiSignatureDataEfiCertSha256(EfiSignatureDataEfiCertShaBase):
+    """An object representing a EFI_SIGNATURE_DATA Structure for Sha256 Certs."""
+
+    _HASH = hashlib.sha256
+    _LABEL = "EFI_CERT_SHA256"
+    STATIC_STRUCT_SIZE = 16 + hashlib.sha256().digest_size
+    FIXED_SIZE = True
+
+
+class EfiSignatureDataEfiCertSha384(EfiSignatureDataEfiCertShaBase):
+    """An object representing a EFI_SIGNATURE_DATA Structure for Sha384 Certs."""
+
+    _HASH = hashlib.sha384
+    _LABEL = "EFI_CERT_SHA384"
+    STATIC_STRUCT_SIZE = 16 + hashlib.sha384().digest_size
+    FIXED_SIZE = True
 
 
 class EfiSignatureHeader(object):  # noqa
@@ -480,7 +500,7 @@ class EfiSignatureDataFactory(object):
     # EFI_CERT_RSA2048_SHA1_GUID = uuid.UUID("0x67f8444f, 0x8743, 0x48f1, 0xa3, 0x28, 0x1e, 0xaa, 0xb8, 0x73, 0x60, 0x80")    # noqa: E501
     EFI_CERT_X509_GUID = uuid.UUID("a5c059a1-94e4-4aa7-87b5-ab155c2bf072")
     # EFI_CERT_SHA224_GUID = uuid.UUID("0xb6e5233, 0xa65c, 0x44c9, 0x94, 0x7, 0xd9, 0xab, 0x83, 0xbf, 0xc8, 0xbd")
-    # EFI_CERT_SHA384_GUID = uuid.UUID("0xff3e5307, 0x9fd0, 0x48c9, 0x85, 0xf1, 0x8a, 0xd5, 0x6c, 0x70, 0x1e, 0x1")
+    EFI_CERT_SHA384_GUID = uuid.UUID("ff3e5307-9fd0-48c9-85f1-8ad56c701e01")
     # EFI_CERT_SHA512_GUID = uuid.UUID("0x93e0fae, 0xa6c4, 0x4f50, 0x9f, 0x1b, 0xd4, 0x1e, 0x2b, 0x89, 0xc1, 0x9a")
     EFI_CERT_X509_SHA256_GUID = uuid.UUID("3bd2a492-96c0-4079-b420-fcf98ef103ed")
     # EFI_CERT_X509_SHA384_GUID = uuid.UUID("0x7076876e, 0x80c2, 0x4ee6, 0xaa, 0xd2, 0x28, 0xb3, 0x49, 0xa6, 0x86, 0x5b")     # noqa: E501
@@ -507,6 +527,11 @@ class EfiSignatureDataFactory(object):
             if size != EfiSignatureDataEfiCertSha256.STATIC_STRUCT_SIZE:
                 raise Exception("Invalid Size 0x%x" % size)
             return EfiSignatureDataEfiCertSha256(decodefs=fs)
+
+        elif type == EfiSignatureDataFactory.EFI_CERT_SHA384_GUID:
+            if size != EfiSignatureDataEfiCertSha384.STATIC_STRUCT_SIZE:
+                raise Exception("Invalid Size 0x%x" % size)
+            return EfiSignatureDataEfiCertSha384(decodefs=fs)
 
         elif type == EfiSignatureDataFactory.EFI_CERT_X509_GUID:
             return EfiSignatureDataEfiCertX509(decodefs=fs, decodesize=size)
@@ -561,6 +586,8 @@ class EfiSignatureDataFactory(object):
 
         if type == EfiSignatureDataFactory.EFI_CERT_SHA256_GUID:
             return EfiSignatureDataEfiCertSha256(createfs=ContentFileStream, sigowner=sigowner)
+        elif type == EfiSignatureDataFactory.EFI_CERT_SHA384_GUID:
+            return EfiSignatureDataEfiCertSha384(createfs=ContentFileStream, sigowner=sigowner)
         elif type == EfiSignatureDataFactory.EFI_CERT_X509_GUID:
             return EfiSignatureDataEfiCertX509(createfs=ContentFileStream, sigowner=sigowner)
         else:
