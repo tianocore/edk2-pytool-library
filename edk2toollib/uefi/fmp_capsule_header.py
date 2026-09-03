@@ -322,7 +322,7 @@ class FmpCapsuleHeaderClass(object):
                 Length = offset_list[Index + 1] - Offset
             else:
                 Length = len(Buffer) - Offset
-            self.AddEmbeddedDriver(Buffer[Offset : Offset + Length])
+            self._EmbeddedDriverList.append(Buffer[Offset : Offset + Length])
 
         #
         # Parse the Payloads that are FMP Capsule Images
@@ -335,7 +335,7 @@ class FmpCapsuleHeaderClass(object):
                 Length = len(Buffer) - Offset
             FmpCapsuleImageHeader = FmpCapsuleImageHeaderClass()
             FmpCapsuleImageHeader.Decode(Buffer[Offset : Offset + Length])
-            self.AddFmpCapsuleImageHeader(FmpCapsuleImageHeader)
+            self._FmpCapsuleImageHeaderList.append(FmpCapsuleImageHeader)
 
         return Result
 
