@@ -61,6 +61,10 @@ class DscParser(HashFileParser):
         self._no_fail_mode = False
         self._dsc_file_paths = set()  # This includes the full paths for every DSC that makes up the file
         self._target_file_stack = []  # previous TargetFilePath values for nested !include
+        # DEFINE outside [Defines] (including [BuildOptions]) is section-scoped
+        # (DSC spec 2.2.6). Key: (section_type, arch, module).
+        self.SectionMacros: dict[tuple[str, str, str], dict[str, str]] = {}
+        self.CurrentSectionScopes: list[tuple[str, str, str]] = []
 
     def ReplacePcds(self, line: str) -> str:
         """Attempts to replace a token if it is a PCD token."""
@@ -69,6 +73,118 @@ class DscParser(HashFileParser):
                 if token in self.PcdValueDict:
                     line = line.replace(token, self.PcdValueDict[token])
         return line
+
+    def _parse_section_scopes(self, header_line: str) -> list[tuple[str, str, str]]:
+        """Split a [Section.Arch.Module, ...] header into scope tuples."""
+        inner = header_line.strip()
+        if inner.startswith("["):
+            inner = inner[1:]
+        if inner.endswith("]"):
+            inner = inner[:-1]
+        scopes: list[tuple[str, str, str]] = []
+        for part in inner.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            bits = [b.strip() for b in part.split(".")]
+            stype = bits[0].upper()
+            arch = bits[1] if len(bits) > 1 else "common"
+            module = bits[2].upper() if len(bits) > 2 else ""
+            scopes.append((stype, arch, module))
+        return scopes
+
+    def _scope_applies(self, defined: tuple[str, str, str], current: tuple[str, str, str]) -> bool:
+        """True if a DEFINE stored under *defined* is visible in *current*.
+
+        common arch matches every arch. An empty module matches every module
+        type. A more specific DEFINE does not leak into a sibling or parent.
+        """
+        defined_stype, defined_arch, defined_mod = defined
+        current_stype, current_arch, current_mod = current
+        if defined_stype != current_stype:
+            return False
+        if defined_arch.lower() != "common" and defined_arch.lower() != current_arch.lower():
+            return False
+        if defined_mod and defined_mod != current_mod:
+            return False
+        return True
+
+    def _scope_specificity(self, scope: tuple[str, str, str]) -> tuple[int, int]:
+        stype, arch, module = scope
+        return (0 if arch.lower() == "common" else 1, 1 if module else 0)
+
+    def _section_macro_value(self, token: str) -> Optional[str]:
+        found: Optional[str] = None
+        best = (-1, -1)
+        for current in self.CurrentSectionScopes:
+            for defined, macros in self.SectionMacros.items():
+                if token not in macros or not self._scope_applies(defined, current):
+                    continue
+                spec = self._scope_specificity(defined)
+                if spec >= best:
+                    best = spec
+                    found = macros[token]
+        return found
+
+    def _FindReplacementForToken(self, token: str, replace_if_not_found: bool = False) -> str:
+        # Section-local DEFINE overrides [Defines] (DSC 2.2.6).
+        v = self._section_macro_value(token)
+        if v is None:
+            v = super()._FindReplacementForToken(token, False)
+        if v is None and replace_if_not_found:
+            v = self._MacroNotDefinedValue
+        return v
+
+    def _resolve_with_scopes(self, line: str, scopes: list[tuple[str, str, str]]) -> str:
+        """Replace variables using only the given section scopes for SectionMacros."""
+        old = self.CurrentSectionScopes
+        self.CurrentSectionScopes = list(scopes)
+        try:
+            return self.ReplaceVariables(line)
+        finally:
+            self.CurrentSectionScopes = old
+
+    def _resolve_for_scope_str(self, line: str, section: str, scope_str: str) -> str:
+        """Resolve *line* for a post-parse scope string (e.g. 'x64', 'common', 'x64.peim')."""
+        parts = [p for p in scope_str.split(".") if p]
+        if not parts or parts[0].lower() == "common":
+            arch = "common"
+            module = parts[1].upper() if len(parts) > 1 else ""
+        else:
+            arch = parts[0]
+            module = parts[1].upper() if len(parts) > 1 else ""
+        return self._resolve_with_scopes(line, [(section.upper(), arch, module)])
+
+    def _record_define(self, left: str, right: str) -> None:
+        """Record a DEFINE: [Defines] -> LocalVars; otherwise -> SectionMacros."""
+        if self.CurrentSection == "DEFINES":
+            self.LocalVars[left] = right
+            for var in self.LocalVars:
+                self.LocalVars[var] = self.ReplaceVariables(self.LocalVars[var])
+            self.Logger.debug("Key,values found:  %s = %s" % (left, right))
+            return
+        scopes = self.CurrentSectionScopes
+        if not scopes and self.CurrentFullSection:
+            scopes = self._parse_section_scopes("[" + self.CurrentFullSection + "]")
+        for scope in scopes:
+            self.SectionMacros.setdefault(scope, {})[left] = right
+        self.Logger.debug("Section DEFINE %s = %s scopes=%s" % (left, right, scopes))
+
+    def _append_component_mod(self, path: str, arch: str, file_name: Optional[str] = None, lineno: int = None) -> None:
+        arch_u = arch.upper()
+        if arch_u == "X64":
+            self.SixMods.append(path)
+            if file_name is not None and lineno is not None:
+                self.SixModsEnhanced.append({"file": os.path.normpath(file_name), "lineno": lineno, "data": path})
+            self.Logger.debug("Found 64bit Module: %s" % path)
+        elif arch_u == "IA32":
+            self.ThreeMods.append(path)
+            if file_name is not None and lineno is not None:
+                self.ThreeModsEnhanced.append({"file": os.path.normpath(file_name), "lineno": lineno, "data": path})
+            self.Logger.debug("Found 32bit Module: %s" % path)
+        else:
+            self.OtherMods.append(path)
+            self.Logger.debug("Found Module: %s" % path)
 
     def __ParseLine(self, Line: str, file_name: Optional[str] = None, lineno: int = None) -> tuple:
         line_stripped = self.StripComment(Line).strip()
@@ -106,83 +222,67 @@ class DscParser(HashFileParser):
         (IsNew, Section) = self.ParseNewSection(line_resolved)
         if IsNew:
             self.CurrentSection = Section.upper()
+            self.CurrentSectionScopes = self._parse_section_scopes(line_resolved)
             self.Logger.debug("New Section: %s" % self.CurrentSection)
             self.Logger.debug("FullSection: %s" % self.CurrentFullSection)
             return (line_resolved, [], None)
 
-        # process line in x64 components
-        if self.CurrentFullSection.upper() == "COMPONENTS.X64":
+        # DEFINE / BuildOptions assignments applied in source order during the full parse
+        if line_stripped.count("=") >= 1:
+            tokens = line_resolved.split("=", 1)
+            leftside = tokens[0].split()
+            is_define_stmt = bool(leftside) and leftside[0].upper() == "DEFINE"
+            if is_define_stmt:
+                left = leftside[1] if len(leftside) == 2 else leftside[0]
+                right = tokens[1].strip()
+                self._record_define(left, right)
+                return (line_resolved, [], None)
+            if self.CurrentSection == "BUILDOPTIONS" and leftside:
+                left = leftside[0]
+                right = tokens[1].strip()
+                self.LocalVars[left] = right
+                for var in self.LocalVars:
+                    self.LocalVars[var] = self.ReplaceVariables(self.LocalVars[var])
+                self.Logger.debug("Key,values found:  %s = %s" % (left, right))
+                return (line_resolved, [], None)
+
+        # Components: evaluate once per header scope so multi-arch sections pick
+        # the DEFINE that belongs to that arch (not the last matching scope).
+        if self.CurrentSection.upper() == "COMPONENTS" or "COMPONENTS" in self.CurrentFullSection.upper():
+            scopes = self.CurrentSectionScopes
+            if not scopes and self.CurrentFullSection:
+                scopes = self._parse_section_scopes("[" + self.CurrentFullSection + "]")
+
             if self.ParsingInBuildOption > 0:
                 if ".inf" in line_resolved.lower():
                     p = self.ParseInfPathLib(line_resolved)
                     self.Libs.append(p)
-                    self.Logger.debug("Found Library in a 64bit BuildOptions Section: %s" % p)
-                elif self.RegisterPcds(line_resolved):
-                    self.Logger.debug("Found a Pcd in a 64bit Module Override section")
-            else:
-                if ".inf" in line_resolved.lower():
-                    p = self.ParseInfPathMod(line_resolved)
-                    self.SixMods.append(p)
-                    if file_name is not None and lineno is not None:
-                        self.SixModsEnhanced.append({"file": os.path.normpath(file_name), "lineno": lineno, "data": p})
-                    self.Logger.debug("Found 64bit Module: %s" % p)
-
-            self.ParsingInBuildOption = self.ParsingInBuildOption + line_resolved.count("{")
-            self.ParsingInBuildOption = self.ParsingInBuildOption - line_resolved.count("}")
-            return (line_resolved, [], None)
-
-        # process line in ia32 components
-        elif self.CurrentFullSection.upper() == "COMPONENTS.IA32":
-            if self.ParsingInBuildOption > 0:
-                if ".inf" in line_resolved.lower():
-                    p = self.ParseInfPathLib(line_resolved)
-                    self.Libs.append(p)
-                    if file_name is not None and lineno is not None:
-                        self.LibsEnhanced.append({"file": os.path.normpath(file_name), "lineno": lineno, "data": p})
-                    self.Logger.debug("Found Library in a 32bit BuildOptions Section: %s" % p)
-                elif self.RegisterPcds(line_resolved):
-                    self.Logger.debug("Found a Pcd in a 32bit Module Override section")
-
-            else:
-                if ".inf" in line_resolved.lower():
-                    p = self.ParseInfPathMod(line_resolved)
-                    self.ThreeMods.append(p)
-                    if file_name is not None and lineno is not None:
-                        self.ThreeModsEnhanced.append(
-                            {"file": os.path.normpath(file_name), "lineno": lineno, "data": p}
-                        )
-                    self.Logger.debug("Found 32bit Module: %s" % p)
-
-            self.ParsingInBuildOption = self.ParsingInBuildOption + line_resolved.count("{")
-            self.ParsingInBuildOption = self.ParsingInBuildOption - line_resolved.count("}")
-            return (line_resolved, [], None)
-
-        # process line in other components
-        elif "COMPONENTS" in self.CurrentFullSection.upper():
-            if self.ParsingInBuildOption > 0:
-                if ".inf" in line_resolved.lower():
-                    p = self.ParseInfPathLib(line_resolved)
-                    self.Libs.append(p)
-                    self.Logger.debug("Found Library in a BuildOptions Section: %s" % p)
+                    self.Logger.debug("Found Library in a Module Override / BuildOptions Section: %s" % p)
                 elif self.RegisterPcds(line_resolved):
                     self.Logger.debug("Found a Pcd in a Module Override section")
-
             else:
-                if ".inf" in line_resolved.lower():
-                    p = self.ParseInfPathMod(line_resolved)
-                    self.OtherMods.append(p)
-                    self.Logger.debug("Found Module: %s" % p)
+                if ".inf" in line_stripped.lower():
+                    for scope in scopes:
+                        resolved = self._resolve_with_scopes(line_stripped, [scope])
+                        p = self.ParseInfPathMod(resolved)
+                        self._append_component_mod(p, scope[1], file_name=file_name, lineno=lineno)
 
-            self.ParsingInBuildOption = self.ParsingInBuildOption + line_resolved.count("{")
-            self.ParsingInBuildOption = self.ParsingInBuildOption - line_resolved.count("}")
-            return (line_resolved, [], None)
+            self.ParsingInBuildOption = self.ParsingInBuildOption + line_stripped.count("{")
+            self.ParsingInBuildOption = self.ParsingInBuildOption - line_stripped.count("}")
+            # Keep section macros unresolved in Lines so _parse_components can
+            # expand per arch; still apply [Defines]/LocalVars.
+            return (self._resolve_with_scopes(line_stripped, []), [], None)
 
         # process line in library class section (don't use full name)
         elif self.CurrentSection.upper() == "LIBRARYCLASSES":
-            if ".inf" in line_resolved.lower():
-                p = self.ParseInfPathLib(line_resolved)
-                self.Libs.append(p)
-                self.Logger.debug("Found Library in Library Class Section: %s" % p)
+            if ".inf" in line_stripped.lower():
+                scopes = self.CurrentSectionScopes or [("LIBRARYCLASSES", "common", "")]
+                for scope in scopes:
+                    resolved = self._resolve_with_scopes(line_stripped, [scope])
+                    p = self.ParseInfPathLib(resolved)
+                    self.Libs.append(p)
+                    self.Logger.debug("Found Library in Library Class Section: %s" % p)
+                return (self._resolve_with_scopes(line_stripped, []), [], None)
             return (line_resolved, [], None)
         # process line in PCD section
         elif self.CurrentSection.upper().startswith("PCDS"):
@@ -231,30 +331,46 @@ class DscParser(HashFileParser):
         (IsNew, Section) = self.ParseNewSection(line_resolved)
         if IsNew:
             self.CurrentSection = Section.upper()
+            self.CurrentSectionScopes = self._parse_section_scopes(line_resolved)
             self.Logger.debug("New Section: %s" % self.CurrentSection)
             self.Logger.debug("FullSection: %s" % self.CurrentFullSection)
             return (line_resolved, [])
 
-        # process line based on section we are in
-        if (self.CurrentSection == "DEFINES") or (self.CurrentSection == "BUILDOPTIONS"):
-            if line_resolved.count("=") >= 1:
-                tokens = line_resolved.split("=", 1)
-                leftside = tokens[0].split()
-                if len(leftside) == 2:
-                    left = leftside[1]
-                else:
-                    left = leftside[0]
-                right = tokens[1].strip()
-
-                self.LocalVars[left] = right
-                self.Logger.debug("Key,values found:  %s = %s" % (left, right))
-
-                # iterate through the existed LocalVars and try to resolve the symbols
-                for var in self.LocalVars:
-                    self.LocalVars[var] = self.ReplaceVariables(self.LocalVars[var])
-                return (line_resolved, [])
-        else:
+        if line_resolved.count("=") < 1:
             return (line_resolved, [])
+
+        tokens = line_resolved.split("=", 1)
+        leftside = tokens[0].split()
+        is_define_stmt = bool(leftside) and leftside[0].upper() == "DEFINE"
+        if not ((self.CurrentSection == "DEFINES") or (self.CurrentSection == "BUILDOPTIONS") or is_define_stmt):
+            return (line_resolved, [])
+
+        if len(leftside) == 2:
+            left = leftside[1]
+        else:
+            left = leftside[0]
+        right = tokens[1].strip()
+
+        # Pre-pass only materializes [Defines] into LocalVars. Section-scoped
+        # DEFINEs (including [BuildOptions]) are applied in source order during
+        # the full parse so they do not rewrite earlier lines retroactively.
+        if is_define_stmt and self.CurrentSection != "DEFINES":
+            return (line_resolved, [])
+
+        if self.CurrentSection not in ("DEFINES", "BUILDOPTIONS") and not is_define_stmt:
+            return (line_resolved, [])
+
+        # BuildOptions KEY=VAL may reference section macros; leave unresolved
+        # tokens for the full parse when this is not a [Defines] assignment.
+        if self.CurrentSection == "BUILDOPTIONS" and not is_define_stmt:
+            return (line_resolved, [])
+
+        self.LocalVars[left] = right
+        self.Logger.debug("Key,values found:  %s = %s" % (left, right))
+
+        for var in self.LocalVars:
+            self.LocalVars[var] = self.ReplaceVariables(self.LocalVars[var])
+        return (line_resolved, [])
 
     def ParseInfPathLib(self, line: str) -> str:
         """Parses a line with an INF path Lib."""
@@ -347,14 +463,28 @@ class DscParser(HashFileParser):
             if self.SECTION_REGEX.match(line):
                 continue
 
-            if len(line.split("|")) != 2:
+            if len(line.split("|")) != 2 and "$(" not in line:
+                define_tokens = line.split()
+                if define_tokens and define_tokens[0].upper() == "DEFINE":
+                    continue
                 logging.debug("Unexpected Line in Library Section:")
                 logging.debug(f"  {line}")
                 continue
 
-            # We are in a valid section, so lets parse the line and add it to our dictionary.
-            lib, instance = tuple(line.split("|"))
+            define_tokens = line.split()
+            if define_tokens and define_tokens[0].upper() == "DEFINE":
+                continue
+
+            # Resolve remaining section macros per scope (Lines keep $(SECTION) tokens).
             for scope in current_scopes:
+                resolved = line
+                if "$(" in line:
+                    resolved = self._resolve_for_scope_str(line, self.SECTION_LIBRARY, scope)
+                if len(resolved.split("|")) != 2:
+                    logging.debug("Unexpected Line in Library Section after macro expand:")
+                    logging.debug(f"  {resolved}")
+                    continue
+                lib, instance = tuple(resolved.split("|"))
                 key = f"{scope.strip()}.{lib.strip()}".lower()
                 value = instance.strip()
                 if os.path.isabs(value):
@@ -385,6 +515,10 @@ class DscParser(HashFileParser):
                 if self.SECTION_REGEX.match(line.lower()):
                     continue
 
+                define_tokens = line.split()
+                if define_tokens and define_tokens[0].upper() == "DEFINE":
+                    continue
+
                 # This component has overrides we need to handle
                 if line.strip().endswith("{"):
                     line = str(line)
@@ -392,14 +526,17 @@ class DscParser(HashFileParser):
                     library_override_dict = self._build_library_override_dictionary(lines)
 
                 for scope in current_scopes:
+                    entry = line.strip(" {")
+                    if "$(" in entry:
+                        entry = self._resolve_for_scope_str(entry, self.SECTION_COMPONENT, scope)
                     # Components without a specific scope (common or empty) are added to all current scopes
-                    if os.path.isabs(line.strip(" {")):
-                        line = self._Edk2PathUtil.GetEdk2RelativePathFromAbsolutePath(line.strip(" {"))
+                    if os.path.isabs(entry):
+                        entry = self._Edk2PathUtil.GetEdk2RelativePathFromAbsolutePath(entry)
                     if scope == "common":
                         for arch in self.LocalVars["SUPPORTED_ARCHITECTURES"].split("|"):
-                            self.Components.append((line.strip(" {"), arch, library_override_dict))
+                            self.Components.append((entry, arch, library_override_dict))
                     else:
-                        self.Components.append((line.strip(" {"), scope, library_override_dict))
+                        self.Components.append((entry, scope, library_override_dict))
 
         except StopIteration:
             return
@@ -473,9 +610,9 @@ class DscParser(HashFileParser):
 
     def ResetParserState(self) -> None:
         """Resets the parser."""
-        #
-        # add more DSC parser based state reset here, if necessary
-        #
+        self.CurrentSectionScopes = []
+        # Drop pre-pass SectionMacros so the full parse activates DEFINE in source order.
+        self.SectionMacros = {}
         super(DscParser, self).ResetParserState()
         self._target_file_stack = []
 

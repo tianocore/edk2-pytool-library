@@ -223,6 +223,287 @@ class TestDscParserIncludes(unittest.TestCase):
             os.remove(file1_path)
         assert any("FakePath/FakePath2/FakeInf.inf" in value for value in parser.Components)
 
+    def test_dsc_define_section_scope(self):
+        """DEFINE outside [Defines] is scoped to equivalent sections (DSC 2.2.6)."""
+        sample = textwrap.dedent("""\
+        [Defines]
+            PLATFORM_NAME                  = SomePlatformPkg
+            PLATFORM_GUID                  = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+            PLATFORM_VERSION               = 0.1
+            DSC_SPECIFICATION              = 0x00010005
+            OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
+
+        [LibraryClasses.common]
+          DEFINE MDE = MdePkg/Library
+          BaseLib|$(MDE)/BaseLib.inf
+
+        [LibraryClasses.X64, LibraryClasses.IA32]
+          DEFINE PERF = PerformancePkg/Library
+          TimerLib|$(PERF)/DxeTscTimerLib/DxeTscTimerLib.inf
+
+        [LibraryClasses.X64.PEIM]
+          DEFINE MDEMEM = $(MDE)/PeiMemoryAllocationLib
+          MemoryAllocationLib|$(MDEMEM)/PeiMemoryAllocationLib.inf
+
+        [LibraryClasses.IPF]
+          PalLib|$(MDE)/UefiPalLib/UefiPalLib.inf
+          TimerLib|$(MDE)/BaseTimerLibNullTemplate/BaseTimerLibNullTemplate.inf
+        """)
+        workspace = tempfile.mkdtemp()
+        file1_path = os.path.join(workspace, "file1.dsc")
+        TestDscParserIncludes.write_to_file(file1_path, sample)
+        try:
+            parser = DscParser()
+            parser.SetEdk2Path(Edk2Path(workspace, []))
+            parser.ParseFile(file1_path)
+        finally:
+            os.remove(file1_path)
+
+        libs = [str(x) for x in parser.Libs]
+        joined = " ".join(libs)
+        self.assertIsNone(parser.LocalVars.get("MDE"))
+        self.assertIsNone(parser.LocalVars.get("PERF"))
+        self.assertIsNone(parser.LocalVars.get("MDEMEM"))
+        self.assertIn("MdePkg/Library/BaseLib.inf", joined)
+        self.assertIn("PerformancePkg/Library/DxeTscTimerLib/DxeTscTimerLib.inf", joined)
+        self.assertIn("MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf", joined)
+        self.assertIn("MdePkg/Library/UefiPalLib/UefiPalLib.inf", joined)
+        self.assertIn("MdePkg/Library/BaseTimerLibNullTemplate/BaseTimerLibNullTemplate.inf", joined)
+        self.assertNotIn("PerformancePkg/Library/BaseTimerLibNullTemplate", joined)
+
+    def test_dsc_define_does_not_leak_to_sibling_module(self):
+        """A DEFINE in [LibraryClasses.common.PEI_CORE] is not visible in DXE_DRIVER."""
+        sample = textwrap.dedent("""\
+        [Defines]
+            PLATFORM_NAME                  = SomePlatformPkg
+            PLATFORM_GUID                  = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+            PLATFORM_VERSION               = 0.1
+            DSC_SPECIFICATION              = 0x00010005
+            OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
+
+        [LibraryClasses.common.PEI_CORE]
+          SomeLib|SomePkg/Library/SomeLib/SomeLib.inf
+          DEFINE SOME_VAR = TRUE
+
+        [LibraryClasses.common.PEIM]
+          AnotherLib|SomePkg/Library/AnotherLib/AnotherLib.inf
+
+        !ifdef SOME_VAR
+        [LibraryClasses.common.DXE_DRIVER]
+          ConditionalLib|SomePkg/Library/ConditionalLib/ConditionalLib.inf
+        !endif
+        """)
+        workspace = tempfile.mkdtemp()
+        file1_path = os.path.join(workspace, "file1.dsc")
+        TestDscParserIncludes.write_to_file(file1_path, sample)
+        try:
+            parser = DscParser()
+            parser.SetEdk2Path(Edk2Path(workspace, []))
+            parser.ParseFile(file1_path)
+        finally:
+            os.remove(file1_path)
+
+        self.assertIsNone(parser.LocalVars.get("SOME_VAR"))
+        libs = [str(x) for x in parser.Libs]
+        self.assertFalse(any("ConditionalLib.inf" in value for value in libs), libs)
+
+    def test_dsc_buildoptions_define_is_section_scoped(self):
+        """DEFINE in [BuildOptions] is not global; common->arch visible; X64 does not leak to IA32."""
+        sample = textwrap.dedent("""\
+        [Defines]
+            PLATFORM_NAME                  = SomePlatformPkg
+            PLATFORM_GUID                  = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+            PLATFORM_VERSION               = 0.1
+            DSC_SPECIFICATION              = 0x00010005
+            OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
+
+        [BuildOptions.common]
+          DEFINE SHARED = common-val
+
+        [BuildOptions.X64]
+          DEFINE LOCAL_X64 = x64-val
+          X64_SEEN = $(SHARED)+$(LOCAL_X64)
+
+        [BuildOptions.IA32]
+          IA32_SEEN = $(SHARED)+$(LOCAL_X64)
+
+        [Defines]
+        !ifdef SHARED
+            LEAKED_SHARED = TRUE
+        !endif
+        !ifdef LOCAL_X64
+            LEAKED_LOCAL = TRUE
+        !endif
+        """)
+        workspace = tempfile.mkdtemp()
+        file1_path = os.path.join(workspace, "file1.dsc")
+        TestDscParserIncludes.write_to_file(file1_path, sample)
+        try:
+            parser = DscParser()
+            parser.SetEdk2Path(Edk2Path(workspace, []))
+            parser.ParseFile(file1_path)
+        finally:
+            os.remove(file1_path)
+
+        self.assertIsNone(parser.LocalVars.get("SHARED"))
+        self.assertIsNone(parser.LocalVars.get("LOCAL_X64"))
+        self.assertIsNone(parser.LocalVars.get("LEAKED_SHARED"))
+        self.assertIsNone(parser.LocalVars.get("LEAKED_LOCAL"))
+        self.assertEqual(
+            parser.SectionMacros.get(("BUILDOPTIONS", "common", ""), {}).get("SHARED"),
+            "common-val",
+        )
+        self.assertEqual(
+            parser.SectionMacros.get(("BUILDOPTIONS", "X64", ""), {}).get("LOCAL_X64"),
+            "x64-val",
+        )
+        self.assertEqual(parser.LocalVars.get("X64_SEEN"), "common-val+x64-val")
+        # SHARED from common applies; LOCAL_X64 must not leak into IA32.
+        self.assertEqual(parser.LocalVars.get("IA32_SEEN"), "common-val+$(LOCAL_X64)")
+
+    def test_dsc_define_arch_overrides_common(self):
+        """More specific arch DEFINE overrides common (ROOT -> X64.PEIM picks X64Pkg)."""
+        sample = textwrap.dedent("""\
+        [Defines]
+            PLATFORM_NAME                  = SomePlatformPkg
+            PLATFORM_GUID                  = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+            PLATFORM_VERSION               = 0.1
+            DSC_SPECIFICATION              = 0x00010005
+            OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
+
+        [LibraryClasses.common]
+          DEFINE ROOT = CommonPkg
+          BaseLib|$(ROOT)/BaseLib.inf
+
+        [LibraryClasses.X64]
+          DEFINE ROOT = X64Pkg
+
+        [LibraryClasses.X64.PEIM]
+          PeimLib|$(ROOT)/PeimLib.inf
+
+        [LibraryClasses.IA32]
+          Ia32Lib|$(ROOT)/Ia32Lib.inf
+        """)
+        workspace = tempfile.mkdtemp()
+        file1_path = os.path.join(workspace, "file1.dsc")
+        TestDscParserIncludes.write_to_file(file1_path, sample)
+        try:
+            parser = DscParser()
+            parser.SetEdk2Path(Edk2Path(workspace, []))
+            parser.ParseFile(file1_path)
+        finally:
+            os.remove(file1_path)
+
+        self.assertIsNone(parser.LocalVars.get("ROOT"))
+        libs = [str(x) for x in parser.Libs]
+        joined = " ".join(libs)
+        self.assertIn("CommonPkg/BaseLib.inf", joined)
+        self.assertIn("X64Pkg/PeimLib.inf", joined)
+        self.assertIn("CommonPkg/Ia32Lib.inf", joined)
+        self.assertNotIn("X64Pkg/Ia32Lib.inf", joined)
+        self.assertNotIn("CommonPkg/PeimLib.inf", joined)
+
+    def test_dsc_section_define_overrides_defines_section(self):
+        """Section-local DEFINE overrides the same name from [Defines]."""
+        sample = textwrap.dedent("""\
+        [Defines]
+            PLATFORM_NAME                  = SomePlatformPkg
+            PLATFORM_GUID                  = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+            PLATFORM_VERSION               = 0.1
+            DSC_SPECIFICATION              = 0x00010005
+            OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
+            DEFINE ROOT = GlobalPkg
+
+        [LibraryClasses]
+          DEFINE ROOT = LocalPkg
+          BaseLib|$(ROOT)/BaseLib.inf
+        """)
+        workspace = tempfile.mkdtemp()
+        file1_path = os.path.join(workspace, "file1.dsc")
+        TestDscParserIncludes.write_to_file(file1_path, sample)
+        try:
+            parser = DscParser()
+            parser.SetEdk2Path(Edk2Path(workspace, []))
+            parser.ParseFile(file1_path)
+        finally:
+            os.remove(file1_path)
+
+        self.assertEqual(parser.LocalVars.get("ROOT"), "GlobalPkg")
+        libs = [str(x) for x in parser.Libs]
+        self.assertIn("LocalPkg/BaseLib.inf", libs)
+        self.assertNotIn("GlobalPkg/BaseLib.inf", libs)
+
+    def test_dsc_section_define_applies_in_source_order(self):
+        """Later DEFINE in the same section does not rewrite earlier lines."""
+        sample = textwrap.dedent("""\
+        [Defines]
+            PLATFORM_NAME                  = SomePlatformPkg
+            PLATFORM_GUID                  = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+            PLATFORM_VERSION               = 0.1
+            DSC_SPECIFICATION              = 0x00010005
+            OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
+
+        [LibraryClasses]
+          DEFINE ROOT = InitialPkg
+          BeforeLib|$(ROOT)/BeforeLib.inf
+          DEFINE ROOT = LocalPkg
+          NextLib|$(ROOT)/NextLib.inf
+          DEFINE ROOT = ExternalPkg
+          FinalLib|$(ROOT)/FinalLib.inf
+        """)
+        workspace = tempfile.mkdtemp()
+        file1_path = os.path.join(workspace, "file1.dsc")
+        TestDscParserIncludes.write_to_file(file1_path, sample)
+        try:
+            parser = DscParser()
+            parser.SetEdk2Path(Edk2Path(workspace, []))
+            parser.ParseFile(file1_path)
+        finally:
+            os.remove(file1_path)
+
+        libs = [str(x) for x in parser.Libs]
+        self.assertIn("InitialPkg/BeforeLib.inf", libs)
+        self.assertIn("LocalPkg/NextLib.inf", libs)
+        self.assertIn("ExternalPkg/FinalLib.inf", libs)
+        self.assertNotIn("ExternalPkg/BeforeLib.inf", libs)
+        self.assertNotIn("ExternalPkg/NextLib.inf", libs)
+
+    def test_dsc_multi_arch_components_evaluate_per_scope(self):
+        """Comma-separated Components headers resolve DEFINE once per arch."""
+        sample = textwrap.dedent("""\
+        [Defines]
+            PLATFORM_NAME                  = SomePlatformPkg
+            PLATFORM_GUID                  = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+            PLATFORM_VERSION               = 0.1
+            DSC_SPECIFICATION              = 0x00010005
+            OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)
+
+        [Components.IA32]
+          DEFINE MY_VAR = SomePkg
+
+        [Components.X64]
+          DEFINE MY_VAR = OtherPkg
+
+        [Components.IA32, Components.X64]
+          $(MY_VAR)/MyDriver/MyDriver.inf
+        """)
+        workspace = tempfile.mkdtemp()
+        file1_path = os.path.join(workspace, "file1.dsc")
+        TestDscParserIncludes.write_to_file(file1_path, sample)
+        try:
+            parser = DscParser()
+            parser.SetEdk2Path(Edk2Path(workspace, []))
+            parser.ParseFile(file1_path)
+        finally:
+            os.remove(file1_path)
+
+        self.assertIn("SomePkg/MyDriver/MyDriver.inf", parser.ThreeMods)
+        self.assertIn("OtherPkg/MyDriver/MyDriver.inf", parser.SixMods)
+        comp_paths = [(p, a) for p, a, _ in parser.Components if "MyDriver" in p]
+        self.assertIn(("SomePkg/MyDriver/MyDriver.inf", "ia32"), comp_paths)
+        self.assertIn(("OtherPkg/MyDriver/MyDriver.inf", "x64"), comp_paths)
+        self.assertNotIn(("OtherPkg/MyDriver/MyDriver.inf", "ia32"), comp_paths)
+
     def test_dsc_pcd_in_include_files(self):
         """This tests whether pcd in and before !include directive works properly"""
         workspace = tempfile.mkdtemp()
