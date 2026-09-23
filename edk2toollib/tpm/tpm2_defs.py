@@ -10,14 +10,19 @@
 
 from typing import Optional
 
+from edk2toollib.tpm import tcg_alg_registry as tcg_alg
+
 ##
 # INCLUDES CONTENTS FROM TianoCore Tpm20.h HEADER FILE!!
 #
 # TPM2.0 Specification data structures
-#   (Trusted Platform Module Library Specification, Family "2.0", Level 00, Revision 00.96,
-#   @http://www.trustedcomputinggroup.org/resources/tpm_library_specification)
+#   (Trusted Platform Module 2.0 Library Part 2: Structures, Version 185,
+#   @https://trustedcomputinggroup.org/resource/tpm-library-specification/)
 #
-#   Check http://trustedcomputinggroup.org for latest specification updates.
+#   (Trusted Computing Group Algorithm Registry, Version 2.0,
+#   @https://trustedcomputinggroup.org/resource/tcg-algorithm-registry/)
+#
+#   Check https://trustedcomputinggroup.org for latest specification updates.
 #
 # Copyright (c) 2013 - 2015, Intel Corporation. All rights reserved. <BR>
 ##
@@ -26,45 +31,58 @@ from typing import Optional
 
 
 # Table 7 - TPM_ALG_ID Constants
+# Aliases for the TCG_ALG_ID constants listed in TPM 2.0 Library Part 2: Structures v185.
 TPM_ALG_Size = 2
 TPM_ALG_Pack = "H"
 TPM_ALG_ERROR = 0x0000
-TPM_ALG_FIRST = 0x0001
-TPM_ALG_RSA = 0x0001
-TPM_ALG_SHA = 0x0004
-TPM_ALG_SHA1 = 0x0004
-TPM_ALG_HMAC = 0x0005
-TPM_ALG_AES = 0x0006
-TPM_ALG_MGF1 = 0x0007
-TPM_ALG_KEYEDHASH = 0x0008
-TPM_ALG_XOR = 0x000A
-TPM_ALG_SHA256 = 0x000B
-TPM_ALG_SHA384 = 0x000C
-TPM_ALG_SHA512 = 0x000D
-TPM_ALG_NULL = 0x0010
-TPM_ALG_SM3_256 = 0x0012
-TPM_ALG_SM4 = 0x0013
-TPM_ALG_RSASSA = 0x0014
-TPM_ALG_RSAES = 0x0015
-TPM_ALG_RSAPSS = 0x0016
-TPM_ALG_OAEP = 0x0017
-TPM_ALG_ECDSA = 0x0018
-TPM_ALG_ECDH = 0x0019
-TPM_ALG_ECDAA = 0x001A
-TPM_ALG_SM2 = 0x001B
-TPM_ALG_ECSCHNORR = 0x001C
-TPM_ALG_ECMQV = 0x001D
-TPM_ALG_KDF1_SP800_56a = 0x0020
-TPM_ALG_KDF2 = 0x0021
-TPM_ALG_KDF1_SP800_108 = 0x0022
-TPM_ALG_ECC = 0x0023
-TPM_ALG_SYMCIPHER = 0x0025
-TPM_ALG_CTR = 0x0040
-TPM_ALG_OFB = 0x0041
-TPM_ALG_CBC = 0x0042
-TPM_ALG_CFB = 0x0043
-TPM_ALG_ECB = 0x0044
-TPM_ALG_LAST = 0x0044
+TPM_ALG_FIRST = tcg_alg.TCG_ALG_RSA
+TPM_ALG_RSA = tcg_alg.TCG_ALG_RSA
+TPM_ALG_TDES = tcg_alg.TCG_ALG_TDES
+TPM_ALG_SHA = tcg_alg.TCG_ALG_SHA1  # TPM 1.2 name, retained for compatibility
+TPM_ALG_SHA1 = tcg_alg.TCG_ALG_SHA1
+TPM_ALG_HMAC = tcg_alg.TCG_ALG_HMAC
+TPM_ALG_AES = tcg_alg.TCG_ALG_AES
+TPM_ALG_MGF1 = tcg_alg.TCG_ALG_MGF1
+TPM_ALG_KEYEDHASH = tcg_alg.TCG_ALG_KEYEDHASH
+TPM_ALG_XOR = tcg_alg.TCG_ALG_XOR
+TPM_ALG_SHA256 = tcg_alg.TCG_ALG_SHA256
+TPM_ALG_SHA384 = tcg_alg.TCG_ALG_SHA384
+TPM_ALG_SHA512 = tcg_alg.TCG_ALG_SHA512
+TPM_ALG_NULL = tcg_alg.TCG_ALG_NULL
+TPM_ALG_SM3_256 = tcg_alg.TCG_ALG_SM3_256
+TPM_ALG_SM4 = tcg_alg.TCG_ALG_SM4
+TPM_ALG_RSASSA = tcg_alg.TCG_ALG_RSASSA
+TPM_ALG_RSAES = tcg_alg.TCG_ALG_RSAES
+TPM_ALG_RSAPSS = tcg_alg.TCG_ALG_RSAPSS
+TPM_ALG_OAEP = tcg_alg.TCG_ALG_OAEP
+TPM_ALG_ECDSA = tcg_alg.TCG_ALG_ECDSA
+TPM_ALG_ECDH = tcg_alg.TCG_ALG_ECDH
+TPM_ALG_ECDAA = tcg_alg.TCG_ALG_ECDAA
+TPM_ALG_SM2 = tcg_alg.TCG_ALG_SM2
+TPM_ALG_ECSCHNORR = tcg_alg.TCG_ALG_ECSCHNORR
+TPM_ALG_ECMQV = tcg_alg.TCG_ALG_ECMQV
+TPM_ALG_HKDF = tcg_alg.TCG_ALG_HKDF
+TPM_ALG_KDF1_SP800_56a = tcg_alg.TCG_ALG_KDF1_SP800_56A
+TPM_ALG_KDF2 = tcg_alg.TCG_ALG_KDF2
+TPM_ALG_KDF1_SP800_108 = tcg_alg.TCG_ALG_KDF1_SP800_108
+TPM_ALG_ECC = tcg_alg.TCG_ALG_ECC
+TPM_ALG_SYMCIPHER = tcg_alg.TCG_ALG_SYMCIPHER
+TPM_ALG_CAMELLIA = tcg_alg.TCG_ALG_CAMELLIA
+TPM_ALG_SHA3_256 = tcg_alg.TCG_ALG_SHA3_256
+TPM_ALG_SHA3_384 = tcg_alg.TCG_ALG_SHA3_384
+TPM_ALG_SHA3_512 = tcg_alg.TCG_ALG_SHA3_512
+TPM_ALG_CMAC = tcg_alg.TCG_ALG_CMAC
+TPM_ALG_CTR = tcg_alg.TCG_ALG_CTR
+TPM_ALG_OFB = tcg_alg.TCG_ALG_OFB
+TPM_ALG_CBC = tcg_alg.TCG_ALG_CBC
+TPM_ALG_CFB = tcg_alg.TCG_ALG_CFB
+TPM_ALG_ECB = tcg_alg.TCG_ALG_ECB
+TPM_ALG_EDDSA = tcg_alg.TCG_ALG_EDDSA
+TPM_ALG_HASH_EDDSA = tcg_alg.TCG_ALG_HASH_EDDSA
+TPM_ALG_MLKEM = tcg_alg.TCG_ALG_MLKEM
+TPM_ALG_MLDSA = tcg_alg.TCG_ALG_MLDSA
+TPM_ALG_HASH_MLDSA = tcg_alg.TCG_ALG_HASH_MLDSA
+TPM_ALG_LAST = tcg_alg.TCG_ALG_HASH_MLDSA
 
 # Table 11 - TPM_CC Constants (Numeric Order)
 TPM_CC_Size = 4
