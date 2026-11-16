@@ -8,6 +8,7 @@
 
 import os
 import unittest
+
 from edk2toollib.windows.capsule.cat_generator import CatGenerator
 
 

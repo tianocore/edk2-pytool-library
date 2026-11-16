@@ -27,11 +27,11 @@ Additionally, we must update the classifiers section to remove the now
 unsupported versions of python.
 
 ```python
-classifiers=[
+classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13"
+    "Programming Language :: Python :: 3.13",
 ]
 ```
 

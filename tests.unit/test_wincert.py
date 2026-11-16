@@ -6,8 +6,8 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-import unittest
 import io
+import unittest
 
 from edk2toollib.uefi.authenticated_variables_structure_support import EfiTime
 from edk2toollib.uefi.wincert import WinCert, WinCertPkcs1, WinCertUefiGuid

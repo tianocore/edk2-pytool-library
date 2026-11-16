@@ -11,7 +11,7 @@ import os
 import tempfile
 import unittest
 
-from edk2toollib.windows.capsule.inf_generator import InfGenerator, InfSection, OS_BUILD_VERSION_DIRID13_SUPPORT
+from edk2toollib.windows.capsule.inf_generator import OS_BUILD_VERSION_DIRID13_SUPPORT, InfGenerator, InfSection
 
 
 def _get_test_file():

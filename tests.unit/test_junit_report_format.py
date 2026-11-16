@@ -7,11 +7,12 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-import unittest
-import tempfile
-import shutil
 import os
+import shutil
+import tempfile
+import unittest
 import xml.dom.minidom
+
 from edk2toollib.log import junit_report_format
 
 

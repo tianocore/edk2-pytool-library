@@ -7,6 +7,7 @@
 # spell-checker:ignore IVMD, IOMMUEFR
 
 import unittest
+
 from edk2toollib.acpi.ivrs_parser import IVRS_TABLE
 
 

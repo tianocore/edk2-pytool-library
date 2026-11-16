@@ -8,8 +8,9 @@
 ##
 
 
-import unittest
 import struct
+import unittest
+
 from edk2toollib.tpm import tpm2_defs as Tpm2Defs
 from edk2toollib.tpm import tpm2_stream as Tpm2Stream
 

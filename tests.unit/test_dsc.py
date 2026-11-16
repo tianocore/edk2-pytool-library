@@ -6,13 +6,16 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 import unittest
-from edk2toollib.uefi.edk2.build_objects.dsc import dsc
-from edk2toollib.uefi.edk2.build_objects.dsc import library_class
-from edk2toollib.uefi.edk2.build_objects.dsc import component
-from edk2toollib.uefi.edk2.build_objects.dsc import definition
-from edk2toollib.uefi.edk2.build_objects.dsc import dsc_buildoption_section_type
-from edk2toollib.uefi.edk2.build_objects.dsc import dsc_pcd_section_type
-from edk2toollib.uefi.edk2.build_objects.dsc import dsc_section_type
+
+from edk2toollib.uefi.edk2.build_objects.dsc import (
+    component,
+    definition,
+    dsc,
+    dsc_buildoption_section_type,
+    dsc_pcd_section_type,
+    dsc_section_type,
+    library_class,
+)
 
 
 class TestDscObject(unittest.TestCase):
@@ -51,7 +54,6 @@ class TestDscObject(unittest.TestCase):
 
     def test_get_library_classes(self):
         """This serves more as an example of how to walk the DSC to get a library class for a componenet"""
-        pass
 
     def test_put_in_bad_things(self):
         d = dsc()
