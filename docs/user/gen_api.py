@@ -17,7 +17,7 @@ import os
 import mkdocs_gen_files
 
 
-def main():
+def main() -> None:
     """Entry into script that is executed."""
     files = glob.glob("**/*.py", recursive=True, root_dir="edk2toollib")
 

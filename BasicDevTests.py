@@ -19,7 +19,7 @@ import re
 import sys
 
 
-def TestEncodingOk(apath, encodingValue):
+def TestEncodingOk(apath, encodingValue) -> bool:
     """Check whether a file can be read using the requested encoding.
 
     Args:
@@ -39,7 +39,7 @@ def TestEncodingOk(apath, encodingValue):
     return True
 
 
-def TestFilenameLowercase(apath):
+def TestFilenameLowercase(apath) -> bool:
     """Check whether a path uses only lowercase characters.
 
     Args:
@@ -55,7 +55,7 @@ def TestFilenameLowercase(apath):
     return True
 
 
-def PackageAndModuleValidCharacters(apath):
+def PackageAndModuleValidCharacters(apath) -> bool:
     """Check pep8 recommendations for package and module names."""
     match = re.match("^[a-z0-9_/.]+$", apath.replace("\\", "/"))
     if match is None:
@@ -66,7 +66,7 @@ def PackageAndModuleValidCharacters(apath):
     return True
 
 
-def TestNoSpaces(apath):
+def TestNoSpaces(apath) -> bool:
     """Check whether a path contains no spaces.
 
     Args:
@@ -81,7 +81,7 @@ def TestNoSpaces(apath):
     return True
 
 
-def TestRequiredLicense(apath):
+def TestRequiredLicense(apath) -> bool:
     """Check whether a file contains a required license identifier.
 
     Args:

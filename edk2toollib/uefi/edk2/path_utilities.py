@@ -134,7 +134,7 @@ class Edk2Path(object):
 
         start_time = timeit.default_timer()
 
-        def get_paths(package_path):
+        def get_paths(package_path) -> tuple[Path, list[Path]]:
             paths = []
             for root, _, files in os.walk(package_path):
                 for file in files:
