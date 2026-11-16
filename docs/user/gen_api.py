@@ -7,7 +7,7 @@
 ##
 """Python script used to automatically generate API Reference documentation.
 
-Used in conjunction with mkdocs to generate static markdown files for each
+Used in conjunction with ProperDocs to generate static markdown files for each
 file inside the edk2toollib package for ReadTheDocs hosting.
 """
 

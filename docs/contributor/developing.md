@@ -129,6 +129,13 @@ as described above.
     markdownlint "**/*.md"
     ```
 
+7. Run ProperDocs build
+   * Fix warnings and errors
+
+    ```cmd
+    properdocs build --strict
+    ```
+
 ### Githooks
 
 Optionally, there are two githooks provided to automate testing locally before running CI
@@ -138,7 +145,7 @@ Optionally, there are two githooks provided to automate testing locally before r
   * This yaml will pull in all the tools into an enviornment it needs to run
 * githooks/advanced-pre-commit-config.yaml
   * This file will run all the basic checks and the longer running checks
-  * This yaml will need mkdocs installed prior to running
+  * This yaml will need ProperDocs installed prior to running
 
 #### Installing
 

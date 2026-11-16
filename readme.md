@@ -148,7 +148,7 @@ following command from the root of the project:
 
 ```cmd
 pip install --upgrade -e .[docs]
-mkdocs serve
+properdocs serve
 ```
 
 ### Contributors
