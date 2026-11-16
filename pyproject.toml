@@ -39,7 +39,7 @@ issues = "https://github.com/tianocore/edk2-pytool-library/issues/"
 
 [project.optional-dependencies]
 dev = [
-    "ruff == 0.15.21",
+    "ruff == 0.16.5",
     "pytest == 9.1.1",
     "coverage == 7.15.4",
     "pre-commit == 4.6.2",
@@ -73,8 +73,7 @@ include = ["edk2toollib/*"]
 src = ["edk2toollib"]
 line-length = 120
 
-[lint]
-ignore = ["ANN101"]
+[tool.ruff.lint]
 select = [
     "E", # Pycodestyle errors
     "W", # Pycodestyle warnings
@@ -84,11 +83,20 @@ select = [
     "PIE", # flake8 - PIEpip
     "ANN",
 ]
+ignore = [
+    "ANN001", # Missing parameter annotations
+    "ANN002", # Missing *args annotations
+    "ANN003", # Missing **kwargs annotations
+    "ANN204", # Missing special-method return annotations
+]
 
-[lint.flake8-annotations]
+[tool.ruff.lint.per-file-ignores]
+"tests.unit/**" = ["ANN", "D"]
+
+[tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true
 
-[lint.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.pytest.ini_options]
