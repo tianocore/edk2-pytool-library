@@ -1106,7 +1106,25 @@ class DevicePathFactory(object):
         """Initialize the stateless device path factory."""
 
     @staticmethod
-    def _find_implementation(header: DevicePathHeader):
+    def _find_implementation(
+        header: DevicePathHeader,
+    ) -> type[
+        UnimplementedDevicePath
+        | PciDevicePath
+        | PccardDevicePath
+        | AcpiHidDevicePath
+        | UsbDevicePath
+        | MacAddrDevicePath
+        | Ipv4DevicePath
+        | SataDevicePath
+        | NvmeOfNamespaceDevicePath
+        | HardDriveDevicePath
+        | FilepathDevicePath
+        | MediaFwVolFilePathDevicePath
+        | FwVolPathDevicePath
+        | MediaRelativeOffsetRangeDevicePath
+        | EndOfHardwareDevicePath
+    ]:
         """Finds the implementation class for a given DevicePathHeader.
 
         Args:
