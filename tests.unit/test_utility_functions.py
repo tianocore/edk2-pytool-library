@@ -296,8 +296,9 @@ class TestRemoveTree:
         value, _ = winreg.QueryValueEx(key, value_name)
         if value == 1:
             pytest.skip(
-                r"Long paths are enabled. To run the test, disable long paths with the registry key located at: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystemLongPathsEnabled"
-            )  # noqa: E501
+                r"Long paths are enabled. To run the test, disable long paths with the registry key located at: "
+                r"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystemLongPathsEnabled"
+            )
 
         long_path = str(tmp_path / ("a" * 250))  # A single folder cannot be longer than 260 characters.
         assert len(str(long_path)) > 260  # Make sure the path is actually long.

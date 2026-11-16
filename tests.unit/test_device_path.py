@@ -129,7 +129,10 @@ class TestDevicePath(unittest.TestCase):
         self.assertEqual(decoded_structure, expected_structure)
 
     def test_device_path_decode_relative_offset_range(self):
-        """Test decoding a device path with a relative offset range. These are option roms that are not in the firmware volume."""
+        """Test decoding a device path with a relative offset range.
+
+        These are option roms that are not in the firmware volume.
+        """
         # Base64-encoded binary data
         base64_data = "AgEMANBBAwoAAAAAAQEGAAEBAQEGAAAABAgYAAAAAABQ/AAAAAAAAP9LAgAAAAAAf/8EAA=="
 
@@ -186,7 +189,12 @@ class TestDevicePath(unittest.TestCase):
     def test_device_path_decode_usb_ipv4(self):
         """Test decoding a device path with USB and IPv4 messaging."""
         # Base64-encoded binary data
-        base64_data = "AgEMANBBAwoAAAAAAQEGAAANAwUGAAMAAwUGAAMAAwUGAAMAAwslAHD4rrFIqgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMGwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//BAA="
+        # cspell:disable
+        base64_data = (
+            "AgEMANBBAwoAAAAAAQEGAAANAwUGAAMAAwUGAAMAAwUGAAMAAwsl"
+            "AHD4rrFIqgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMGwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//BAA="
+        )
+        # cspell:enable
 
         # Decode the base64 string into binary data
         binary_data = base64.b64decode(base64_data)
@@ -235,7 +243,10 @@ class TestDevicePath(unittest.TestCase):
                 "Messaging / MAC Address": {
                     "Header": {"type": "Messaging", "subtype": "MAC Address", "length": 37},
                     "MacAddress": {
-                        "Addr": "70:F8:AE:B1:48:AA:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00"
+                        "Addr": (
+                            "70:F8:AE:B1:48:AA:"
+                            "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00"
+                        )
                     },
                     "IfType": (0,),
                 }

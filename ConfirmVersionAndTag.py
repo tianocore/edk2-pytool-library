@@ -7,6 +7,8 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
+"""Validate that exactly one built wheel has a non-development, three-part version."""
+
 import glob
 import os
 import sys
