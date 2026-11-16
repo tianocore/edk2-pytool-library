@@ -10,6 +10,8 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
+"""Validate Python source encoding, file names, and license headers."""
+
 import glob
 import logging
 import os
@@ -18,6 +20,15 @@ import sys
 
 
 def TestEncodingOk(apath, encodingValue):
+    """Check whether a file can be read using the requested encoding.
+
+    Args:
+        apath: The path of the file to check.
+        encodingValue: The encoding to use when decoding the file.
+
+    Returns:
+        True if the file can be read and decoded, otherwise False.
+    """
     try:
         with open(apath, "rb") as f_obj:
             f_obj.read().decode(encodingValue)
@@ -29,6 +40,14 @@ def TestEncodingOk(apath, encodingValue):
 
 
 def TestFilenameLowercase(apath):
+    """Check whether a path uses only lowercase characters.
+
+    Args:
+        apath: The path to check.
+
+    Returns:
+        True if the path matches its lowercase form, otherwise False.
+    """
     if apath != apath.lower():
         logging.critical(f"Lowercase failure: file {apath} not lower case path")
         logging.error(f"\n\tLOWERCASE: {apath.lower()}\n\tINPUTPATH: {apath}")
@@ -37,7 +56,7 @@ def TestFilenameLowercase(apath):
 
 
 def PackageAndModuleValidCharacters(apath):
-    """Check pep8 recommendations for package and module names"""
+    """Check pep8 recommendations for package and module names."""
     match = re.match("^[a-z0-9_/.]+$", apath.replace("\\", "/"))
     if match is None:
         logging.critical(
@@ -48,6 +67,14 @@ def PackageAndModuleValidCharacters(apath):
 
 
 def TestNoSpaces(apath):
+    """Check whether a path contains no spaces.
+
+    Args:
+        apath: The path to check.
+
+    Returns:
+        True if the path contains no spaces, otherwise False.
+    """
     if " " in apath:
         logging.critical(f"NoSpaces failure: file {apath} has spaces in path")
         return False
@@ -55,6 +82,14 @@ def TestNoSpaces(apath):
 
 
 def TestRequiredLicense(apath):
+    """Check whether a file contains a required license identifier.
+
+    Args:
+        apath: The path of the file to check.
+
+    Returns:
+        True if the file can be read and contains a required identifier, otherwise False.
+    """
     licenses = [
         "SPDX-License-Identifier: BSD-2-Clause-Patent",
     ]

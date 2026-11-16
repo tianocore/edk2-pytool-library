@@ -192,20 +192,21 @@ class TestDscParserIncludes(unittest.TestCase):
 
     def test_dsc_define_statements(self):
         """This test some dsc define statements"""
+        # Preserve fixture whitespace with escapes instead of source-level trailing spaces.
         SAMPLE_DSC_FILE1 = textwrap.dedent("""\
         [Defines]
             PLATFORM_NAME                  = SomePlatformPkg
             PLATFORM_GUID                  = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
             PLATFORM_VERSION               = 0.1
             DSC_SPECIFICATION              = 0x00010005
-            OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)    
-            
-            DEFINE  FLAG1 = 
-            
+            OUTPUT_DIRECTORY               = Build/$(PLATFORM_NAME)   \x20
+           \x20
+            DEFINE  FLAG1 =\x20
+           \x20
             !if FLAG1 != ""
                 FLAG2 = "hi"
             !endif
-            
+           \x20
             !if $(FLAG2) == "hi"
               [Components.IA32]
                 FakePath/FakePath2/FakeInf.inf

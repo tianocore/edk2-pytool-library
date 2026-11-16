@@ -166,9 +166,9 @@ class FmpCapsuleImageHeaderClass(object):
             )
         )
         print(
-            "EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER.UpdateHardwareInstance = {UpdateHardwareInstance:016X}".format(
-                UpdateHardwareInstance=self.UpdateHardwareInstance
-            )
+            (
+                "EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER.UpdateHardwareInstance = {UpdateHardwareInstance:016X}"
+            ).format(UpdateHardwareInstance=self.UpdateHardwareInstance)
         )
         print(
             "sizeof (Payload)                                                    = {Size:08X}".format(

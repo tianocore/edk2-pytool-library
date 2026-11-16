@@ -114,7 +114,7 @@ def test_file_raw_section_statements():
                 SECTION RAW = $(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/FV/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.bin
             }
         }
-    """)
+    """)  # noqa: E501
     SAMPLE_FDF_FILE2 = textwrap.dedent("""\
         [FV.MAINFV]
         FILEFILE RAW = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa {

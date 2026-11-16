@@ -5,7 +5,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-"""Python implementation of UEFI C types"""
+"""Python implementation of UEFI C types."""
 
 import ctypes
 from typing import TypeAlias
