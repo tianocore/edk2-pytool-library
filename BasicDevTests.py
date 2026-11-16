@@ -11,10 +11,10 @@
 ##
 
 import glob
-import os
-import sys
 import logging
+import os
 import re
+import sys
 
 
 def TestEncodingOk(apath, encodingValue):
@@ -37,8 +37,7 @@ def TestFilenameLowercase(apath):
 
 
 def PackageAndModuleValidCharacters(apath):
-    """check pep8 recommendations for package and module names"""
-
+    """Check pep8 recommendations for package and module names"""
     match = re.match("^[a-z0-9_/.]+$", apath.replace("\\", "/"))
     if match is None:
         logging.critical(

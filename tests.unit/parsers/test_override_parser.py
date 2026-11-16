@@ -7,8 +7,8 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-import unittest
 import os
+import unittest
 
 from edk2toollib.uefi.edk2.parsers.override_parser import OverrideParser
 

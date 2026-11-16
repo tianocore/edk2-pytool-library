@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 import unittest
+
 from edk2toollib.uefi.status_codes import UefiStatusCode
 
 

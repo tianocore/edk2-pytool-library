@@ -7,14 +7,15 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-import unittest
-import pathlib
-import pytest
 import logging
-import sys
 import os
-import edk2toollib.windows.locate_tools as locate_tools
+import pathlib
+import sys
+import unittest
 from unittest.mock import patch
+
+import edk2toollib.windows.locate_tools as locate_tools
+import pytest
 
 
 class LocateToolsTest(unittest.TestCase):

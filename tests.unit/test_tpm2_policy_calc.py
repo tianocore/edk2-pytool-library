@@ -7,6 +7,7 @@
 ##
 
 import unittest
+
 import edk2toollib.tpm.tpm2_policy_calc as t2pc
 
 

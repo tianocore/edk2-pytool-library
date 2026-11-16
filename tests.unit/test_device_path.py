@@ -6,8 +6,9 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-import unittest
 import base64
+import unittest
+
 from edk2toollib.uefi.device_path import DevicePathFactory
 
 

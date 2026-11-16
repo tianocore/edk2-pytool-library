@@ -10,13 +10,13 @@ import textwrap
 import unittest
 
 from edk2toollib.windows.capsule.inf_generator2 import (
+    DEFAULT_TARGET_OSVERSION_DIRID13,
     InfFile,
     InfFirmware,
     InfFirmwareSections,
     InfHeader,
     InfSourceFiles,
     InfStrings,
-    DEFAULT_TARGET_OSVERSION_DIRID13,
 )
 
 

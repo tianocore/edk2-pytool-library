@@ -5,13 +5,13 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-import unittest
 import os
 import tempfile
-from edk2toollib.uefi.edk2.parsers.dsc_parser import DscParser
+import unittest
 
 # from edk2toollib.uefi.edk2.build_objects.dsc import dsc
 from edk2toollib.uefi.edk2.build_objects.dsc_translator import DscTranslator
+from edk2toollib.uefi.edk2.parsers.dsc_parser import DscParser
 
 
 class TestDscTranslator(unittest.TestCase):

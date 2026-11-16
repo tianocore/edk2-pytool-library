@@ -8,8 +8,8 @@
 
 import unittest
 import uuid
-from edk2toollib.uefi.edk2.variable_policy import VariableLockOnVarStatePolicy, VariablePolicyEntry
 
+from edk2toollib.uefi.edk2.variable_policy import VariableLockOnVarStatePolicy, VariablePolicyEntry
 
 TEST_GUID_1 = uuid.UUID("48B5F961-3F7D-4B88-9BEE-D305ED8256DA")
 TEST_GUID_2 = uuid.UUID("65D16747-FCBC-4FAE-A727-7B679A7B23F9")

@@ -7,10 +7,11 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-import unittest
 import os
-import textwrap
 import tempfile
+import textwrap
+import unittest
+
 from edk2toollib.uefi.edk2.parsers.fdf_parser import FdfParser
 from edk2toollib.uefi.edk2.path_utilities import Edk2Path
 

@@ -7,8 +7,8 @@
 ##
 """Python implementation of UEFI C types"""
 
-from typing import TypeAlias
 import ctypes
+from typing import TypeAlias
 
 # These depend on 32 bit vs 64 bit, but assuming 64
 EFI_PHYSICAL_ADDRESS: TypeAlias = ctypes.c_uint64

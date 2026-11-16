@@ -7,6 +7,7 @@
 # spell-checker:ignore IVMD, IOMMUEFR
 
 import unittest
+
 from edk2toollib.acpi.dmar_parser import DMARTable
 
 

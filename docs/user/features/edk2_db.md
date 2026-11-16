@@ -57,7 +57,7 @@ If your parser needs some type of metadata, then that metadata can be set in the
 (`__init__(*args, **kwargs)`).
 
 ``` python
-db.register(Parser1(x = 5, y = 7))
+db.register(Parser1(x=5, y=7))
 ```
 
 A method is provided to clear any registered parsers:
@@ -124,24 +124,18 @@ from edk2toollib.database import Edk2DB, InstancedInf, Fv
 from sqlalchemy.orm import aliased
 
 with Edk2DB(DB_PATH).session() as session:
-   dsc_components_query = (
-      session
-         .query(InstancedInf)
-         .filter_by(cls = None, arch = "IA32")
-         .order_by(InstancedInf.package_name, InstancedInf.path)
-   )
+    dsc_components_query = (
+        session.query(InstancedInf)
+        .filter_by(cls=None, arch="IA32")
+        .order_by(InstancedInf.package_name, InstancedInf.path)
+    )
 
-   fdf_components_query = (
-      session
-         .query(InstancedInf)
-         .join(Fv.infs)
-         .filter(InstancedInf.arch == "IA32")
-   )
+    fdf_components_query = session.query(InstancedInf).join(Fv.infs).filter(InstancedInf.arch == "IA32")
 
-   dsc_components = set([inf.path for inf in dsc_components_query.all()])
-   fdf_components = set([inf.path for inf in fdf_components_query.all()])
+    dsc_components = set([inf.path for inf in dsc_components_query.all()])
+    fdf_components = set([inf.path for inf in fdf_components_query.all()])
 
-   unused_componets = dsc_components - fdf_components
+    unused_componets = dsc_components - fdf_components
 ```
 
 The above example is a simple way to determine which IA32 components were compiled per the DSC but not placed in the

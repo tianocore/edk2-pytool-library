@@ -7,8 +7,9 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-import unittest
 import logging
+import unittest
+
 from edk2toollib.log.string_handler import StringStreamHandler
 
 

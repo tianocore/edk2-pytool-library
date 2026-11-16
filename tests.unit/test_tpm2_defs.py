@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 import unittest
+
 import edk2toollib.tpm.tpm2_defs as t2d
 
 

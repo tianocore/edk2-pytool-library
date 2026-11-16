@@ -6,9 +6,10 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
-import unittest
-from edk2toollib.uefi.bmp_object import BmpObject
 import io
+import unittest
+
+from edk2toollib.uefi.bmp_object import BmpObject
 
 """
 # to import an image into hex use this

@@ -5,10 +5,11 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-import unittest
-import secrets
 import io
-from edk2toollib.windows.policy.firmware_policy import FirmwarePolicy, Reserved2, PolicyValueType
+import secrets
+import unittest
+
+from edk2toollib.windows.policy.firmware_policy import FirmwarePolicy, PolicyValueType, Reserved2
 
 
 class FirmwarePolicyTest(unittest.TestCase):

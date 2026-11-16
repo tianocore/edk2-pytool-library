@@ -8,6 +8,7 @@
 
 
 import unittest
+
 import edk2toollib.uefi.edk2.variable_format as VF
 
 
